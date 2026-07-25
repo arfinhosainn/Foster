@@ -6,5 +6,6 @@ sealed class Screen {
     data class CodeVerification(val phoneNumber: String) : Screen()
     data object Name : Screen()
     data object Group : Screen()
+    data object Reminder : Screen()
     data object Contact : Screen()
 }
