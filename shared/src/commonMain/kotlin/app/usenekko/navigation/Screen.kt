@@ -7,5 +7,6 @@ sealed class Screen {
     data object Name : Screen()
     data object Group : Screen()
     data object Reminder : Screen()
+    data object TimeReminder : Screen()
     data object Contact : Screen()
 }

@@ -8,9 +8,12 @@ import androidx.compose.runtime.remember
 import app.usenekko.navigation.Navigator
 import app.usenekko.navigation.Screen
 import app.usenekko.onboarding.contact.ContactScreen
+import app.usenekko.onboarding.group.GroupScreen
 import app.usenekko.onboarding.name.NameScreen
 import app.usenekko.onboarding.phone.CodeVerificationScreen
 import app.usenekko.onboarding.phone.PhoneScreen
+import app.usenekko.onboarding.reminder.ReminderScreen
+import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
@@ -42,6 +45,18 @@ class MainActivity : ComponentActivity() {
                         onNavigateToNext = { navigator.navigate(Screen.Contact) },
                         onBack = { navigator.goBack() },
                         onSkip = { navigator.navigate(Screen.Contact) },
+                    )
+                    is Screen.Group -> GroupScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.Reminder) },
+                        onBack = { navigator.goBack() },
+                    )
+                    is Screen.Reminder -> ReminderScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.TimeReminder) },
+                        onBack = { navigator.goBack() },
+                    )
+                    is Screen.TimeReminder -> TimeReminderScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.Contact) },
+                        onBack = { navigator.goBack() },
                     )
                     is Screen.Contact -> ContactScreen(
                         onNavigateToNext = { /* TODO: next screen */ },
