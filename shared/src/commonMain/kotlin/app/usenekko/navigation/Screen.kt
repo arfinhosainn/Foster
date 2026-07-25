@@ -10,5 +10,6 @@ sealed class Screen {
     data object TimeReminder : Screen()
     data object CustomReminder : Screen()
     data object AddNote : Screen()
+    data object Notification : Screen()
     data object Contact : Screen()
 }
