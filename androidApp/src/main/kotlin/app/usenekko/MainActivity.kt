@@ -16,6 +16,7 @@ import app.usenekko.onboarding.reminder.ReminderScreen
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.customreminder.CustomReminderScreen
 import app.usenekko.onboarding.addnote.AddNoteScreen
+import app.usenekko.onboarding.notification.NotificationScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
@@ -66,9 +67,14 @@ class MainActivity : ComponentActivity() {
                         onSkip = { navigator.navigate(Screen.Contact) },
                     )
                     is Screen.AddNote -> AddNoteScreen(
-                        onNavigateToNext = { navigator.navigate(Screen.Contact) },
+                        onNavigateToNext = { navigator.navigate(Screen.Notification) },
                         onBack = { navigator.goBack() },
-                        onSkip = { navigator.navigate(Screen.Contact) },
+                        onSkip = { navigator.navigate(Screen.Notification) },
+                    )
+                    is Screen.Notification -> NotificationScreen(
+                        onNavigateToNext = { /* TODO */ },
+                        onBack = { navigator.goBack() },
+                        onSkip = { /* TODO */ },
                     )
                     is Screen.Contact -> ContactScreen(
                         onNavigateToNext = { /* TODO: next screen */ },
