@@ -44,7 +44,9 @@ import app.usenekko.designsystem.shapes.SawToothCircleShape
 import app.usenekko.designsystem.topbar.NekkoTopAppBar
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.theme.NekkoTheme
-import app.usenekko.designsystem.modifiers.glass
+import io.github.fletchmckee.liquid.liquid
+import io.github.fletchmckee.liquid.liquefiable
+import io.github.fletchmckee.liquid.rememberLiquidState
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_add
 import nekko.onboarding.generated.resources.ic_back
@@ -79,11 +81,19 @@ fun GroupScreen(
         )
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(NekkoTheme.colors.background.b0),
-    ) {
+    val liquidState = rememberLiquidState()
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(NekkoTheme.colors.background.b0)
+                .liquefiable(liquidState)
+        )
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+        ) {
         // ── Top bar with step indicator ─────────────────────────────────
         NekkoTopAppBar {
             StepIndicator(
@@ -165,11 +175,13 @@ fun GroupScreen(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .glass(
-                        shape = RoundedCornerShape(20.dp),
-                        backgroundColor = NekkoTheme.colors.fill.secondary,
-                        borderColor = NekkoTheme.colors.stroke.primary,
-                    )
+                    .liquid(liquidState) {
+                        frost = 16.dp
+                        shape = RoundedCornerShape(20.dp)
+                        tint = Color.White.copy(alpha = 0.2f)
+                        refraction = 0.3f
+                        saturation = 1.2f
+                    }
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -239,6 +251,7 @@ fun GroupScreen(
             )
         }
     }
+}
 }
 
 

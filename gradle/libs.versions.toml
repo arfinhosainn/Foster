@@ -14,6 +14,7 @@ junit = "4.13.2"
 kotlin = "2.4.10"
 material3 = "1.11.0-alpha07"
 material-icons = "1.7.3"
+liquid-glass = "1.1.1"
 
 
 [libraries]
@@ -36,6 +37,10 @@ compose-components-resources = { module = "org.jetbrains.compose.components:comp
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
 
 jetbrains-compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "material-icons" }
+
+
+#Liquid-Glass
+liquid-glass = { module = "io.github.fletchmckee.liquid:liquid", version.ref = "liquid-glass"}
 
 
 [plugins]
