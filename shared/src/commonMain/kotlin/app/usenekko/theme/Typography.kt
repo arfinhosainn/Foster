@@ -11,19 +11,19 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
-
 import nekko.shared.generated.resources.Res
-import nekko.shared.generated.resources.inter_regular
-import nekko.shared.generated.resources.inter_medium
-import nekko.shared.generated.resources.inter_semibold
-import nekko.shared.generated.resources.inter_bold
+
+import nekko.shared.generated.resources.sf_pro_rounded
+import nekko.shared.generated.resources.sf_pro_rounded_medium
+import nekko.shared.generated.resources.sf_pro_rounded_semibold
+import nekko.shared.generated.resources.sf_pro_rounded_bold
 
 @Composable
-internal fun interFontFamily(): FontFamily = FontFamily(
-    Font(Res.font.inter_regular, FontWeight.Normal),
-    Font(Res.font.inter_medium, FontWeight.Medium),
-    Font(Res.font.inter_semibold, FontWeight.SemiBold),
-    Font(Res.font.inter_bold, FontWeight.Bold),
+internal fun sfProRoundedFontFamily(): FontFamily = FontFamily(
+    Font(Res.font.sf_pro_rounded, FontWeight.Normal),
+    Font(Res.font.sf_pro_rounded_medium, FontWeight.Medium),
+    Font(Res.font.sf_pro_rounded_semibold, FontWeight.SemiBold),
+    Font(Res.font.sf_pro_rounded_bold, FontWeight.Bold),
 )
 
 private fun textStyle(fontFamily: FontFamily, size: Int, lineHeight: Int, weight: FontWeight) = TextStyle(
@@ -61,11 +61,10 @@ data class AppTypography(
 
 @Composable
 fun appTypography(): AppTypography {
-    val headingFamily = headingFontFamily()
-    val bodyFamily = interFontFamily()
+    val sharedFamily = sfProRoundedFontFamily()
 
-    fun heading(size: Int, lineHeight: Int, weight: FontWeight) = textStyle(headingFamily, size, lineHeight, weight)
-    fun body(size: Int, lineHeight: Int, weight: FontWeight) = textStyle(bodyFamily, size, lineHeight, weight)
+    fun heading(size: Int, lineHeight: Int, weight: FontWeight) = textStyle(sharedFamily, size, lineHeight, weight)
+    fun body(size: Int, lineHeight: Int, weight: FontWeight) = textStyle(sharedFamily, size, lineHeight, weight)
 
     return AppTypography(
         display = heading(34, 41, FontWeight.Normal),
@@ -76,7 +75,7 @@ fun appTypography(): AppTypography {
         heading2Bold = heading(24, 31, FontWeight.Bold),
         heading3 = heading(20, 26, FontWeight.Normal),
         heading3Bold = heading(20, 26, FontWeight.Bold),
-        heading4 = heading(16, 21, FontWeight.Normal),
+        heading4 = heading(17, 21, FontWeight.Normal),
         heading4Semibold = heading(16, 21, FontWeight.SemiBold),
         heading5 = heading(14, 18, FontWeight.Normal),
         heading5Semibold = heading(14, 18, FontWeight.SemiBold),
