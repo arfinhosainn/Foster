@@ -36,18 +36,23 @@ class MainActivity : ComponentActivity() {
                             navigator.navigate(Screen.CodeVerification(phoneNumber))
                         },
                         onBack = { navigator.goBack() },
-                        onSkip = { navigator.navigate(Screen.Contact) },
+                        onSkip = { navigator.navigate(Screen.Name) },
                     )
                     is Screen.CodeVerification -> CodeVerificationScreen(
                         phoneNumber = screen.phoneNumber,
                         onNavigateToNext = { navigator.navigate(Screen.Name) },
                         onBack = { navigator.goBack() },
-                        onSkip = { navigator.navigate(Screen.Contact) },
+                        onSkip = { navigator.navigate(Screen.Name) },
                     )
                     is Screen.Name -> NameScreen(
                         onNavigateToNext = { navigator.navigate(Screen.Contact) },
                         onBack = { navigator.goBack() },
                         onSkip = { navigator.navigate(Screen.Contact) },
+                    )
+                    is Screen.Contact -> ContactScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.Group) },
+                        onBack = { navigator.goBack() },
+                        onSkip = { navigator.navigate(Screen.Group) },
                     )
                     is Screen.Group -> GroupScreen(
                         onNavigateToNext = { navigator.navigate(Screen.Reminder) },
@@ -64,7 +69,7 @@ class MainActivity : ComponentActivity() {
                     is Screen.CustomReminder -> CustomReminderScreen(
                         onNavigateToNext = { navigator.navigate(Screen.AddNote) },
                         onBack = { navigator.goBack() },
-                        onSkip = { navigator.navigate(Screen.Contact) },
+                        onSkip = { navigator.navigate(Screen.AddNote) },
                     )
                     is Screen.AddNote -> AddNoteScreen(
                         onNavigateToNext = { navigator.navigate(Screen.Notification) },
@@ -75,11 +80,6 @@ class MainActivity : ComponentActivity() {
                         onNavigateToNext = { /* TODO */ },
                         onBack = { navigator.goBack() },
                         onSkip = { /* TODO */ },
-                    )
-                    is Screen.Contact -> ContactScreen(
-                        onNavigateToNext = { /* TODO: next screen */ },
-                        onBack = { navigator.goBack() },
-                        onSkip = { /* TODO: skip to main */ },
                     )
                 }
             }
