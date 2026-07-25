@@ -44,6 +44,7 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.liquid.glass)
             implementation(libs.jetbrains.compose.material.icons.extended)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
         }
