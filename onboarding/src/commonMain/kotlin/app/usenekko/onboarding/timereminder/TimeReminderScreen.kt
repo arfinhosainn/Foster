@@ -1,0 +1,192 @@
+package app.usenekko.onboarding.timereminder
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
+import app.usenekko.designsystem.buttons.NekkoButton
+import app.usenekko.designsystem.topbar.NekkoTopAppBar
+import app.usenekko.onboarding.components.StepIndicator
+import app.usenekko.onboarding.timereminder.components.AmPmToggle
+import app.usenekko.onboarding.timereminder.components.TimeScrollDial
+import app.usenekko.theme.NekkoTheme
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.ic_back
+import org.jetbrains.compose.resources.vectorResource
+
+/**
+ * Stateful entry point for the Time Reminder screen.
+ */
+@Composable
+fun TimeReminderScreen(
+    onNavigateToNext: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var state by remember { mutableStateOf(TimeReminderState()) }
+
+    TimeReminderScreenContent(
+        state = state,
+        onAction = { action ->
+            when (action) {
+                is TimeReminderAction.ScrollToMinute -> {
+                    val hour = if (action.totalMinutes / 60 == 0) 12 else action.totalMinutes / 60
+                    val minute = action.totalMinutes % 60
+                    state = state.copy(selectedHour = hour, selectedMinute = minute)
+                }
+                is TimeReminderAction.ToggleAmPm -> {
+                    state = state.copy(isAm = action.isAm)
+                }
+            }
+        },
+        onNavigateToNext = onNavigateToNext,
+        onBack = onBack,
+        modifier = modifier,
+    )
+}
+
+/**
+ * Stateless content for the Time Reminder screen.
+ *
+ * Layout matches the design reference:
+ * - Step indicator (dot 2 of 5 active — the 3rd screen in the flow)
+ * - "Choose reminder time" heading
+ * - "How often do you want to be reminded?" subtitle
+ * - Horizontal scrolling ruler/dial with 3D perspective
+ * - AM / PM toggle
+ * - Bottom nav row (back + Next)
+ */
+@Composable
+private fun TimeReminderScreenContent(
+    state: TimeReminderState,
+    onAction: (TimeReminderAction) -> Unit,
+    onNavigateToNext: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(NekkoTheme.colors.background.b0),
+    ) {
+        // ── Top bar with step indicator ─────────────────────────────────
+        NekkoTopAppBar {
+            StepIndicator(
+                totalSteps = 5,
+                currentStep = 2, // 3rd dot active (0-indexed)
+            )
+        }
+
+        // ── Title section ───────────────────────────────────────────────
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Choose reminder time",
+                style = NekkoTheme.typography.heading1Bold,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                color = NekkoTheme.colors.text.primary,
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            Text(
+                text = "How often do you want to be\nreminded?",
+                style = NekkoTheme.typography.heading4,
+                color = NekkoTheme.colors.text.secondary,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Spacer(Modifier.height(40.dp))
+
+        // ── Time dial ───────────────────────────────────────────────────
+        TimeScrollDial(
+            totalMinutes = state.totalMinutes,
+            onValueChange = { newTotal ->
+                onAction(TimeReminderAction.ScrollToMinute(newTotal))
+            },
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        // ── AM / PM toggle ──────────────────────────────────────────────
+        AmPmToggle(
+            isAm = state.isAm,
+            onToggle = { isAm -> onAction(TimeReminderAction.ToggleAmPm(isAm)) },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        )
+
+        // Push bottom nav to the bottom
+        Spacer(Modifier.weight(1f))
+
+        // ── Bottom navigation buttons ───────────────────────────────────
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 30.dp)
+                .padding(bottom = 24.dp, top = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Button(
+                onClick = onBack,
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NekkoTheme.colors.fill.tertiary,
+                    contentColor = NekkoTheme.colors.background.onBackground,
+                ),
+                contentPadding = PaddingValues(0.dp),
+            ) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_back),
+                    contentDescription = "Back",
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            NekkoButton(
+                text = "Next",
+                onClick = onNavigateToNext,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun TimeReminderScreenPreview() {
+    NekkoTheme {
+        TimeReminderScreen(
+            onNavigateToNext = {},
+            onBack = {},
+        )
+    }
+}
