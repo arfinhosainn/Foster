@@ -7,6 +7,5 @@ fun NekkoNavHost(
     navigator: Navigator,
     screenContent: @Composable (Screen) -> Unit
 ) {
-    val currentScreen = navigator.backStack.lastOrNull() ?: return
-    screenContent(currentScreen)
+    screenContent(navigator.currentScreen)
 }
