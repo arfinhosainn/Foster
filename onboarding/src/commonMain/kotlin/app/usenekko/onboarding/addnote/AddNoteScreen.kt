@@ -1,5 +1,6 @@
 package app.usenekko.onboarding.addnote
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,9 +21,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,14 +40,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
-import app.usenekko.designsystem.topbar.NekkoTopAppBar
 import app.usenekko.onboarding.addnote.components.AddNoteBottomSheet
 import app.usenekko.onboarding.addnote.components.NoteCard
 import app.usenekko.onboarding.components.StepIndicator
@@ -70,15 +82,19 @@ fun AddNoteScreen(
                 is AddNoteAction.AddClicked -> {
                     state = state.copy(isBottomSheetVisible = true)
                 }
+
                 is AddNoteAction.BottomSheetDismissed -> {
                     state = state.copy(isBottomSheetVisible = false)
                 }
+
                 is AddNoteAction.DraftTitleChanged -> {
                     state = state.copy(draftTitle = action.title)
                 }
+
                 is AddNoteAction.DraftDescriptionChanged -> {
                     state = state.copy(draftDescription = action.description)
                 }
+
                 is AddNoteAction.SaveClicked -> {
                     val newNote = NoteItem(
                         id = "note_${state.notes.size}",
@@ -93,6 +109,7 @@ fun AddNoteScreen(
                         draftDescription = "",
                     )
                 }
+
                 is AddNoteAction.DeleteNote -> {
                     state = state.copy(
                         notes = state.notes.filter { it.id != action.id },
@@ -116,6 +133,8 @@ private fun AddNoteScreenContent(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
     Box(modifier = modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
@@ -124,130 +143,150 @@ private fun AddNoteScreenContent(
         )
 
         val blurModifier = if (state.isBottomSheetVisible) Modifier.blur(20.dp) else Modifier
-        Column(modifier = Modifier.fillMaxSize().then(blurModifier)) {
-            NekkoTopAppBar(
-                trailingContent = {
-                    Text(
-                        text = "Skip",
-                        color = NekkoTheme.colors.text.secondary,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier
-                            .padding(end = 24.dp)
-                            .clickable { onSkip() },
-                    )
-                },
-            ) {
-                StepIndicator(
-                    totalSteps = 6,
-                    currentStep = 2,
-                )
-            }
 
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 30.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = "Add a Note",
-                    style = NekkoTheme.typography.heading1Bold,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    color = NekkoTheme.colors.text.primary,
+        Scaffold(
+            modifier = Modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .then(blurModifier),
+            topBar = {
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = NekkoTheme.colors.background.b0,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    title = {
+                        StepIndicator(
+                            totalSteps = 6,
+                            currentStep = 2,
+                        )
+                    },
+                    navigationIcon = { },
+                    actions = {
+                        Button(
+                            onClick = onSkip,
+                            colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
+                        ) {
+                            Text(
+                                text = "Skip",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = NekkoTheme.colors.text.secondary,
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
                 )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "Capture thoughts & memories\nabout your conversation",
-                    style = NekkoTheme.typography.heading4,
-                    fontSize = 20.sp,
-                    color = NekkoTheme.colors.text.secondary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            Spacer(Modifier.height(40.dp))
-
-            if (state.notes.isEmpty()) {
-                Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentAlignment = Alignment.TopCenter,
+            },
+            bottomBar = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 30.dp)
+                        .padding(bottom = 24.dp, top = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Spacer(modifier = Modifier.height(40.dp))
-                        Icon(
-                            imageVector = vectorResource(Res.drawable.ic_flower),
-                            contentDescription = null,
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(64.dp),
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Text(
-                            text = "Capture thoughts & memories\nabout your conversation",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = NekkoTheme.colors.text.tertiary,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-
-
-
-                        AddNoteButton(
-                            onClick = { onAction(AddNoteAction.AddClicked) },
+                    FilledIconButton(
+                        modifier = modifier.weight(0.23f).size(58.dp),
+                        onClick = onBack,
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
+                    ) {
+                        Image(
+                            imageVector = vectorResource(Res.drawable.ic_back),
+                            contentDescription = "BACK"
                         )
                     }
+                    Spacer(Modifier.width(12.dp))
+                    NekkoButton(
+                        text = "Next",
+                        onClick = onNavigateToNext,
+                        modifier = Modifier.weight(0.8f),
+                    )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+            },
+            containerColor = NekkoTheme.colors.background.b0
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 30.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    items(state.notes) { note ->
-                        NoteCard(
-                            note = note,
-                            onDelete = { onAction(AddNoteAction.DeleteNote(note.id)) },
-                        )
-                    }
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        AddNoteButton(
-                            onClick = { onAction(AddNoteAction.AddClicked) },
-                        )
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 30.dp)
-                    .padding(bottom = 24.dp, top = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Button(
-                    onClick = onBack,
-                    modifier = Modifier.size(56.dp),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = NekkoTheme.colors.fill.tertiary,
-                        contentColor = NekkoTheme.colors.background.onBackground,
-                    ),
-                    contentPadding = PaddingValues(0.dp),
-                ) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_back),
-                        contentDescription = "Back",
+                    Spacer(Modifier.height(42.dp))
+                    Text(
+                        text = "Add a Note",
+                        style = NekkoTheme.typography.heading1Bold,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        color = NekkoTheme.colors.text.primary,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "Capture thoughts & memories\nabout your conversation",
+                        style = NekkoTheme.typography.heading4,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = NekkoTheme.colors.text.secondary,
+                        textAlign = TextAlign.Center,
                     )
                 }
-                Spacer(Modifier.width(12.dp))
-                NekkoButton(
-                    text = "Next",
-                    onClick = onNavigateToNext,
-                    modifier = Modifier.weight(1f),
-                )
+
+                Spacer(Modifier.height(40.dp))
+
+                if (state.notes.isEmpty()) {
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentAlignment = Alignment.TopCenter,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Spacer(modifier = Modifier.height(40.dp))
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.ic_flower),
+                                contentDescription = null,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(64.dp),
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Text(
+                                text = "Capture thoughts & memories\nabout your conversation",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = NekkoTheme.colors.text.tertiary,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            NekkoActionButton(
+                                text = "Add Note",
+                                leadingIcon = vectorResource(Res.drawable.ic_add),
+                                onClick = { onAction(AddNoteAction.AddClicked) },
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        items(state.notes) { note ->
+                            NoteCard(
+                                note = note,
+                                onDelete = { onAction(AddNoteAction.DeleteNote(note.id)) },
+                            )
+                        }
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            NekkoActionButton(
+                                onClick = { onAction(AddNoteAction.AddClicked) },
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -260,32 +299,6 @@ private fun AddNoteScreenContent(
     }
 }
 
-@Composable
-private fun AddNoteButton(onClick: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = NekkoTheme.colors.background.b1,
-        modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = onClick),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_add),
-                contentDescription = null,
-                tint = NekkoTheme.colors.background.onBackground,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Add Note",
-                style = NekkoTheme.typography.heading4Semibold,
-                color = NekkoTheme.colors.text.primary,
-            )
-        }
-    }
-}
 
 private fun currentFormattedDate(): String {
     val now = Clock.System.now()
@@ -299,8 +312,8 @@ private fun currentFormattedDate(): String {
 
 @PreviewLightDark
 @Composable
-fun PreviewAddNoteScreen(){
-    NekkoTheme{
+fun PreviewAddNoteScreen() {
+    NekkoTheme {
         AddNoteScreen(
             onNavigateToNext = {},
             onBack = {},

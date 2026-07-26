@@ -1,4 +1,4 @@
-package app.usenekko.onboarding.reminder
+package app.usenekko.onboarding.dayreminder
 
 /**
  * Sealed interface representing UI actions in the Reminder screen.

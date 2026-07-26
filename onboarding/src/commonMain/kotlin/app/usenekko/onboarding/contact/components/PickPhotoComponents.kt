@@ -1,4 +1,4 @@
-package app.usenekko.onboarding.photo
+package app.usenekko.onboarding.contact.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -12,17 +12,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
@@ -33,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -58,6 +53,7 @@ fun ProfilePhotoPicker(
     onPreviewChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     avatarSize: Dp = 130.dp,
+    selectedAvatarIndex: Int? = null,
 ) {
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -108,6 +104,13 @@ fun ProfilePhotoPicker(
                 Image(
                     bitmap = photoBitmap,
                     contentDescription = "Selected Profile Photo",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else if (selectedAvatarIndex != null && selectedAvatarIndex in avatarResources.indices) {
+                Image(
+                    imageVector = vectorResource(avatarResources[selectedAvatarIndex]),
+                    contentDescription = "Selected Avatar",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )

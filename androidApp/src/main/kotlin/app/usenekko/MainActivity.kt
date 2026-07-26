@@ -12,7 +12,7 @@ import app.usenekko.onboarding.group.GroupScreen
 import app.usenekko.onboarding.name.NameScreen
 import app.usenekko.onboarding.phone.CodeVerificationScreen
 import app.usenekko.onboarding.phone.PhoneScreen
-import app.usenekko.onboarding.reminder.ReminderScreen
+import app.usenekko.onboarding.dayreminder.ReminderScreen
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.customreminder.CustomReminderScreen
 import app.usenekko.onboarding.addnote.AddNoteScreen
@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
                     is Screen.TimeReminder -> TimeReminderScreen(
                         onNavigateToNext = { navigator.navigate(Screen.CustomReminder) },
                         onBack = { navigator.goBack() },
+                        onSkip = {}
                     )
                     is Screen.CustomReminder -> CustomReminderScreen(
                         onNavigateToNext = { navigator.navigate(Screen.AddNote) },

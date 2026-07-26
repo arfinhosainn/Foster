@@ -1,4 +1,4 @@
-package app.usenekko.onboarding.reminder
+package app.usenekko.onboarding.dayreminder
 
 /**
  * Data class holding the state for the Reminder screen.
