@@ -1,7 +1,7 @@
-package app.usenekko.onboarding.timereminder
+package app.usenekko.onboarding.dayreminder
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,12 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -36,58 +34,49 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
-import app.usenekko.onboarding.timereminder.components.AmPmToggle
-import app.usenekko.onboarding.timereminder.components.TimeScrollDial
+import app.usenekko.onboarding.dayreminder.components.ReminderOptionCard
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
 
 /**
- * Stateful entry point for the Time Reminder screen.
+ * Stateful entry point for ReminderScreen.
  */
 @Composable
-fun TimeReminderScreen(
+fun ReminderScreen(
     onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
-    onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var state by remember { mutableStateOf(TimeReminderState()) }
+    var state by remember { mutableStateOf(ReminderState()) }
 
-    TimeReminderScreenContent(
+    ReminderScreenContent(
         state = state,
         onAction = { action ->
             when (action) {
-                is TimeReminderAction.ScrollToMinute -> {
-                    val hour = if (action.totalMinutes / 60 == 0) 12 else action.totalMinutes / 60
-                    val minute = action.totalMinutes % 60
-                    state = state.copy(selectedHour = hour, selectedMinute = minute)
-                }
-
-                is TimeReminderAction.ToggleAmPm -> {
-                    state = state.copy(isAm = action.isAm)
+                is ReminderAction.SelectOption -> {
+                    state = state.copy(selectedOption = action.option)
                 }
             }
         },
         onNavigateToNext = onNavigateToNext,
         onBack = onBack,
-        modifier = modifier,
-        onSkip = onSkip
+        modifier = modifier
     )
 }
 
-
+/**
+ * Stateless content for ReminderScreen.
+ */
 @Composable
-private fun TimeReminderScreenContent(
-    state: TimeReminderState,
-    onAction: (TimeReminderAction) -> Unit,
+private fun ReminderScreenContent(
+    state: ReminderState,
+    onAction: (ReminderAction) -> Unit,
     onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
-    onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -103,21 +92,8 @@ private fun TimeReminderScreenContent(
                 title = {
                     StepIndicator(
                         totalSteps = 5,
-                        currentStep = 2,
+                        currentStep = 3,
                     )
-                },
-                actions = {
-                    Button(
-                        onClick = onSkip,
-                        colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
-                    ) {
-                        Text(
-                            text = "Skip",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = NekkoTheme.colors.text.secondary,
-                        )
-                    }
                 },
                 navigationIcon = { },
                 scrollBehavior = scrollBehavior,
@@ -160,11 +136,12 @@ private fun TimeReminderScreenContent(
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Spacer(Modifier.height(42.dp))
 
                 Text(
-                    text = "Choose reminder time",
+                    text = "Every day is precious",
                     style = NekkoTheme.typography.heading1Bold,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
@@ -175,45 +152,41 @@ private fun TimeReminderScreenContent(
 
                 Text(
                     text = "How often do you want to be\nreminded?",
-                    style = NekkoTheme.typography.heading4,
+                    style = NekkoTheme.typography.heading3,
+                    fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.secondary,
                     textAlign = TextAlign.Center,
                 )
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(32.dp))
 
-            // ── Time dial ───────────────────────────────────────────────
-            TimeScrollDial(
-                totalMinutes = state.totalMinutes,
-                onValueChange = { newTotal ->
-                    onAction(TimeReminderAction.ScrollToMinute(newTotal))
-                },
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            // ── AM / PM toggle ──────────────────────────────────────────
-            AmPmToggle(
-                isAm = state.isAm,
-                onToggle = { isAm -> onAction(TimeReminderAction.ToggleAmPm(isAm)) },
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-
-            // Push bottom nav to the bottom
-            Spacer(Modifier.weight(1f))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(horizontal = 30.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(ReminderOptions.all) { option ->
+                    ReminderOptionCard(
+                        text = option,
+                        isSelected = option == state.selectedOption,
+                        onClick = { onAction(ReminderAction.SelectOption(option)) }
+                    )
+                }
+            }
         }
     }
 }
 
 @PreviewLightDark
 @Composable
-private fun TimeReminderScreenPreview() {
+private fun ReminderScreenPreview() {
     NekkoTheme {
-        TimeReminderScreen(
+        ReminderScreen(
             onNavigateToNext = {},
-            onBack = {},
-            onSkip = {}
+            onBack = {}
         )
     }
 }

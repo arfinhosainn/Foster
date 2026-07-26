@@ -26,7 +26,7 @@ fun StepIndicator(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(NekkoTheme.colors.fill.secondary)
+            .background(NekkoTheme.colors.background.b1)
             .padding(horizontal = 20.dp, vertical = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -41,12 +41,12 @@ fun StepIndicator(
                 },
                 label = "step_color_$index",
             )
-            val width = if (isCurrent) 18.dp else 6.dp
+            val width = if (isCurrent) 18.dp else 5.dp
 
             Box(
                 modifier = Modifier
                     .width(width)
-                    .height(6.dp)
+                    .height(5.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(color),
             )

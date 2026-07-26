@@ -1,38 +1,32 @@
 package app.usenekko.onboarding.customreminder
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
-import io.github.fletchmckee.liquid.liquid
-import io.github.fletchmckee.liquid.liquefiable
-import io.github.fletchmckee.liquid.rememberLiquidState
-import io.github.fletchmckee.liquid.LiquidState
-import app.usenekko.designsystem.topbar.NekkoTopAppBar
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.customreminder.components.AddReminderBottomSheet
 import app.usenekko.onboarding.customreminder.components.CustomReminderCard
 import app.usenekko.theme.NekkoTheme
+import io.github.fletchmckee.liquid.liquefiable
+import io.github.fletchmckee.liquid.rememberLiquidState
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_add
 import nekko.onboarding.generated.resources.ic_back
@@ -111,12 +105,10 @@ private fun CustomReminderScreenContent(
     modifier: Modifier = Modifier
 ) {
     val liquidState = rememberLiquidState()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Box(modifier = modifier.fillMaxSize()) {
 
-        // Source layer — sampled by AddButton's liquid effect.
-        // Must stay a SIBLING of the content below, not an ancestor of it,
-        // since AddButton (a descendant of the content Column) uses .liquid(liquidState).
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -125,147 +117,166 @@ private fun CustomReminderScreenContent(
         )
 
         val blurModifier = if (state.isBottomSheetVisible) Modifier.blur(20.dp) else Modifier
-        Column(modifier = Modifier.fillMaxSize().then(blurModifier)) {
-            NekkoTopAppBar(
-                trailingContent = {
-                    Text(
-                        text = "Skip",
-                        color = NekkoTheme.colors.text.secondary,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier
-                            .padding(end = 24.dp)
-                            .clickable { onSkip() }
-                    )
-                }
-            ) {
-                StepIndicator(
-                    totalSteps = 5,
-                    currentStep = 3,
-                )
-            }
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = "Add more reminder",
-                    style = NekkoTheme.typography.heading1Bold,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    color = NekkoTheme.colors.text.primary,
-                )
-
-                Spacer(Modifier.height(6.dp))
-
-                Text(
-                    text = "Like birthdays, anniversaries, etc",
-                    style = NekkoTheme.typography.heading4,
-                    color = NekkoTheme.colors.text.secondary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            Spacer(Modifier.height(40.dp))
-
-            if (state.reminders.isEmpty()) {
-                Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentAlignment = Alignment.TopCenter
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Spacer(modifier = Modifier.height(40.dp))
-                        AddButton(
-                            liquidState = liquidState,
-                            onClick = { onAction(CustomReminderAction.AddClicked) })
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Add reminder",
-                            fontSize = 20.sp,
-                            color = NekkoTheme.colors.text.secondary,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Tap on the plus button",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = NekkoTheme.colors.text.tertiary
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    items(state.reminders) { reminder ->
-                        CustomReminderCard(reminder = reminder)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        // Dashed divider line
-                        val dividerColor = NekkoTheme.colors.gray.quaternary
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .drawBehind {
-                                    drawLine(
-                                        color = dividerColor,
-                                        start = Offset(0f, 0f),
-                                        end = Offset(size.width, 0f),
-                                        pathEffect = PathEffect.dashPathEffect(
-                                            floatArrayOf(
-                                                10f,
-                                                10f
-                                            ), 0f
-                                        )
-                                    )
-                                }
-                        )
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        AddButton(
-                            liquidState = liquidState,
-                            onClick = { onAction(CustomReminderAction.AddClicked) })
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 30.dp)
-                    .padding(bottom = 24.dp, top = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Button(
-                    onClick = onBack,
-                    modifier = Modifier.size(56.dp),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = NekkoTheme.colors.fill.tertiary,
-                        contentColor = NekkoTheme.colors.background.onBackground,
+        Scaffold(
+            modifier = Modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .then(blurModifier),
+            topBar = {
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = NekkoTheme.colors.background.b0,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
                     ),
-                    contentPadding = PaddingValues(0.dp),
+                    title = {
+                        StepIndicator(
+                            totalSteps = 5,
+                            currentStep = 3,
+                        )
+                    },
+                    navigationIcon = { },
+                    actions = {
+                        Button(
+                            onClick = onSkip,
+                            colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
+                        ) {
+                            Text(
+                                text = "Skip",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = NekkoTheme.colors.text.secondary,
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                )
+            },
+            bottomBar = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 30.dp)
+                        .padding(bottom = 24.dp, top = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_back),
-                        contentDescription = "Back",
+                    FilledIconButton(
+                        modifier = modifier.weight(0.23f).size(58.dp),
+                        onClick = onBack,
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
+                    ) {
+                        Image(
+                            imageVector = vectorResource(Res.drawable.ic_back),
+                            contentDescription = "BACK"
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    NekkoButton(
+                        text = "Next",
+                        onClick = onNavigateToNext,
+                        modifier = Modifier.weight(0.8f),
                     )
                 }
-                Spacer(Modifier.width(12.dp))
-                NekkoButton(
-                    text = "Next",
-                    onClick = onNavigateToNext,
-                    modifier = Modifier.weight(1f),
-                )
+            },
+            containerColor = NekkoTheme.colors.background.b0
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Spacer(Modifier.height(42.dp))
+
+                    Text(
+                        text = "Add more reminder",
+                        style = NekkoTheme.typography.heading1Bold,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        color = NekkoTheme.colors.text.primary,
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Text(
+                        text = "Like birthdays, anniversaries, etc",
+                        style = NekkoTheme.typography.heading3,
+                        fontWeight = FontWeight.Medium,
+                        color = NekkoTheme.colors.text.secondary,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+
+                Spacer(Modifier.height(40.dp))
+
+                if (state.reminders.isEmpty()) {
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Spacer(modifier = Modifier.height(40.dp))
+                            NekkoActionButton(
+                                leadingIcon = vectorResource(Res.drawable.ic_add),
+                                onClick = { onAction(CustomReminderAction.AddClicked) })
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Add reminder",
+                                fontSize = 20.sp,
+                                color = NekkoTheme.colors.text.secondary,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Tap on the plus button",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = NekkoTheme.colors.text.tertiary
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        items(state.reminders) { reminder ->
+                            CustomReminderCard(reminder = reminder)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            // Dashed divider line
+                            val dividerColor = NekkoTheme.colors.gray.quaternary
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .drawBehind {
+                                        drawLine(
+                                            color = dividerColor,
+                                            start = Offset(0f, 0f),
+                                            end = Offset(size.width, 0f),
+                                            pathEffect = PathEffect.dashPathEffect(
+                                                floatArrayOf(
+                                                    10f,
+                                                    10f
+                                                ), 0f
+                                            )
+                                        )
+                                    }
+                            )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            NekkoActionButton(
+                                onClick = { onAction(CustomReminderAction.AddClicked) })
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
+                }
             }
         }
 
@@ -277,44 +288,6 @@ private fun CustomReminderScreenContent(
         }
     }
 }
-
-@Composable
-private fun AddButton(liquidState: LiquidState, onClick: () -> Unit) {
-    Surface(
-        shape = CircleShape,
-        color = Color.Transparent, // let .liquid() render the glass surface itself
-        shadowElevation = 0.dp,
-        modifier = Modifier.size(64.dp).liquid(liquidState) {
-            frost = 16.dp
-            shape = CircleShape
-            tint = Color.White.copy(alpha = 0.2f)
-            refraction = 0.3f
-            saturation = 1.2f
-        }
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(onClick = onClick), // no opaque background here
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_add),
-                    contentDescription = "Add Reminder",
-                    tint = NekkoTheme.colors.background.onBackground,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
-}
-
 
 @PreviewLightDark
 @Composable

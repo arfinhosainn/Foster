@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.onboarding.customreminder.ReminderItem
 import app.usenekko.theme.NekkoTheme
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.ic_calender
+import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun CustomReminderCard(
@@ -44,15 +47,16 @@ fun CustomReminderCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
+                        imageVector = vectorResource(Res.drawable.ic_calender),
                         contentDescription = "Recurrence",
                         tint = NekkoTheme.colors.text.tertiary,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Recurrence: ",
-                        fontSize = 14.sp,
+                        text = "Recurrence",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.tertiary
                     )
                     Text(
@@ -66,12 +70,12 @@ fun CustomReminderCard(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
-                    .background(NekkoTheme.colors.gray.quaternary)
+                    .background(NekkoTheme.colors.fill.tertiary)
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
                     text = reminder.date,
-                    fontSize = 14.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.primary
                 )

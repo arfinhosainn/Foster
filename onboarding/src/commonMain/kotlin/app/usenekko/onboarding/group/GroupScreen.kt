@@ -1,5 +1,6 @@
 package app.usenekko.onboarding.group
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,12 +21,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,54 +43,62 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.designsystem.shapes.SawToothCircleShape
-import app.usenekko.designsystem.topbar.NekkoTopAppBar
 import app.usenekko.onboarding.components.StepIndicator
+import app.usenekko.onboarding.group.components.CreateGroupBottomSheet
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.liquid
 import io.github.fletchmckee.liquid.liquefiable
 import io.github.fletchmckee.liquid.rememberLiquidState
+import kotlin.random.Random
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_add
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
 
-
 /**
- * Group onboarding screen — allows the user to add themselves to existing
- * groups or create new ones before completing onboarding.
+ * One-time onboarding flow:
+ * - show Family + Friends
+ * - allow creating only one extra group
+ * - after creation, hide the plus button
+ * - show the created group centered together with the starter row, using a
+ *   fixed gap instead of a bottom-pinned unbounded spacer
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupScreen(
     onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Default sample groups matching the design
-    var groups by remember {
-        mutableStateOf(
-            listOf(
-                Group(
-                    id = "family",
-                    name = "Family",
-                    members = listOf(Color(0xFF4CAF50), Color(0xFFFF9800)),
-                ),
-                Group(
-                    id = "friends",
-                    name = "Friends",
-                    members = emptyList(),
-                ),
-            )
+    val starterGroups = remember {
+        listOf(
+            Group(
+                id = "family",
+                name = "Family",
+                members = listOf(Color(0xFF4CAF50), Color(0xFFFF9800)),
+            ),
+            Group(
+                id = "friends",
+                name = "Friends",
+                members = emptyList(),
+            ),
         )
     }
 
+    var createdGroup by remember { mutableStateOf<Group?>(null) }
+    var showCreateGroupSheet by remember { mutableStateOf(false) }
+
     val liquidState = rememberLiquidState()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Box(modifier = modifier.fillMaxSize()) {
         Box(
@@ -91,169 +108,205 @@ fun GroupScreen(
                 .liquefiable(liquidState)
         )
 
-        Column(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-        // ── Top bar with step indicator ─────────────────────────────────
-        NekkoTopAppBar {
-            StepIndicator(
-                totalSteps = 4,
-                currentStep = 3,
-            )
-        }
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = NekkoTheme.colors.background.b0,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    title = {
+                        StepIndicator(
+                            totalSteps = 4,
+                            currentStep = 3,
+                        )
+                    },
+                    navigationIcon = { },
+                    scrollBehavior = scrollBehavior,
+                )
+            },
+            bottomBar = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 30.dp)
+                        .padding(bottom = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    FilledIconButton(
+                        modifier = modifier.weight(0.23f).size(58.dp),
+                        onClick = onBack,
+                        colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
+                    ) {
+                        Image(
+                            imageVector = vectorResource(Res.drawable.ic_back),
+                            contentDescription = "BACK"
+                        )
+                    }
 
-        // ── Title section ───────────────────────────────────────────────
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.width(12.dp))
 
-            Text(
-                text = "Add to a group",
-                textAlign = TextAlign.Center,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = NekkoTheme.colors.text.primary,
-            )
-
-            Spacer(Modifier.height(6.dp))
-
-            Text(
-                text = "Add user to a group",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                color = NekkoTheme.colors.text.tertiary,
-            )
-        }
-
-        Spacer(Modifier.height(32.dp))
-
-        // ── Group cards grid ────────────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 30.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            groups.forEach { group ->
+                    NekkoButton(
+                        text = "Next",
+                        onClick = onNavigateToNext,
+                        modifier = Modifier.weight(0.8f),
+                    )
+                }
+            },
+            containerColor = NekkoTheme.colors.background.b0
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            ) {
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    GroupCard(
-                        group = group,
-                        onClick = { /* toggle selection */ },
-                    )
-
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(42.dp))
 
                     Text(
-                        text = group.name,
-                        style = NekkoTheme.typography.heading4Semibold,
+                        text = "Add to a group",
+                        textAlign = TextAlign.Center,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.SemiBold,
                         color = NekkoTheme.colors.text.primary,
                     )
 
-                    Spacer(Modifier.height(2.dp))
+                    Spacer(Modifier.height(6.dp))
 
                     Text(
-                        text = "${group.members.size} people",
-                        style = NekkoTheme.typography.footnote,
+                        text = "Add user to a group",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.tertiary,
                     )
                 }
-            }
-        }
 
-        Spacer(Modifier.weight(1f))
 
-        // ── "Create new group" prompt ───────────────────────────────────
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .liquid(liquidState) {
-                        frost = 16.dp
-                        shape = RoundedCornerShape(20.dp)
-                        tint = Color.White.copy(alpha = 0.2f)
-                        refraction = 0.3f
-                        saturation = 1.2f
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.7f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 30.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            starterGroups.forEach { group ->
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    GroupCard(
+                                        group = group,
+                                        onClick = { /* optional selection */ },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .aspectRatio(1f),
+                                    )
+
+                                    Spacer(Modifier.height(12.dp))
+
+                                    Text(
+                                        text = group.name,
+                                        style = NekkoTheme.typography.heading4Semibold,
+                                        color = NekkoTheme.colors.text.primary,
+                                        textAlign = TextAlign.Center,
+                                    )
+
+                                    Spacer(Modifier.height(2.dp))
+
+                                    Text(
+                                        text = "${group.members.size} people",
+                                        style = NekkoTheme.typography.footnote,
+                                        color = NekkoTheme.colors.text.tertiary,
+                                        textAlign = TextAlign.Center,
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(100.dp)) // fixed gap, not weighted
+
+                        if (createdGroup == null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                NekkoActionButton(onClick = {
+                                    showCreateGroupSheet = true
+                                }, leadingIcon = vectorResource(Res.drawable.ic_add))
+
+                                Spacer(Modifier.height(14.dp))
+
+                                Text(
+                                    text = "Create one group for onboarding",
+                                    color = NekkoTheme.colors.text.secondary,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Medium,
+                                )
+
+                                Spacer(Modifier.height(4.dp))
+
+                                Text(
+                                    text = "Tap the plus button",
+                                    color = NekkoTheme.colors.text.tertiary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        } else {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                GroupCard(
+                                    group = createdGroup!!,
+                                    onClick = { },
+                                    modifier = Modifier.size(160.dp),
+                                )
+
+                                Spacer(Modifier.height(12.dp))
+
+                                Text(
+                                    text = createdGroup!!.name,
+                                    style = NekkoTheme.typography.heading4Semibold,
+                                    color = NekkoTheme.colors.text.primary,
+                                    textAlign = TextAlign.Center,
+                                )
+
+                                Spacer(Modifier.height(2.dp))
+
+                                Text(
+                                    text = "${createdGroup!!.members.size} people",
+                                    style = NekkoTheme.typography.footnote,
+                                    color = NekkoTheme.colors.text.tertiary,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
                     }
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { /* handle create group */ },
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_add),
-                    contentDescription = "Create new group",
-                    tint = NekkoTheme.colors.background.onBackground,
-                    modifier = Modifier.size(20.dp),
-                )
+                }
             }
-
-            Spacer(Modifier.height(14.dp))
-
-            Text(
-                text = "Wanna create a new group?",
-                color = NekkoTheme.colors.text.secondary,
-                textAlign = TextAlign.Center,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium
-
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            Text(
-                text = "Tap on the plus button",
-                color = NekkoTheme.colors.text.tertiary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        // ── Bottom navigation buttons ───────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 30.dp)
-                .padding(bottom = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Button(
-                onClick = onBack,
-                modifier = Modifier.size(56.dp),
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = NekkoTheme.colors.fill.tertiary,
-                    contentColor = Color(0xFFFFFFFF)
-                ),
-                contentPadding = PaddingValues(0.dp),
-            ) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_back),
-                    contentDescription = "Back",
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            NekkoButton(
-                text = "Next",
-                onClick = onNavigateToNext,
-                modifier = Modifier.weight(1f),
-            )
         }
     }
-}
-}
 
+    if (showCreateGroupSheet && createdGroup == null) {
+        CreateGroupBottomSheet(
+            onDismiss = { showCreateGroupSheet = false },
+            onSave = { name ->
+                createdGroup = Group(
+                    id = "group_${Random.nextLong()}",
+                    name = name,
+                )
+                showCreateGroupSheet = false
+            },
+        )
+    }
+}
 
 @Composable
 private fun GroupCard(
@@ -263,7 +316,6 @@ private fun GroupCard(
 ) {
     Box(
         modifier = modifier
-            .size(160.dp)
             .clip(SawToothCircleShape())
             .background(NekkoTheme.colors.fill.secondary)
             .clickable(
@@ -274,7 +326,6 @@ private fun GroupCard(
         contentAlignment = Alignment.Center,
     ) {
         if (group.members.isEmpty()) {
-            // Empty group → show a "+" icon
             Icon(
                 imageVector = Icons.Filled.Add,
                 contentDescription = "Add members",
@@ -282,15 +333,10 @@ private fun GroupCard(
                 modifier = Modifier.size(40.dp),
             )
         } else {
-            // Show overlapping member avatar circles
             MemberAvatars(colors = group.members)
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Overlapping member circles
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun MemberAvatars(
@@ -298,13 +344,11 @@ private fun MemberAvatars(
     modifier: Modifier = Modifier,
 ) {
     val avatarSize = 56.dp
-    val overlapOffset = 18.dp  // how much each avatar slides into the previous one
+    val overlapOffset = 18.dp
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Row {
-            colors.forEachIndexed { index, color ->
-                // Use a colored circle with a thin border to mimic the design's avatars.
-                // Each successive avatar is shifted left to create the overlap.
+            colors.take(3).forEachIndexed { index, color ->
                 Box(
                     modifier = Modifier
                         .size(avatarSize)
@@ -315,7 +359,6 @@ private fun MemberAvatars(
                         .clip(CircleShape)
                         .background(NekkoTheme.colors.background.b2),
                 ) {
-                    // Inner colored "drop" avatar
                     Box(
                         modifier = Modifier
                             .size(avatarSize - 4.dp)
@@ -324,7 +367,6 @@ private fun MemberAvatars(
                             .background(color.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        // Teardrop / blob shape approximated with a circle fill
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
@@ -334,13 +376,27 @@ private fun MemberAvatars(
                     }
                 }
             }
+
+            if (colors.size > 3) {
+                Box(
+                    modifier = Modifier
+                        .size(avatarSize)
+                        .offset(x = -(overlapOffset * 3))
+                        .clip(CircleShape)
+                        .background(NekkoTheme.colors.fill.tertiary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "+${colors.size - 3}",
+                        color = NekkoTheme.colors.text.secondary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                    )
+                }
+            }
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Preview
-// ─────────────────────────────────────────────────────────────────────────────
 
 @PreviewLightDark
 @Composable
