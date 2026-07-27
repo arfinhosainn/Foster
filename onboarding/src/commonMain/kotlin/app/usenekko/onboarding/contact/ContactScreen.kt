@@ -90,8 +90,8 @@ fun ContactScreen(
                     ),
                     title = {
                         StepIndicator(
-                            totalSteps = 4,
-                            currentStep = 3,
+                            totalSteps = 8,
+                            currentStep = 1,
                         )
                     },
                     navigationIcon = { },
@@ -150,7 +150,7 @@ fun ContactScreen(
                         lineHeight = 36.sp,
                     )
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(10.dp))
 
                     Text(
                         text = "You can fill out or import from your contacts",

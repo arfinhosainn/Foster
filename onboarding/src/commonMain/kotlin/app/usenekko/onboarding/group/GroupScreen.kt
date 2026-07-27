@@ -118,8 +118,8 @@ fun GroupScreen(
                     ),
                     title = {
                         StepIndicator(
-                            totalSteps = 4,
-                            currentStep = 3,
+                            totalSteps = 8,
+                            currentStep = 2,
                         )
                     },
                     navigationIcon = { },
@@ -175,11 +175,11 @@ fun GroupScreen(
                         color = NekkoTheme.colors.text.primary,
                     )
 
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(10.dp))
 
                     Text(
                         text = "Add user to a group",
-                        fontSize = 18.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.tertiary,
                     )
@@ -189,7 +189,7 @@ fun GroupScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(0.7f),
+                        .weight(0.3f),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -244,7 +244,7 @@ fun GroupScreen(
                                 Spacer(Modifier.height(14.dp))
 
                                 Text(
-                                    text = "Create one group for onboarding",
+                                    text = "Wanna create a new group?",
                                     color = NekkoTheme.colors.text.secondary,
                                     textAlign = TextAlign.Center,
                                     fontSize = 20.sp,

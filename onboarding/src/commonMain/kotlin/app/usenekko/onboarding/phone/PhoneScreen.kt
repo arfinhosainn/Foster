@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.PhoneNumberField
-import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.theme.NekkoTheme
 
 @Composable
@@ -64,12 +63,7 @@ fun PhoneScreen(
                         containerColor = NekkoTheme.colors.background.b0,
                         titleContentColor = MaterialTheme.colorScheme.primary,
                     ),
-                    title = {
-                        StepIndicator(
-                            totalSteps = 4,
-                            currentStep = 0,
-                        )
-                    },
+                    title = { },
                     navigationIcon = { },
                     actions = {
                         Button(

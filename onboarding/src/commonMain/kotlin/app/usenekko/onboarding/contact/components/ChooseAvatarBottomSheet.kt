@@ -78,7 +78,7 @@ fun ChooseAvatarBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = NekkoTheme.colors.background.b0,
+        containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
     ) {

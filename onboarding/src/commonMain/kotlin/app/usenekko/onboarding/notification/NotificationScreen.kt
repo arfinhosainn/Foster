@@ -94,8 +94,8 @@ private fun NotificationScreenContent(
                 ),
                 title = {
                     StepIndicator(
-                        totalSteps = 6,
-                        currentStep = 3,
+                        totalSteps = 8,
+                        currentStep = 7,
                     )
                 },
                 navigationIcon = { },
@@ -152,7 +152,7 @@ private fun NotificationScreenContent(
                     textAlign = TextAlign.Center,
                     color = NekkoTheme.colors.text.primary,
                 )
-                Spacer(Modifier.height(15.dp))
+                Spacer(Modifier.height(10.dp))
                 Text(
                     text = "Keep up with check-ins &\nbirthdays with friends",
                     style = NekkoTheme.typography.heading3Bold,
