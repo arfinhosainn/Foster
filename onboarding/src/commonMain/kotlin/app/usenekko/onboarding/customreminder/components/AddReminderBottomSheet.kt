@@ -139,7 +139,8 @@ fun AddReminderBottomSheet(
                         textStyle = TextStyle(
                             fontSize = 18.sp,
                             color = NekkoTheme.colors.text.primary,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = NekkoTheme.typography.bodyMedium.fontFamily,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
                         modifier = Modifier.fillMaxWidth(),
@@ -170,7 +171,8 @@ fun AddReminderBottomSheet(
                         onValueChange = { onAction(CustomReminderAction.DraftDescriptionChanged(it)) },
                         textStyle = TextStyle(
                             fontSize = 16.sp,
-                            color = NekkoTheme.colors.text.primary
+                            color = NekkoTheme.colors.text.primary,
+                            fontFamily = NekkoTheme.typography.bodyMedium.fontFamily,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
                         modifier = Modifier.fillMaxWidth().height(220.dp),

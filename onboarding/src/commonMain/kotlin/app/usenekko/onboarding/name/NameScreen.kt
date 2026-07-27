@@ -35,9 +35,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
+import app.usenekko.onboarding.domain.OnboardingStep
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
@@ -65,7 +65,8 @@ fun NameScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var fullName by remember { mutableStateOf("") }
+    val draftStore = LocalOnboardingDraftStore.current
+    val draft by draftStore.draft.collectAsStateWithLifecycle()
 
     Column(
         modifier = modifier
@@ -132,7 +133,10 @@ fun NameScreen(
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = "Next",
-                        onClick = onNavigateToNext,
+                        onClick = {
+                            draftStore.update { it.copy(currentStep = OnboardingStep.Contact) }
+                            onNavigateToNext()
+                        },
                         modifier = Modifier.weight(0.8f),
                     )
                 }
@@ -165,10 +169,20 @@ fun NameScreen(
                 Spacer(Modifier.height(25.dp))
 
                 NameField(
-                    value = fullName,
-                    onValueChange = { fullName = it },
+                    value = draft.name,
+                    onValueChange = { value ->
+                        draftStore.update {
+                            it.copy(
+                                name = value,
+                                currentStep = OnboardingStep.Name,
+                            )
+                        }
+                    },
                     onDone = {
-                        if (fullName.isNotBlank()) onNavigateToNext()
+                        if (draft.name.isNotBlank()) {
+                            draftStore.update { it.copy(currentStep = OnboardingStep.Contact) }
+                            onNavigateToNext()
+                        }
                     },
                 )
 
@@ -205,6 +219,7 @@ private fun NameField(
         textStyle = TextStyle(
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
+            fontFamily = NekkoTheme.typography.heading3.fontFamily,
             color = NekkoTheme.colors.text.primary,
         ),
         keyboardOptions = KeyboardOptions(

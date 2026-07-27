@@ -98,6 +98,7 @@ fun AddNoteBottomSheet(
                             fontSize = 20.sp,
                             color = NekkoTheme.colors.text.tertiary,
                             fontWeight = FontWeight.Medium,
+                            fontFamily = NekkoTheme.typography.heading3.fontFamily,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
                         modifier = Modifier.fillMaxWidth(),
@@ -129,6 +130,7 @@ fun AddNoteBottomSheet(
                         textStyle = TextStyle(
                             fontSize = 17.sp,
                             color = NekkoTheme.colors.text.primary,
+                            fontFamily = NekkoTheme.typography.bodyMedium.fontFamily,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
                         modifier = Modifier

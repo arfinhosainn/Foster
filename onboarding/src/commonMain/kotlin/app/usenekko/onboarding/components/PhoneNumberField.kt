@@ -70,6 +70,7 @@ fun PhoneNumberField(
                         textStyle = TextStyle(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
+                            fontFamily = NekkoTheme.typography.bodyMedium.fontFamily,
                             color = NekkoTheme.colors.text.primary,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),

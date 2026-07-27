@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,7 +54,10 @@ import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.designsystem.shapes.SawToothCircleShape
 import app.usenekko.onboarding.components.StepIndicator
+import app.usenekko.onboarding.domain.GroupDraft
+import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.onboarding.group.components.CreateGroupBottomSheet
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.liquid
 import io.github.fletchmckee.liquid.liquefiable
@@ -79,6 +83,8 @@ fun GroupScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val draftStore = LocalOnboardingDraftStore.current
+    val draft by draftStore.draft.collectAsStateWithLifecycle()
     val starterGroups = remember {
         listOf(
             Group(
@@ -94,7 +100,9 @@ fun GroupScreen(
         )
     }
 
-    var createdGroup by remember { mutableStateOf<Group?>(null) }
+    val createdGroup = draft.groups
+        .firstOrNull { it.id !in setOf("family", "friends") }
+        ?.toUiGroup()
     var showCreateGroupSheet by remember { mutableStateOf(false) }
 
     val liquidState = rememberLiquidState()
@@ -149,7 +157,10 @@ fun GroupScreen(
 
                     NekkoButton(
                         text = "Next",
-                        onClick = onNavigateToNext,
+                        onClick = {
+                            draftStore.update { it.copy(currentStep = OnboardingStep.DayReminder) }
+                            onNavigateToNext()
+                        },
                         modifier = Modifier.weight(0.8f),
                     )
                 }
@@ -262,9 +273,10 @@ fun GroupScreen(
                                 )
                             }
                         } else {
+                            val group = createdGroup
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 GroupCard(
-                                    group = createdGroup!!,
+                                    group = group,
                                     onClick = { },
                                     modifier = Modifier.size(160.dp),
                                 )
@@ -272,7 +284,7 @@ fun GroupScreen(
                                 Spacer(Modifier.height(12.dp))
 
                                 Text(
-                                    text = createdGroup!!.name,
+                                    text = group.name,
                                     style = NekkoTheme.typography.heading4Semibold,
                                     color = NekkoTheme.colors.text.primary,
                                     textAlign = TextAlign.Center,
@@ -281,7 +293,7 @@ fun GroupScreen(
                                 Spacer(Modifier.height(2.dp))
 
                                 Text(
-                                    text = "${createdGroup!!.members.size} people",
+                                    text = "${group.members.size} people",
                                     style = NekkoTheme.typography.footnote,
                                     color = NekkoTheme.colors.text.tertiary,
                                     textAlign = TextAlign.Center,
@@ -298,15 +310,26 @@ fun GroupScreen(
         CreateGroupBottomSheet(
             onDismiss = { showCreateGroupSheet = false },
             onSave = { name ->
-                createdGroup = Group(
+                val group = GroupDraft(
                     id = "group_${Random.nextLong()}",
                     name = name,
                 )
+                draftStore.update {
+                    it.copy(
+                        groups = listOf(group),
+                        currentStep = OnboardingStep.Group,
+                    )
+                }
                 showCreateGroupSheet = false
             },
         )
     }
 }
+
+private fun GroupDraft.toUiGroup(): Group = Group(
+    id = id,
+    name = name,
+)
 
 @Composable
 private fun GroupCard(

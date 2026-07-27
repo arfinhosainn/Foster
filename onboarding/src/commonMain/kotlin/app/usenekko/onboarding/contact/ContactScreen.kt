@@ -28,10 +28,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -50,6 +52,8 @@ import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.contact.components.ChooseAvatarBottomSheet
 import app.usenekko.onboarding.contact.components.ProfilePhotoPicker
 import app.usenekko.onboarding.contact.components.ProfilePhotoPreview
+import app.usenekko.onboarding.domain.OnboardingStep
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.theme.NekkoTheme
 import androidx.compose.ui.graphics.ImageBitmap
 import nekko.onboarding.generated.resources.Res
@@ -65,13 +69,18 @@ fun ContactScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val draftStore = LocalOnboardingDraftStore.current
+    val draft by draftStore.draft.collectAsStateWithLifecycle()
     var photoBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-    var contactName by remember { mutableStateOf("") }
     var isPreviewVisible by remember { mutableStateOf(false) }
-    var selectedAvatarIndex by remember { mutableStateOf<Int?>(null) }
+    var selectedAvatarIndex by remember { mutableStateOf(draft.selectedAvatarId?.toIntOrNull()) }
     var showAvatarPicker by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
+    LaunchedEffect(draft.selectedAvatarId) {
+        selectedAvatarIndex = draft.selectedAvatarId?.toIntOrNull()
+    }
 
     Column(
         modifier = modifier
@@ -122,7 +131,10 @@ fun ContactScreen(
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = "Next",
-                        onClick = onNavigateToNext,
+                        onClick = {
+                            draftStore.update { it.copy(currentStep = OnboardingStep.Group) }
+                            onNavigateToNext()
+                        },
                         modifier = Modifier.weight(0.8f),
                     )
                 }
@@ -179,7 +191,7 @@ fun ContactScreen(
 
                 NekkoStepField(isConfirmed = false) {
                     Box(modifier = Modifier.weight(1f)) {
-                        if (contactName.isEmpty()) {
+                        if (draft.contactName.isEmpty()) {
                             Text(
                                 text = "Contact name",
                                 fontSize = 17.sp,
@@ -188,13 +200,21 @@ fun ContactScreen(
                             )
                         }
                         BasicTextField(
-                            value = contactName,
-                            onValueChange = { contactName = it },
+                            value = draft.contactName,
+                            onValueChange = { value ->
+                                draftStore.update {
+                                    it.copy(
+                                        contactName = value,
+                                        currentStep = OnboardingStep.Contact,
+                                    )
+                                }
+                            },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             textStyle = TextStyle(
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
+                                fontFamily = NekkoTheme.typography.bodyMedium.fontFamily,
                                 color = NekkoTheme.colors.text.primary,
                             ),
                             cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
@@ -203,7 +223,12 @@ fun ContactScreen(
                                 imeAction = ImeAction.Done,
                             ),
                             keyboardActions = KeyboardActions(
-                                onDone = { if (contactName.isNotBlank()) onNavigateToNext() },
+                                onDone = {
+                                    if (draft.contactName.isNotBlank()) {
+                                        draftStore.update { it.copy(currentStep = OnboardingStep.Group) }
+                                        onNavigateToNext()
+                                    }
+                                },
                             ),
                         )
                     }
@@ -247,6 +272,13 @@ fun ContactScreen(
                 selectedAvatarIndex = index
                 photoBitmap = null
                 showAvatarPicker = false
+                draftStore.update {
+                    it.copy(
+                        selectedAvatarId = index.toString(),
+                        profilePhotoUri = null,
+                        currentStep = OnboardingStep.Contact,
+                    )
+                }
             },
             onDismiss = { showAvatarPicker = false },
         )

@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -55,6 +56,9 @@ import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.addnote.components.AddNoteBottomSheet
 import app.usenekko.onboarding.addnote.components.NoteCard
 import app.usenekko.onboarding.components.StepIndicator
+import app.usenekko.onboarding.domain.NoteDraft
+import app.usenekko.onboarding.domain.OnboardingStep
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.theme.NekkoTheme
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -73,37 +77,46 @@ fun AddNoteScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var state by remember { mutableStateOf(AddNoteState()) }
+    val draftStore = LocalOnboardingDraftStore.current
+    val draft by draftStore.draft.collectAsStateWithLifecycle()
+    var sheetState by remember {
+        mutableStateOf(AddNoteState(notes = draft.notes.map { it.toNoteItem() }))
+    }
+    val state = sheetState.copy(notes = draft.notes.map { it.toNoteItem() })
 
     AddNoteScreenContent(
         state = state,
         onAction = { action ->
             when (action) {
                 is AddNoteAction.AddClicked -> {
-                    state = state.copy(isBottomSheetVisible = true)
+                    sheetState = sheetState.copy(isBottomSheetVisible = true)
                 }
 
                 is AddNoteAction.BottomSheetDismissed -> {
-                    state = state.copy(isBottomSheetVisible = false)
+                    sheetState = sheetState.copy(isBottomSheetVisible = false)
                 }
 
                 is AddNoteAction.DraftTitleChanged -> {
-                    state = state.copy(draftTitle = action.title)
+                    sheetState = sheetState.copy(draftTitle = action.title)
                 }
 
                 is AddNoteAction.DraftDescriptionChanged -> {
-                    state = state.copy(draftDescription = action.description)
+                    sheetState = sheetState.copy(draftDescription = action.description)
                 }
 
                 is AddNoteAction.SaveClicked -> {
-                    val newNote = NoteItem(
-                        id = "note_${state.notes.size}",
+                    val newNote = NoteDraft(
+                        id = "note_${draft.notes.size}",
                         title = state.draftTitle.ifEmpty { "Untitled" },
-                        description = state.draftDescription,
-                        date = currentFormattedDate(),
+                        body = state.draftDescription,
                     )
-                    state = state.copy(
-                        notes = state.notes + newNote,
+                    draftStore.update {
+                        it.copy(
+                            notes = it.notes + newNote,
+                            currentStep = OnboardingStep.AddNote,
+                        )
+                    }
+                    sheetState = sheetState.copy(
                         isBottomSheetVisible = false,
                         draftTitle = "",
                         draftDescription = "",
@@ -111,18 +124,31 @@ fun AddNoteScreen(
                 }
 
                 is AddNoteAction.DeleteNote -> {
-                    state = state.copy(
-                        notes = state.notes.filter { it.id != action.id },
-                    )
+                    draftStore.update {
+                        it.copy(notes = it.notes.filter { note -> note.id != action.id })
+                    }
                 }
             }
         },
-        onNavigateToNext = onNavigateToNext,
+        onNavigateToNext = {
+            draftStore.update { it.copy(currentStep = OnboardingStep.Notification) }
+            onNavigateToNext()
+        },
         onBack = onBack,
-        onSkip = onSkip,
+        onSkip = {
+            draftStore.update { it.copy(currentStep = OnboardingStep.Notification) }
+            onSkip()
+        },
         modifier = modifier,
     )
 }
+
+private fun NoteDraft.toNoteItem(): NoteItem = NoteItem(
+    id = id,
+    title = title,
+    description = body,
+    date = currentFormattedDate(),
+)
 
 @Composable
 private fun AddNoteScreenContent(

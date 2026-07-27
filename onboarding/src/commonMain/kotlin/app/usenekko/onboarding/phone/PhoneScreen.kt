@@ -22,10 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.PhoneNumberField
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.theme.NekkoTheme
 
 @Composable
@@ -45,9 +46,23 @@ fun PhoneScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var phone by remember { mutableStateOf("") }
+    val draftStore = LocalOnboardingDraftStore.current
+    val viewModel = viewModel { PhoneViewModel(draftStore) }
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                PhoneEvent.NavigateBack -> onBack()
+                PhoneEvent.NavigateSkip -> onSkip()
+                is PhoneEvent.NavigateToCodeVerification -> {
+                    onNavigateToCodeVerification(event.phoneNumber)
+                }
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -67,7 +82,7 @@ fun PhoneScreen(
                     navigationIcon = { },
                     actions = {
                         Button(
-                            onClick = onSkip,
+                            onClick = { viewModel.onAction(PhoneAction.SkipClicked) },
                             colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
                         ) {
                             Text(
@@ -89,7 +104,7 @@ fun PhoneScreen(
                 ) {
                     NekkoButton(
                         text = "Back",
-                        onClick = onBack,
+                        onClick = { viewModel.onAction(PhoneAction.BackClicked) },
                         modifier = Modifier.weight(0.2f),
                         leadingIcon = {
                             Icon(
@@ -102,7 +117,7 @@ fun PhoneScreen(
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = "Next",
-                        onClick = { onNavigateToCodeVerification("+60$phone") },
+                        onClick = { viewModel.onAction(PhoneAction.ContinueClicked) },
                         modifier = Modifier.weight(0.8f),
                         textStyle = TextStyle(
                             fontSize = 20.sp,
@@ -123,9 +138,9 @@ fun PhoneScreen(
                 Spacer(Modifier.height(16.dp))
 
                 PhoneNumberField(
-                    phoneNumber = phone,
-                    onPhoneNumberChange = { phone = it },
-                    onDone = { fullNumber -> onNavigateToCodeVerification(fullNumber) },
+                    phoneNumber = state.phoneNumber,
+                    onPhoneNumberChange = { viewModel.onAction(PhoneAction.PhoneNumberChanged(it)) },
+                    onDone = { viewModel.onAction(PhoneAction.ContinueClicked) },
                 )
 
                 Spacer(Modifier.weight(1f))
