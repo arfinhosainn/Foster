@@ -44,6 +44,10 @@ jetbrains-compose-material-icons-extended = { module = "org.jetbrains.compose.ma
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
+datastore-core = { module = "androidx.datastore:datastore-core", version = "1.1.4" }
+datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version = "1.1.4" }
+datastore-preferences = { module = "androidx.datastore:datastore-preferences", version = "1.1.4" }
+
 #Liquid-Glass
 liquid-glass = { module = "io.github.fletchmckee.liquid:liquid", version.ref = "liquid-glass"}
 

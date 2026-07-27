@@ -111,6 +111,7 @@ fun CreateGroupBottomSheet(
                     color = NekkoTheme.colors.text.primary,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Normal,
+                    fontFamily = NekkoTheme.typography.heading3.fontFamily,
                     textAlign = TextAlign.Center,
                 ),
                 singleLine = true,

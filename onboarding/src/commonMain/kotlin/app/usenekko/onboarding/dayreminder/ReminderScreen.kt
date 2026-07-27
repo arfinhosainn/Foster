@@ -24,9 +24,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -38,6 +36,9 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.dayreminder.components.ReminderOptionCard
+import app.usenekko.onboarding.domain.OnboardingStep
+import app.usenekko.onboarding.domain.ReminderFrequency
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
@@ -52,21 +53,53 @@ fun ReminderScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var state by remember { mutableStateOf(ReminderState()) }
+    val draftStore = LocalOnboardingDraftStore.current
+    val draft by draftStore.draft.collectAsStateWithLifecycle()
+    val state = ReminderState(
+        selectedOption = draft.reminderFrequency.toReminderOption(),
+    )
 
     ReminderScreenContent(
         state = state,
         onAction = { action ->
             when (action) {
                 is ReminderAction.SelectOption -> {
-                    state = state.copy(selectedOption = action.option)
+                    draftStore.update {
+                        it.copy(
+                            reminderFrequency = action.option.toReminderFrequency(),
+                            currentStep = OnboardingStep.DayReminder,
+                        )
+                    }
                 }
             }
         },
-        onNavigateToNext = onNavigateToNext,
+        onNavigateToNext = {
+            draftStore.update { it.copy(currentStep = OnboardingStep.TimeReminder) }
+            onNavigateToNext()
+        },
         onBack = onBack,
         modifier = modifier
     )
+}
+
+private fun ReminderFrequency?.toReminderOption(): String = when (this) {
+    ReminderFrequency.Daily -> ReminderOptions.DAILY
+    ReminderFrequency.Weekly -> ReminderOptions.WEEKLY
+    ReminderFrequency.BiWeekly -> ReminderOptions.BI_WEEKLY
+    ReminderFrequency.Monthly -> ReminderOptions.MONTHLY
+    ReminderFrequency.SemiAnnually -> ReminderOptions.SEMI_ANNUALLY
+    ReminderFrequency.Annually -> ReminderOptions.ANNUALLY
+    ReminderFrequency.None, null -> ReminderOptions.DAILY
+}
+
+private fun String.toReminderFrequency(): ReminderFrequency = when (this) {
+    ReminderOptions.DAILY -> ReminderFrequency.Daily
+    ReminderOptions.WEEKLY -> ReminderFrequency.Weekly
+    ReminderOptions.BI_WEEKLY -> ReminderFrequency.BiWeekly
+    ReminderOptions.MONTHLY -> ReminderFrequency.Monthly
+    ReminderOptions.SEMI_ANNUALLY -> ReminderFrequency.SemiAnnually
+    ReminderOptions.ANNUALLY -> ReminderFrequency.Annually
+    else -> ReminderFrequency.None
 }
 
 /**

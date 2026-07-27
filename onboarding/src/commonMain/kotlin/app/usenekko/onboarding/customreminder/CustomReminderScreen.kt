@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -24,6 +25,10 @@ import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.customreminder.components.AddReminderBottomSheet
 import app.usenekko.onboarding.customreminder.components.CustomReminderCard
+import app.usenekko.onboarding.domain.CustomReminderDraft
+import app.usenekko.onboarding.domain.OnboardingStep
+import app.usenekko.onboarding.domain.ReminderFrequency
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.liquefiable
 import io.github.fletchmckee.liquid.rememberLiquidState
@@ -39,46 +44,57 @@ fun CustomReminderScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var state by remember { mutableStateOf(CustomReminderState()) }
+    val draftStore = LocalOnboardingDraftStore.current
+    val draft by draftStore.draft.collectAsStateWithLifecycle()
+    var sheetState by remember {
+        mutableStateOf(
+            CustomReminderState(reminders = draft.customReminders.map { it.toReminderItem() })
+        )
+    }
+    val state = sheetState.copy(reminders = draft.customReminders.map { it.toReminderItem() })
 
     CustomReminderScreenContent(
         state = state,
         onAction = { action ->
             when (action) {
                 is CustomReminderAction.AddClicked -> {
-                    state = state.copy(isBottomSheetVisible = true)
+                    sheetState = sheetState.copy(isBottomSheetVisible = true)
                 }
 
                 is CustomReminderAction.BottomSheetDismissed -> {
-                    state = state.copy(isBottomSheetVisible = false)
+                    sheetState = sheetState.copy(isBottomSheetVisible = false)
                 }
 
                 is CustomReminderAction.DraftTitleChanged -> {
-                    state = state.copy(draftTitle = action.title)
+                    sheetState = sheetState.copy(draftTitle = action.title)
                 }
 
                 is CustomReminderAction.DraftDescriptionChanged -> {
-                    state = state.copy(draftDescription = action.description)
+                    sheetState = sheetState.copy(draftDescription = action.description)
                 }
 
                 is CustomReminderAction.DraftRecurrenceChanged -> {
-                    state = state.copy(draftRecurrence = action.recurrence)
+                    sheetState = sheetState.copy(draftRecurrence = action.recurrence)
                 }
 
                 is CustomReminderAction.DraftDateChanged -> {
-                    state = state.copy(draftDate = action.date)
+                    sheetState = sheetState.copy(draftDate = action.date)
                 }
 
                 is CustomReminderAction.SaveReminderClicked -> {
-                    val newItem = ReminderItem(
-                        id = "rem_${state.reminders.size}",
+                    val newItem = CustomReminderDraft(
+                        id = "rem_${draft.customReminders.size}",
                         title = state.draftTitle.ifEmpty { "New Reminder" },
                         description = state.draftDescription,
-                        recurrence = state.draftRecurrence,
-                        date = state.draftDate
+                        recurrence = state.draftRecurrence.toReminderFrequency(),
                     )
-                    state = state.copy(
-                        reminders = state.reminders + newItem,
+                    draftStore.update {
+                        it.copy(
+                            customReminders = it.customReminders + newItem,
+                            currentStep = OnboardingStep.CustomReminder,
+                        )
+                    }
+                    sheetState = sheetState.copy(
                         isBottomSheetVisible = false,
                         draftTitle = "",
                         draftDescription = "",
@@ -88,11 +104,45 @@ fun CustomReminderScreen(
                 }
             }
         },
-        onNavigateToNext = onNavigateToNext,
+        onNavigateToNext = {
+            draftStore.update { it.copy(currentStep = OnboardingStep.AddNote) }
+            onNavigateToNext()
+        },
         onBack = onBack,
-        onSkip = onSkip,
+        onSkip = {
+            draftStore.update { it.copy(currentStep = OnboardingStep.AddNote) }
+            onSkip()
+        },
         modifier = modifier
     )
+}
+
+private fun CustomReminderDraft.toReminderItem(): ReminderItem = ReminderItem(
+    id = id,
+    title = title,
+    description = description,
+    recurrence = recurrence.toUiLabel(),
+    date = dateEpochMillis?.toString() ?: "Choose Date",
+)
+
+private fun ReminderFrequency.toUiLabel(): String = when (this) {
+    ReminderFrequency.Daily -> "Daily"
+    ReminderFrequency.Weekly -> "Weekly"
+    ReminderFrequency.BiWeekly -> "Bi-weekly"
+    ReminderFrequency.Monthly -> "Monthly"
+    ReminderFrequency.SemiAnnually -> "Semi-annually"
+    ReminderFrequency.Annually -> "Yearly"
+    ReminderFrequency.None -> "None"
+}
+
+private fun String.toReminderFrequency(): ReminderFrequency = when (this) {
+    "Daily" -> ReminderFrequency.Daily
+    "Weekly" -> ReminderFrequency.Weekly
+    "Bi-weekly" -> ReminderFrequency.BiWeekly
+    "Monthly" -> ReminderFrequency.Monthly
+    "Semi-annually" -> ReminderFrequency.SemiAnnually
+    "Yearly", "Annually" -> ReminderFrequency.Annually
+    else -> ReminderFrequency.None
 }
 
 @Composable

@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -36,9 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
+import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.onboarding.permissions.Permission
 import app.usenekko.onboarding.permissions.PermissionStatus
 import app.usenekko.onboarding.permissions.rememberPermissionController
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.checkin_img
@@ -52,7 +55,11 @@ fun NotificationScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var state by remember { mutableStateOf(NotificationState()) }
+    val draftStore = LocalOnboardingDraftStore.current
+    val draft by draftStore.draft.collectAsStateWithLifecycle()
+    var state by remember {
+        mutableStateOf(NotificationState(isNotificationEnabled = draft.notificationPermissionGranted))
+    }
     val permissionController = rememberPermissionController()
 
     NotificationScreenContent(
@@ -63,14 +70,32 @@ fun NotificationScreen(
                     permissionController.requestPermission(Permission.Notification) { status ->
                         val granted = status == PermissionStatus.Granted
                         state = state.copy(isNotificationEnabled = granted)
+                        draftStore.update {
+                            it.copy(
+                                notificationPermissionAsked = true,
+                                notificationPermissionGranted = granted,
+                                currentStep = OnboardingStep.Complete,
+                            )
+                        }
                         onNavigateToNext()
                     }
                 }
             }
         },
-        onNavigateToNext = onNavigateToNext,
+        onNavigateToNext = {
+            draftStore.update { it.copy(currentStep = OnboardingStep.Complete) }
+            onNavigateToNext()
+        },
         onBack = onBack,
-        onSkip = onSkip,
+        onSkip = {
+            draftStore.update {
+                it.copy(
+                    notificationPermissionAsked = true,
+                    currentStep = OnboardingStep.Complete,
+                )
+            }
+            onSkip()
+        },
         modifier = modifier,
     )
 }
