@@ -30,7 +30,7 @@ fun CustomReminderCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(NekkoTheme.colors.fill.secondary)
+            .background(NekkoTheme.colors.background.b1)
             .padding(20.dp)
     ) {
         Row(
@@ -54,14 +54,15 @@ fun CustomReminderCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Recurrence",
-                        fontSize = 20.sp,
+                        text = "Recurrence: ",
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.tertiary
                     )
                     Text(
                         text = reminder.recurrence,
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
                         color = Color(0xFF10B981) // Green color based on design
                     )
                 }
@@ -75,7 +76,7 @@ fun CustomReminderCard(
             ) {
                 Text(
                     text = reminder.date,
-                    fontSize = 20.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.primary
                 )

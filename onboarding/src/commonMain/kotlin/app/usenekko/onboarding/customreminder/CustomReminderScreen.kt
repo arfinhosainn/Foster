@@ -130,8 +130,8 @@ private fun CustomReminderScreenContent(
                     ),
                     title = {
                         StepIndicator(
-                            totalSteps = 5,
-                            currentStep = 3,
+                            totalSteps = 8,
+                            currentStep = 5,
                         )
                     },
                     navigationIcon = { },
@@ -198,7 +198,7 @@ private fun CustomReminderScreenContent(
                         color = NekkoTheme.colors.text.primary,
                     )
 
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(10.dp))
 
                     Text(
                         text = "Like birthdays, anniversaries, etc",
@@ -272,6 +272,7 @@ private fun CustomReminderScreenContent(
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
                             NekkoActionButton(
+                                leadingIcon = vectorResource(Res.drawable.ic_add),
                                 onClick = { onAction(CustomReminderAction.AddClicked) })
                             Spacer(modifier = Modifier.height(24.dp))
                         }

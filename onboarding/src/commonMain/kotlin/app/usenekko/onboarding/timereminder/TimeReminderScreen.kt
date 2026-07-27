@@ -102,8 +102,8 @@ private fun TimeReminderScreenContent(
                 ),
                 title = {
                     StepIndicator(
-                        totalSteps = 5,
-                        currentStep = 2,
+                        totalSteps = 8,
+                        currentStep = 4,
                     )
                 },
                 actions = {
@@ -171,11 +171,12 @@ private fun TimeReminderScreenContent(
                     color = NekkoTheme.colors.text.primary,
                 )
 
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(10.dp))
 
                 Text(
-                    text = "How often do you want to be\nreminded?",
-                    style = NekkoTheme.typography.heading4,
+                    text = "How often do you want to be reminded?",
+                    style = NekkoTheme.typography.heading3,
+                    fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.secondary,
                     textAlign = TextAlign.Center,
                 )

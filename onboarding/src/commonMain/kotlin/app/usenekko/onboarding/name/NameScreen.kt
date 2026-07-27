@@ -88,8 +88,8 @@ fun NameScreen(
                     ),
                     title = {
                         StepIndicator(
-                            totalSteps = 5,
-                            currentStep = 1,
+                            totalSteps = 8,
+                            currentStep = 0,
                         )
                     },
                     navigationIcon = {

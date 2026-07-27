@@ -39,6 +39,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nekko.onboarding.generated.resources.Res
@@ -79,6 +80,8 @@ fun ProfilePhotoPicker(
             Modifier
                 .fillMaxSize()
                 .clip(CircleShape)
+                .border(4.dp, NekkoTheme.colors.stroke.secondary, CircleShape)
+
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onTap = { onEditClick() },
@@ -118,7 +121,7 @@ fun ProfilePhotoPicker(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFE5E5E5))
+                        .background(NekkoTheme.colors.fill.secondary)
                 )
             }
         }
@@ -129,14 +132,14 @@ fun ProfilePhotoPicker(
                 .offset(y = 16.dp)
                 .size(32.dp)
                 .clip(CircleShape)
-                .border(4.dp, Color.White, CircleShape)
-                .background(Color.White),
+                .border(2.dp, NekkoTheme.colors.stroke.secondary, CircleShape)
+                .background(NekkoTheme.colors.background.b2),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_pencil),
                 contentDescription = "Edit Profile Picture",
-                tint = Color.Black,
+                tint = NekkoTheme.colors.text.primary,
                 modifier = Modifier.size(16.dp),
             )
         }
@@ -165,17 +168,21 @@ private fun ProfilePhotoPickerPreview() {
 @Preview
 @Composable
 private fun ProfilePhotoPreviewComponentPreview() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Background content to show transparency
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-        )
-        ProfilePhotoPreview(
-            visible = true,
-            photoBitmap = null
-        )
+
+    NekkoTheme {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Background content to show transparency
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+            )
+            ProfilePhotoPreview(
+                visible = true,
+                photoBitmap = null
+            )
+        }
+
     }
 }
 

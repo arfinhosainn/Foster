@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.dayreminder.components.ReminderOptionCard
@@ -91,7 +92,7 @@ private fun ReminderScreenContent(
                 ),
                 title = {
                     StepIndicator(
-                        totalSteps = 5,
+                        totalSteps = 8,
                         currentStep = 3,
                     )
                 },
@@ -142,17 +143,18 @@ private fun ReminderScreenContent(
 
                 Text(
                     text = "Every day is precious",
-                    style = NekkoTheme.typography.heading1Bold,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                     color = NekkoTheme.colors.text.primary,
+                    lineHeight = 36.sp,
                 )
 
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(10.dp))
 
                 Text(
                     text = "How often do you want to be\nreminded?",
-                    style = NekkoTheme.typography.heading3,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.secondary,
                     textAlign = TextAlign.Center,
@@ -166,7 +168,7 @@ private fun ReminderScreenContent(
                     .fillMaxWidth()
                     .weight(1f),
                 contentPadding = PaddingValues(horizontal = 30.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(15.dp)
             ) {
                 items(ReminderOptions.all) { option ->
                     ReminderOptionCard(

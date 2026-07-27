@@ -33,7 +33,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.PhoneNumberField
-import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.components.VerificationCodeField
 import app.usenekko.theme.NekkoTheme
 
@@ -64,12 +63,7 @@ fun CodeVerificationScreen(
                         containerColor = NekkoTheme.colors.background.b0,
                         titleContentColor = MaterialTheme.colorScheme.primary,
                     ),
-                    title = {
-                        StepIndicator(
-                            totalSteps = 4,
-                            currentStep = 1,
-                        )
-                    },
+                    title = { },
                     navigationIcon = { },
                     actions = {
                         Button(

@@ -46,8 +46,8 @@ fun AddNoteBottomSheet(
     ModalBottomSheet(
         onDismissRequest = { onAction(AddNoteAction.BottomSheetDismissed) },
         sheetState = sheetState,
-        containerColor = NekkoTheme.colors.background.b0,
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = NekkoTheme.colors.background.b1,
+        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
         modifier = modifier,
     ) {
@@ -86,8 +86,8 @@ fun AddNoteBottomSheet(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(NekkoTheme.colors.background.b1)
+                    .clip(RoundedCornerShape(40.dp))
+                    .background(NekkoTheme.colors.fill.tertiary)
                     .padding(20.dp),
             ) {
                 Column {
@@ -95,8 +95,8 @@ fun AddNoteBottomSheet(
                         value = state.draftTitle,
                         onValueChange = { onAction(AddNoteAction.DraftTitleChanged(it)) },
                         textStyle = TextStyle(
-                            fontSize = 18.sp,
-                            color = NekkoTheme.colors.text.primary,
+                            fontSize = 20.sp,
+                            color = NekkoTheme.colors.text.tertiary,
                             fontWeight = FontWeight.Medium,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
@@ -105,7 +105,7 @@ fun AddNoteBottomSheet(
                             if (state.draftTitle.isEmpty()) {
                                 Text(
                                     text = "Title",
-                                    fontSize = 18.sp,
+                                    fontSize = 20.sp,
                                     color = NekkoTheme.colors.text.tertiary,
                                     fontWeight = FontWeight.Medium,
                                 )
@@ -127,19 +127,19 @@ fun AddNoteBottomSheet(
                         value = state.draftDescription,
                         onValueChange = { onAction(AddNoteAction.DraftDescriptionChanged(it)) },
                         textStyle = TextStyle(
-                            fontSize = 16.sp,
+                            fontSize = 17.sp,
                             color = NekkoTheme.colors.text.primary,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(250.dp),
+                            .height(220.dp),
                         decorationBox = { innerTextField ->
                             if (state.draftDescription.isEmpty()) {
                                 Text(
                                     text = "Description",
-                                    fontSize = 16.sp,
-                                    color = NekkoTheme.colors.text.tertiary,
+                                    fontSize = 17.sp,
+                                    color = NekkoTheme.colors.text.quaternary,
                                 )
                             }
                             innerTextField()
@@ -148,7 +148,7 @@ fun AddNoteBottomSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             NekkoButton(
                 text = "Save",
