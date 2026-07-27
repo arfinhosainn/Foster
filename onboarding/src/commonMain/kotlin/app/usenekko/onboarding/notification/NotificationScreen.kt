@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
+import app.usenekko.onboarding.permissions.Permission
+import app.usenekko.onboarding.permissions.PermissionStatus
+import app.usenekko.onboarding.permissions.rememberPermissionController
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.checkin_img
@@ -50,13 +53,18 @@ fun NotificationScreen(
     modifier: Modifier = Modifier,
 ) {
     var state by remember { mutableStateOf(NotificationState()) }
+    val permissionController = rememberPermissionController()
 
     NotificationScreenContent(
         state = state,
         onAction = { action ->
             when (action) {
                 is NotificationAction.TurnOnClicked -> {
-                    state = state.copy(isNotificationEnabled = true)
+                    permissionController.requestPermission(Permission.Notification) { status ->
+                        val granted = status == PermissionStatus.Granted
+                        state = state.copy(isNotificationEnabled = granted)
+                        onNavigateToNext()
+                    }
                 }
             }
         },
@@ -126,7 +134,7 @@ private fun NotificationScreenContent(
                 Spacer(Modifier.width(12.dp))
                 NekkoButton(
                     text = "Turn on Notification",
-                    onClick = onNavigateToNext,
+                    onClick = { onAction(NotificationAction.TurnOnClicked) },
                     modifier = Modifier.weight(1f),
                 )
             }
