@@ -21,11 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -35,13 +32,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
-import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.onboarding.permissions.Permission
 import app.usenekko.onboarding.permissions.PermissionStatus
 import app.usenekko.onboarding.permissions.rememberPermissionController
-import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
+import app.usenekko.onboarding.presentation.rememberNotificationViewModel
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.checkin_img
@@ -50,52 +47,43 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun NotificationScreen(
-    onNavigateToNext: () -> Unit,
+    onNavigateToMainApp: () -> Unit,
     onBack: () -> Unit,
-    onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val draftStore = LocalOnboardingDraftStore.current
-    val draft by draftStore.draft.collectAsStateWithLifecycle()
-    var state by remember {
-        mutableStateOf(NotificationState(isNotificationEnabled = draft.notificationPermissionGranted))
-    }
+    val viewModel = rememberNotificationViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val permissionController = rememberPermissionController()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                NotificationEvent.NavigateToMainApp -> onNavigateToMainApp()
+                is NotificationEvent.ShowError -> { /* snackbar or error UI */ }
+            }
+        }
+    }
 
     NotificationScreenContent(
         state = state,
         onAction = { action ->
             when (action) {
-                is NotificationAction.TurnOnClicked -> {
+                NotificationAction.TurnOnClicked -> {
                     permissionController.requestPermission(Permission.Notification) { status ->
-                        val granted = status == PermissionStatus.Granted
-                        state = state.copy(isNotificationEnabled = granted)
-                        draftStore.update {
-                            it.copy(
-                                notificationPermissionAsked = true,
-                                notificationPermissionGranted = granted,
-                                currentStep = OnboardingStep.Complete,
+                        viewModel.onAction(
+                            NotificationAction.PermissionResult(
+                                granted = status == PermissionStatus.Granted,
                             )
-                        }
-                        onNavigateToNext()
+                        )
                     }
+                }
+                is NotificationAction.PermissionResult -> viewModel.onAction(action)
+                NotificationAction.SkipClicked -> {
+                    viewModel.onAction(NotificationAction.SkipClicked)
                 }
             }
         },
-        onNavigateToNext = {
-            draftStore.update { it.copy(currentStep = OnboardingStep.Complete) }
-            onNavigateToNext()
-        },
         onBack = onBack,
-        onSkip = {
-            draftStore.update {
-                it.copy(
-                    notificationPermissionAsked = true,
-                    currentStep = OnboardingStep.Complete,
-                )
-            }
-            onSkip()
-        },
         modifier = modifier,
     )
 }
@@ -104,9 +92,7 @@ fun NotificationScreen(
 private fun NotificationScreenContent(
     state: NotificationState,
     onAction: (NotificationAction) -> Unit,
-    onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
-    onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val painter = if (isSystemInDarkTheme()) {
@@ -133,16 +119,20 @@ private fun NotificationScreenContent(
                 },
                 navigationIcon = { },
                 actions = {
-                    Button(
-                        onClick = onSkip,
-                        colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
-                    ) {
-                        Text(
-                            text = "Skip",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = NekkoTheme.colors.text.secondary,
-                        )
+                    if (!state.isSubmitting) {
+                        Button(
+                            onClick = { onAction(NotificationAction.SkipClicked) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = NekkoTheme.colors.background.b0
+                            )
+                        ) {
+                            Text(
+                                text = "Skip",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = NekkoTheme.colors.text.secondary,
+                            )
+                        }
                     }
                 },
                 scrollBehavior = scrollBehavior,
@@ -161,6 +151,7 @@ private fun NotificationScreenContent(
                     text = "Turn on Notification",
                     onClick = { onAction(NotificationAction.TurnOnClicked) },
                     modifier = Modifier.weight(1f),
+                    loading = state.isSubmitting,
                 )
             }
         },
@@ -212,15 +203,13 @@ private fun NotificationScreenContent(
     }
 }
 
-
 @PreviewLightDark
 @Composable
 fun PreviewNotificationScreen() {
     NekkoTheme {
         NotificationScreen(
-            onNavigateToNext = {},
+            onNavigateToMainApp = {},
             onBack = {},
-            onSkip = {},
         )
     }
 }

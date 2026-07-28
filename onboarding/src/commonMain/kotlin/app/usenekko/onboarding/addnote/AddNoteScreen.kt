@@ -2,7 +2,6 @@ package app.usenekko.onboarding.addnote
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -27,24 +25,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,19 +47,13 @@ import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.addnote.components.AddNoteBottomSheet
 import app.usenekko.onboarding.addnote.components.NoteCard
 import app.usenekko.onboarding.components.StepIndicator
-import app.usenekko.onboarding.domain.NoteDraft
-import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
+import app.usenekko.onboarding.presentation.rememberAddNoteViewModel
 import app.usenekko.theme.NekkoTheme
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_add
 import nekko.onboarding.generated.resources.ic_back
 import nekko.onboarding.generated.resources.ic_flower
 import org.jetbrains.compose.resources.vectorResource
-import kotlin.time.Clock
 
 @Composable
 fun AddNoteScreen(
@@ -77,78 +62,28 @@ fun AddNoteScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val draftStore = LocalOnboardingDraftStore.current
-    val draft by draftStore.draft.collectAsStateWithLifecycle()
-    var sheetState by remember {
-        mutableStateOf(AddNoteState(notes = draft.notes.map { it.toNoteItem() }))
+    val viewModel = rememberAddNoteViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                AddNoteEvent.NavigateToNext -> onNavigateToNext()
+                AddNoteEvent.NavigateBack -> onBack()
+                AddNoteEvent.NavigateSkip -> onSkip()
+            }
+        }
     }
-    val state = sheetState.copy(notes = draft.notes.map { it.toNoteItem() })
 
     AddNoteScreenContent(
         state = state,
-        onAction = { action ->
-            when (action) {
-                is AddNoteAction.AddClicked -> {
-                    sheetState = sheetState.copy(isBottomSheetVisible = true)
-                }
-
-                is AddNoteAction.BottomSheetDismissed -> {
-                    sheetState = sheetState.copy(isBottomSheetVisible = false)
-                }
-
-                is AddNoteAction.DraftTitleChanged -> {
-                    sheetState = sheetState.copy(draftTitle = action.title)
-                }
-
-                is AddNoteAction.DraftDescriptionChanged -> {
-                    sheetState = sheetState.copy(draftDescription = action.description)
-                }
-
-                is AddNoteAction.SaveClicked -> {
-                    val newNote = NoteDraft(
-                        id = "note_${draft.notes.size}",
-                        title = state.draftTitle.ifEmpty { "Untitled" },
-                        body = state.draftDescription,
-                    )
-                    draftStore.update {
-                        it.copy(
-                            notes = it.notes + newNote,
-                            currentStep = OnboardingStep.AddNote,
-                        )
-                    }
-                    sheetState = sheetState.copy(
-                        isBottomSheetVisible = false,
-                        draftTitle = "",
-                        draftDescription = "",
-                    )
-                }
-
-                is AddNoteAction.DeleteNote -> {
-                    draftStore.update {
-                        it.copy(notes = it.notes.filter { note -> note.id != action.id })
-                    }
-                }
-            }
-        },
-        onNavigateToNext = {
-            draftStore.update { it.copy(currentStep = OnboardingStep.Notification) }
-            onNavigateToNext()
-        },
-        onBack = onBack,
-        onSkip = {
-            draftStore.update { it.copy(currentStep = OnboardingStep.Notification) }
-            onSkip()
-        },
+        onAction = { viewModel.onAction(it) },
+        onNavigateToNext = { viewModel.onNavigateToNext() },
+        onBack = { viewModel.onBack() },
+        onSkip = { viewModel.onSkip() },
         modifier = modifier,
     )
 }
-
-private fun NoteDraft.toNoteItem(): NoteItem = NoteItem(
-    id = id,
-    title = title,
-    description = body,
-    date = currentFormattedDate(),
-)
 
 @Composable
 private fun AddNoteScreenContent(
@@ -325,17 +260,6 @@ private fun AddNoteScreenContent(
     }
 }
 
-
-private fun currentFormattedDate(): String {
-    val now = Clock.System.now()
-    val localDate = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val dayOfWeek = localDate.dayOfWeek.name.take(3)
-    val day = localDate.day.toString().padStart(2, '0')
-    val month = localDate.month.name.take(3)
-    val year = (localDate.year % 100).toString().padStart(2, '0')
-    return "$dayOfWeek, $day $month $year"
-}
-
 @PreviewLightDark
 @Composable
 fun PreviewAddNoteScreen() {
@@ -345,6 +269,5 @@ fun PreviewAddNoteScreen() {
             onBack = {},
             onSkip = {},
         )
-
     }
 }

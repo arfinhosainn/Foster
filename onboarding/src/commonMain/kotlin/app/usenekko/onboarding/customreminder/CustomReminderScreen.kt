@@ -25,10 +25,7 @@ import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.customreminder.components.AddReminderBottomSheet
 import app.usenekko.onboarding.customreminder.components.CustomReminderCard
-import app.usenekko.onboarding.domain.CustomReminderDraft
-import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.domain.ReminderFrequency
-import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
+import app.usenekko.onboarding.presentation.rememberCustomReminderViewModel
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.liquefiable
 import io.github.fletchmckee.liquid.rememberLiquidState
@@ -44,105 +41,27 @@ fun CustomReminderScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val draftStore = LocalOnboardingDraftStore.current
-    val draft by draftStore.draft.collectAsStateWithLifecycle()
-    var sheetState by remember {
-        mutableStateOf(
-            CustomReminderState(reminders = draft.customReminders.map { it.toReminderItem() })
-        )
+    val viewModel = rememberCustomReminderViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                CustomReminderEvent.NavigateToNext -> onNavigateToNext()
+                CustomReminderEvent.NavigateBack -> onBack()
+                CustomReminderEvent.NavigateSkip -> onSkip()
+            }
+        }
     }
-    val state = sheetState.copy(reminders = draft.customReminders.map { it.toReminderItem() })
 
     CustomReminderScreenContent(
         state = state,
-        onAction = { action ->
-            when (action) {
-                is CustomReminderAction.AddClicked -> {
-                    sheetState = sheetState.copy(isBottomSheetVisible = true)
-                }
-
-                is CustomReminderAction.BottomSheetDismissed -> {
-                    sheetState = sheetState.copy(isBottomSheetVisible = false)
-                }
-
-                is CustomReminderAction.DraftTitleChanged -> {
-                    sheetState = sheetState.copy(draftTitle = action.title)
-                }
-
-                is CustomReminderAction.DraftDescriptionChanged -> {
-                    sheetState = sheetState.copy(draftDescription = action.description)
-                }
-
-                is CustomReminderAction.DraftRecurrenceChanged -> {
-                    sheetState = sheetState.copy(draftRecurrence = action.recurrence)
-                }
-
-                is CustomReminderAction.DraftDateChanged -> {
-                    sheetState = sheetState.copy(draftDate = action.date)
-                }
-
-                is CustomReminderAction.SaveReminderClicked -> {
-                    val newItem = CustomReminderDraft(
-                        id = "rem_${draft.customReminders.size}",
-                        title = state.draftTitle.ifEmpty { "New Reminder" },
-                        description = state.draftDescription,
-                        recurrence = state.draftRecurrence.toReminderFrequency(),
-                    )
-                    draftStore.update {
-                        it.copy(
-                            customReminders = it.customReminders + newItem,
-                            currentStep = OnboardingStep.CustomReminder,
-                        )
-                    }
-                    sheetState = sheetState.copy(
-                        isBottomSheetVisible = false,
-                        draftTitle = "",
-                        draftDescription = "",
-                        draftRecurrence = "None",
-                        draftDate = "Choose Date"
-                    )
-                }
-            }
-        },
-        onNavigateToNext = {
-            draftStore.update { it.copy(currentStep = OnboardingStep.AddNote) }
-            onNavigateToNext()
-        },
-        onBack = onBack,
-        onSkip = {
-            draftStore.update { it.copy(currentStep = OnboardingStep.AddNote) }
-            onSkip()
-        },
+        onAction = { viewModel.onAction(it) },
+        onNavigateToNext = { viewModel.onNextClicked() },
+        onBack = { viewModel.onBackClicked() },
+        onSkip = { viewModel.onSkipClicked() },
         modifier = modifier
     )
-}
-
-private fun CustomReminderDraft.toReminderItem(): ReminderItem = ReminderItem(
-    id = id,
-    title = title,
-    description = description,
-    recurrence = recurrence.toUiLabel(),
-    date = dateEpochMillis?.toString() ?: "Choose Date",
-)
-
-private fun ReminderFrequency.toUiLabel(): String = when (this) {
-    ReminderFrequency.Daily -> "Daily"
-    ReminderFrequency.Weekly -> "Weekly"
-    ReminderFrequency.BiWeekly -> "Bi-weekly"
-    ReminderFrequency.Monthly -> "Monthly"
-    ReminderFrequency.SemiAnnually -> "Semi-annually"
-    ReminderFrequency.Annually -> "Yearly"
-    ReminderFrequency.None -> "None"
-}
-
-private fun String.toReminderFrequency(): ReminderFrequency = when (this) {
-    "Daily" -> ReminderFrequency.Daily
-    "Weekly" -> ReminderFrequency.Weekly
-    "Bi-weekly" -> ReminderFrequency.BiWeekly
-    "Monthly" -> ReminderFrequency.Monthly
-    "Semi-annually" -> ReminderFrequency.SemiAnnually
-    "Yearly", "Annually" -> ReminderFrequency.Annually
-    else -> ReminderFrequency.None
 }
 
 @Composable
@@ -297,7 +216,6 @@ private fun CustomReminderScreenContent(
                         items(state.reminders) { reminder ->
                             CustomReminderCard(reminder = reminder)
                             Spacer(modifier = Modifier.height(16.dp))
-                            // Dashed divider line
                             val dividerColor = NekkoTheme.colors.gray.quaternary
                             Box(
                                 modifier = Modifier
@@ -309,10 +227,7 @@ private fun CustomReminderScreenContent(
                                             start = Offset(0f, 0f),
                                             end = Offset(size.width, 0f),
                                             pathEffect = PathEffect.dashPathEffect(
-                                                floatArrayOf(
-                                                    10f,
-                                                    10f
-                                                ), 0f
+                                                floatArrayOf(10f, 10f), 0f
                                             )
                                         )
                                     }

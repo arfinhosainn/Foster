@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class OnboardingStep(val index: Int) {
     Welcome(0),
-    Phone(1),
-    CodeVerification(2),
+    Email(1),
+    EmailVerification(2),
     Name(3),
     Contact(4),
     Group(5),

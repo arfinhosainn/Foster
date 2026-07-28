@@ -15,7 +15,9 @@ kotlin = "2.4.10"
 material3 = "1.11.0-alpha07"
 material-icons = "1.7.3"
 kotlinxDatetime = "0.8.0"
-kotlinxSerialization = "1.9.0"
+kotlinxSerialization = "1.11.0"
+supabase = "3.7.0"
+ktor = "3.5.1"
 liquid-glass = "1.1.1"
 
 
@@ -47,6 +49,14 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 datastore-core = { module = "androidx.datastore:datastore-core", version = "1.1.4" }
 datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version = "1.1.4" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version = "1.1.4" }
+
+supabase-kt = { module = "io.github.jan-tennert.supabase:supabase-kt", version.ref = "supabase" }
+supabase-auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref = "supabase" }
+supabase-postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "supabase" }
+supabase-storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt", version.ref = "supabase" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 
 #Liquid-Glass
 liquid-glass = { module = "io.github.fletchmckee.liquid:liquid", version.ref = "liquid-glass"}
