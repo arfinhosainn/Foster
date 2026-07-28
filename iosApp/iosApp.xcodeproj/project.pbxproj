@@ -6,12 +6,17 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D89F4D073018839D005B07F9 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = D89F4D063018839D005B07F9 /* GoogleSignIn */; };
+		D89F4D093018839D005B07F9 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = D89F4D083018839D005B07F9 /* GoogleSignInSwift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F72596F734EC37AD32DDBE4A /* Nekko.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nekko.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		FB9E99515169153898D03E75 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		FB9E99515169153898D03E75 /* Exceptions for "iosApp" folder in "iosApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -24,7 +29,7 @@
 		3A57B881C9C5411030797A68 /* iosApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				FB9E99515169153898D03E75 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+				FB9E99515169153898D03E75 /* Exceptions for "iosApp" folder in "iosApp" target */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -41,6 +46,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D89F4D073018839D005B07F9 /* GoogleSignIn in Frameworks */,
+				D89F4D093018839D005B07F9 /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -86,6 +93,8 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
+				D89F4D063018839D005B07F9 /* GoogleSignIn */,
+				D89F4D083018839D005B07F9 /* GoogleSignInSwift */,
 			);
 			productName = iosApp;
 			productReference = F72596F734EC37AD32DDBE4A /* Nekko.app */;
@@ -115,6 +124,9 @@
 			);
 			mainGroup = 137B2608745A6AA049B4E955;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D89F4D053018839D005B07F9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 755456A10E0CBD7C2B92D610 /* Products */;
 			projectDirPath = "";
@@ -138,12 +150,16 @@
 /* Begin PBXShellScriptBuildPhase section */
 		54B36C560D20B1EAA80A8243 /* Compile Kotlin */ = {
 			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
 			inputPaths = (
 			);
 			name = "Compile Kotlin";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
 			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :onboarding:embedAndSignAppleFrameworkForXcode";
 		};
 		EF4FEDE8621A50A138EAE13D /* Compile Kotlin Framework */ = {
@@ -389,6 +405,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D89F4D053018839D005B07F9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.2.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D89F4D063018839D005B07F9 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D89F4D053018839D005B07F9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		D89F4D083018839D005B07F9 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D89F4D053018839D005B07F9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 49F472CDC09A4BFF970FA87C /* Project object */;
 }

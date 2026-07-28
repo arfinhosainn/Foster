@@ -20,9 +20,9 @@ class NavigatorTest {
     fun navigateAndGoBackUpdateCurrentScreen() {
         val navigator = Navigator(Screen.Welcome)
 
-        navigator.navigate(Screen.Phone)
+        navigator.navigate(Screen.Email)
 
-        assertEquals(Screen.Phone, navigator.currentScreen)
+        assertEquals(Screen.Email, navigator.currentScreen)
         assertTrue(navigator.goBack())
         assertEquals(Screen.Welcome, navigator.currentScreen)
     }
@@ -31,7 +31,7 @@ class NavigatorTest {
     fun replaceAllClearsPreviousStack() {
         val navigator = Navigator(Screen.Welcome)
 
-        navigator.navigate(Screen.Phone)
+        navigator.navigate(Screen.Email)
         navigator.replaceAll(Screen.Name)
 
         assertEquals(Screen.Name, navigator.currentScreen)

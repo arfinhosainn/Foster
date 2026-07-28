@@ -19,16 +19,14 @@ class DataStoreOnboardingDraftDataSource(
     }
 
     override suspend fun getDraft(): OnboardingDraft {
-        return dataStore.data
-            .map { prefs ->
-                val encoded = prefs[Keys.DraftJson]
-                if (encoded == null) {
-                    OnboardingDraft()
-                } else {
-                    json.decodeFromString<OnboardingDraft>(encoded)
-                }
-            }
-            .first()
+        val prefs = dataStore.data.first()
+        val encoded = prefs[Keys.DraftJson] ?: return OnboardingDraft()
+        return try {
+            json.decodeFromString<OnboardingDraft>(encoded)
+        } catch (_: Exception) {
+            clearDraft()
+            OnboardingDraft()
+        }
     }
 
     override suspend fun saveDraft(draft: OnboardingDraft) {

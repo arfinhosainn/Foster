@@ -13,9 +13,8 @@ import app.usenekko.onboarding.data.supabase.createAppSupabaseClient
 import app.usenekko.onboarding.dayreminder.ReminderViewModel
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.group.GroupViewModel
+import io.github.jan.supabase.SupabaseClient
 import app.usenekko.onboarding.name.NameViewModel
-import app.usenekko.onboarding.email.EmailVerificationViewModel
-import app.usenekko.onboarding.email.EmailViewModel
 import app.usenekko.onboarding.notification.NotificationViewModel
 import app.usenekko.onboarding.timereminder.TimeReminderViewModel
 
@@ -25,6 +24,10 @@ val LocalOnboardingDraftStore = staticCompositionLocalOf<OnboardingDraftStore> {
 
 val LocalOnboardingProfileDataSource = staticCompositionLocalOf<OnboardingProfileDataSource> {
     error("No OnboardingProfileDataSource provided.")
+}
+
+val LocalSupabaseClient = staticCompositionLocalOf<SupabaseClient> {
+    error("No SupabaseClient provided.")
 }
 
 @Composable
@@ -40,21 +43,10 @@ fun OnboardingDraftStoreProvider(
     CompositionLocalProvider(
         LocalOnboardingDraftStore provides draftStore,
         LocalOnboardingProfileDataSource provides profileDataSource,
+        LocalSupabaseClient provides supabaseClient,
     ) {
         content()
     }
-}
-
-@Composable
-fun rememberEmailViewModel(): EmailViewModel {
-    val draftStore = LocalOnboardingDraftStore.current
-    return remember { EmailViewModel(draftStore) }
-}
-
-@Composable
-fun rememberEmailVerificationViewModel(email: String): EmailVerificationViewModel {
-    val draftStore = LocalOnboardingDraftStore.current
-    return remember(email) { EmailVerificationViewModel(email, draftStore) }
 }
 
 @Composable

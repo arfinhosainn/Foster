@@ -18,6 +18,7 @@ class NSUserDefaultsOnboardingDraftDataSource(
         return try {
             json.decodeFromString<OnboardingDraft>(encoded)
         } catch (_: Exception) {
+            clearDraft()
             OnboardingDraft()
         }
     }

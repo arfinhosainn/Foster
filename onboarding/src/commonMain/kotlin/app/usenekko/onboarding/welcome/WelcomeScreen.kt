@@ -10,9 +10,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -27,6 +34,10 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.TermsAndPrivacyNotice
 import app.usenekko.theme.NekkoTheme
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
+import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
+import io.github.jan.supabase.compose.auth.composeAuth
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.gradients
 import nekko.onboarding.generated.resources.ic_apple
@@ -35,9 +46,35 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun WelcomeScreen(
-    onNavigateToEmail: () -> Unit = {},
-    modifier: Modifier = Modifier
+    supabaseClient: SupabaseClient,
+    onGoogleSignInSuccess: () -> Unit = {},
+    modifier: Modifier = Modifier,
 ) {
+    var errorMessage by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
+
+    val googleSignInAction = supabaseClient.composeAuth.rememberSignInWithGoogle(
+        onResult = { result ->
+            when (result) {
+                is NativeSignInResult.Success -> {
+                    kotlin.io.println("GoogleSignIn Success!")
+                    errorMessage = null
+                    onGoogleSignInSuccess()
+                }
+                is NativeSignInResult.Error -> {
+                    kotlin.io.println("GoogleSignIn Error: ${result.message}")
+                    result.message?.let { errorMessage = it }
+                }
+                is NativeSignInResult.NetworkError -> {
+                    kotlin.io.println("GoogleSignIn NetworkError: ${result.message}")
+                    errorMessage = "Network error. Check your connection."
+                }
+                NativeSignInResult.ClosedByUser -> {
+                    kotlin.io.println("GoogleSignIn: User cancelled")
+                }
+            }
+        },
+    )
+
     Column(
         modifier = modifier.fillMaxSize()
     ) {
@@ -61,14 +98,13 @@ fun WelcomeScreen(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .offset(x = (-20).dp)
-
             )
 
             Image(
                 painter = painterResource(Res.drawable.users),
                 contentDescription = null,
                 modifier = Modifier.align(Alignment.CenterEnd)
-                    . scale(scaleX = -1f, scaleY = 1f)
+                    .scale(scaleX = -1f, scaleY = 1f)
             )
 
             Text(
@@ -107,7 +143,6 @@ fun WelcomeScreen(
                 )
                 Spacer(Modifier.height(50.dp))
 
-
                 NekkoButton(
                     text = "Continue with Apple",
                     onClick = {},
@@ -127,10 +162,36 @@ fun WelcomeScreen(
                         containerColor = NekkoTheme.colors.background.b1,
                         contentColor = NekkoTheme.colors.background.onBackground
                     ),
-                    text = "Continue with Email",
-                    onClick = onNavigateToEmail,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Email,
+                            contentDescription = "Google",
+                        )
+                    },
+                    text = "Continue with Google",
+                    onClick = {
+                        try {
+                            kotlin.io.println("Starting Google Sign-In flow...")
+                            googleSignInAction.startFlow()
+                            kotlin.io.println("startFlow returned (no exception)")
+                        } catch (e: Exception) {
+                            kotlin.io.println("startFlow threw: ${e.message}")
+                            errorMessage = "Error: ${e.message}"
+                        }
+                    },
                     loading = false
                 )
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = NekkoTheme.colors.red.default,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
+
                 Spacer(Modifier.height(25.dp))
 
                 TermsAndPrivacyNotice(
@@ -138,7 +199,6 @@ fun WelcomeScreen(
                     onPrivacyClick = { /* navigate to Privacy screen or open URL */ },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 )
-
             }
         }
     }
@@ -148,7 +208,11 @@ fun WelcomeScreen(
 @Composable
 fun WelcomeScreenPreview() {
     NekkoTheme {
-        WelcomeScreen()
-
+        WelcomeScreen(
+            supabaseClient = io.github.jan.supabase.createSupabaseClient(
+                supabaseUrl = "https://placeholder.supabase.co",
+                supabaseKey = "placeholder"
+            ) {}
+        )
     }
 }

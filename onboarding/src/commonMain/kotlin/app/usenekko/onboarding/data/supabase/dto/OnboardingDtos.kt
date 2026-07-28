@@ -5,8 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CompleteOnboardingPayload(
-    val email: String? = null,
-    val emailVerified: Boolean = false,
     val displayName: String? = null,
     val contactName: String? = null,
     val avatarUrl: String? = null,
@@ -47,4 +45,6 @@ data class NoteDto(
 data class OnboardingStepResponse(
     @SerialName("onboarding_step")
     val onboardingStep: Int?,
+    @SerialName("onboarding_completed_at")
+    val onboardingCompletedAt: String? = null,
 )
