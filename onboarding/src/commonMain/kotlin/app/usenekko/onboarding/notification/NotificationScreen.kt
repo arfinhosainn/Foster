@@ -35,9 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
-import app.usenekko.onboarding.permissions.Permission
-import app.usenekko.onboarding.permissions.PermissionStatus
-import app.usenekko.onboarding.permissions.rememberPermissionController
+import app.usenekko.onboarding.notification.rememberNotificationPermissionLauncher
 import app.usenekko.onboarding.presentation.rememberNotificationViewModel
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
@@ -53,7 +51,15 @@ fun NotificationScreen(
 ) {
     val viewModel = rememberNotificationViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val permissionController = rememberPermissionController()
+
+    val requestNotificationPermission = rememberNotificationPermissionLauncher(
+        onGranted = {
+            viewModel.onAction(NotificationAction.PermissionResult(granted = true))
+        },
+        onDenied = {
+            viewModel.onAction(NotificationAction.PermissionResult(granted = false))
+        },
+    )
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -69,13 +75,7 @@ fun NotificationScreen(
         onAction = { action ->
             when (action) {
                 NotificationAction.TurnOnClicked -> {
-                    permissionController.requestPermission(Permission.Notification) { status ->
-                        viewModel.onAction(
-                            NotificationAction.PermissionResult(
-                                granted = status == PermissionStatus.Granted,
-                            )
-                        )
-                    }
+                    requestNotificationPermission()
                 }
                 is NotificationAction.PermissionResult -> viewModel.onAction(action)
                 NotificationAction.SkipClicked -> {

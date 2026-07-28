@@ -51,7 +51,7 @@ class ContactViewModel(
                 }
             }
             is ContactAction.ImportClicked -> {
-                // TODO: import from device contacts
+                sendEvent(ContactEvent.RequestContactPermission)
             }
             is ContactAction.NextClicked -> {
                 draftStore.update { it.copy(currentStep = OnboardingStep.Group) }

@@ -62,7 +62,7 @@ fun WelcomeScreen(
                 }
                 is NativeSignInResult.Error -> {
                     kotlin.io.println("GoogleSignIn Error: ${result.message}")
-                    result.message?.let { errorMessage = it }
+                    errorMessage = result.message
                 }
                 is NativeSignInResult.NetworkError -> {
                     kotlin.io.println("GoogleSignIn NetworkError: ${result.message}")
