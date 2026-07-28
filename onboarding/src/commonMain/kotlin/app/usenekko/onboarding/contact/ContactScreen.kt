@@ -36,8 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -52,10 +53,8 @@ import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.contact.components.ChooseAvatarBottomSheet
 import app.usenekko.onboarding.contact.components.ProfilePhotoPicker
 import app.usenekko.onboarding.contact.components.ProfilePhotoPreview
-import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
+import app.usenekko.onboarding.presentation.rememberContactViewModel
 import app.usenekko.theme.NekkoTheme
-import androidx.compose.ui.graphics.ImageBitmap
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
 import nekko.onboarding.generated.resources.ic_import
@@ -69,18 +68,22 @@ fun ContactScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val draftStore = LocalOnboardingDraftStore.current
-    val draft by draftStore.draft.collectAsStateWithLifecycle()
+    val viewModel = rememberContactViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     var photoBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var isPreviewVisible by remember { mutableStateOf(false) }
-    var selectedAvatarIndex by remember { mutableStateOf(draft.selectedAvatarId?.toIntOrNull()) }
-    var showAvatarPicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                ContactEvent.NavigateToNext -> onNavigateToNext()
+                ContactEvent.NavigateBack -> onBack()
+                ContactEvent.NavigateSkip -> onSkip()
+            }
+        }
+    }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-
-    LaunchedEffect(draft.selectedAvatarId) {
-        selectedAvatarIndex = draft.selectedAvatarId?.toIntOrNull()
-    }
 
     Column(
         modifier = modifier
@@ -104,9 +107,7 @@ fun ContactScreen(
                         )
                     },
                     navigationIcon = { },
-                    actions = {
-
-                    },
+                    actions = { },
                     scrollBehavior = scrollBehavior,
                 )
             },
@@ -120,7 +121,7 @@ fun ContactScreen(
                 ) {
                     FilledIconButton(
                         modifier = Modifier.weight(0.23f).size(58.dp),
-                        onClick = onBack,
+                        onClick = { viewModel.onAction(ContactAction.BackClicked) },
                         colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
                     ) {
                         Image(
@@ -131,10 +132,7 @@ fun ContactScreen(
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = "Next",
-                        onClick = {
-                            draftStore.update { it.copy(currentStep = OnboardingStep.Group) }
-                            onNavigateToNext()
-                        },
+                        onClick = { viewModel.onAction(ContactAction.NextClicked) },
                         modifier = Modifier.weight(0.8f),
                     )
                 }
@@ -181,9 +179,9 @@ fun ContactScreen(
                 ) {
                     ProfilePhotoPicker(
                         photoBitmap = photoBitmap,
-                        onEditClick = { showAvatarPicker = true },
+                        onEditClick = { viewModel.onShowAvatarPicker() },
                         onPreviewChanged = { isPreviewVisible = it },
-                        selectedAvatarIndex = selectedAvatarIndex,
+                        selectedAvatarIndex = state.selectedAvatarIndex,
                     )
                 }
 
@@ -191,7 +189,7 @@ fun ContactScreen(
 
                 NekkoStepField(isConfirmed = false) {
                     Box(modifier = Modifier.weight(1f)) {
-                        if (draft.contactName.isEmpty()) {
+                        if (state.contactName.isEmpty()) {
                             Text(
                                 text = "Contact name",
                                 fontSize = 17.sp,
@@ -200,15 +198,8 @@ fun ContactScreen(
                             )
                         }
                         BasicTextField(
-                            value = draft.contactName,
-                            onValueChange = { value ->
-                                draftStore.update {
-                                    it.copy(
-                                        contactName = value,
-                                        currentStep = OnboardingStep.Contact,
-                                    )
-                                }
-                            },
+                            value = state.contactName,
+                            onValueChange = { viewModel.onAction(ContactAction.ContactNameChanged(it)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             textStyle = TextStyle(
@@ -224,9 +215,8 @@ fun ContactScreen(
                             ),
                             keyboardActions = KeyboardActions(
                                 onDone = {
-                                    if (draft.contactName.isNotBlank()) {
-                                        draftStore.update { it.copy(currentStep = OnboardingStep.Group) }
-                                        onNavigateToNext()
+                                    if (state.contactName.isNotBlank()) {
+                                        viewModel.onAction(ContactAction.NextClicked)
                                     }
                                 },
                             ),
@@ -238,7 +228,7 @@ fun ContactScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth()
-                        .clickable { /* TODO: import contacts */ }
+                        .clickable { viewModel.onAction(ContactAction.ImportClicked) }
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
@@ -266,21 +256,10 @@ fun ContactScreen(
         photoBitmap = photoBitmap,
     )
 
-    if (showAvatarPicker) {
+    if (state.showAvatarPicker) {
         ChooseAvatarBottomSheet(
-            onAvatarSelected = { index ->
-                selectedAvatarIndex = index
-                photoBitmap = null
-                showAvatarPicker = false
-                draftStore.update {
-                    it.copy(
-                        selectedAvatarId = index.toString(),
-                        profilePhotoUri = null,
-                        currentStep = OnboardingStep.Contact,
-                    )
-                }
-            },
-            onDismiss = { showAvatarPicker = false },
+            onAvatarSelected = { index -> viewModel.onAction(ContactAction.AvatarSelected(index)) },
+            onDismiss = { viewModel.onDismissAvatarPicker() },
         )
     }
 }

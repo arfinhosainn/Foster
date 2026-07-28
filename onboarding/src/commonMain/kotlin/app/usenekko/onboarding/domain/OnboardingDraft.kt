@@ -4,8 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class OnboardingDraft(
-    val phoneNumber: String = "",
-    val phoneVerified: Boolean = false,
+    val email: String = "",
+    val emailVerified: Boolean = false,
     val name: String = "",
     val contactName: String = "",
     val profilePhotoUri: String? = null,

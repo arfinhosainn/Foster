@@ -38,6 +38,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
             implementation(libs.datastore.preferences)
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(project(":shared"))
@@ -53,6 +54,14 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.supabase.kt)
+            implementation(libs.supabase.auth.kt)
+            implementation(libs.supabase.postgrest.kt)
+            implementation(libs.supabase.storage.kt)
+            implementation(libs.ktor.client.core)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

@@ -10,9 +10,9 @@ import app.usenekko.onboarding.customreminder.CustomReminderScreen
 import app.usenekko.onboarding.dayreminder.ReminderScreen
 import app.usenekko.onboarding.group.GroupScreen
 import app.usenekko.onboarding.name.NameScreen
+import app.usenekko.onboarding.email.EmailScreen
+import app.usenekko.onboarding.email.EmailVerificationScreen
 import app.usenekko.onboarding.notification.NotificationScreen
-import app.usenekko.onboarding.phone.CodeVerificationScreen
-import app.usenekko.onboarding.phone.PhoneScreen
 import app.usenekko.onboarding.presentation.OnboardingDraftStoreProvider
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
@@ -23,19 +23,19 @@ fun OnboardingApp(navigator: Navigator) {
         App(navigator) { screen ->
             when (screen) {
                 is Screen.Welcome -> WelcomeScreen(
-                    onNavigateToPhone = { navigator.navigate(Screen.Phone) },
+                    onNavigateToEmail = { navigator.navigate(Screen.Email) },
                 )
 
-                is Screen.Phone -> PhoneScreen(
-                    onNavigateToCodeVerification = { phoneNumber ->
-                        navigator.navigate(Screen.CodeVerification(phoneNumber))
+                is Screen.Email -> EmailScreen(
+                    onNavigateToEmailVerification = { email ->
+                        navigator.navigate(Screen.EmailVerification(email))
                     },
                     onBack = { navigator.goBack() },
                     onSkip = { navigator.navigate(Screen.Name) },
                 )
 
-                is Screen.CodeVerification -> CodeVerificationScreen(
-                    phoneNumber = screen.phoneNumber,
+                is Screen.EmailVerification -> EmailVerificationScreen(
+                    email = screen.email,
                     onNavigateToNext = { navigator.navigate(Screen.Name) },
                     onBack = { navigator.goBack() },
                     onSkip = { navigator.navigate(Screen.Name) },
@@ -81,11 +81,10 @@ fun OnboardingApp(navigator: Navigator) {
                     onSkip = { navigator.navigate(Screen.Notification) },
                 )
 
-                is Screen.Notification -> NotificationScreen(
-                    onNavigateToNext = { },
-                    onBack = { navigator.goBack() },
-                    onSkip = { },
-                )
+            is Screen.Notification -> NotificationScreen(
+                onNavigateToMainApp = { /* TODO: navigate to main app */ },
+                onBack = { navigator.goBack() },
+            )
             }
         }
     }

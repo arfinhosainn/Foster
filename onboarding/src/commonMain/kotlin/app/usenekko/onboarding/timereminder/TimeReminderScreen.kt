@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
@@ -37,9 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
-import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.domain.ReminderTimeDraft
-import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
+import app.usenekko.onboarding.presentation.rememberTimeReminderViewModel
 import app.usenekko.onboarding.timereminder.components.AmPmToggle
 import app.usenekko.onboarding.timereminder.components.TimeScrollDial
 import app.usenekko.theme.NekkoTheme
@@ -47,9 +46,6 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
 
-/**
- * Stateful entry point for the Time Reminder screen.
- */
 @Composable
 fun TimeReminderScreen(
     onNavigateToNext: () -> Unit,
@@ -57,76 +53,28 @@ fun TimeReminderScreen(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val draftStore = LocalOnboardingDraftStore.current
-    val draft by draftStore.draft.collectAsStateWithLifecycle()
-    val state = draft.reminderTime.toTimeReminderState()
+    val viewModel = rememberTimeReminderViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                TimeReminderEvent.NavigateToNext -> onNavigateToNext()
+                TimeReminderEvent.NavigateBack -> onBack()
+                TimeReminderEvent.NavigateSkip -> onSkip()
+            }
+        }
+    }
 
     TimeReminderScreenContent(
         state = state,
-        onAction = { action ->
-            when (action) {
-                is TimeReminderAction.ScrollToMinute -> {
-                    val hour = if (action.totalMinutes / 60 == 0) 12 else action.totalMinutes / 60
-                    val minute = action.totalMinutes % 60
-                    draftStore.update {
-                        it.copy(
-                            reminderTime = TimeReminderState(
-                                selectedHour = hour,
-                                selectedMinute = minute,
-                                isAm = state.isAm,
-                            ).toReminderTimeDraft(),
-                            currentStep = OnboardingStep.TimeReminder,
-                        )
-                    }
-                }
-
-                is TimeReminderAction.ToggleAmPm -> {
-                    draftStore.update {
-                        it.copy(
-                            reminderTime = state.copy(isAm = action.isAm).toReminderTimeDraft(),
-                            currentStep = OnboardingStep.TimeReminder,
-                        )
-                    }
-                }
-            }
-        },
-        onNavigateToNext = {
-            draftStore.update { it.copy(currentStep = OnboardingStep.CustomReminder) }
-            onNavigateToNext()
-        },
-        onBack = onBack,
+        onAction = { viewModel.onAction(it) },
+        onNavigateToNext = { viewModel.onNextClicked() },
+        onBack = { viewModel.onBackClicked() },
         modifier = modifier,
-        onSkip = {
-            draftStore.update { it.copy(currentStep = OnboardingStep.CustomReminder) }
-            onSkip()
-        }
+        onSkip = { viewModel.onSkipClicked() }
     )
 }
-
-private fun ReminderTimeDraft?.toTimeReminderState(): TimeReminderState {
-    if (this == null) return TimeReminderState()
-    val periodHour = when {
-        hour == 0 -> 12
-        hour > 12 -> hour - 12
-        else -> hour
-    }
-    return TimeReminderState(
-        selectedHour = periodHour,
-        selectedMinute = minute,
-        isAm = hour < 12,
-    )
-}
-
-private fun TimeReminderState.toReminderTimeDraft(): ReminderTimeDraft {
-    val hour24 = when {
-        isAm && selectedHour == 12 -> 0
-        isAm -> selectedHour
-        selectedHour == 12 -> 12
-        else -> selectedHour + 12
-    }
-    return ReminderTimeDraft(hour = hour24, minute = selectedMinute)
-}
-
 
 @Composable
 private fun TimeReminderScreenContent(
@@ -203,7 +151,6 @@ private fun TimeReminderScreenContent(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // ── Title section ───────────────────────────────────────────
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -231,7 +178,6 @@ private fun TimeReminderScreenContent(
 
             Spacer(Modifier.height(40.dp))
 
-            // ── Time dial ───────────────────────────────────────────────
             TimeScrollDial(
                 totalMinutes = state.totalMinutes,
                 onValueChange = { newTotal ->
@@ -241,14 +187,12 @@ private fun TimeReminderScreenContent(
 
             Spacer(Modifier.height(24.dp))
 
-            // ── AM / PM toggle ──────────────────────────────────────────
             AmPmToggle(
                 isAm = state.isAm,
                 onToggle = { isAm -> onAction(TimeReminderAction.ToggleAmPm(isAm)) },
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
 
-            // Push bottom nav to the bottom
             Spacer(Modifier.weight(1f))
         }
     }

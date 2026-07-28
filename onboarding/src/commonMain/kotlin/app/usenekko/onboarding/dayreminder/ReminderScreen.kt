@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
@@ -36,75 +37,39 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.dayreminder.components.ReminderOptionCard
-import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.domain.ReminderFrequency
-import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
+import app.usenekko.onboarding.presentation.rememberReminderViewModel
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
 
-/**
- * Stateful entry point for ReminderScreen.
- */
 @Composable
 fun ReminderScreen(
     onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val draftStore = LocalOnboardingDraftStore.current
-    val draft by draftStore.draft.collectAsStateWithLifecycle()
-    val state = ReminderState(
-        selectedOption = draft.reminderFrequency.toReminderOption(),
-    )
+    val viewModel = rememberReminderViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                ReminderEvent.NavigateToNext -> onNavigateToNext()
+                ReminderEvent.NavigateBack -> onBack()
+            }
+        }
+    }
 
     ReminderScreenContent(
         state = state,
-        onAction = { action ->
-            when (action) {
-                is ReminderAction.SelectOption -> {
-                    draftStore.update {
-                        it.copy(
-                            reminderFrequency = action.option.toReminderFrequency(),
-                            currentStep = OnboardingStep.DayReminder,
-                        )
-                    }
-                }
-            }
-        },
-        onNavigateToNext = {
-            draftStore.update { it.copy(currentStep = OnboardingStep.TimeReminder) }
-            onNavigateToNext()
-        },
-        onBack = onBack,
+        onAction = { viewModel.onAction(it) },
+        onNavigateToNext = { viewModel.onNextClicked() },
+        onBack = { viewModel.onBackClicked() },
         modifier = modifier
     )
 }
 
-private fun ReminderFrequency?.toReminderOption(): String = when (this) {
-    ReminderFrequency.Daily -> ReminderOptions.DAILY
-    ReminderFrequency.Weekly -> ReminderOptions.WEEKLY
-    ReminderFrequency.BiWeekly -> ReminderOptions.BI_WEEKLY
-    ReminderFrequency.Monthly -> ReminderOptions.MONTHLY
-    ReminderFrequency.SemiAnnually -> ReminderOptions.SEMI_ANNUALLY
-    ReminderFrequency.Annually -> ReminderOptions.ANNUALLY
-    ReminderFrequency.None, null -> ReminderOptions.DAILY
-}
-
-private fun String.toReminderFrequency(): ReminderFrequency = when (this) {
-    ReminderOptions.DAILY -> ReminderFrequency.Daily
-    ReminderOptions.WEEKLY -> ReminderFrequency.Weekly
-    ReminderOptions.BI_WEEKLY -> ReminderFrequency.BiWeekly
-    ReminderOptions.MONTHLY -> ReminderFrequency.Monthly
-    ReminderOptions.SEMI_ANNUALLY -> ReminderFrequency.SemiAnnually
-    ReminderOptions.ANNUALLY -> ReminderFrequency.Annually
-    else -> ReminderFrequency.None
-}
-
-/**
- * Stateless content for ReminderScreen.
- */
 @Composable
 private fun ReminderScreenContent(
     state: ReminderState,
@@ -166,7 +131,6 @@ private fun ReminderScreenContent(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // ── Title section ───────────────────────────────────────────
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,

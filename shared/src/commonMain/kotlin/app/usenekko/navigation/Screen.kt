@@ -8,10 +8,10 @@ sealed class Screen {
     data object Welcome : Screen()
 
     @Serializable
-    data object Phone : Screen()
+    data object Email : Screen()
 
     @Serializable
-    data class CodeVerification(val phoneNumber: String) : Screen()
+    data class EmailVerification(val email: String) : Screen()
 
     @Serializable
     data object Name : Screen()

@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -19,11 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -35,10 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,28 +49,16 @@ import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.designsystem.shapes.SawToothCircleShape
 import app.usenekko.onboarding.components.StepIndicator
-import app.usenekko.onboarding.domain.GroupDraft
-import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.onboarding.group.components.CreateGroupBottomSheet
-import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
+import app.usenekko.onboarding.presentation.rememberGroupViewModel
 import app.usenekko.theme.NekkoTheme
-import io.github.fletchmckee.liquid.liquid
 import io.github.fletchmckee.liquid.liquefiable
 import io.github.fletchmckee.liquid.rememberLiquidState
-import kotlin.random.Random
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_add
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
 
-/**
- * One-time onboarding flow:
- * - show Family + Friends
- * - allow creating only one extra group
- * - after creation, hide the plus button
- * - show the created group centered together with the starter row, using a
- *   fixed gap instead of a bottom-pinned unbounded spacer
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupScreen(
@@ -83,8 +66,21 @@ fun GroupScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val draftStore = LocalOnboardingDraftStore.current
+    val viewModel = rememberGroupViewModel()
+    val showCreateGroupSheet by viewModel.showCreateGroupSheet.collectAsStateWithLifecycle()
+
+    val draftStore = app.usenekko.onboarding.presentation.LocalOnboardingDraftStore.current
     val draft by draftStore.draft.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                GroupEvent.NavigateToNext -> onNavigateToNext()
+                GroupEvent.NavigateBack -> onBack()
+            }
+        }
+    }
+
     val starterGroups = remember {
         listOf(
             Group(
@@ -102,8 +98,9 @@ fun GroupScreen(
 
     val createdGroup = draft.groups
         .firstOrNull { it.id !in setOf("family", "friends") }
-        ?.toUiGroup()
-    var showCreateGroupSheet by remember { mutableStateOf(false) }
+        ?.let {
+            Group(id = it.id, name = it.name)
+        }
 
     val liquidState = rememberLiquidState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -144,7 +141,7 @@ fun GroupScreen(
                 ) {
                     FilledIconButton(
                         modifier = modifier.weight(0.23f).size(58.dp),
-                        onClick = onBack,
+                        onClick = { viewModel.onBackClicked() },
                         colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
                     ) {
                         Image(
@@ -157,10 +154,7 @@ fun GroupScreen(
 
                     NekkoButton(
                         text = "Next",
-                        onClick = {
-                            draftStore.update { it.copy(currentStep = OnboardingStep.DayReminder) }
-                            onNavigateToNext()
-                        },
+                        onClick = { viewModel.onNextClicked() },
                         modifier = Modifier.weight(0.8f),
                     )
                 }
@@ -196,7 +190,6 @@ fun GroupScreen(
                     )
                 }
 
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -217,7 +210,7 @@ fun GroupScreen(
                                 ) {
                                     GroupCard(
                                         group = group,
-                                        onClick = { /* optional selection */ },
+                                        onClick = { },
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .aspectRatio(1f),
@@ -244,12 +237,12 @@ fun GroupScreen(
                             }
                         }
 
-                        Spacer(Modifier.height(100.dp)) // fixed gap, not weighted
+                        Spacer(Modifier.height(100.dp))
 
                         if (createdGroup == null) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 NekkoActionButton(onClick = {
-                                    showCreateGroupSheet = true
+                                    viewModel.onCreateGroupClicked()
                                 }, leadingIcon = vectorResource(Res.drawable.ic_add))
 
                                 Spacer(Modifier.height(14.dp))
@@ -308,28 +301,11 @@ fun GroupScreen(
 
     if (showCreateGroupSheet && createdGroup == null) {
         CreateGroupBottomSheet(
-            onDismiss = { showCreateGroupSheet = false },
-            onSave = { name ->
-                val group = GroupDraft(
-                    id = "group_${Random.nextLong()}",
-                    name = name,
-                )
-                draftStore.update {
-                    it.copy(
-                        groups = listOf(group),
-                        currentStep = OnboardingStep.Group,
-                    )
-                }
-                showCreateGroupSheet = false
-            },
+            onDismiss = { viewModel.onDismissCreateGroupSheet() },
+            onSave = { name -> viewModel.onSaveGroup(name) },
         )
     }
 }
-
-private fun GroupDraft.toUiGroup(): Group = Group(
-    id = id,
-    name = name,
-)
 
 @Composable
 private fun GroupCard(

@@ -1,4 +1,4 @@
-package app.usenekko.onboarding.phone
+package app.usenekko.onboarding.email
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -24,50 +24,47 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.buttons.NekkoButton
-import app.usenekko.onboarding.components.PhoneNumberField
-import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
+import app.usenekko.onboarding.components.VerificationCodeField
+import app.usenekko.onboarding.presentation.rememberEmailVerificationViewModel
 import app.usenekko.theme.NekkoTheme
 
 @Composable
-fun PhoneScreen(
-    onNavigateToCodeVerification: (phoneNumber: String) -> Unit,
+fun EmailVerificationScreen(
+    email: String,
+    onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val draftStore = LocalOnboardingDraftStore.current
-    val viewModel = viewModel { PhoneViewModel(draftStore) }
+    val viewModel = rememberEmailVerificationViewModel(email)
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                PhoneEvent.NavigateBack -> onBack()
-                PhoneEvent.NavigateSkip -> onSkip()
-                is PhoneEvent.NavigateToCodeVerification -> {
-                    onNavigateToCodeVerification(event.phoneNumber)
-                }
+                EmailVerificationEvent.NavigateToNext -> onNavigateToNext()
+                EmailVerificationEvent.NavigateBack -> onBack()
+                EmailVerificationEvent.NavigateSkip -> onSkip()
             }
         }
     }
 
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(NekkoTheme.colors.background.b0)
+            .background(NekkoTheme.colors.background.b1)
             .imePadding()
     ) {
         Scaffold(
@@ -82,7 +79,7 @@ fun PhoneScreen(
                     navigationIcon = { },
                     actions = {
                         Button(
-                            onClick = { viewModel.onAction(PhoneAction.SkipClicked) },
+                            onClick = { viewModel.onAction(EmailVerificationAction.SkipClicked) },
                             colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
                         ) {
                             Text(
@@ -104,7 +101,7 @@ fun PhoneScreen(
                 ) {
                     NekkoButton(
                         text = "Back",
-                        onClick = { viewModel.onAction(PhoneAction.BackClicked) },
+                        onClick = { viewModel.onAction(EmailVerificationAction.BackClicked) },
                         modifier = Modifier.weight(0.2f),
                         leadingIcon = {
                             Icon(
@@ -117,13 +114,12 @@ fun PhoneScreen(
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = "Next",
-                        onClick = { viewModel.onAction(PhoneAction.ContinueClicked) },
+                        onClick = {
+                            if (!state.isVerifying) {
+                                viewModel.onAction(EmailVerificationAction.VerifyClicked)
+                            }
+                        },
                         modifier = Modifier.weight(0.8f),
-                        textStyle = TextStyle(
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = NekkoTheme.typography.heading3Bold.fontFamily,
-                        ),
                     )
                 }
             },
@@ -137,10 +133,21 @@ fun PhoneScreen(
             ) {
                 Spacer(Modifier.height(16.dp))
 
-                PhoneNumberField(
-                    phoneNumber = state.phoneNumber,
-                    onPhoneNumberChange = { viewModel.onAction(PhoneAction.PhoneNumberChanged(it)) },
-                    onDone = { viewModel.onAction(PhoneAction.ContinueClicked) },
+                Text(
+                    text = "Verification code sent\nto $email",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    color = NekkoTheme.colors.text.primary,
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                VerificationCodeField(
+                    code = state.code,
+                    onCodeChange = { viewModel.onAction(EmailVerificationAction.CodeChanged(it)) },
+                    isLoading = state.isVerifying,
+                    onDone = { viewModel.onAction(EmailVerificationAction.Done) },
                 )
 
                 Spacer(Modifier.weight(1f))
@@ -151,10 +158,11 @@ fun PhoneScreen(
 
 @PreviewLightDark
 @Composable
-fun PreviewPhoneScreen() {
+fun PreviewEmailVerificationScreen() {
     NekkoTheme {
-        PhoneScreen(
-            onNavigateToCodeVerification = {},
+        EmailVerificationScreen(
+            email = "user@example.com",
+            onNavigateToNext = {},
             onBack = {},
             onSkip = {},
         )
