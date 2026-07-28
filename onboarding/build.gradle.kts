@@ -58,6 +58,7 @@ kotlin {
             implementation(libs.supabase.auth.kt)
             implementation(libs.supabase.postgrest.kt)
             implementation(libs.supabase.storage.kt)
+            implementation(libs.supabase.compose.auth)
             implementation(libs.ktor.client.core)
         }
         iosMain.dependencies {

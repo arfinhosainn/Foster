@@ -23,7 +23,7 @@ begin
   end if;
 
   -- upsert profile
-  insert into profiles (id, email, email_verified, display_name, contact_name,
+  insert into profiles (id, email, email_verified, display_name, contact_name, avatar_url,
                         selected_avatar_id, onboarding_step, onboarding_completed_at, updated_at)
   values (
     v_user_id,
@@ -31,18 +31,18 @@ begin
     coalesce((payload->>'emailVerified')::boolean, false),
     payload->>'displayName',
     payload->>'contactName',
+    payload->>'avatarUrl',
     payload->>'selectedAvatarId',
-    11,
+    9,
     now(),
     now()
   )
   on conflict (id) do update set
-    email                 = excluded.email,
-    email_verified        = excluded.email_verified,
     display_name          = excluded.display_name,
     contact_name          = excluded.contact_name,
+    avatar_url            = excluded.avatar_url,
     selected_avatar_id    = excluded.selected_avatar_id,
-    onboarding_step       = 11,
+    onboarding_step       = 9,
     onboarding_completed_at = now(),
     updated_at            = now();
 
@@ -93,3 +93,5 @@ begin
     updated_at          = now();
 end;
 $$;
+
+

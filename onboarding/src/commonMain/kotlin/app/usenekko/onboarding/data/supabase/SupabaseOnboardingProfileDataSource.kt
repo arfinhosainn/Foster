@@ -31,8 +31,6 @@ class SupabaseOnboardingProfileDataSource(
                 ?: return Result.Error(OnboardingProfileError.NotAuthenticated)
 
             val payload = CompleteOnboardingPayload(
-                email = draft.email.ifEmpty { null },
-                emailVerified = draft.emailVerified,
                 displayName = draft.name.ifEmpty { null },
                 contactName = draft.contactName.ifEmpty { null },
                 avatarUrl = draft.profilePhotoUri,
@@ -75,10 +73,31 @@ class SupabaseOnboardingProfileDataSource(
                 }
                 .decodeSingle<OnboardingStepResponse>()
 
-            val step = response.onboardingStep?.let { value ->
-                OnboardingStep.entries.firstOrNull { it.index == value }
+            val step = if (response.onboardingCompletedAt != null) {
+                OnboardingStep.Complete
+            } else {
+                response.onboardingStep?.let { value ->
+                    OnboardingStep.entries.firstOrNull { it.index == value }
+                }
             }
             Result.Success(step)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun ensureProfileExists(): EmptyResult<OnboardingProfileError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(OnboardingProfileError.NotAuthenticated)
+
+            val userId = session.user?.id ?: return Result.Error(OnboardingProfileError.NotAuthenticated)
+
+            client.postgrest.from("profiles").upsert(
+                mapOf("id" to userId, "onboarding_step" to OnboardingStep.Name.index)
+            ) { onConflict = "id" }
+
+            Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error(mapError(e))
         }

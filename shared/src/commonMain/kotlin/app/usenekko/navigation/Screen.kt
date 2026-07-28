@@ -8,12 +8,6 @@ sealed class Screen {
     data object Welcome : Screen()
 
     @Serializable
-    data object Email : Screen()
-
-    @Serializable
-    data class EmailVerification(val email: String) : Screen()
-
-    @Serializable
     data object Name : Screen()
 
     @Serializable
@@ -36,4 +30,7 @@ sealed class Screen {
 
     @Serializable
     data object Contact : Screen()
+
+    @Serializable
+    data object Home : Screen()
 }
