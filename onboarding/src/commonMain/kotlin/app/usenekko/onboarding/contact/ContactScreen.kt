@@ -54,6 +54,7 @@ import app.usenekko.onboarding.contact.components.ChooseAvatarBottomSheet
 import app.usenekko.onboarding.contact.components.ProfilePhotoPicker
 import app.usenekko.onboarding.contact.components.ProfilePhotoPreview
 import app.usenekko.onboarding.presentation.rememberContactViewModel
+import app.usenekko.onboarding.contact.rememberContactPermissionLauncher
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
@@ -73,12 +74,31 @@ fun ContactScreen(
     var photoBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var isPreviewVisible by remember { mutableStateOf(false) }
 
+    var importContactName by remember { mutableStateOf<String?>(null) }
+
+    val requestPermission = rememberContactPermissionLauncher(
+        onGranted = {
+            importContactName?.let { name ->
+                viewModel.onAction(ContactAction.ContactNameChanged(name))
+            }
+        },
+        onDenied = { }
+    )
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 ContactEvent.NavigateToNext -> onNavigateToNext()
                 ContactEvent.NavigateBack -> onBack()
                 ContactEvent.NavigateSkip -> onSkip()
+                ContactEvent.RequestContactPermission -> {
+                    importContactName = "Imported Contact"
+                    requestPermission()
+                }
+                is ContactEvent.ContactImported -> {
+                    viewModel.onAction(ContactAction.ContactNameChanged(event.name))
+                }
+                ContactEvent.ContactPermissionDenied -> { }
             }
         }
     }
