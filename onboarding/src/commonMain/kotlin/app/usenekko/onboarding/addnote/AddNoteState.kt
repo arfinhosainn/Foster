@@ -5,6 +5,7 @@ data class AddNoteState(
     val isBottomSheetVisible: Boolean = false,
     val draftTitle: String = "",
     val draftDescription: String = "",
+    val isSubmitting: Boolean = false,
 )
 
 data class NoteItem(

@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.NotificationManagerCompat
 
 @Composable
 actual fun rememberNotificationPermissionLauncher(
@@ -20,6 +21,15 @@ actual fun rememberNotificationPermissionLauncher(
     ) { granted ->
         if (granted) onGranted() else onDenied()
     }
+    val settingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+            onGranted()
+        } else {
+            onDenied()
+        }
+    }
     return {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -27,8 +37,7 @@ actual fun rememberNotificationPermissionLauncher(
             val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                 putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             }
-            context.startActivity(intent)
-            onGranted()
+            settingsLauncher.launch(intent)
         }
     }
 }

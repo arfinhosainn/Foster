@@ -25,12 +25,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,10 +63,12 @@ fun AddNoteScreen(
     onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit,
+    onComplete: () -> Unit = onNavigateToNext,
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberAddNoteViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -71,6 +76,8 @@ fun AddNoteScreen(
                 AddNoteEvent.NavigateToNext -> onNavigateToNext()
                 AddNoteEvent.NavigateBack -> onBack()
                 AddNoteEvent.NavigateSkip -> onSkip()
+                AddNoteEvent.NavigateToHome -> onComplete()
+                is AddNoteEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
             }
         }
     }
@@ -81,6 +88,7 @@ fun AddNoteScreen(
         onNavigateToNext = { viewModel.onNavigateToNext() },
         onBack = { viewModel.onBack() },
         onSkip = { viewModel.onSkip() },
+        snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
 }
@@ -92,6 +100,7 @@ private fun AddNoteScreenContent(
     onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -106,6 +115,7 @@ private fun AddNoteScreenContent(
         val blurModifier = if (state.isBottomSheetVisible) Modifier.blur(20.dp) else Modifier
 
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             modifier = Modifier
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .then(blurModifier),
@@ -161,6 +171,7 @@ private fun AddNoteScreenContent(
                         text = "Next",
                         onClick = onNavigateToNext,
                         modifier = Modifier.weight(0.8f),
+                        loading = state.isSubmitting,
                     )
                 }
             },
@@ -268,6 +279,7 @@ fun PreviewAddNoteScreen() {
             onNavigateToNext = {},
             onBack = {},
             onSkip = {},
+            onComplete = {},
         )
     }
 }

@@ -30,3 +30,4 @@ dependencyResolutionManagement {
 include(":androidApp")
 include(":shared")
 include(":onboarding")
+include(":home")
