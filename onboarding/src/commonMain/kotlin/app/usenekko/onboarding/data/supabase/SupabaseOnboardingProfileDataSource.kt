@@ -17,6 +17,7 @@ import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 
 private val payloadJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -35,6 +36,8 @@ class SupabaseOnboardingProfileDataSource(
                 contactName = draft.contactName.ifEmpty { null },
                 avatarUrl = draft.profilePhotoUri,
                 selectedAvatarId = draft.selectedAvatarId,
+                email = session.user?.email,
+                emailVerified = session.user?.emailConfirmedAt != null,
                 groups = draft.groups.map { GroupDto(name = it.name, color = it.color) },
                 reminderFrequency = draft.reminderFrequency?.name,
                 reminderHour = draft.reminderTime?.hour,
@@ -53,7 +56,12 @@ class SupabaseOnboardingProfileDataSource(
             )
 
             val jsonElement = payloadJson.encodeToJsonElement(payload)
-            client.postgrest.rpc("complete_onboarding", jsonElement as JsonObject)
+
+            val rpcParams = buildJsonObject {
+                put("payload", jsonElement)
+            }
+
+            client.postgrest.rpc("complete_onboarding", rpcParams)
 
             Result.Success(Unit)
         } catch (e: Exception) {
@@ -129,7 +137,7 @@ class SupabaseOnboardingProfileDataSource(
             e.message?.contains("JWT", ignoreCase = true) == true -> OnboardingProfileError.NotAuthenticated
             e.message?.contains("network", ignoreCase = true) == true -> OnboardingProfileError.Network
             e.message?.contains("timeout", ignoreCase = true) == true -> OnboardingProfileError.Network
-            else -> OnboardingProfileError.Unknown
+            else -> OnboardingProfileError.Unknown(detail = e.message)
         }
     }
 }

@@ -3,7 +3,11 @@ package app.usenekko.onboarding.addnote
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.usenekko.onboarding.domain.NoteDraft
+import app.usenekko.onboarding.domain.OnboardingDraft
+import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
+import app.usenekko.onboarding.domain.Result
+import app.usenekko.onboarding.domain.toUserMessage
 import app.usenekko.onboarding.presentation.OnboardingDraftStore
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +21,7 @@ import kotlin.time.Clock
 
 class AddNoteViewModel(
     private val draftStore: OnboardingDraftStore,
+    private val profileDataSource: OnboardingProfileDataSource,
 ) : ViewModel() {
     private val _state = MutableStateFlow(
         AddNoteState(notes = draftStore.draft.value.notes.map { it.toNoteItem() })
@@ -78,13 +83,40 @@ class AddNoteViewModel(
     }
 
     fun onNavigateToNext() {
-        draftStore.update { it.copy(currentStep = OnboardingStep.Notification) }
-        viewModelScope.launch { _events.send(AddNoteEvent.NavigateToNext) }
+        draftStore.update {
+            it.copy(currentStep = OnboardingStep.Complete)
+        }
+        val completedDraft = draftStore.draft.value.copy(
+            currentStep = OnboardingStep.Complete,
+        )
+        submitOnboarding(completedDraft)
     }
 
     fun onSkip() {
-        draftStore.update { it.copy(currentStep = OnboardingStep.Notification) }
-        viewModelScope.launch { _events.send(AddNoteEvent.NavigateSkip) }
+        draftStore.update {
+            it.copy(currentStep = OnboardingStep.Complete)
+        }
+        val completedDraft = draftStore.draft.value.copy(
+            currentStep = OnboardingStep.Complete,
+        )
+        submitOnboarding(completedDraft)
+    }
+
+    private fun submitOnboarding(draft: OnboardingDraft) {
+        viewModelScope.launch {
+            _state.update { it.copy(isSubmitting = true) }
+            when (val result = profileDataSource.submitOnboarding(draft)) {
+                is Result.Success -> {
+                    draftStore.clear()
+                    _events.send(AddNoteEvent.NavigateToHome)
+                    _state.update { it.copy(isSubmitting = false) }
+                }
+                is Result.Error -> {
+                    _events.send(AddNoteEvent.ShowError(result.error.toUserMessage()))
+                    _state.update { it.copy(isSubmitting = false) }
+                }
+            }
+        }
     }
 
     fun onBack() {

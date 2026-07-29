@@ -1,12 +1,7 @@
 package app.usenekko.onboarding
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import app.usenekko.App
 import app.usenekko.navigation.Navigator
 import app.usenekko.navigation.Screen
@@ -23,6 +18,7 @@ import app.usenekko.onboarding.presentation.OnboardingDraftStoreProvider
 import io.github.jan.supabase.auth.auth
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
+import app.usenekko.home.HomeScreen
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.onboarding.domain.Result
 
@@ -93,6 +89,7 @@ fun OnboardingApp(navigator: Navigator) {
                     onNavigateToNext = { navigator.navigate(Screen.Notification) },
                     onBack = { navigator.goBack() },
                     onSkip = { navigator.navigate(Screen.Notification) },
+                    onComplete = { navigator.replaceAll(Screen.Home) },
                 )
 
                 is Screen.Notification -> NotificationScreen(
@@ -100,7 +97,7 @@ fun OnboardingApp(navigator: Navigator) {
                     onBack = { navigator.goBack() },
                 )
 
-                is Screen.Home -> HomePlaceholder()
+                is Screen.Home -> HomeScreen()
             }
         }
     }
@@ -122,12 +119,4 @@ private fun OnboardingStep?.toScreen(): Screen {
     }
 }
 
-@Composable
-private fun HomePlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text("Home")
-    }
-}
+

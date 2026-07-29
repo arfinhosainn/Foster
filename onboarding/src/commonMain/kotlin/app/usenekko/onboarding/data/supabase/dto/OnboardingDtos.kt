@@ -9,6 +9,8 @@ data class CompleteOnboardingPayload(
     val contactName: String? = null,
     val avatarUrl: String? = null,
     val selectedAvatarId: String? = null,
+    val email: String? = null,
+    val emailVerified: Boolean = false,
     val groups: List<GroupDto> = emptyList(),
     val reminderFrequency: String? = null,
     val reminderHour: Int? = null,
@@ -17,8 +19,6 @@ data class CompleteOnboardingPayload(
     val notes: List<NoteDto> = emptyList(),
     val notificationPermissionAsked: Boolean = false,
     val notificationPermissionGranted: Boolean = false,
-    val photoBytes: List<Byte>? = null,
-    val photoExtension: String? = null,
 )
 
 @Serializable
