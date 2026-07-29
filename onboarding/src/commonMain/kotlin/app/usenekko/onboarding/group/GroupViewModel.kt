@@ -34,13 +34,16 @@ class GroupViewModel(
     }
 
     fun onSaveGroup(name: String) {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return
+
         val group = GroupDraft(
             id = "group_${Random.nextLong()}",
-            name = name,
+            name = trimmed,
         )
         draftStore.update {
             it.copy(
-                groups = listOf(group),
+                groups = it.groups + group,
                 currentStep = OnboardingStep.Group,
             )
         }

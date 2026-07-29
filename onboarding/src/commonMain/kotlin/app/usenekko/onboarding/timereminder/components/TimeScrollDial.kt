@@ -1,8 +1,8 @@
 package app.usenekko.onboarding.timereminder.components
 
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -32,159 +33,124 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
-/**
- * Total minutes represented on the dial: 12 hours × 60 minutes = 720 ticks.
- * Each tick = 1 minute. A "page" in the lazy row = 1 minute.
- */
-private const val TOTAL_MINUTES = 12 * 60   // 720
+private const val TOTAL_MINUTES = 12 * 60
+private const val WRAP_COUNT = 3
 
-/**
- * How many extra copies we pad on each side so the user can scroll "infinitely"
- * in either direction without hitting an edge.
- */
-private const val WRAP_COUNT = 3            // 3 × 720 = 2160 items on each side
-
-/** Width of each minute slot in the lazy row. */
 private val TICK_SLOT_WIDTH = 6.dp
-
-/** Visible tick area height. */
 private val DIAL_HEIGHT = 120.dp
 
-/**
- * A horizontal scrolling ruler / dial that lets the user pick a time with
- * 1-minute precision by scrolling.  The ruler has:
- *
- * - Tall ticks every 15 minutes with a time label above.
- * - Medium ticks every 5 minutes.
- * - Short ticks every 1 minute.
- * - A 3D "barrel" perspective effect — ticks shrink and fade near the edges.
- * - A glowing green center-line indicator.
- * - The currently selected time displayed large above the ruler.
- *
- * @param totalMinutes  Current value expressed as minutes since 12:00 (0–719).
- * @param onValueChange Called with the new total-minutes value when the user scrolls.
- */
 @Composable
 fun TimeScrollDial(
     totalMinutes: Int,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
-
-    // ── Lazy-row state ──────────────────────────────────────────────────
-    // We center the logical range by placing `WRAP_COUNT` full copies before
-    // the "canonical" copy.  The initial item is therefore:
-    //   WRAP_COUNT * TOTAL_MINUTES + totalMinutes
+    val safeInitialMinute = totalMinutes.coerceIn(0, TOTAL_MINUTES - 1)
     val centerOffset = WRAP_COUNT * TOTAL_MINUTES
-    val initialItem = centerOffset + totalMinutes
 
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialItem)
+    // This state is created only once.
+    // Do not recreate it every time totalMinutes changes.
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = centerOffset + safeInitialMinute,
+    )
 
-    // ── Snap behaviour ──────────────────────────────────────────────────
     val snapBehavior = rememberSnapFlingBehavior(
         lazyListState = listState,
         snapPosition = SnapPosition.Center,
     )
 
-    // ── Derive selected minute from scroll position ─────────────────────
     val selectedMinute by remember {
         derivedStateOf {
-            val info = listState.layoutInfo
-            val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2f
-            val closest = info.visibleItemsInfo.minByOrNull {
-                abs((it.offset + it.size / 2f) - viewportCenter)
+            val layoutInfo = listState.layoutInfo
+            val viewportCenter =
+                (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2f
+
+            val centeredItem = layoutInfo.visibleItemsInfo.minByOrNull { item ->
+                abs((item.offset + item.size / 2f) - viewportCenter)
             }
-            if (closest != null) {
-                ((closest.index % TOTAL_MINUTES) + TOTAL_MINUTES) % TOTAL_MINUTES
-            } else {
-                totalMinutes
-            }
+
+            centeredItem?.index
+                ?.mod(TOTAL_MINUTES)
+                ?.coerceIn(0, TOTAL_MINUTES - 1)
+                ?: safeInitialMinute
         }
     }
 
-    // Emit changes back to the parent.
+    /*
+     * This is the only direction of synchronization:
+     *
+     * LazyRow scroll -> selectedMinute -> ViewModel.
+     *
+     * There is intentionally no LaunchedEffect(totalMinutes) that scrolls
+     * the list back. That effect caused the automatic movement loop.
+     */
     LaunchedEffect(Unit) {
         snapshotFlow { selectedMinute }
             .distinctUntilChanged()
-            .collect { onValueChange(it) }
+            .collect { minute ->
+                onValueChange(minute)
+            }
     }
 
-    // Scroll to the requested value when it changes externally.
-    LaunchedEffect(totalMinutes) {
-        val current = ((listState.firstVisibleItemIndex % TOTAL_MINUTES) + TOTAL_MINUTES) % TOTAL_MINUTES
-        if (current != totalMinutes) {
-            val target = centerOffset + totalMinutes
-            listState.scrollToItem(target)
-        }
-    }
-
-    // ── Formatted strings ───────────────────────────────────────────────
-    val hour = if (selectedMinute / 60 == 0) 12 else selectedMinute / 60
+    val hour = selectedMinute / 60
+    val displayHour = if (hour == 0) 12 else hour
     val minute = selectedMinute % 60
-    val selectedTimeText = "${hour}:${minute.toString().padStart(2, '0')}"
 
-    // Adjacent labels (±15 min)
-    val leftMinute = ((selectedMinute - 15) + TOTAL_MINUTES) % TOTAL_MINUTES
-    val rightMinute = (selectedMinute + 15) % TOTAL_MINUTES
-    val leftHour = if (leftMinute / 60 == 0) 12 else leftMinute / 60
-    val rightHour = if (rightMinute / 60 == 0) 12 else rightMinute / 60
-    val leftTimeText = "${leftHour}:${(leftMinute % 60).toString().padStart(2, '0')}"
-    val rightTimeText = "${rightHour}:${(rightMinute % 60).toString().padStart(2, '0')}"
+    val selectedTimeText =
+        "$displayHour:${minute.toString().padStart(2, '0')}"
 
-    // ── Colors ──────────────────────────────────────────────────────────
+    val leftMinute = (selectedMinute - 15).mod(TOTAL_MINUTES)
+    val rightMinute = (selectedMinute + 15).mod(TOTAL_MINUTES)
+
+    val leftHour = leftMinute / 60
+    val rightHour = rightMinute / 60
+
+    val leftTimeText =
+        "${if (leftHour == 0) 12 else leftHour}:${(leftMinute % 60).toString().padStart(2, '0')}"
+
+    val rightTimeText =
+        "${if (rightHour == 0) 12 else rightHour}:${(rightMinute % 60).toString().padStart(2, '0')}"
+
     val tickColor = NekkoTheme.colors.text.quaternary
     val labelColor = NekkoTheme.colors.text.tertiary
     val selectedColor = NekkoTheme.colors.text.primary
     val surfaceColor = NekkoTheme.colors.fill.secondary
-    val backgroundColor = NekkoTheme.colors.background.b0
 
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // ── Container with rounded corners ──────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 30.dp)
                 .clip(RoundedCornerShape(24.dp))
                 .drawWithContent {
-                    // Draw semi-transparent background
                     drawRect(surfaceColor)
                     drawContent()
                 },
             contentAlignment = Alignment.Center,
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // ── Selected time display ───────────────────────────────
                 Text(
                     text = selectedTimeText,
                     fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
                     color = selectedColor,
-                    textAlign = TextAlign.Center,
                 )
 
                 Spacer(Modifier.height(2.dp))
 
-                // ── Adjacent time labels ────────────────────────────────
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -193,14 +159,13 @@ fun TimeScrollDial(
                     Text(
                         text = leftTimeText,
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
                         color = labelColor,
                         modifier = Modifier.align(Alignment.CenterStart),
                     )
+
                     Text(
                         text = rightTimeText,
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
                         color = labelColor,
                         modifier = Modifier.align(Alignment.CenterEnd),
                     )
@@ -208,14 +173,12 @@ fun TimeScrollDial(
 
                 Spacer(Modifier.height(8.dp))
 
-                // ── Tick ruler ───────────────────────────────────────────
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(DIAL_HEIGHT),
                     contentAlignment = Alignment.Center,
                 ) {
-                    // The scrollable tick row
                     TickRulerRow(
                         listState = listState,
                         snapBehavior = snapBehavior,
@@ -223,13 +186,11 @@ fun TimeScrollDial(
                         dialHeight = DIAL_HEIGHT,
                     )
 
-                    // Edge fade overlays
                     Canvas(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(DIAL_HEIGHT)
+                            .height(DIAL_HEIGHT),
                     ) {
-                        // Left fade
                         drawRect(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
@@ -240,7 +201,7 @@ fun TimeScrollDial(
                                 endX = size.width * 0.18f,
                             ),
                         )
-                        // Right fade
+
                         drawRect(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
@@ -253,15 +214,14 @@ fun TimeScrollDial(
                         )
                     }
 
-                    // ── Center indicator line with green glow ───────────
                     Canvas(
                         modifier = Modifier
                             .width(3.dp)
                             .height(DIAL_HEIGHT)
-                            .align(Alignment.Center)
+                            .align(Alignment.Center),
                     ) {
                         val centerX = size.width / 2f
-                        // Glow
+
                         drawLine(
                             color = Color(0xFF4ADE80).copy(alpha = 0.35f),
                             start = Offset(centerX, 0f),
@@ -269,7 +229,7 @@ fun TimeScrollDial(
                             strokeWidth = 12f,
                             cap = StrokeCap.Round,
                         )
-                        // Core line
+
                         drawLine(
                             color = Color(0xFF4ADE80),
                             start = Offset(centerX, 0f),
@@ -284,21 +244,15 @@ fun TimeScrollDial(
     }
 }
 
-/**
- * The actual horizontally-scrollable row of tick marks.
- *
- * Ticks fade toward the edges via alpha for a subtle depth cue, but
- * the ruler itself is flat / straight with no barrel curvature.
- */
 @Composable
 private fun TickRulerRow(
     listState: LazyListState,
-    snapBehavior: androidx.compose.foundation.gestures.FlingBehavior,
+    snapBehavior: FlingBehavior,
     tickColor: Color,
     dialHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
+    val totalItems = (WRAP_COUNT * 2 + 1) * TOTAL_MINUTES
 
     LazyRow(
         state = listState,
@@ -309,65 +263,62 @@ private fun TickRulerRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        val totalItems = (2 * WRAP_COUNT + 1) * TOTAL_MINUTES
-
         items(totalItems) { index ->
-            val minuteValue = ((index % TOTAL_MINUTES) + TOTAL_MINUTES) % TOTAL_MINUTES
+            val minuteValue = index.mod(TOTAL_MINUTES)
 
-            // ── Tick geometry ───────────────────────────────────────────
             val isQuarterHour = minuteValue % 15 == 0
-            val isFiveMin = minuteValue % 5 == 0
+            val isFiveMinutes = minuteValue % 5 == 0
 
             val tickHeightFraction = when {
                 isQuarterHour -> 0.82f
-                isFiveMin -> 0.52f
+                isFiveMinutes -> 0.52f
                 else -> 0.32f
             }
 
             val tickWidth = when {
                 isQuarterHour -> 2.dp
-                isFiveMin -> 1.5.dp
+                isFiveMinutes -> 1.5.dp
                 else -> 1.dp
             }
 
-            // ── Distance from viewport center (0 = center, 1 = edge) ───
-            val info = listState.layoutInfo
+            val layoutInfo = listState.layoutInfo
             val viewportCenter =
-                (info.viewportStartOffset + info.viewportEndOffset) / 2f
+                (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2f
+
             val visibleItem =
-                info.visibleItemsInfo.firstOrNull { it.index == index }
+                layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
 
             val distanceFraction = if (visibleItem != null) {
                 val itemCenter = visibleItem.offset + visibleItem.size / 2f
                 val viewportHalf =
-                    (info.viewportEndOffset - info.viewportStartOffset) / 2f
-                (abs(itemCenter - viewportCenter) / viewportHalf).coerceIn(0f, 1f)
+                    (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset) / 2f
+
+                (abs(itemCenter - viewportCenter) / viewportHalf)
+                    .coerceIn(0f, 1f)
             } else {
                 1f
             }
 
-
-            // ── Flat dial transforms ─────────────────────────────────────
-            // Alpha: fade toward edges for depth.
-            val alphaValue = (1f - distanceFraction * 0.65f).coerceIn(0.08f, 1f)
+            val alpha = (1f - distanceFraction * 0.65f)
+                .coerceIn(0.08f, 1f)
 
             Box(
                 modifier = Modifier
                     .width(TICK_SLOT_WIDTH)
                     .height(dialHeight)
                     .graphicsLayer {
-                        alpha = alphaValue
+                        this.alpha = alpha
                     },
                 contentAlignment = Alignment.BottomCenter,
             ) {
                 Canvas(
                     modifier = Modifier
                         .width(tickWidth)
-                        .height(dialHeight * tickHeightFraction)
+                        .height(dialHeight * tickHeightFraction),
                 ) {
                     val lineColor = when {
                         isQuarterHour -> tickColor.copy(alpha = 0.8f)
-                        isFiveMin -> tickColor.copy(alpha = 0.5f)
+                        isFiveMinutes -> tickColor.copy(alpha = 0.5f)
                         else -> tickColor.copy(alpha = 0.3f)
                     }
 
@@ -383,4 +334,3 @@ private fun TickRulerRow(
         }
     }
 }
-

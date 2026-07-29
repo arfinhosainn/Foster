@@ -127,10 +127,14 @@ private fun TimeReminderScreenContent(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 FilledIconButton(
-                    modifier = modifier.weight(0.23f).size(58.dp),
+                    modifier = Modifier
+                        .weight(0.23f)
+                        .size(58.dp),
                     onClick = onBack,
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
-                ) {
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = NekkoTheme.colors.fill.tertiary,
+                    ),
+                ){
                     Image(
                         imageVector = vectorResource(Res.drawable.ic_back),
                         contentDescription = "BACK"
