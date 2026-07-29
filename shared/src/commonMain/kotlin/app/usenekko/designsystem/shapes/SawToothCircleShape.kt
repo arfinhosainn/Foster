@@ -36,7 +36,7 @@ import kotlin.math.sin
  *                    0.5f means teeth and gaps are equally wide.
  */
 class SawToothCircleShape(
-    private val teethCount: Int = 30,
+    private val teethCount: Int = 40,
     private val toothDepth: Float = 0.02f,
     private val toothWidth: Float = 0.5f,
 ) : Shape {
