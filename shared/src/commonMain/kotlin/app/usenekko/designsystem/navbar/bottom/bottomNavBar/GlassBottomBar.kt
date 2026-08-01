@@ -72,7 +72,7 @@ fun GlassBottomNavBar(
     onAddClick: () -> Unit,
     liquidState: LiquidState,          // ← passed in, not remembered here
     modifier: Modifier = Modifier,
-)  {
+) {
     Row(
         modifier
             .fillMaxWidth()
@@ -109,7 +109,7 @@ private fun NavPill(
     val cellWidth = CellWidth.dp
     val innerPadding = PillInnerPadding.dp
 
-    val glassTint = if (isSystemInDarkTheme()) Color.Black.copy(alpha = 0.55f)
+    val glassTint = if (isSystemInDarkTheme()) NekkoTheme.colors.fill.secondary
     else Color.White.copy(alpha = 0.45f)
 
     Box(
@@ -175,10 +175,10 @@ private fun NavCell(
 
     val iconTint by animateColorAsState(
         targetValue = when {
-            dark && selected  -> NekkoTheme.colors.text.primary
-            dark              -> NekkoTheme.colors.gray.secondary
-            selected          -> NekkoTheme.colors.gray.secondary
-            else              -> Color.Black
+            dark && selected -> NekkoTheme.colors.text.primary
+            dark -> NekkoTheme.colors.gray.secondary
+            selected -> NekkoTheme.colors.gray.secondary
+            else -> Color.Black
         },
         animationSpec = tween(240),
         label = "iconTint",
@@ -227,7 +227,7 @@ private fun CircleActionButton(
         animationSpec = spring(dampingRatio = 0.55f, stiffness = 800f),
         label = "squeeze",
     )
-    val glassTint = if (isSystemInDarkTheme()) Color.Black.copy(alpha = 0.55f)
+    val glassTint = if (isSystemInDarkTheme()) NekkoTheme.colors.fill.secondary
     else Color.White.copy(alpha = 0.45f)
 
 
@@ -252,7 +252,7 @@ private fun CircleActionButton(
                 refraction = 0.18f     // subtle, this look is soft not lensy
                 curve = 0.30f
                 edge = 0.06f           // that faint light rim on the top-left
-                tint =  glassTint // dark glass, not white
+                tint = glassTint // dark glass, not white
                 saturation = 1.15f
                 dispersion = 0f        // no rainbow fringe in your ref
             },
@@ -271,7 +271,7 @@ private fun CircleActionButton(
 fun AmbientGlow(liquidState: LiquidState, modifier: Modifier = Modifier) = Box(
     modifier
         .fillMaxSize()
-        .background(NekkoTheme.colors.background.b0)
+        .background(NekkoTheme.colors.fill.secondary)
         .liquefiable(liquidState),
 ) {
 
@@ -283,7 +283,8 @@ private fun PreviewGlassBottomBar() = NekkoTheme {
     Box(Modifier.fillMaxSize()) {
         val liquidState = rememberLiquidState()
         AmbientGlow(liquidState)              // SOURCE, sibling
-        GlassBottomNavBar(                    // EFFECT, sibling
+        GlassBottomNavBar(
+            // EFFECT, sibling
             selectedIndex = 1,
             onItemSelected = {},
             onAddClick = {},
