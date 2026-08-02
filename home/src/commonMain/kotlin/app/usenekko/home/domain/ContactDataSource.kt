@@ -10,6 +10,15 @@ interface ContactDataSource {
         checkInFrequency: String,
         reminderTime: String?,
     ): Result<Contact, ContactError>
+    suspend fun getGroups(): Result<List<Group>, ContactError>
+    suspend fun createGroup(
+        name: String,
+        color: String?,
+    ): Result<Group, ContactError>
+    suspend fun assignContactToGroup(
+        contactId: String,
+        groupId: String,
+    ): Result<Unit, ContactError>
 }
 
 sealed interface ContactError {

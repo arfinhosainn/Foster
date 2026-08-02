@@ -1,6 +1,7 @@
 package app.usenekko.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,8 @@ import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
 import app.usenekko.designsystem.navbar.top.NekkoTopBar
 import app.usenekko.designsystem.shapes.SawToothCircleShape
+import app.usenekko.home.addcontact.AddContactScreen
+import app.usenekko.home.di.rememberAddContactViewModel
 import app.usenekko.home.di.rememberHomeViewModel
 import app.usenekko.home.presentation.components.CheckInTimelineGridSample
 import app.usenekko.home.presentation.components.StatusSummaryCard
@@ -54,6 +57,8 @@ fun HomeScreen(
 
     val viewModel = rememberHomeViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    var showAddContact by remember { mutableStateOf(false) }
 
     val options = listOf(
         AudienceOption("Everyone", nekko.home.generated.resources.Res.drawable.ic_group),
@@ -91,7 +96,7 @@ fun HomeScreen(
                 // EFFECT, sibling
                 selectedIndex = 1,
                 onItemSelected = {},
-                onAddClick = {},
+                onAddClick = { showAddContact = true },
                 liquidState = liquidState,
             )
 
@@ -117,41 +122,60 @@ fun HomeScreen(
 
                 Spacer(Modifier.height(70.dp))
 
-//                Box(
-//                    modifier = Modifier
-//                        .size(200.dp)
-//                        .clip(SawToothCircleShape())
-//                        .background(NekkoTheme.colors.background.b2),
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Add,
-//                        contentDescription = null,
-//                        tint = NekkoTheme.colors.text.tertiary,
-//                        modifier = Modifier.size(50.dp)
-//                    )
-//                }
-//                Spacer(Modifier.height(30.dp))
-//
-//                Text(
-//                    "Get started",
-//                    color = NekkoTheme.colors.text.primary,
-//                    fontSize = 24.sp,
-//                    fontWeight = FontWeight.Medium
-//                )
-//                Spacer(Modifier.height(10.dp))
-//                Text(
-//                    "Import from your contact",
-//                    color = NekkoTheme.colors.text.tertiary,
-//                    fontSize = 16.sp,
-//                    fontWeight = FontWeight.Medium
-//                )
-                CheckInTimelineGridSample()
+                if (state.outstandingCount == 0 && state.upToDateCount == 0 && !state.isLoading) {
+                    Column(
+                        modifier = Modifier.clickable { showAddContact = true },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(200.dp)
+                                .clip(SawToothCircleShape())
+                                .background(NekkoTheme.colors.background.b2),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = NekkoTheme.colors.text.tertiary,
+                                modifier = Modifier.size(50.dp)
+                            )
+                        }
+                        Spacer(Modifier.height(30.dp))
+
+                        Text(
+                            "Get started",
+                            color = NekkoTheme.colors.text.primary,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "Import from your contact",
+                            color = NekkoTheme.colors.text.tertiary,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    CheckInTimelineGridSample()
+                }
             }
 
         }
     }
 
+    if (showAddContact) {
+        val addContactViewModel = rememberAddContactViewModel()
+        AddContactScreen(
+            viewModel = addContactViewModel,
+            onDismiss = { showAddContact = false },
+            onSaved = {
+                showAddContact = false
+                viewModel.loadContacts()
+            },
+        )
+    }
 
 }
 
