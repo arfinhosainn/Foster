@@ -1,12 +1,9 @@
 package app.usenekko.home
 
 import app.usenekko.home.domain.Contact
-import app.usenekko.home.domain.ContactDataSource
-import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.presentation.HomeViewModel
-import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -116,34 +113,5 @@ class HomeViewModelGroupFilterTest {
             Dispatchers.resetMain()
         }
     }
-
-    private class FakeContactDataSource(
-        private val contacts: List<Contact>,
-        private val groups: List<Group>,
-        private val memberships: List<GroupMembership>,
-    ) : ContactDataSource {
-        override suspend fun getContacts(): Result<List<Contact>, ContactError> = Result.Success(contacts)
-
-        override suspend fun createContact(
-            name: String,
-            avatarColor: String?,
-            checkInFrequency: String,
-            reminderTime: String?,
-        ): Result<Contact, ContactError> = Result.Error(ContactError.Unknown("not used"))
-
-        override suspend fun getGroups(): Result<List<Group>, ContactError> = Result.Success(groups)
-
-        override suspend fun getGroupMemberships(): Result<List<GroupMembership>, ContactError> =
-            Result.Success(memberships)
-
-        override suspend fun createGroup(
-            name: String,
-            color: String?,
-        ): Result<Group, ContactError> = Result.Error(ContactError.Unknown("not used"))
-
-        override suspend fun assignContactToGroup(
-            contactId: String,
-            groupId: String,
-        ): Result<Unit, ContactError> = Result.Error(ContactError.Unknown("not used"))
-    }
 }
+

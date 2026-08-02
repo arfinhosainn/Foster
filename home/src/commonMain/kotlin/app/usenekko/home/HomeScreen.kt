@@ -5,13 +5,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -36,10 +44,22 @@ import app.usenekko.designsystem.shapes.SawToothCircleShape
 import app.usenekko.home.addcontact.AddContactScreen
 import app.usenekko.home.di.rememberAddContactViewModel
 import app.usenekko.home.di.rememberHomeViewModel
-import app.usenekko.home.presentation.components.CheckInTimelineGridSample
+import app.usenekko.home.domain.CheckIn
+import app.usenekko.home.domain.Contact
+import app.usenekko.home.domain.isOutstanding
+import app.usenekko.home.domain.nextCheckInDateLocal
+import app.usenekko.home.presentation.components.CheckInTimelineGrid
 import app.usenekko.home.presentation.components.StatusSummaryCard
+import app.usenekko.home.presentation.components.TimelineEvent
+import app.usenekko.home.presentation.components.rememberTimelineSlots
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_acquaintance
 import nekko.home.generated.resources.ic_family
@@ -128,7 +148,8 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 24.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
@@ -180,7 +201,13 @@ fun HomeScreen(
                         )
                     }
                 } else {
-                    CheckInTimelineGridSample()
+                    CheckInSection(
+                        checkIns = state.checkIns,
+                        contacts = state.contacts,
+                        outstandingCount = state.outstandingCount,
+                        checkingInContactId = state.checkingInContactId,
+                        onCheckIn = viewModel::checkIn,
+                    )
                 }
             }
 
@@ -201,6 +228,157 @@ fun HomeScreen(
 
 }
 
+
+@Composable
+private fun CheckInSection(
+    checkIns: List<CheckIn>,
+    contacts: List<Contact>,
+    outstandingCount: Int,
+    checkingInContactId: String?,
+    onCheckIn: (String) -> Unit,
+) {
+    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
+    val events = remember(checkIns, outstandingCount, today) {
+        buildCheckInEvents(checkIns, outstandingCount, today)
+    }
+
+    Column {
+        Text(
+            "Check In",
+            style = NekkoTheme.typography.heading2,
+            color = NekkoTheme.colors.text.primary,
+            fontWeight = FontWeight.Medium,
+        )
+        Spacer(Modifier.height(5.dp))
+        Text(
+            text = when {
+                outstandingCount == 0 -> "You're all caught up"
+                outstandingCount == 1 -> "1 contact waiting for check in"
+                else -> "$outstandingCount contacts waiting for check in"
+            },
+            color = NekkoTheme.colors.text.tertiary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+        )
+        CheckInTimelineGrid(
+            slots = rememberTimelineSlots(today = today, events = events),
+            animatePulse = true,
+            modifier = Modifier.padding(top = 24.dp),
+        )
+        Spacer(Modifier.height(32.dp))
+        Text(
+            "Contacts",
+            style = NekkoTheme.typography.heading2,
+            color = NekkoTheme.colors.text.primary,
+            fontWeight = FontWeight.Medium,
+        )
+        Spacer(Modifier.height(8.dp))
+        if (contacts.isEmpty()) {
+            Text(
+                "No contacts in this audience",
+                color = NekkoTheme.colors.text.tertiary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        } else {
+            contacts.forEach { contact ->
+                ContactCheckInRow(
+                    contact = contact,
+                    today = today,
+                    checkingInContactId = checkingInContactId,
+                    onCheckIn = onCheckIn,
+                )
+            }
+        }
+    }
+}
+
+private fun buildCheckInEvents(
+    checkIns: List<CheckIn>,
+    outstandingCount: Int,
+    today: LocalDate,
+): List<TimelineEvent> {
+    val byDate = checkIns
+        .mapNotNull { row -> runCatching { Instant.parse(row.checkedInAt) }.getOrNull() }
+        .map { instant -> instant.toLocalDateTime(TimeZone.currentSystemDefault()).date }
+        .groupingBy { it }
+        .eachCount()
+        .map { (date, count) -> TimelineEvent(date = date, checkedIn = true, avatarCount = count) }
+    return if (outstandingCount > 0) {
+        byDate + TimelineEvent(date = today, checkedIn = false, avatarCount = outstandingCount)
+    } else {
+        byDate
+    }
+}
+
+@Composable
+private fun ContactCheckInRow(
+    contact: Contact,
+    today: LocalDate,
+    checkingInContactId: String?,
+    onCheckIn: (String) -> Unit,
+) {
+    val outstanding = contact.isOutstanding(today)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(
+                    contact.avatarColor
+                        ?.let { rememberColorFromHex(it) }
+                        ?: NekkoTheme.colors.fill.secondary
+                ),
+        )
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                contact.name,
+                color = NekkoTheme.colors.text.primary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                contactStatusText(contact, today),
+                color = NekkoTheme.colors.text.tertiary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        if (outstanding) {
+            Spacer(Modifier.width(12.dp))
+            Button(
+                onClick = { onCheckIn(contact.id) },
+                enabled = checkingInContactId == null,
+            ) {
+                Text(
+                    if (checkingInContactId == contact.id) "Checking..." else "Check In",
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+private fun contactStatusText(contact: Contact, today: LocalDate): String {
+    val next = contact.nextCheckInDateLocal()
+    return when {
+        next == null -> "Not scheduled"
+        next <= today -> "Outstanding"
+        else -> "Next: $next"
+    }
+}
+
+private fun rememberColorFromHex(hex: String): Color {
+    val value = hex.removePrefix("#").toLongOrNull(16) ?: return Color.Gray
+    return Color((0xFF000000L or value).toInt())
+}
 
 @PreviewLightDark
 @Composable

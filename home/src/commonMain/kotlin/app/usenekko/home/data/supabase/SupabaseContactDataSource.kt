@@ -1,5 +1,6 @@
 package app.usenekko.home.data.supabase
 
+import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
@@ -55,6 +56,21 @@ private data class GroupMembershipDto(
     @SerialName("contact_id") val contactId: String,
     @SerialName("group_id") val groupId: String,
 )
+
+@Serializable
+private data class CheckInDto(
+    val id: String,
+    @SerialName("contact_id") val contactId: String,
+    @SerialName("checked_in_at") val checkedInAt: String,
+    val note: String? = null,
+) {
+    fun toDomain() = CheckIn(
+        id = id,
+        contactId = contactId,
+        checkedInAt = checkedInAt,
+        note = note,
+    )
+}
 
 class SupabaseContactDataSource(
     private val client: SupabaseClient,
@@ -191,6 +207,70 @@ class SupabaseContactDataSource(
                 )
 
             Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun getCheckIns(
+        contactId: String?,
+        from: String,
+        to: String,
+    ): Result<List<CheckIn>, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val checkIns = client.postgrest
+                .from("check_ins")
+                .select(Columns.list("id", "contact_id", "checked_in_at", "note")) {
+                    if (contactId != null) {
+                        filter { eq("contact_id", contactId) }
+                    }
+                    filter { gte("checked_in_at", "$from 00:00:00") }
+                    filter { lte("checked_in_at", "$to 23:59:59.999999") }
+                    order("checked_in_at", Order.DESCENDING)
+                }
+                .decodeList<CheckInDto>()
+                .map { it.toDomain() }
+
+            Result.Success(checkIns)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun logCheckIn(
+        contactId: String,
+        lastCheckInDate: String,
+        nextCheckInDate: String?,
+        streakCount: Int,
+    ): Result<Contact, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("check_ins")
+                .insert(mapOf("contact_id" to contactId))
+
+            val updated = client.postgrest
+                .from("contacts")
+                .update(
+                    {
+                        this["last_check_in_date"] = lastCheckInDate
+                        this["next_check_in_date"] = nextCheckInDate
+                        this["streak_count"] = streakCount
+                    }
+                ) {
+                    filter { eq("id", contactId) }
+                    filter { eq("owner_id", userId) }
+                    select(Columns.list("id", "name", "avatar_color", "check_in_frequency", "reminder_time", "next_check_in_date", "last_check_in_date", "streak_count"))
+                }
+                .decodeSingle<ContactDto>()
+
+            Result.Success(updated.toDomain())
         } catch (e: Exception) {
             Result.Error(mapError(e))
         }

@@ -1,0 +1,117 @@
+package app.usenekko.home
+
+import app.usenekko.home.domain.Contact
+import app.usenekko.home.presentation.HomeViewModel
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlin.time.Clock
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class HomeViewModelCheckInTest {
+
+    private val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+
+    private fun contact(
+        id: String,
+        frequency: String = "daily",
+        next: String = today.minus(DatePeriod(days = 1)).toString(),
+    ) = Contact(
+        id = id,
+        name = "C$id",
+        avatarColor = "#007AFF",
+        checkInFrequency = frequency,
+        reminderTime = "12:00:00",
+        nextCheckInDate = next,
+        lastCheckInDate = null,
+        streakCount = 0,
+    )
+
+    @Test
+    fun checkInFlipsOutstandingToUpToDate() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(contacts = listOf(contact("c1")))
+            val viewModel = HomeViewModel(dataSource)
+            advanceUntilIdle()
+
+            assertEquals(1, viewModel.state.value.outstandingCount)
+            assertEquals(0, viewModel.state.value.upToDateCount)
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+
+            val call = dataSource.logCheckInCalls.single()
+            assertEquals("c1", call.contactId)
+            assertEquals(today.toString(), call.lastCheckInDate)
+            assertEquals(today.plus(DatePeriod(days = 1)).toString(), call.nextCheckInDate)
+            assertEquals(1, call.streakCount)
+
+            assertEquals(0, viewModel.state.value.outstandingCount)
+            assertEquals(1, viewModel.state.value.upToDateCount)
+            assertEquals(1, viewModel.state.value.checkIns.size)
+            assertEquals("c1", viewModel.state.value.checkIns.first().contactId)
+            assertEquals(null, viewModel.state.value.checkingInContactId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun onlyOutstandingContactsGetAButtonState() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val upToDate = contact("c1", next = today.plus(DatePeriod(days = 7)).toString())
+            val outstanding = contact("c2", next = today.minus(DatePeriod(days = 2)).toString())
+            val dataSource = FakeContactDataSource(contacts = listOf(upToDate, outstanding))
+            val viewModel = HomeViewModel(dataSource)
+            advanceUntilIdle()
+
+            assertEquals(listOf("c1", "c2"), viewModel.state.value.contacts.map { it.id })
+            assertEquals(1, viewModel.state.value.outstandingCount)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun concurrentCheckInsAreBlocked() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("c1"), contact("c2", next = today.minus(DatePeriod(days = 2)).toString())),
+            )
+            dataSource.checkInGate = CompletableDeferred()
+            val viewModel = HomeViewModel(dataSource)
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+            assertEquals(1, dataSource.logCheckInCalls.size)
+
+            viewModel.checkIn("c2")
+            assertEquals(1, dataSource.logCheckInCalls.size)
+
+            dataSource.checkInGate?.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(1, dataSource.logCheckInCalls.size)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+}

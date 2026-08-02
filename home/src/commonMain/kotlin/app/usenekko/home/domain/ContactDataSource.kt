@@ -20,6 +20,17 @@ interface ContactDataSource {
         contactId: String,
         groupId: String,
     ): Result<Unit, ContactError>
+    suspend fun getCheckIns(
+        contactId: String?,
+        from: String,
+        to: String,
+    ): Result<List<CheckIn>, ContactError>
+    suspend fun logCheckIn(
+        contactId: String,
+        lastCheckInDate: String,
+        nextCheckInDate: String?,
+        streakCount: Int,
+    ): Result<Contact, ContactError>
 }
 
 sealed interface ContactError {
