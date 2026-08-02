@@ -31,6 +31,7 @@ import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
 import app.usenekko.designsystem.navbar.top.NekkoTopBar
 import app.usenekko.designsystem.shapes.SawToothCircleShape
+import app.usenekko.home.di.rememberHomeViewModel
 import app.usenekko.home.presentation.components.CheckInTimelineGridSample
 import app.usenekko.home.presentation.components.StatusSummaryCard
 import app.usenekko.theme.NekkoTheme
@@ -49,6 +50,8 @@ import nekko.home.generated.resources.img_gradientss
 fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
+
+    val viewModel = rememberHomeViewModel()
 
     val options = listOf(
         AudienceOption("Everyone", nekko.home.generated.resources.Res.drawable.ic_group),

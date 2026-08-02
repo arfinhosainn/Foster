@@ -23,7 +23,7 @@ import app.usenekko.onboarding.welcome.WelcomeScreen
 import app.usenekko.home.HomeScreen
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.domain.Result
+import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.launch
 
 @Composable
