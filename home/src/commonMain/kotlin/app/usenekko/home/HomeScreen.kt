@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.buttons.AudienceOption
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
@@ -52,6 +53,7 @@ fun HomeScreen(
 ) {
 
     val viewModel = rememberHomeViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     val options = listOf(
         AudienceOption("Everyone", nekko.home.generated.resources.Res.drawable.ic_group),
@@ -106,8 +108,8 @@ fun HomeScreen(
                 Spacer(Modifier.height(40.dp))
 
                 StatusSummaryCard(
-                    outstandingCount = 0,
-                    upToDateCount = 0,
+                    outstandingCount = state.outstandingCount,
+                    upToDateCount = state.upToDateCount,
                     outstandingBgResource = Res.drawable.ic_globe,
                     upToDateBgResource = Res.drawable.ic_fire,
                     gradientOrbResource = Res.drawable.img_gradientss

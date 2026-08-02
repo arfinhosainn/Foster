@@ -2,24 +2,48 @@ package app.usenekko.home.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.shared.domain.Result
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
+import kotlin.time.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 class HomeViewModel(
     private val contactDataSource: ContactDataSource,
 ) : ViewModel() {
 
+    private val _state = MutableStateFlow(HomeState())
+    val state: StateFlow<HomeState> = _state.asStateFlow()
+
     init {
         viewModelScope.launch {
             when (val result = contactDataSource.getContacts()) {
-                is Result.Success -> kotlin.io.println(
-                    "HomeContacts: Success(${result.data.size}) -> ${result.data.map { it.name }}"
-                )
-                is Result.Error -> kotlin.io.println(
-                    "HomeContacts: Error -> $result.error"
-                )
+                is Result.Success -> {
+                    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                    _state.value = HomeState(
+                        isLoading = false,
+                        outstandingCount = result.data.count { it.isOutstanding(today) },
+                        upToDateCount = result.data.count { !it.isOutstanding(today) },
+                    )
+                }
+                is Result.Error -> {
+                    _state.value = HomeState(
+                        isLoading = false,
+                        error = result.error.toString(),
+                    )
+                }
             }
         }
+    }
+
+    private fun Contact.isOutstanding(today: LocalDate): Boolean {
+        val next = nextCheckInDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            ?: return true
+        return next <= today
     }
 }
