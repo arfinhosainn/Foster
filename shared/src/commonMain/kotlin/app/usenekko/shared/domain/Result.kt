@@ -1,4 +1,4 @@
-package app.usenekko.onboarding.domain
+package app.usenekko.shared.domain
 
 sealed interface Result<out D, out E> {
     data class Success<out D>(val data: D) : Result<D, Nothing>

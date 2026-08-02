@@ -36,6 +36,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(project(":shared"))
@@ -52,6 +53,13 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.liquid.glass)
             implementation(libs.jetbrains.compose.material.icons.extended)
+            implementation(libs.supabase.kt)
+            implementation(libs.supabase.auth.kt)
+            implementation(libs.supabase.postgrest.kt)
+            implementation(libs.ktor.client.core)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

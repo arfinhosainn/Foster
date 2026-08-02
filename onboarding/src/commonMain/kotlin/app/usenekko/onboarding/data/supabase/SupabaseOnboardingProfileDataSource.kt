@@ -5,12 +5,12 @@ import app.usenekko.onboarding.data.supabase.dto.CustomReminderDto
 import app.usenekko.onboarding.data.supabase.dto.GroupDto
 import app.usenekko.onboarding.data.supabase.dto.NoteDto
 import app.usenekko.onboarding.data.supabase.dto.OnboardingStepResponse
-import app.usenekko.onboarding.domain.EmptyResult
 import app.usenekko.onboarding.domain.OnboardingDraft
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingProfileError
 import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.domain.Result
+import app.usenekko.shared.domain.EmptyResult
+import app.usenekko.shared.domain.Result
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest

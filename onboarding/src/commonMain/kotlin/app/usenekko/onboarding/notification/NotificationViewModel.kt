@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingDraft
 import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.domain.Result
+import app.usenekko.shared.domain.Result
 import app.usenekko.onboarding.domain.toUserMessage
 import app.usenekko.onboarding.presentation.OnboardingDraftStore
 import kotlinx.coroutines.channels.Channel

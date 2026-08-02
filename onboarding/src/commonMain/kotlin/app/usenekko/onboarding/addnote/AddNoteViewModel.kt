@@ -6,9 +6,9 @@ import app.usenekko.onboarding.domain.NoteDraft
 import app.usenekko.onboarding.domain.OnboardingDraft
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
-import app.usenekko.onboarding.domain.Result
 import app.usenekko.onboarding.domain.toUserMessage
 import app.usenekko.onboarding.presentation.OnboardingDraftStore
+import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
