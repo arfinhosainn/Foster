@@ -4,6 +4,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
+import app.usenekko.home.domain.GroupMembership
 import app.usenekko.shared.domain.Result
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -48,6 +49,12 @@ private data class GroupDto(
         color = color,
     )
 }
+
+@Serializable
+private data class GroupMembershipDto(
+    @SerialName("contact_id") val contactId: String,
+    @SerialName("group_id") val groupId: String,
+)
 
 class SupabaseContactDataSource(
     private val client: SupabaseClient,
@@ -118,6 +125,23 @@ class SupabaseContactDataSource(
                 .map { it.toDomain() }
 
             Result.Success(groups)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun getGroupMemberships(): Result<List<GroupMembership>, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val memberships = client.postgrest
+                .from("contact_groups")
+                .select(Columns.list("contact_id", "group_id"))
+                .decodeList<GroupMembershipDto>()
+                .map { GroupMembership(contactId = it.contactId, groupId = it.groupId) }
+
+            Result.Success(memberships)
         } catch (e: Exception) {
             Result.Error(mapError(e))
         }

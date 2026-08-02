@@ -11,6 +11,7 @@ interface ContactDataSource {
         reminderTime: String?,
     ): Result<Contact, ContactError>
     suspend fun getGroups(): Result<List<Group>, ContactError>
+    suspend fun getGroupMemberships(): Result<List<GroupMembership>, ContactError>
     suspend fun createGroup(
         name: String,
         color: String?,

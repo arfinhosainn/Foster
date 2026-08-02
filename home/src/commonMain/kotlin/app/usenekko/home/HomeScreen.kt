@@ -49,6 +49,15 @@ import nekko.home.generated.resources.ic_globe
 import nekko.home.generated.resources.ic_group
 import nekko.home.generated.resources.ic_person
 import nekko.home.generated.resources.img_gradientss
+import org.jetbrains.compose.resources.DrawableResource
+
+private fun audienceIcon(name: String): DrawableResource = when (name.lowercase()) {
+    "family" -> Res.drawable.ic_family
+    "friends" -> Res.drawable.ic_friends
+    "acquaintance" -> Res.drawable.ic_acquaintance
+    "others" -> Res.drawable.ic_person
+    else -> Res.drawable.ic_person
+}
 
 @Composable
 fun HomeScreen(
@@ -60,14 +69,22 @@ fun HomeScreen(
 
     var showAddContact by remember { mutableStateOf(false) }
 
-    val options = listOf(
-        AudienceOption("Everyone", nekko.home.generated.resources.Res.drawable.ic_group),
-        AudienceOption("Family", nekko.home.generated.resources.Res.drawable.ic_family),
-        AudienceOption("Friends", nekko.home.generated.resources.Res.drawable.ic_friends),
-        AudienceOption("Acquaintance", nekko.home.generated.resources.Res.drawable.ic_acquaintance),
-        AudienceOption("Others", nekko.home.generated.resources.Res.drawable.ic_person),
-    )
-    var selected by remember { mutableStateOf(options.first()) }
+    val options = remember(state.groups) {
+        buildList {
+            add(AudienceOption("Everyone", Res.drawable.ic_group))
+            state.groups.forEach { group ->
+                add(AudienceOption(group.name, audienceIcon(group.name)))
+            }
+        }
+    }
+    val selectedAudience = remember(state.selectedGroupId, options) {
+        if (state.selectedGroupId == null) {
+            options.first()
+        } else {
+            val index = state.groups.indexOfFirst { it.id == state.selectedGroupId }
+            options.getOrElse(index + 1) { options.first() }
+        }
+    }
     val liquidState = rememberLiquidState()
 
 
@@ -84,8 +101,13 @@ fun HomeScreen(
         Scaffold(topBar = {
             NekkoTopBar(
                 audienceOptions = options,
-                selectedAudience = selected,
-                onAudienceSelect = { selected = it },
+                selectedAudience = selectedAudience,
+                onAudienceSelect = { option ->
+                    val index = options.indexOf(option)
+                    viewModel.onGroupSelected(
+                        if (index <= 0) null else state.groups[index - 1].id
+                    )
+                },
                 userName = "Jane Bell",
                 onAvatarClick = {},
                 onPremiumClick = {},
@@ -122,7 +144,7 @@ fun HomeScreen(
 
                 Spacer(Modifier.height(70.dp))
 
-                if (state.outstandingCount == 0 && state.upToDateCount == 0 && !state.isLoading) {
+                if (state.totalContactCount == 0 && !state.isLoading) {
                     Column(
                         modifier = Modifier.clickable { showAddContact = true },
                         horizontalAlignment = Alignment.CenterHorizontally,
