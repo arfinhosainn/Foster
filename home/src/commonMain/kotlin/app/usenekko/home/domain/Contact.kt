@@ -1,5 +1,7 @@
 package app.usenekko.home.domain
 
+import kotlinx.datetime.LocalDate
+
 data class Contact(
     val id: String,
     val name: String,
@@ -10,3 +12,11 @@ data class Contact(
     val lastCheckInDate: String?,
     val streakCount: Int,
 )
+
+fun Contact.nextCheckInDateLocal(): LocalDate? =
+    nextCheckInDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
+fun Contact.isOutstanding(today: LocalDate): Boolean {
+    val next = nextCheckInDateLocal() ?: return true
+    return next <= today
+}

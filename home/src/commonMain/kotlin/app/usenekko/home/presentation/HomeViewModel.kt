@@ -2,17 +2,23 @@ package app.usenekko.home.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.domain.CheckIn
+import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.isOutstanding
 import app.usenekko.shared.domain.Result
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 
 class HomeViewModel(
@@ -36,6 +42,7 @@ class HomeViewModel(
             val contactsResult = contactDataSource.getContacts()
             val groupsResult = contactDataSource.getGroups()
             val membershipsResult = contactDataSource.getGroupMemberships()
+            val checkInsResult = contactDataSource.getCheckIns(null, checkInFrom(), checkInTo())
 
             when (val result = contactsResult) {
                 is Result.Success -> {
@@ -47,6 +54,8 @@ class HomeViewModel(
                         is Result.Error -> _state.value.groups
                     }
 
+                    val checkIns = (checkInsResult as? Result.Success)?.data.orEmpty()
+
                     val effectiveGroupId = _state.value.selectedGroupId
                         ?.takeIf { selected -> groups.any { it.id == selected } }
 
@@ -54,6 +63,7 @@ class HomeViewModel(
                         isLoading = false,
                         groups = groups,
                         selectedGroupId = effectiveGroupId,
+                        checkIns = checkIns,
                     )
                     recomputeCounts(allContacts, effectiveGroupId, memberships)
                 }
@@ -71,6 +81,36 @@ class HomeViewModel(
         if (_state.value.selectedGroupId == groupId) return
         _state.value = _state.value.copy(selectedGroupId = groupId)
         recomputeCounts(allContacts, groupId, memberships)
+    }
+
+    fun checkIn(contactId: String) {
+        if (_state.value.checkingInContactId != null) return
+        viewModelScope.launch {
+            _state.value = _state.value.copy(checkingInContactId = contactId, checkInError = null)
+
+            val contact = allContacts.firstOrNull { it.id == contactId }
+            if (contact == null) {
+                _state.value = _state.value.copy(checkingInContactId = null)
+                return@launch
+            }
+
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            val update = computeCheckInUpdate(contact, today)
+            val result = contactDataSource.logCheckIn(
+                contactId = contact.id,
+                lastCheckInDate = update.lastCheckInDate,
+                nextCheckInDate = update.nextCheckInDate,
+                streakCount = update.streakCount,
+            )
+
+            _state.value = _state.value.copy(checkingInContactId = null)
+            when (result) {
+                is Result.Success -> loadContacts()
+                is Result.Error -> {
+                    _state.value = _state.value.copy(checkInError = result.error.toString())
+                }
+            }
+        }
     }
 
     private fun recomputeCounts(
@@ -91,12 +131,17 @@ class HomeViewModel(
             totalContactCount = contacts.size,
             outstandingCount = filtered.count { it.isOutstanding(today) },
             upToDateCount = filtered.count { !it.isOutstanding(today) },
+            contacts = filtered,
         )
     }
 
-    private fun Contact.isOutstanding(today: LocalDate): Boolean {
-        val next = nextCheckInDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-            ?: return true
-        return next <= today
+    private fun checkInFrom(): String {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        return today.minus(DatePeriod(days = 12)).toString()
+    }
+
+    private fun checkInTo(): String {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        return today.plus(DatePeriod(days = 13)).toString()
     }
 }
