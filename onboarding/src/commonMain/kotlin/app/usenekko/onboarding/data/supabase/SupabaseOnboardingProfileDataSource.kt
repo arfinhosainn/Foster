@@ -14,6 +14,7 @@ import app.usenekko.onboarding.domain.Result
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -76,10 +77,10 @@ class SupabaseOnboardingProfileDataSource(
 
             val response = client.postgrest
                 .from("profiles")
-                .select {
+                .select(columns = Columns.list("onboarding_step", "onboarding_completed_at")) {
                     single()
                 }
-                .decodeSingle<OnboardingStepResponse>()
+                .decodeAs<OnboardingStepResponse>()
 
             val step = if (response.onboardingCompletedAt != null) {
                 OnboardingStep.Complete
@@ -103,7 +104,10 @@ class SupabaseOnboardingProfileDataSource(
 
             client.postgrest.from("profiles").upsert(
                 mapOf("id" to userId, "onboarding_step" to OnboardingStep.Name.index)
-            ) { onConflict = "id" }
+            ) {
+                onConflict = "id"
+                ignoreDuplicates = true
+            }
 
             Result.Success(Unit)
         } catch (e: Exception) {

@@ -2,6 +2,7 @@ package app.usenekko.onboarding
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import app.usenekko.App
 import app.usenekko.navigation.Navigator
 import app.usenekko.navigation.Screen
@@ -15,30 +16,28 @@ import app.usenekko.onboarding.notification.NotificationScreen
 import app.usenekko.onboarding.presentation.LocalOnboardingProfileDataSource
 import app.usenekko.onboarding.presentation.LocalSupabaseClient
 import app.usenekko.onboarding.presentation.OnboardingDraftStoreProvider
+import app.usenekko.onboarding.data.supabase.SupabaseOnboardingProfileDataSource
 import io.github.jan.supabase.auth.auth
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
 import app.usenekko.home.HomeScreen
+import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.onboarding.domain.Result
+import kotlinx.coroutines.launch
 
 @Composable
 fun OnboardingApp(navigator: Navigator) {
     OnboardingDraftStoreProvider {
         val profileDataSource = LocalOnboardingProfileDataSource.current
         val supabaseClient = LocalSupabaseClient.current
+        val scope = rememberCoroutineScope()
 
         LaunchedEffect(Unit) {
-            if (supabaseClient.auth.currentSessionOrNull() != null) {
-                when (val stepResult = profileDataSource.getOnboardingStep()) {
-                    is Result.Success -> {
-                        navigator.replaceAll(stepResult.data.toScreen())
-                    }
-                    is Result.Error -> {
-                        profileDataSource.ensureProfileExists()
-                        navigator.replaceAll(Screen.Name)
-                    }
-                }
+            val session = supabaseClient.auth.currentSessionOrNull()
+            logAccount(session?.user?.email, session?.user?.id, "app launch")
+            if (session != null) {
+                routeAfterAuth(profileDataSource, navigator)
             }
         }
 
@@ -47,7 +46,11 @@ fun OnboardingApp(navigator: Navigator) {
                 is Screen.Welcome -> WelcomeScreen(
                     supabaseClient = supabaseClient,
                     onGoogleSignInSuccess = {
-                        navigator.replaceAll(Screen.Name)
+                        scope.launch {
+                            val session = supabaseClient.auth.currentSessionOrNull()
+                            logAccount(session?.user?.email, session?.user?.id, "Google sign-in")
+                            routeAfterAuth(profileDataSource, navigator)
+                        }
                     },
                 )
 
@@ -103,6 +106,21 @@ fun OnboardingApp(navigator: Navigator) {
     }
 }
 
+private suspend fun routeAfterAuth(
+    profileDataSource: OnboardingProfileDataSource,
+    navigator: Navigator,
+) {
+    when (val stepResult = profileDataSource.getOnboardingStep()) {
+        is Result.Success -> {
+            navigator.replaceAll(stepResult.data.toScreen())
+        }
+        is Result.Error -> {
+            profileDataSource.ensureProfileExists()
+            navigator.replaceAll(Screen.Name)
+        }
+    }
+}
+
 private fun OnboardingStep?.toScreen(): Screen {
     return when (this) {
         null,
@@ -117,6 +135,10 @@ private fun OnboardingStep?.toScreen(): Screen {
         OnboardingStep.Notification -> Screen.Notification
         OnboardingStep.Complete -> Screen.Home
     }
+}
+
+private fun logAccount(email: String?, userId: String?, source: String) {
+    kotlin.io.println("NekkoAuth[$source]: email=${email ?: "null"} userId=${userId ?: "null"}")
 }
 
 
