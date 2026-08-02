@@ -5,14 +5,15 @@ import androidx.lifecycle.viewModelScope
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.shared.domain.Result
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+
 class HomeViewModel(
     private val contactDataSource: ContactDataSource,
 ) : ViewModel() {
@@ -21,7 +22,12 @@ class HomeViewModel(
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
     init {
+        loadContacts()
+    }
+
+    fun loadContacts() {
         viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true, error = null)
             when (val result = contactDataSource.getContacts()) {
                 is Result.Success -> {
                     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())

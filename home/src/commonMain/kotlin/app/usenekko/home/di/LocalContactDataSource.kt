@@ -3,6 +3,7 @@ package app.usenekko.home.di
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import app.usenekko.home.addcontact.AddContactViewModel
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.presentation.HomeViewModel
 
@@ -14,4 +15,10 @@ val LocalContactDataSource = staticCompositionLocalOf<ContactDataSource> {
 fun rememberHomeViewModel(): HomeViewModel {
     val contactDataSource = LocalContactDataSource.current
     return remember { HomeViewModel(contactDataSource) }
+}
+
+@Composable
+fun rememberAddContactViewModel(): AddContactViewModel {
+    val contactDataSource = LocalContactDataSource.current
+    return remember { AddContactViewModel(contactDataSource) }
 }
