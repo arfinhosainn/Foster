@@ -21,6 +21,7 @@ import io.github.jan.supabase.auth.auth
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
 import app.usenekko.home.HomeScreen
+import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.shared.domain.Result
@@ -100,7 +101,14 @@ fun OnboardingApp(navigator: Navigator) {
                     onBack = { navigator.goBack() },
                 )
 
-                is Screen.Home -> HomeScreen()
+                is Screen.Home -> HomeScreen(
+                    onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
+                )
+
+                is Screen.ContactProfile -> ContactProfileScreen(
+                    contactId = screen.contactId,
+                    onBack = { navigator.goBack() },
+                )
             }
         }
     }
