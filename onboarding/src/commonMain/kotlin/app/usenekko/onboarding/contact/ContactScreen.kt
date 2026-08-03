@@ -33,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -47,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.NekkoStepField
 import app.usenekko.onboarding.components.StepIndicator
@@ -54,7 +54,6 @@ import app.usenekko.onboarding.contact.components.ChooseAvatarBottomSheet
 import app.usenekko.onboarding.contact.components.ProfilePhotoPicker
 import app.usenekko.onboarding.contact.components.ProfilePhotoPreview
 import app.usenekko.onboarding.presentation.rememberContactViewModel
-import app.usenekko.onboarding.contact.rememberContactPermissionLauncher
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back

@@ -33,4 +33,7 @@ sealed class Screen {
 
     @Serializable
     data object Home : Screen()
+
+    @Serializable
+    data class ContactProfile(val contactId: String) : Screen()
 }

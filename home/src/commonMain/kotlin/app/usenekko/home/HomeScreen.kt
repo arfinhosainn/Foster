@@ -81,6 +81,7 @@ private fun audienceIcon(name: String): DrawableResource = when (name.lowercase(
 
 @Composable
 fun HomeScreen(
+    onContactClick: (Contact) -> Unit,
     modifier: Modifier = Modifier,
 ) {
 
@@ -152,7 +153,6 @@ fun HomeScreen(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Spacer(Modifier.height(40.dp))
 
                 StatusSummaryCard(
@@ -207,6 +207,7 @@ fun HomeScreen(
                         outstandingCount = state.outstandingCount,
                         checkingInContactId = state.checkingInContactId,
                         onCheckIn = viewModel::checkIn,
+                        onContactClick = onContactClick,
                     )
                 }
             }
@@ -236,6 +237,7 @@ private fun CheckInSection(
     outstandingCount: Int,
     checkingInContactId: String?,
     onCheckIn: (String) -> Unit,
+    onContactClick: (Contact) -> Unit,
 ) {
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     val events = remember(checkIns, outstandingCount, today) {
@@ -287,6 +289,7 @@ private fun CheckInSection(
                     today = today,
                     checkingInContactId = checkingInContactId,
                     onCheckIn = onCheckIn,
+                    onContactClick = onContactClick,
                 )
             }
         }
@@ -317,11 +320,13 @@ private fun ContactCheckInRow(
     today: LocalDate,
     checkingInContactId: String?,
     onCheckIn: (String) -> Unit,
+    onContactClick: (Contact) -> Unit,
 ) {
     val outstanding = contact.isOutstanding(today)
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onContactClick(contact) }
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -384,6 +389,6 @@ private fun rememberColorFromHex(hex: String): Color {
 @Composable
 fun PreviewHomeScreen() {
     NekkoTheme {
-        HomeScreen()
+        HomeScreen(onContactClick = {})
     }
 }
