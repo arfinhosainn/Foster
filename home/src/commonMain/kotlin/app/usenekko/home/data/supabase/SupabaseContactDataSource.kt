@@ -6,6 +6,7 @@ import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.Note
 import app.usenekko.shared.domain.Result
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -69,6 +70,24 @@ private data class CheckInDto(
         contactId = contactId,
         checkedInAt = checkedInAt,
         note = note,
+    )
+}
+
+@Serializable
+private data class NoteDto(
+    val id: String,
+    @SerialName("contact_id") val contactId: String,
+    @SerialName("owner_id") val ownerId: String,
+    val title: String,
+    val body: String = "",
+    @SerialName("created_at") val createdAt: String,
+) {
+    fun toDomain() = Note(
+        id = id,
+        contactId = contactId,
+        title = title,
+        body = body,
+        createdAt = createdAt,
     )
 }
 
@@ -271,6 +290,56 @@ class SupabaseContactDataSource(
                 .decodeSingle<ContactDto>()
 
             Result.Success(updated.toDomain())
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun getNotes(contactId: String): Result<List<Note>, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val notes = client.postgrest
+                .from("notes")
+                .select(Columns.list("id", "contact_id", "owner_id", "title", "body", "created_at")) {
+                    filter { eq("contact_id", contactId) }
+                    filter { eq("owner_id", userId) }
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<NoteDto>()
+                .map { it.toDomain() }
+
+            Result.Success(notes)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun createNote(
+        contactId: String,
+        title: String,
+        body: String,
+    ): Result<Note, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val inserted = client.postgrest
+                .from("notes")
+                .insert(
+                    mapOf(
+                        "owner_id" to userId,
+                        "contact_id" to contactId,
+                        "title" to title,
+                        "body" to body,
+                    )
+                ) { select(Columns.list("id", "contact_id", "owner_id", "title", "body", "created_at")) }
+                .decodeSingle<NoteDto>()
+
+            Result.Success(inserted.toDomain())
         } catch (e: Exception) {
             Result.Error(mapError(e))
         }

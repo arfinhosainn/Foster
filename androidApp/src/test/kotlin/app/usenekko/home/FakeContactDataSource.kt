@@ -6,6 +6,7 @@ import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.Note
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.CompletableDeferred
 
@@ -14,6 +15,7 @@ class FakeContactDataSource(
     groups: List<Group> = emptyList(),
     memberships: List<GroupMembership> = emptyList(),
     checkIns: List<CheckIn> = emptyList(),
+    notes: List<Note> = emptyList(),
 ) : ContactDataSource {
 
     var contacts: List<Contact> = contacts
@@ -24,6 +26,17 @@ class FakeContactDataSource(
         private set
     var checkIns: List<CheckIn> = checkIns
         private set
+    var notes: List<Note> = notes
+        private set
+
+    /** When set, [getNotes] returns this error instead of the stored notes. */
+    var notesError: ContactError? = null
+
+    /** When set, [createNote] fails without storing anything. */
+    var createNoteError: ContactError? = null
+
+    /** When set, [createNote] suspends until the gate completes. */
+    var createNoteGate: CompletableDeferred<Unit>? = null
 
     /** When set, [logCheckIn] suspends until the gate completes. */
     var checkInGate: CompletableDeferred<Unit>? = null
@@ -35,7 +48,14 @@ class FakeContactDataSource(
         val streakCount: Int,
     )
 
+    data class CreateNoteCall(
+        val contactId: String,
+        val title: String,
+        val body: String,
+    )
+
     val logCheckInCalls = mutableListOf<LogCheckInCall>()
+    val createNoteCalls = mutableListOf<CreateNoteCall>()
 
     override suspend fun getContacts(): Result<List<Contact>, ContactError> = Result.Success(contacts)
 
@@ -92,5 +112,29 @@ class FakeContactDataSource(
             checkedInAt = "${lastCheckInDate}T12:00:00Z",
         )
         return Result.Success(updated)
+    }
+
+    override suspend fun getNotes(contactId: String): Result<List<Note>, ContactError> {
+        notesError?.let { return Result.Error(it) }
+        return Result.Success(notes.filter { it.contactId == contactId })
+    }
+
+    override suspend fun createNote(
+        contactId: String,
+        title: String,
+        body: String,
+    ): Result<Note, ContactError> {
+        createNoteCalls += CreateNoteCall(contactId, title, body)
+        createNoteError?.let { return Result.Error(it) }
+        createNoteGate?.await()
+        val note = Note(
+            id = "n${notes.size + 1}",
+            contactId = contactId,
+            title = title,
+            body = body,
+            createdAt = "2026-08-03T10:00:00Z",
+        )
+        notes = notes + note
+        return Result.Success(note)
     }
 }
