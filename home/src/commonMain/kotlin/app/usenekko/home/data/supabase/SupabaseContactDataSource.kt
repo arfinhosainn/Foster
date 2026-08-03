@@ -7,6 +7,7 @@ import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.Note
+import app.usenekko.home.domain.Reminder
 import app.usenekko.shared.domain.Result
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -15,6 +16,10 @@ import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 @Serializable
 private data class ContactDto(
@@ -88,6 +93,26 @@ private data class NoteDto(
         title = title,
         body = body,
         createdAt = createdAt,
+    )
+}
+
+@Serializable
+private data class ReminderDto(
+    val id: String,
+    @SerialName("contact_id") val contactId: String,
+    @SerialName("owner_id") val ownerId: String,
+    val title: String,
+    val description: String = "",
+    val recurrence: String = "none",
+    @SerialName("date_epoch_millis") val dateEpochMillis: Long? = null,
+) {
+    fun toDomain() = Reminder(
+        id = id,
+        contactId = contactId,
+        title = title,
+        description = description,
+        recurrence = recurrence,
+        dateEpochMillis = dateEpochMillis,
     )
 }
 
@@ -340,6 +365,79 @@ class SupabaseContactDataSource(
                 .decodeSingle<NoteDto>()
 
             Result.Success(inserted.toDomain())
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun getReminders(contactId: String): Result<List<Reminder>, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val reminders = client.postgrest
+                .from("custom_reminders")
+                .select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis")) {
+                    filter { eq("contact_id", contactId) }
+                    filter { eq("owner_id", userId) }
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<ReminderDto>()
+                .map { it.toDomain() }
+
+            Result.Success(reminders)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun createReminder(
+        contactId: String,
+        title: String,
+        description: String,
+        recurrence: String,
+        date: Long?,
+    ): Result<Reminder, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val body = buildJsonObject {
+                put("owner_id", userId)
+                put("contact_id", contactId)
+                put("title", title)
+                put("description", description)
+                put("recurrence", recurrence)
+                put("date_epoch_millis", date?.let { JsonPrimitive(it) } ?: JsonNull)
+            }
+
+            val inserted = client.postgrest
+                .from("custom_reminders")
+                .insert(body) { select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis")) }
+                .decodeSingle<ReminderDto>()
+
+            Result.Success(inserted.toDomain())
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun deleteReminder(reminderId: String): Result<Unit, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("custom_reminders")
+                .delete {
+                    filter { eq("id", reminderId) }
+                    filter { eq("owner_id", userId) }
+                }
+
+            Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error(mapError(e))
         }

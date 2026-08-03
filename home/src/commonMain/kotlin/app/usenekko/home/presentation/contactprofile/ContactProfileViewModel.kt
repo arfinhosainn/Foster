@@ -42,6 +42,8 @@ class ContactProfileViewModel(
             )
         }
         loadNotes()
+        loadReminders()
+        loadCheckInStats()
     }
 
     private fun loadNotes() {
@@ -54,6 +56,28 @@ class ContactProfileViewModel(
                     _state.value = _state.value.copy(notesError = result.error.toString())
                 }
             }
+        }
+    }
+
+    private fun loadReminders() {
+        viewModelScope.launch {
+            when (val result = contactDataSource.getReminders(contactId)) {
+                is Result.Success -> {
+                    _state.value = _state.value.copy(reminders = result.data, remindersError = null)
+                }
+                is Result.Error -> {
+                    _state.value = _state.value.copy(remindersError = result.error.toString())
+                }
+            }
+        }
+    }
+
+    private fun loadCheckInStats() {
+        viewModelScope.launch {
+            // Total check-in count derived from existing rows — no extra column.
+            val result = contactDataSource.getCheckIns(contactId, "1970-01-01", "2999-12-31")
+            val count = (result as? Result.Success)?.data?.size ?: 0
+            _state.value = _state.value.copy(checkInCount = count)
         }
     }
 
@@ -78,6 +102,27 @@ class ContactProfileViewModel(
                 _state.value = _state.value.copy(draftDescription = action.description)
             }
             ContactProfileAction.SaveNote -> saveNote()
+            ContactProfileAction.OpenAddReminder -> {
+                _state.value = _state.value.copy(isAddReminderSheetOpen = true)
+            }
+            ContactProfileAction.CloseAddReminder -> {
+                _state.value = _state.value.copy(isAddReminderSheetOpen = false)
+            }
+            is ContactProfileAction.ReminderDraftTitleChanged -> {
+                _state.value = _state.value.copy(reminderDraftTitle = action.title)
+            }
+            is ContactProfileAction.ReminderDraftDescriptionChanged -> {
+                _state.value = _state.value.copy(reminderDraftDescription = action.description)
+            }
+            is ContactProfileAction.ReminderDraftRecurrenceChanged -> {
+                _state.value = _state.value.copy(reminderDraftRecurrence = action.recurrence)
+            }
+            is ContactProfileAction.ReminderDraftDateChanged -> {
+                _state.value = _state.value.copy(reminderDraftDateEpochMillis = action.dateEpochMillis)
+            }
+            ContactProfileAction.SaveReminder -> saveReminder()
+            is ContactProfileAction.EditReminder -> editReminder(action.reminderId)
+            is ContactProfileAction.DeleteReminder -> deleteReminder(action.reminderId)
         }
     }
 
@@ -141,12 +186,73 @@ class ContactProfileViewModel(
                         contact = updated,
                         daysUntilNextCheckIn = daysUntilNextCheckIn(updated),
                     )
+                    loadCheckInStats()
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
                         isCheckingIn = false,
                         checkInError = result.error.toString(),
                     )
+                }
+            }
+        }
+    }
+
+    private fun saveReminder() {
+        if (_state.value.isSavingReminder) return
+        val title = _state.value.reminderDraftTitle.trim()
+        if (title.isEmpty()) return
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSavingReminder = true, remindersError = null)
+            val result = contactDataSource.createReminder(
+                contactId = contactId,
+                title = title,
+                description = _state.value.reminderDraftDescription.trim(),
+                recurrence = recurrenceToDbValue(_state.value.reminderDraftRecurrence),
+                date = _state.value.reminderDraftDateEpochMillis,
+            )
+
+            when (result) {
+                is Result.Success -> {
+                    _state.value = _state.value.copy(
+                        isSavingReminder = false,
+                        isAddReminderSheetOpen = false,
+                        reminderDraftTitle = "",
+                        reminderDraftDescription = "",
+                        reminderDraftRecurrence = "None",
+                        reminderDraftDateEpochMillis = null,
+                    )
+                    loadReminders()
+                }
+                is Result.Error -> {
+                    _state.value = _state.value.copy(
+                        isSavingReminder = false,
+                        remindersError = result.error.toString(),
+                    )
+                }
+            }
+        }
+    }
+
+    private fun editReminder(reminderId: String) {
+        // Opens the same add-reminder form pre-filled with the existing values.
+        val reminder = _state.value.reminders.firstOrNull { it.id == reminderId } ?: return
+        _state.value = _state.value.copy(
+            reminderDraftTitle = reminder.title,
+            reminderDraftDescription = reminder.description,
+            reminderDraftRecurrence = recurrenceToUiLabel(reminder.recurrence),
+            reminderDraftDateEpochMillis = reminder.dateEpochMillis,
+            isAddReminderSheetOpen = true,
+        )
+    }
+
+    private fun deleteReminder(reminderId: String) {
+        viewModelScope.launch {
+            when (val result = contactDataSource.deleteReminder(reminderId)) {
+                is Result.Success -> loadReminders()
+                is Result.Error -> {
+                    _state.value = _state.value.copy(remindersError = result.error.toString())
                 }
             }
         }

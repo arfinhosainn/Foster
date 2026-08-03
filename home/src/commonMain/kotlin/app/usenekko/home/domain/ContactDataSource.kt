@@ -37,6 +37,15 @@ interface ContactDataSource {
         title: String,
         body: String,
     ): Result<Note, ContactError>
+    suspend fun getReminders(contactId: String): Result<List<Reminder>, ContactError>
+    suspend fun createReminder(
+        contactId: String,
+        title: String,
+        description: String,
+        recurrence: String,
+        date: Long?,
+    ): Result<Reminder, ContactError>
+    suspend fun deleteReminder(reminderId: String): Result<Unit, ContactError>
 }
 
 sealed interface ContactError {
