@@ -70,6 +70,41 @@ fun ContactProfileScreen(
         }
     }
 
+    if (state.isRelationshipInfoOpen) {
+        RelationshipInfoSheet(
+            checkInCount = state.checkInCount,
+            nextCheckInDate = state.contact?.nextCheckInDate,
+            reminders = state.reminders,
+            remindersError = state.remindersError,
+            onDismiss = { viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo) },
+            onAddReminder = { viewModel.onAction(ContactProfileAction.OpenAddReminder) },
+            onEditReminder = { viewModel.onAction(ContactProfileAction.EditReminder(it)) },
+            onDeleteReminder = { viewModel.onAction(ContactProfileAction.DeleteReminder(it)) },
+        )
+    }
+
+    if (state.isAddReminderSheetOpen) {
+        AddReminderSheet(
+            draftTitle = state.reminderDraftTitle,
+            draftDescription = state.reminderDraftDescription,
+            draftRecurrence = state.reminderDraftRecurrence,
+            draftDateEpochMillis = state.reminderDraftDateEpochMillis,
+            isSaving = state.isSavingReminder,
+            onDismiss = { viewModel.onAction(ContactProfileAction.CloseAddReminder) },
+            onTitleChanged = { viewModel.onAction(ContactProfileAction.ReminderDraftTitleChanged(it)) },
+            onDescriptionChanged = {
+                viewModel.onAction(ContactProfileAction.ReminderDraftDescriptionChanged(it))
+            },
+            onRecurrenceChanged = {
+                viewModel.onAction(ContactProfileAction.ReminderDraftRecurrenceChanged(it))
+            },
+            onDateChanged = {
+                viewModel.onAction(ContactProfileAction.ReminderDraftDateChanged(it))
+            },
+            onSave = { viewModel.onAction(ContactProfileAction.SaveReminder) },
+        )
+    }
+
     if (state.isAddNoteSheetOpen) {
         AddNoteSheet(
             draftTitle = state.draftTitle,

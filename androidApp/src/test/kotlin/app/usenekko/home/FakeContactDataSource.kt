@@ -7,6 +7,7 @@ import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.Note
+import app.usenekko.home.domain.Reminder
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.CompletableDeferred
 
@@ -16,6 +17,7 @@ class FakeContactDataSource(
     memberships: List<GroupMembership> = emptyList(),
     checkIns: List<CheckIn> = emptyList(),
     notes: List<Note> = emptyList(),
+    reminders: List<Reminder> = emptyList(),
 ) : ContactDataSource {
 
     var contacts: List<Contact> = contacts
@@ -28,6 +30,8 @@ class FakeContactDataSource(
         private set
     var notes: List<Note> = notes
         private set
+    var reminders: List<Reminder> = reminders
+        private set
 
     /** When set, [getNotes] returns this error instead of the stored notes. */
     var notesError: ContactError? = null
@@ -37,6 +41,15 @@ class FakeContactDataSource(
 
     /** When set, [createNote] suspends until the gate completes. */
     var createNoteGate: CompletableDeferred<Unit>? = null
+
+    /** When set, [getReminders] returns this error instead of the stored reminders. */
+    var remindersError: ContactError? = null
+
+    /** When set, [createReminder] fails without storing anything. */
+    var createReminderError: ContactError? = null
+
+    /** When set, [deleteReminder] fails without removing anything. */
+    var deleteReminderError: ContactError? = null
 
     /** When set, [logCheckIn] suspends until the gate completes. */
     var checkInGate: CompletableDeferred<Unit>? = null
@@ -54,8 +67,18 @@ class FakeContactDataSource(
         val body: String,
     )
 
+    data class CreateReminderCall(
+        val contactId: String,
+        val title: String,
+        val description: String,
+        val recurrence: String,
+        val date: Long?,
+    )
+
     val logCheckInCalls = mutableListOf<LogCheckInCall>()
     val createNoteCalls = mutableListOf<CreateNoteCall>()
+    val createReminderCalls = mutableListOf<CreateReminderCall>()
+    val deletedReminderIds = mutableListOf<String>()
 
     override suspend fun getContacts(): Result<List<Contact>, ContactError> = Result.Success(contacts)
 
@@ -136,5 +159,38 @@ class FakeContactDataSource(
         )
         notes = notes + note
         return Result.Success(note)
+    }
+
+    override suspend fun getReminders(contactId: String): Result<List<Reminder>, ContactError> {
+        remindersError?.let { return Result.Error(it) }
+        return Result.Success(reminders.filter { it.contactId == contactId })
+    }
+
+    override suspend fun createReminder(
+        contactId: String,
+        title: String,
+        description: String,
+        recurrence: String,
+        date: Long?,
+    ): Result<Reminder, ContactError> {
+        createReminderCalls += CreateReminderCall(contactId, title, description, recurrence, date)
+        createReminderError?.let { return Result.Error(it) }
+        val reminder = Reminder(
+            id = "r${reminders.size + 1}",
+            contactId = contactId,
+            title = title,
+            description = description,
+            recurrence = recurrence,
+            dateEpochMillis = date,
+        )
+        reminders = reminders + reminder
+        return Result.Success(reminder)
+    }
+
+    override suspend fun deleteReminder(reminderId: String): Result<Unit, ContactError> {
+        deletedReminderIds += reminderId
+        deleteReminderError?.let { return Result.Error(it) }
+        reminders = reminders.filterNot { it.id == reminderId }
+        return Result.Success(Unit)
     }
 }
