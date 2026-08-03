@@ -41,6 +41,20 @@ class ContactProfileViewModel(
                 daysUntilNextCheckIn = contact?.let { daysUntilNextCheckIn(it) } ?: 0,
             )
         }
+        loadNotes()
+    }
+
+    private fun loadNotes() {
+        viewModelScope.launch {
+            when (val result = contactDataSource.getNotes(contactId)) {
+                is Result.Success -> {
+                    _state.value = _state.value.copy(notes = result.data, notesError = null)
+                }
+                is Result.Error -> {
+                    _state.value = _state.value.copy(notesError = result.error.toString())
+                }
+            }
+        }
     }
 
     fun onAction(action: ContactProfileAction) {
@@ -51,6 +65,52 @@ class ContactProfileViewModel(
                 )
             }
             ContactProfileAction.CheckIn -> checkIn()
+            ContactProfileAction.OpenAddNote -> {
+                _state.value = _state.value.copy(isAddNoteSheetOpen = true)
+            }
+            ContactProfileAction.CloseAddNote -> {
+                _state.value = _state.value.copy(isAddNoteSheetOpen = false)
+            }
+            is ContactProfileAction.DraftTitleChanged -> {
+                _state.value = _state.value.copy(draftTitle = action.title)
+            }
+            is ContactProfileAction.DraftDescriptionChanged -> {
+                _state.value = _state.value.copy(draftDescription = action.description)
+            }
+            ContactProfileAction.SaveNote -> saveNote()
+        }
+    }
+
+    private fun saveNote() {
+        if (_state.value.isSavingNote) return
+        val title = _state.value.draftTitle.trim()
+        if (title.isEmpty()) return
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSavingNote = true, notesError = null)
+            val result = contactDataSource.createNote(
+                contactId = contactId,
+                title = title,
+                body = _state.value.draftDescription.trim(),
+            )
+
+            when (result) {
+                is Result.Success -> {
+                    _state.value = _state.value.copy(
+                        isSavingNote = false,
+                        isAddNoteSheetOpen = false,
+                        draftTitle = "",
+                        draftDescription = "",
+                    )
+                    loadNotes()
+                }
+                is Result.Error -> {
+                    _state.value = _state.value.copy(
+                        isSavingNote = false,
+                        notesError = result.error.toString(),
+                    )
+                }
+            }
         }
     }
 

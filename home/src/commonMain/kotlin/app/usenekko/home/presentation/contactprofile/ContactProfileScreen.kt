@@ -1,12 +1,18 @@
 package app.usenekko.home.presentation.contactprofile
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.home.di.rememberContactProfileViewModel
 import app.usenekko.theme.NekkoTheme
@@ -38,7 +44,12 @@ fun ContactProfileScreen(
         },
         containerColor = NekkoTheme.colors.background.b0,
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+        ) {
             state.contact?.let { c ->
                 ContactProfileHeader(
                     name = c.name,
@@ -50,9 +61,27 @@ fun ContactProfileScreen(
                     onCheckInClick = { viewModel.onAction(ContactProfileAction.CheckIn) },
                 )
             }
-            // TODO: notes section (empty-state placeholder per earlier scope),
+            Spacer(modifier = Modifier.height(24.dp))
+            NotesSection(
+                notes = state.notes,
+                onAddNote = { viewModel.onAction(ContactProfileAction.OpenAddNote) },
+            )
             // TODO: RelationshipInfoBottomSheet when state.isRelationshipInfoOpen
         }
+    }
+
+    if (state.isAddNoteSheetOpen) {
+        AddNoteSheet(
+            draftTitle = state.draftTitle,
+            draftDescription = state.draftDescription,
+            isSaving = state.isSavingNote,
+            onDismiss = { viewModel.onAction(ContactProfileAction.CloseAddNote) },
+            onTitleChanged = { viewModel.onAction(ContactProfileAction.DraftTitleChanged(it)) },
+            onDescriptionChanged = {
+                viewModel.onAction(ContactProfileAction.DraftDescriptionChanged(it))
+            },
+            onSave = { viewModel.onAction(ContactProfileAction.SaveNote) },
+        )
     }
 }
 

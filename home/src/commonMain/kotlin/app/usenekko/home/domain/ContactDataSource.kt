@@ -31,6 +31,12 @@ interface ContactDataSource {
         nextCheckInDate: String?,
         streakCount: Int,
     ): Result<Contact, ContactError>
+    suspend fun getNotes(contactId: String): Result<List<Note>, ContactError>
+    suspend fun createNote(
+        contactId: String,
+        title: String,
+        body: String,
+    ): Result<Note, ContactError>
 }
 
 sealed interface ContactError {
