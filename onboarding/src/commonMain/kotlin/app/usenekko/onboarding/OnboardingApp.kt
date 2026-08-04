@@ -130,6 +130,16 @@ fun OnboardingApp(navigator: Navigator) {
                     onBack = { navigator.goBack() },
                     onAccountClick = { navigator.navigate(Screen.Account) },
                     onGroupsClick = { navigator.navigate(Screen.GroupSettings) },
+                    onAccountDeleted = {
+                        scope.launch {
+                            // The server row is already gone (the Edge Function
+                            // returned success). Best-effort local sign-out so the
+                            // stale session doesn't leave the app half-authenticated,
+                            // then drop the whole stack back to Welcome (no account).
+                            runCatching { supabaseClient.auth.signOut() }
+                            navigator.replaceAll(Screen.Welcome)
+                        }
+                    },
                 )
 
                 is Screen.Account -> AccountScreen(
