@@ -34,6 +34,7 @@ import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.avatar_red
+import nekko.home.generated.resources.ic_brainstorm
 import nekko.home.generated.resources.ic_dropdown
 import nekko.home.generated.resources.ic_notification
 import nekko.home.generated.resources.ic_reminder
@@ -48,6 +49,7 @@ fun ContactProfileHeader(
     onNameClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onCheckInClick: () -> Unit,
+    onBrainstormClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val selectionRingBrush = Brush.sweepGradient(
@@ -99,6 +101,12 @@ fun ContactProfileHeader(
                 onClick = onNotificationClick,
             )
             Spacer(Modifier.width(10.dp))
+            NekkoActionButton(
+                text = "",
+                leadingIcon = vectorResource(Res.drawable.ic_brainstorm),
+                onClick = onBrainstormClick,
+            )
+            Spacer(Modifier.width(10.dp))
             NekkoButton(
                 "Check-In",
                 onClick = onCheckInClick,
@@ -148,6 +156,7 @@ fun PreviewContactProfileHeader() {
                 onNameClick = {},
                 onNotificationClick = {},
                 onCheckInClick = {},
+                onBrainstormClick = {},
             )
         }
     }

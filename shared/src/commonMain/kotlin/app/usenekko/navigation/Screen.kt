@@ -38,6 +38,9 @@ sealed class Screen {
     data class ContactProfile(val contactId: String) : Screen()
 
     @Serializable
+    data class Brainstorm(val contactId: String) : Screen()
+
+    @Serializable
     data object Settings : Screen()
 
     @Serializable

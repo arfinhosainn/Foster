@@ -9,6 +9,7 @@ import io.github.jan.supabase.compose.auth.googleNativeLogin
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.storage.Storage
+import io.ktor.client.plugins.HttpTimeout
 
 object SupabaseConfig {
     const val SUPABASE_URL = "https://ulrzuzrwilemkcahsvih.supabase.co"
@@ -16,6 +17,7 @@ object SupabaseConfig {
     const val GOOGLE_WEB_CLIENT_ID = "874656360216-clvksukjpp8jpmusoo93mv11auiumsdq.apps.googleusercontent.com"
 }
 
+@OptIn(io.github.jan.supabase.annotations.SupabaseInternal::class)
 fun createAppSupabaseClient(): SupabaseClient = createSupabaseClient(
     supabaseUrl = SupabaseConfig.SUPABASE_URL,
     supabaseKey = SupabaseConfig.SUPABASE_ANON_KEY,
@@ -27,4 +29,13 @@ fun createAppSupabaseClient(): SupabaseClient = createSupabaseClient(
         googleNativeLogin(serverClientId = SupabaseConfig.GOOGLE_WEB_CLIENT_ID)
     }
     install(Functions)
+    // The brainstorm Edge Function calls an LLM whose response can take a few
+    // seconds. Without a generous client timeout, a slow (but successful) call
+    // surfaces as a spurious "network error". Set a comfortable ceiling here.
+    httpConfig {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 120_000
+            connectTimeoutMillis = 30_000
+        }
+    }
 }

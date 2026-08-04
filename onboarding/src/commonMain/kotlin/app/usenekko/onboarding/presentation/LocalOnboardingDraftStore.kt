@@ -4,8 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import app.usenekko.home.data.supabase.SupabaseBrainstormDataSource
 import app.usenekko.home.data.supabase.SupabaseContactDataSource
 import app.usenekko.home.data.supabase.SupabaseDeleteAccountDataSource
+import app.usenekko.home.di.LocalBrainstormDataSource
 import app.usenekko.home.di.LocalContactDataSource
 import app.usenekko.home.di.LocalDeleteAccountDataSource
 import app.usenekko.home.di.LocalProfileDataSource
@@ -47,6 +49,7 @@ fun OnboardingDraftStoreProvider(
     val profileDataSource = remember { SupabaseOnboardingProfileDataSource(supabaseClient) }
     val contactDataSource = remember { SupabaseContactDataSource(supabaseClient) }
     val deleteAccountDataSource = remember { SupabaseDeleteAccountDataSource(supabaseClient) }
+    val brainstormDataSource = remember { SupabaseBrainstormDataSource(supabaseClient) }
 
     CompositionLocalProvider(
         LocalOnboardingDraftStore provides draftStore,
@@ -55,6 +58,7 @@ fun OnboardingDraftStoreProvider(
         LocalSupabaseClient provides supabaseClient,
         LocalContactDataSource provides contactDataSource,
         LocalDeleteAccountDataSource provides deleteAccountDataSource,
+        LocalBrainstormDataSource provides brainstormDataSource,
     ) {
         content()
     }
