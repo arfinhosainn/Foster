@@ -8,6 +8,8 @@ import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.nextCheckInDateLocal
 import app.usenekko.home.domain.nextReminder
+import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
+import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
@@ -173,6 +175,8 @@ class ContactProfileViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isCheckingIn = true, checkInError = null)
 
+            val previousBadges = contactDataSource.unlockedBadgeIdsOrNull()
+
             val update = computeCheckInUpdate(current, today)
             val result = contactDataSource.logCheckIn(
                 contactId = current.id,
@@ -193,6 +197,9 @@ class ContactProfileViewModel(
                     // next_check_in_date moved — cancel the old alarm and schedule
                     // the new one (locally, no push service involved).
                     rescheduleReminder(updated)
+                    if (previousBadges != null) {
+                        contactDataSource.detectAndTriggerBadgeReveal(previousBadges)
+                    }
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(

@@ -20,7 +20,14 @@ import app.usenekko.onboarding.data.supabase.SupabaseOnboardingProfileDataSource
 import io.github.jan.supabase.auth.auth
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import app.usenekko.home.HomeScreen
+import app.usenekko.home.presentation.badges.BadgeRevealStore
+import app.usenekko.home.presentation.badges.PlantUnlockedBadgeOverlay
 import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
 import app.usenekko.home.presentation.settings.AccountScreen
 import app.usenekko.home.presentation.settings.GroupDetailScreen
@@ -29,6 +36,7 @@ import app.usenekko.home.presentation.settings.SettingScreen
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.shared.domain.Result
+import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.launch
 
 @Composable
@@ -46,8 +54,11 @@ fun OnboardingApp(navigator: Navigator) {
             }
         }
 
-        App(navigator) { screen ->
-            when (screen) {
+        val pendingBadge by BadgeRevealStore.pending.collectAsState()
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            App(navigator) { screen ->
+                when (screen) {
                 is Screen.Welcome -> WelcomeScreen(
                     supabaseClient = supabaseClient,
                     onGoogleSignInSuccess = {
@@ -134,6 +145,20 @@ fun OnboardingApp(navigator: Navigator) {
                     groupId = screen.groupId,
                     onBack = { navigator.goBack() },
                 )
+            }
+            }
+
+            pendingBadge?.let { badge ->
+                NekkoTheme {
+                    PlantUnlockedBadgeOverlay(
+                        badge = badge,
+                        onCollect = {
+                            BadgeRevealStore.consume()
+                            navigator.navigate(Screen.Account)
+                        },
+                        onDismiss = { BadgeRevealStore.consume() },
+                    )
+                }
             }
         }
     }
