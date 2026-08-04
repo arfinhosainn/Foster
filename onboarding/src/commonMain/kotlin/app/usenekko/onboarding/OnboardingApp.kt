@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import app.usenekko.home.HomeScreen
 import app.usenekko.home.presentation.badges.BadgeRevealStore
 import app.usenekko.home.presentation.badges.PlantUnlockedBadgeOverlay
+import app.usenekko.home.presentation.brainstorm.BrainstormScreen
 import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
 import app.usenekko.home.presentation.settings.AccountScreen
 import app.usenekko.home.presentation.settings.GroupDetailScreen
@@ -122,6 +123,12 @@ fun OnboardingApp(navigator: Navigator) {
                 )
 
                 is Screen.ContactProfile -> ContactProfileScreen(
+                    contactId = screen.contactId,
+                    onBack = { navigator.goBack() },
+                    onBrainstormClick = { navigator.navigate(Screen.Brainstorm(screen.contactId)) },
+                )
+
+                is Screen.Brainstorm -> BrainstormScreen(
                     contactId = screen.contactId,
                     onBack = { navigator.goBack() },
                 )

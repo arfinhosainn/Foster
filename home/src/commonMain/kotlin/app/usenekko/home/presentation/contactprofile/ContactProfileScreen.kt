@@ -21,6 +21,7 @@ import app.usenekko.theme.NekkoTheme
 fun ContactProfileScreen(
     contactId: String,
     onBack: () -> Unit,
+    onBrainstormClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberContactProfileViewModel(contactId)
@@ -59,6 +60,7 @@ fun ContactProfileScreen(
                     onNameClick = { viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo) },
                     onNotificationClick = { /* TODO: mute/notification toggle — not built yet */ },
                     onCheckInClick = { viewModel.onAction(ContactProfileAction.CheckIn) },
+                    onBrainstormClick = onBrainstormClick,
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
