@@ -97,12 +97,46 @@ class FakeContactDataSource(
     override suspend fun createGroup(
         name: String,
         color: String?,
-    ): Result<Group, ContactError> = Result.Error(ContactError.Unknown("not used"))
+    ): Result<Group, ContactError> {
+        val group = Group(id = "g${groups.size + 1}", name = name, color = color)
+        groups = groups + group
+        return Result.Success(group)
+    }
 
     override suspend fun assignContactToGroup(
         contactId: String,
         groupId: String,
-    ): Result<Unit, ContactError> = Result.Success(Unit)
+    ): Result<Unit, ContactError> {
+        memberships = memberships + GroupMembership(contactId, groupId)
+        return Result.Success(Unit)
+    }
+
+    override suspend fun removeContactFromGroup(
+        contactId: String,
+        groupId: String,
+    ): Result<Unit, ContactError> {
+        memberships = memberships.filterNot {
+            it.contactId == contactId && it.groupId == groupId
+        }
+        return Result.Success(Unit)
+    }
+
+    override suspend fun moveContactToGroup(
+        contactId: String,
+        fromGroupId: String,
+        toGroupId: String,
+    ): Result<Unit, ContactError> {
+        memberships = memberships.filterNot {
+            it.contactId == contactId && it.groupId == fromGroupId
+        } + GroupMembership(contactId, toGroupId)
+        return Result.Success(Unit)
+    }
+
+    override suspend fun deleteGroup(groupId: String): Result<Unit, ContactError> {
+        groups = groups.filterNot { it.id == groupId }
+        memberships = memberships.filterNot { it.groupId == groupId }
+        return Result.Success(Unit)
+    }
 
     override suspend fun getCheckIns(
         contactId: String?,

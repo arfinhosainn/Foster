@@ -7,9 +7,17 @@ import app.usenekko.home.addcontact.AddContactViewModel
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.presentation.HomeViewModel
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
+import app.usenekko.home.presentation.settings.AccountViewModel
+import app.usenekko.home.presentation.settings.GroupDetailViewModel
+import app.usenekko.home.presentation.settings.GroupSettingsViewModel
+import app.usenekko.shared.domain.ProfileDataSource
 
 val LocalContactDataSource = staticCompositionLocalOf<ContactDataSource> {
     error("ContactDataSource not provided")
+}
+
+val LocalProfileDataSource = staticCompositionLocalOf<ProfileDataSource> {
+    error("ProfileDataSource not provided")
 }
 
 @Composable
@@ -28,4 +36,23 @@ fun rememberAddContactViewModel(): AddContactViewModel {
 fun rememberContactProfileViewModel(contactId: String): ContactProfileViewModel {
     val contactDataSource = LocalContactDataSource.current
     return remember(contactId) { ContactProfileViewModel(contactId, contactDataSource) }
+}
+
+@Composable
+fun rememberAccountViewModel(): AccountViewModel {
+    val profileDataSource = LocalProfileDataSource.current
+    val contactDataSource = LocalContactDataSource.current
+    return remember { AccountViewModel(profileDataSource, contactDataSource) }
+}
+
+@Composable
+fun rememberGroupSettingsViewModel(): GroupSettingsViewModel {
+    val contactDataSource = LocalContactDataSource.current
+    return remember { GroupSettingsViewModel(contactDataSource) }
+}
+
+@Composable
+fun rememberGroupDetailViewModel(groupId: String): GroupDetailViewModel {
+    val contactDataSource = LocalContactDataSource.current
+    return remember(groupId) { GroupDetailViewModel(groupId, contactDataSource) }
 }
