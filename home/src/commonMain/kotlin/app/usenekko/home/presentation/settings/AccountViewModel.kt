@@ -2,6 +2,7 @@ package app.usenekko.home.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.domain.BadgeSlot
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.shared.domain.AccountProfile
 import app.usenekko.shared.domain.ProfileDataSource
@@ -23,6 +24,7 @@ data class AccountState(
     val createdAt: String? = null,
     val totalContacts: Int = 0,
     val totalCheckIns: Int = 0,
+    val badgeSlots: List<BadgeSlot> = emptyList(),
     val error: String? = null,
 )
 
@@ -52,15 +54,30 @@ class AccountViewModel(
                     val checkIns = async {
                         contactDataSource.getCheckIns(null, EPOCH_START, EPOCH_END)
                     }
-                    Triple(profile.await(), contacts.await(), checkIns.await())
+                    val badges = async { contactDataSource.getBadges() }
+                    val userBadges = async { contactDataSource.getUserBadges() }
+                    Quintuple(
+                        profile.await(),
+                        contacts.await(),
+                        checkIns.await(),
+                        badges.await(),
+                        userBadges.await(),
+                    )
                 }
             }
 
             result.fold(
-                onSuccess = { (profile, contacts, checkIns) ->
+                onSuccess = { (profile, contacts, checkIns, badges, userBadges) ->
                     val profileData = (profile as? Result.Success)?.data
                     val contactList = (contacts as? Result.Success)?.data.orEmpty()
                     val checkInCount = (checkIns as? Result.Success)?.data?.size ?: 0
+                    val catalog = (badges as? Result.Success)?.data.orEmpty()
+                    val unlockedIds = (userBadges as? Result.Success)?.data
+                        .orEmpty()
+                        .mapTo(mutableSetOf()) { it.badgeId }
+                    val badgeSlots = catalog
+                        .sortedBy { it.threshold }
+                        .map { badge -> BadgeSlot(badge, badge.id in unlockedIds) }
                     _state.value = AccountState(
                         isLoading = false,
                         profile = profileData,
@@ -68,6 +85,7 @@ class AccountViewModel(
                         createdAt = profileData?.createdAt,
                         totalContacts = contactList.size,
                         totalCheckIns = checkInCount,
+                        badgeSlots = badgeSlots,
                     )
                 },
                 onFailure = { e ->
@@ -80,3 +98,11 @@ class AccountViewModel(
         }
     }
 }
+
+private data class Quintuple<A, B, C, D, E>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D,
+    val fifth: E,
+)

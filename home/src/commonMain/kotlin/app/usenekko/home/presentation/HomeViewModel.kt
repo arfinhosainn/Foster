@@ -9,6 +9,8 @@ import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.computeReminderPlans
 import app.usenekko.home.domain.isOutstanding
+import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
+import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
@@ -98,6 +100,8 @@ class HomeViewModel(
                 return@launch
             }
 
+            val previousBadges = contactDataSource.unlockedBadgeIdsOrNull()
+
             val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val update = computeCheckInUpdate(contact, today)
             val result = contactDataSource.logCheckIn(
@@ -109,7 +113,12 @@ class HomeViewModel(
 
             _state.value = _state.value.copy(checkingInContactId = null)
             when (result) {
-                is Result.Success -> loadContacts()
+                is Result.Success -> {
+                    if (previousBadges != null) {
+                        contactDataSource.detectAndTriggerBadgeReveal(previousBadges)
+                    }
+                    loadContacts()
+                }
                 is Result.Error -> {
                     _state.value = _state.value.copy(checkInError = result.error.toString())
                 }

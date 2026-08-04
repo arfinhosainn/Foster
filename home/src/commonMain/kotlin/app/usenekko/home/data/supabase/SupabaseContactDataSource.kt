@@ -1,5 +1,6 @@
 package app.usenekko.home.data.supabase
 
+import app.usenekko.home.domain.Badge
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
@@ -8,6 +9,7 @@ import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.Note
 import app.usenekko.home.domain.Reminder
+import app.usenekko.home.domain.UserBadge
 import app.usenekko.shared.domain.Result
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -114,6 +116,29 @@ private data class ReminderDto(
         recurrence = recurrence,
         dateEpochMillis = dateEpochMillis,
     )
+}
+
+@Serializable
+private data class BadgeDto(
+    val id: String,
+    val name: String,
+    val description: String? = null,
+    val threshold: Int = 0,
+) {
+    fun toDomain() = Badge(
+        id = id,
+        name = name,
+        description = description.orEmpty(),
+        threshold = threshold,
+    )
+}
+
+@Serializable
+private data class UserBadgeDto(
+    @SerialName("badge_id") val badgeId: String,
+    @SerialName("unlocked_at") val unlockedAt: String,
+) {
+    fun toDomain() = UserBadge(badgeId = badgeId, unlockedAt = unlockedAt)
 }
 
 class SupabaseContactDataSource(
@@ -508,6 +533,45 @@ class SupabaseContactDataSource(
                 }
 
             Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun getBadges(): Result<List<Badge>, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val badges = client.postgrest
+                .from("badges")
+                .select {
+                    order("threshold", Order.ASCENDING)
+                }
+                .decodeList<BadgeDto>()
+                .map { it.toDomain() }
+
+            Result.Success(badges)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun getUserBadges(): Result<List<UserBadge>, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val userBadges = client.postgrest
+                .from("user_badges")
+                .select(Columns.list("badge_id", "unlocked_at")) {
+                    filter { eq("owner_id", userId) }
+                }
+                .decodeList<UserBadgeDto>()
+                .map { it.toDomain() }
+
+            Result.Success(userBadges)
         } catch (e: Exception) {
             Result.Error(mapError(e))
         }

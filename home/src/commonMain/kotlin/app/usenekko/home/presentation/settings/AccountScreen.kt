@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.home.di.rememberAccountViewModel
+import app.usenekko.home.presentation.badges.BadgeRow
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
@@ -87,6 +88,11 @@ fun AccountScreen(
                     value = state.totalCheckIns.toString(),
                     modifier = Modifier.weight(1f),
                 )
+            }
+
+            if (state.badgeSlots.isNotEmpty()) {
+                Spacer(Modifier.height(28.dp))
+                BadgeRow(badges = state.badgeSlots)
             }
 
             state.error?.let { error ->

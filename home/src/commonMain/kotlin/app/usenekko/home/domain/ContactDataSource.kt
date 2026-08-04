@@ -56,6 +56,8 @@ interface ContactDataSource {
         date: Long?,
     ): Result<Reminder, ContactError>
     suspend fun deleteReminder(reminderId: String): Result<Unit, ContactError>
+    suspend fun getBadges(): Result<List<Badge>, ContactError>
+    suspend fun getUserBadges(): Result<List<UserBadge>, ContactError>
 }
 
 sealed interface ContactError {

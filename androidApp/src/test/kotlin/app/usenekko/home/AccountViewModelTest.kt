@@ -1,7 +1,9 @@
 package app.usenekko.home
 
+import app.usenekko.home.domain.Badge
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
+import app.usenekko.home.domain.UserBadge
 import app.usenekko.home.presentation.settings.AccountViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,6 +73,34 @@ class AccountViewModelTest {
             assertEquals(false, state.isLoading)
             assertNull(state.fullName)
             assertEquals(0, state.totalContacts)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun accountLoadsBadgeSlotsWithUnlockStateSortedByThreshold() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val profileDataSource = FakeProfileDataSource()
+            val contactDataSource = FakeContactDataSource(
+                contacts = emptyList(),
+                badges = listOf(
+                    Badge("b2", "Wild Flower", "bloom", 15),
+                    Badge("b1", "Seedling", "first", 1),
+                ),
+                userBadges = listOf(UserBadge("b1", "2026-08-04T10:00:00Z")),
+            )
+            val viewModel = AccountViewModel(profileDataSource, contactDataSource)
+            advanceUntilIdle()
+
+            val slots = viewModel.state.value.badgeSlots
+            assertEquals(2, slots.size)
+            assertEquals("b1", slots[0].badge.id)
+            assertEquals(true, slots[0].unlocked)
+            assertEquals("b2", slots[1].badge.id)
+            assertEquals(false, slots[1].unlocked)
         } finally {
             Dispatchers.resetMain()
         }

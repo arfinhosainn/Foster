@@ -1,5 +1,6 @@
 package app.usenekko.home
 
+import app.usenekko.home.domain.Badge
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
@@ -8,6 +9,7 @@ import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.Note
 import app.usenekko.home.domain.Reminder
+import app.usenekko.home.domain.UserBadge
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.CompletableDeferred
 
@@ -18,6 +20,8 @@ class FakeContactDataSource(
     checkIns: List<CheckIn> = emptyList(),
     notes: List<Note> = emptyList(),
     reminders: List<Reminder> = emptyList(),
+    badges: List<Badge> = emptyList(),
+    userBadges: List<UserBadge> = emptyList(),
 ) : ContactDataSource {
 
     var contacts: List<Contact> = contacts
@@ -31,6 +35,10 @@ class FakeContactDataSource(
     var notes: List<Note> = notes
         private set
     var reminders: List<Reminder> = reminders
+        private set
+    var badges: List<Badge> = badges
+        private set
+    var userBadges: List<UserBadge> = userBadges
         private set
 
     /** When set, [getNotes] returns this error instead of the stored notes. */
@@ -163,11 +171,22 @@ class FakeContactDataSource(
             streakCount = streakCount,
         )
         contacts = contacts.toMutableList().also { it[index] = updated }
-        checkIns = checkIns + CheckIn(
+        val newCheckIn = CheckIn(
             id = "ci${checkIns.size + 1}",
             contactId = contactId,
             checkedInAt = "${lastCheckInDate}T12:00:00Z",
         )
+        checkIns = checkIns + newCheckIn
+        // Mimic the DB trigger: unlock every badge whose threshold the all-time
+        // check-in count now reaches, without re-triggering already-held ones.
+        val total = checkIns.size
+        val held = userBadges.mapTo(mutableSetOf()) { it.badgeId }
+        val newly = badges.filter { it.threshold <= total && it.id !in held }
+        if (newly.isNotEmpty()) {
+            userBadges = userBadges + newly.map {
+                UserBadge(it.id, "${lastCheckInDate}T12:00:00Z")
+            }
+        }
         return Result.Success(updated)
     }
 
@@ -227,4 +246,9 @@ class FakeContactDataSource(
         reminders = reminders.filterNot { it.id == reminderId }
         return Result.Success(Unit)
     }
+
+    override suspend fun getBadges(): Result<List<Badge>, ContactError> = Result.Success(badges)
+
+    override suspend fun getUserBadges(): Result<List<UserBadge>, ContactError> =
+        Result.Success(userBadges)
 }
