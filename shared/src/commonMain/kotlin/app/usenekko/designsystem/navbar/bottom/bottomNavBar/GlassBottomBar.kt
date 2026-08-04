@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import app.usenekko.designsystem.buttons.GlassIconButton
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.LiquidState
 import io.github.fletchmckee.liquid.liquefiable
@@ -48,10 +49,6 @@ import nekko.shared.generated.resources.ic_home
 import nekko.shared.generated.resources.ic_leaf
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
-
-private val BarColor = Color.Transparent
-private val IndicatorColor = Color(0xFF187BD7)
-private val IconIdle = Color(0xFF71777B)
 
 private const val BarHeight = 68
 private const val IndicatorSize = 54
@@ -89,11 +86,13 @@ fun GlassBottomNavBar(
             onSelect = onItemSelected,
             liquidState = liquidState
         )
-        CircleActionButton(
+        GlassIconButton(
             icon = Res.drawable.ic_contact,
             contentDescription = "Invite someone",
             onClick = onAddClick,
             liquidState = liquidState,
+            size = BarHeight.dp,
+            iconSize = 26.dp,
         )
     }
 }
@@ -212,66 +211,10 @@ private fun NavCell(
 }
 
 @Composable
-private fun CircleActionButton(
-    icon: DrawableResource,
-    contentDescription: String,
-    onClick: () -> Unit,
-    liquidState: LiquidState,
-    modifier: Modifier = Modifier,
-) {
-    val haptics = LocalHapticFeedback.current
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val squeeze by animateFloatAsState(
-        targetValue = if (pressed) 0.93f else 1f,
-        animationSpec = spring(dampingRatio = 0.55f, stiffness = 800f),
-        label = "squeeze",
-    )
-    val glassTint = if (isSystemInDarkTheme()) NekkoTheme.colors.fill.secondary
-    else Color.White.copy(alpha = 0.45f)
-
-
-    Box(
-        modifier
-            .size(BarHeight.dp)
-            .scale(squeeze)
-            .background(BarColor, CircleShape)
-            .selectable(
-                selected = false,
-                interactionSource = interaction,
-                indication = null,
-                role = Role.Button,
-                onClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onClick()
-                },
-            )
-            .liquid(liquidState) {
-                frost = 5.dp
-                shape = CircleShape
-                refraction = 0.18f     // subtle, this look is soft not lensy
-                curve = 0.30f
-                edge = 0.06f           // that faint light rim on the top-left
-                tint = glassTint // dark glass, not white
-                saturation = 1.15f
-                dispersion = 0f        // no rainbow fringe in your ref
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = vectorResource(icon),
-            contentDescription = contentDescription,
-            tint = IconIdle,
-            modifier = Modifier.size(26.dp),
-        )
-    }
-}
-
-@Composable
 fun AmbientGlow(liquidState: LiquidState, modifier: Modifier = Modifier) = Box(
     modifier
         .fillMaxSize()
-        .background(NekkoTheme.colors.fill.secondary)
+        .background(NekkoTheme.colors.background.b0)
         .liquefiable(liquidState),
 ) {
 

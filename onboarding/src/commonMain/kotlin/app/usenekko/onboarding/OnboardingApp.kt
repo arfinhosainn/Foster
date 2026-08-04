@@ -22,6 +22,10 @@ import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
 import app.usenekko.home.HomeScreen
 import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
+import app.usenekko.home.presentation.settings.AccountScreen
+import app.usenekko.home.presentation.settings.GroupDetailScreen
+import app.usenekko.home.presentation.settings.GroupSettingsScreen
+import app.usenekko.home.presentation.settings.SettingScreen
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.shared.domain.Result
@@ -103,10 +107,31 @@ fun OnboardingApp(navigator: Navigator) {
 
                 is Screen.Home -> HomeScreen(
                     onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
+                    onSettingsClick = { navigator.navigate(Screen.Settings) },
                 )
 
                 is Screen.ContactProfile -> ContactProfileScreen(
                     contactId = screen.contactId,
+                    onBack = { navigator.goBack() },
+                )
+
+                is Screen.Settings -> SettingScreen(
+                    onBack = { navigator.goBack() },
+                    onAccountClick = { navigator.navigate(Screen.Account) },
+                    onGroupsClick = { navigator.navigate(Screen.GroupSettings) },
+                )
+
+                is Screen.Account -> AccountScreen(
+                    onBack = { navigator.goBack() },
+                )
+
+                is Screen.GroupSettings -> GroupSettingsScreen(
+                    onBack = { navigator.goBack() },
+                    onGroupClick = { group -> navigator.navigate(Screen.GroupDetail(group.id, group.name)) },
+                )
+
+                is Screen.GroupDetail -> GroupDetailScreen(
+                    groupId = screen.groupId,
                     onBack = { navigator.goBack() },
                 )
             }

@@ -82,6 +82,7 @@ private fun audienceIcon(name: String): DrawableResource = when (name.lowercase(
 @Composable
 fun HomeScreen(
     onContactClick: (Contact) -> Unit,
+    onSettingsClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
 
@@ -130,7 +131,7 @@ fun HomeScreen(
                     )
                 },
                 userName = "Jane Bell",
-                onAvatarClick = {},
+                onAvatarClick = { onSettingsClick() },
                 onPremiumClick = {},
             )
 

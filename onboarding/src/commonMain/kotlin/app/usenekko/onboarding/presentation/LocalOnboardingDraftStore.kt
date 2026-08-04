@@ -6,6 +6,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import app.usenekko.home.data.supabase.SupabaseContactDataSource
 import app.usenekko.home.di.LocalContactDataSource
+import app.usenekko.home.di.LocalProfileDataSource
+import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.onboarding.addnote.AddNoteViewModel
 import app.usenekko.onboarding.contact.ContactViewModel
 import app.usenekko.onboarding.customreminder.CustomReminderViewModel
@@ -46,6 +48,7 @@ fun OnboardingDraftStoreProvider(
     CompositionLocalProvider(
         LocalOnboardingDraftStore provides draftStore,
         LocalOnboardingProfileDataSource provides profileDataSource,
+        LocalProfileDataSource provides (profileDataSource as ProfileDataSource),
         LocalSupabaseClient provides supabaseClient,
         LocalContactDataSource provides contactDataSource,
     ) {

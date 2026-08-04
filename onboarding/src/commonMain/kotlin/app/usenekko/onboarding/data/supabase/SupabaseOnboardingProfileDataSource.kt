@@ -9,6 +9,9 @@ import app.usenekko.onboarding.domain.OnboardingDraft
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingProfileError
 import app.usenekko.onboarding.domain.OnboardingStep
+import app.usenekko.shared.domain.AccountProfile
+import app.usenekko.shared.domain.ProfileDataSource
+import app.usenekko.shared.domain.ProfileError
 import app.usenekko.shared.domain.EmptyResult
 import app.usenekko.shared.domain.Result
 import io.github.jan.supabase.SupabaseClient
@@ -16,6 +19,8 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.storage.storage
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -23,9 +28,17 @@ import kotlinx.serialization.json.encodeToJsonElement
 
 private val payloadJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
+@Serializable
+private data class ProfileDto(
+    @SerialName("full_name") val fullName: String? = null,
+    @SerialName("display_name") val displayName: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+)
+
 class SupabaseOnboardingProfileDataSource(
     private val client: SupabaseClient,
-) : OnboardingProfileDataSource {
+) : OnboardingProfileDataSource, ProfileDataSource {
 
     override suspend fun submitOnboarding(draft: OnboardingDraft): EmptyResult<OnboardingProfileError> {
         return try {
@@ -95,6 +108,31 @@ class SupabaseOnboardingProfileDataSource(
         }
     }
 
+    override suspend fun getProfile(): Result<AccountProfile, ProfileError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ProfileError.NotAuthenticated)
+
+            val profile = client.postgrest
+                .from("profiles")
+                .select(columns = Columns.list("full_name", "display_name", "avatar_url", "created_at")) {
+                    single()
+                }
+                .decodeAs<ProfileDto>()
+
+            Result.Success(
+                AccountProfile(
+                    fullName = profile.fullName,
+                    displayName = profile.displayName,
+                    avatarUrl = profile.avatarUrl,
+                    createdAt = profile.createdAt,
+                )
+            )
+        } catch (e: Exception) {
+            Result.Error(mapProfileError(e))
+        }
+    }
+
     override suspend fun ensureProfileExists(): EmptyResult<OnboardingProfileError> {
         return try {
             val session = client.auth.currentSessionOrNull()
@@ -142,6 +180,15 @@ class SupabaseOnboardingProfileDataSource(
             e.message?.contains("network", ignoreCase = true) == true -> OnboardingProfileError.Network
             e.message?.contains("timeout", ignoreCase = true) == true -> OnboardingProfileError.Network
             else -> OnboardingProfileError.Unknown(detail = e.message)
+        }
+    }
+
+    private fun mapProfileError(e: Exception): ProfileError {
+        return when {
+            e.message?.contains("JWT", ignoreCase = true) == true -> ProfileError.NotAuthenticated
+            e.message?.contains("network", ignoreCase = true) == true -> ProfileError.Network
+            e.message?.contains("timeout", ignoreCase = true) == true -> ProfileError.Network
+            else -> ProfileError.Unknown(detail = e.message)
         }
     }
 }

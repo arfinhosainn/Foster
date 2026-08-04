@@ -36,4 +36,16 @@ sealed class Screen {
 
     @Serializable
     data class ContactProfile(val contactId: String) : Screen()
+
+    @Serializable
+    data object Settings : Screen()
+
+    @Serializable
+    data object Account : Screen()
+
+    @Serializable
+    data object GroupSettings : Screen()
+
+    @Serializable
+    data class GroupDetail(val groupId: String, val groupName: String) : Screen()
 }

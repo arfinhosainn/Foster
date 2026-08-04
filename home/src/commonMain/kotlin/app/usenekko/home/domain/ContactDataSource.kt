@@ -20,6 +20,16 @@ interface ContactDataSource {
         contactId: String,
         groupId: String,
     ): Result<Unit, ContactError>
+    suspend fun removeContactFromGroup(
+        contactId: String,
+        groupId: String,
+    ): Result<Unit, ContactError>
+    suspend fun moveContactToGroup(
+        contactId: String,
+        fromGroupId: String,
+        toGroupId: String,
+    ): Result<Unit, ContactError>
+    suspend fun deleteGroup(groupId: String): Result<Unit, ContactError>
     suspend fun getCheckIns(
         contactId: String?,
         from: String,

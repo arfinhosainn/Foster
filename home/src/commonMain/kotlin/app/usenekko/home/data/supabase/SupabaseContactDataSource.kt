@@ -256,6 +256,76 @@ class SupabaseContactDataSource(
         }
     }
 
+    override suspend fun removeContactFromGroup(
+        contactId: String,
+        groupId: String,
+    ): Result<Unit, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("contact_groups")
+                .delete {
+                    filter { eq("contact_id", contactId) }
+                    filter { eq("group_id", groupId) }
+                }
+
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun moveContactToGroup(
+        contactId: String,
+        fromGroupId: String,
+        toGroupId: String,
+    ): Result<Unit, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("contact_groups")
+                .delete {
+                    filter { eq("contact_id", contactId) }
+                    filter { eq("group_id", fromGroupId) }
+                }
+            client.postgrest
+                .from("contact_groups")
+                .insert(
+                    mapOf(
+                        "contact_id" to contactId,
+                        "group_id" to toGroupId,
+                    )
+                )
+
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun deleteGroup(groupId: String): Result<Unit, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("groups")
+                .delete {
+                    filter { eq("id", groupId) }
+                    filter { eq("owner_id", userId) }
+                }
+
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
     override suspend fun getCheckIns(
         contactId: String?,
         from: String,
