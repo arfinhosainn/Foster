@@ -45,6 +45,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
             implementation(libs.androidx.core.ktx)
+            implementation(libs.datastore.preferences)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)

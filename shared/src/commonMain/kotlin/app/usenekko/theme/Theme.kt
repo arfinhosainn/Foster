@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
@@ -221,11 +222,14 @@ private fun darkMaterialColorScheme(colors: ExtendedColors): ColorScheme = darkC
 
 @Composable
 fun NekkoTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean? = null,
     content: @Composable () -> Unit,
 ) {
-    val extended = if (darkTheme) DarkExtendedColors else LightExtendedColors
-    val materialColors = if (darkTheme) darkMaterialColorScheme(extended) else lightMaterialColorScheme(extended)
+    val themeStore = LocalThemeStore.current
+    val selectedMode = themeStore?.mode?.collectAsState()?.value ?: AppThemeMode.SYSTEM
+    val isDark = darkTheme ?: resolveDarkTheme(selectedMode, isSystemInDarkTheme())
+    val extended = if (isDark) DarkExtendedColors else LightExtendedColors
+    val materialColors = if (isDark) darkMaterialColorScheme(extended) else lightMaterialColorScheme(extended)
     val appTypo = appTypography()
 
     CompositionLocalProvider(

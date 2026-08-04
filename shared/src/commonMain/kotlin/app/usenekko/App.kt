@@ -5,13 +5,16 @@ import app.usenekko.navigation.Navigator
 import app.usenekko.navigation.NekkoNavHost
 import app.usenekko.navigation.Screen
 import app.usenekko.theme.NekkoTheme
+import app.usenekko.theme.ThemePreferenceStoreProvider
 
 @Composable
 fun App(
     navigator: Navigator,
     screenContent: @Composable (Screen) -> Unit
 ) {
-    NekkoTheme {
-        NekkoNavHost(navigator, screenContent)
+    ThemePreferenceStoreProvider {
+        NekkoTheme {
+            NekkoNavHost(navigator, screenContent)
+        }
     }
 }
