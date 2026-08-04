@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,10 +37,13 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
+import app.usenekko.home.presentation.settings.components.AppearanceBottomSheet
 import app.usenekko.home.presentation.settings.components.SettingsGroup
 import app.usenekko.home.presentation.settings.components.SettingsRow
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
 import app.usenekko.shared.notifications.ReminderScheduler
+import app.usenekko.theme.AppThemeMode
+import app.usenekko.theme.LocalThemeStore
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
 import kotlinx.coroutines.launch
@@ -75,6 +79,18 @@ fun SettingScreen(
         notificationEnabled = reminderScheduler.isEnabled()
     }
 
+    // Appearance — local theme preference (Dark/Light/System)
+    val themeStore = LocalThemeStore.current
+    val selectedMode by themeStore?.mode?.collectAsState()
+        ?: remember { mutableStateOf(AppThemeMode.SYSTEM) }
+    var showAppearanceSheet by remember { mutableStateOf(false) }
+
+    val appearanceLabel = when (selectedMode) {
+        AppThemeMode.DARK -> "Dark"
+        AppThemeMode.LIGHT -> "Light"
+        AppThemeMode.SYSTEM -> "System"
+    }
+
     // Store in pixels, convert to Dp only when needed
     var topBarHeightPx by remember { mutableStateOf(0) }
     val topBarHeightDp by remember(topBarHeightPx) {
@@ -108,7 +124,11 @@ fun SettingScreen(
                 liquidState = liquidState,
                 rows = listOf(
                     SettingsRow.Item(icon = Res.drawable.ic_greenprofile, title = "Account") { onAccountClick() },
-                    SettingsRow.Item(icon = Res.drawable.ic_appearance, title = "Appearance") {},
+                    SettingsRow.Item(
+                        icon = Res.drawable.ic_appearance,
+                        title = "Appearance",
+                        trailing = appearanceLabel,
+                    ) { showAppearanceSheet = true },
                     SettingsRow.Item(
                         icon = Res.drawable.ic_notification,
                         title = "Notification",
@@ -210,6 +230,15 @@ fun SettingScreen(
                 .onSizeChanged { topBarHeightPx = it.height },
         ) {
             SettingsTopBar(onBack = onBack)
+        }
+
+        // Appearance picker
+        if (showAppearanceSheet) {
+            AppearanceBottomSheet(
+                selectedMode = selectedMode,
+                onSelect = { mode -> themeStore?.setMode(mode) },
+                onDismiss = { showAppearanceSheet = false },
+            )
         }
 
         // Scrim — taller, non-linear fade for a polished iOS-style effect
