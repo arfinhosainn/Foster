@@ -37,10 +37,14 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
+import app.usenekko.home.di.LocalDeleteAccountDataSource
+import app.usenekko.home.domain.DeleteAccountError
 import app.usenekko.home.presentation.settings.components.AppearanceBottomSheet
+import app.usenekko.home.presentation.settings.components.DeleteAccountBottomSheet
 import app.usenekko.home.presentation.settings.components.SettingsGroup
 import app.usenekko.home.presentation.settings.components.SettingsRow
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
+import app.usenekko.shared.domain.Result
 import app.usenekko.shared.notifications.ReminderScheduler
 import app.usenekko.theme.AppThemeMode
 import app.usenekko.theme.LocalThemeStore
@@ -64,6 +68,7 @@ fun SettingScreen(
     onBack: () -> Unit,
     onAccountClick: () -> Unit = {},
     onGroupsClick: () -> Unit = {},
+    onAccountDeleted: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val liquidState = rememberLiquidState()
@@ -84,6 +89,39 @@ fun SettingScreen(
     val selectedMode by themeStore?.mode?.collectAsState()
         ?: remember { mutableStateOf(AppThemeMode.SYSTEM) }
     var showAppearanceSheet by remember { mutableStateOf(false) }
+
+    // Delete Account — destructive & irreversible. Gated behind a typed
+    // confirmation sheet; only signs out + routes to Welcome on real success.
+    val deleteAccountDataSource = LocalDeleteAccountDataSource.current
+    var showDeleteSheet by remember { mutableStateOf(false) }
+    var deleteLoading by remember { mutableStateOf(false) }
+    var deleteError by remember { mutableStateOf<String?>(null) }
+
+    fun confirmDeleteAccount() {
+        scope.launch {
+            deleteLoading = true
+            deleteError = null
+            when (val result = deleteAccountDataSource.deleteAccount()) {
+                is Result.Success -> {
+                    deleteLoading = false
+                    onAccountDeleted()
+                }
+                is Result.Error -> {
+                    deleteLoading = false
+                    deleteError = when (val err = result.error) {
+                        is DeleteAccountError.Network ->
+                            "Network error. Check your connection and try again."
+                        is DeleteAccountError.NotAuthenticated ->
+                            "Your session expired. Please sign in again."
+                        is DeleteAccountError.Unknown ->
+                            err.detail?.takeIf { it.isNotBlank() }
+                                ?: "Something went wrong. Your account was not deleted."
+                    }
+                }
+            }
+        }
+    }
+
 
     val appearanceLabel = when (selectedMode) {
         AppThemeMode.DARK -> "Dark"
@@ -165,7 +203,10 @@ fun SettingScreen(
                     SettingsRow.Destructive(
                         icon = Res.drawable.ic_trashbin,
                         title = "Delete Account"
-                    ) {},
+                    ) {
+                        deleteError = null
+                        showDeleteSheet = true
+                    },
                 ),
             )
 
@@ -238,6 +279,21 @@ fun SettingScreen(
                 selectedMode = selectedMode,
                 onSelect = { mode -> themeStore?.setMode(mode) },
                 onDismiss = { showAppearanceSheet = false },
+            )
+        }
+
+        // Delete Account — typed-confirmation sheet (destructive, irreversible)
+        if (showDeleteSheet) {
+            DeleteAccountBottomSheet(
+                isLoading = deleteLoading,
+                errorMessage = deleteError,
+                onConfirm = ::confirmDeleteAccount,
+                onDismiss = {
+                    if (!deleteLoading) {
+                        showDeleteSheet = false
+                        deleteError = null
+                    }
+                },
             )
         }
 

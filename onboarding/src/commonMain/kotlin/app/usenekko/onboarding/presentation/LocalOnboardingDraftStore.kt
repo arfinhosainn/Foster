@@ -5,7 +5,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import app.usenekko.home.data.supabase.SupabaseContactDataSource
+import app.usenekko.home.data.supabase.SupabaseDeleteAccountDataSource
 import app.usenekko.home.di.LocalContactDataSource
+import app.usenekko.home.di.LocalDeleteAccountDataSource
 import app.usenekko.home.di.LocalProfileDataSource
 import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.onboarding.addnote.AddNoteViewModel
@@ -44,6 +46,7 @@ fun OnboardingDraftStoreProvider(
     val supabaseClient = remember { createAppSupabaseClient() }
     val profileDataSource = remember { SupabaseOnboardingProfileDataSource(supabaseClient) }
     val contactDataSource = remember { SupabaseContactDataSource(supabaseClient) }
+    val deleteAccountDataSource = remember { SupabaseDeleteAccountDataSource(supabaseClient) }
 
     CompositionLocalProvider(
         LocalOnboardingDraftStore provides draftStore,
@@ -51,6 +54,7 @@ fun OnboardingDraftStoreProvider(
         LocalProfileDataSource provides (profileDataSource as ProfileDataSource),
         LocalSupabaseClient provides supabaseClient,
         LocalContactDataSource provides contactDataSource,
+        LocalDeleteAccountDataSource provides deleteAccountDataSource,
     ) {
         content()
     }
