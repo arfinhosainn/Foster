@@ -18,6 +18,20 @@ data class CheckInUpdate(
 )
 
 /**
+ * The full check-in cadence for a frequency, used when computing the next
+ * check-in date after a check-in ([computeCheckInUpdate]). Keeping the interval
+ * math in one place guarantees follow-up reminders use the exact cadence the
+ * user picked.
+ */
+internal fun nextCheckInOffset(frequency: String): DatePeriod? = when (frequency) {
+    "daily" -> DatePeriod(days = 1)
+    "weekly" -> DatePeriod(days = 7)
+    "biweekly" -> DatePeriod(days = 14)
+    "monthly" -> DatePeriod(months = 1)
+    else -> null
+}
+
+/**
  * Computes the new denormalized check-in state for a contact after a check-in
  * on [today]. `contacts.last_check_in_date / next_check_in_date / streak_count`
  * have no DB trigger (see migration_v2_erd.sql), so the app must update them on
@@ -44,17 +58,9 @@ fun computeCheckInUpdate(current: Contact, today: LocalDate): CheckInUpdate {
         }
         ?: 1
 
-    val nextCheckInDate = when (current.checkInFrequency) {
-        "daily" -> today.plus(DatePeriod(days = 1))
-        "weekly" -> today.plus(DatePeriod(days = 7))
-        "biweekly" -> today.plus(DatePeriod(days = 14))
-        "monthly" -> today.plus(DatePeriod(months = 1))
-        else -> null
-    }
-
     return CheckInUpdate(
         lastCheckInDate = today.toString(),
-        nextCheckInDate = nextCheckInDate?.toString(),
+        nextCheckInDate = nextCheckInOffset(current.checkInFrequency)?.let { today.plus(it).toString() },
         streakCount = streakCount,
     )
 }

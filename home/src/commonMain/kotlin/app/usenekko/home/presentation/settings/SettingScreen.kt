@@ -18,10 +18,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,8 +39,10 @@ import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.home.presentation.settings.components.SettingsGroup
 import app.usenekko.home.presentation.settings.components.SettingsRow
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
+import app.usenekko.shared.notifications.ReminderScheduler
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
+import kotlinx.coroutines.launch
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_appearance
 import nekko.home.generated.resources.ic_contacts
@@ -60,6 +64,16 @@ fun SettingScreen(
 ) {
     val liquidState = rememberLiquidState()
     val density = LocalDensity.current
+
+    // Real OS notification permission state. Read on launch and after returning
+    // from the OS settings screen. Android/iOS can't re-grant from an in-app
+    // toggle once denied, so tapping the row opens the system settings instead.
+    val reminderScheduler = remember { ReminderScheduler() }
+    val scope = rememberCoroutineScope()
+    var notificationEnabled by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(Unit) {
+        notificationEnabled = reminderScheduler.isEnabled()
+    }
 
     // Store in pixels, convert to Dp only when needed
     var topBarHeightPx by remember { mutableStateOf(0) }
@@ -98,8 +112,18 @@ fun SettingScreen(
                     SettingsRow.Item(
                         icon = Res.drawable.ic_notification,
                         title = "Notification",
-                        trailing = "Off"
-                    ) {},
+                        trailing = when (notificationEnabled) {
+                            true -> "On"
+                            false -> "Off"
+                            null -> null
+                        },
+                    ) {
+                        // Opens the OS notification settings page — can't be toggled
+                        // in-app once denied at the system level.
+                        scope.launch {
+                            reminderScheduler.openSettings()
+                        }
+                    },
                     SettingsRow.Item(icon = Res.drawable.ic_contacts, title = "Contacts") {},
                     SettingsRow.Item(icon = Res.drawable.ic_groups, title = "Groups") { onGroupsClick() },
                     SettingsRow.Item(icon = Res.drawable.ic_support, title = "Support") {},

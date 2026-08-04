@@ -7,7 +7,9 @@ import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.nextCheckInDateLocal
+import app.usenekko.home.domain.nextReminder
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +22,7 @@ import kotlinx.datetime.todayIn
 class ContactProfileViewModel(
     private val contactId: String,
     private val contactDataSource: ContactDataSource,
+    private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ContactProfileState())
@@ -187,6 +190,9 @@ class ContactProfileViewModel(
                         daysUntilNextCheckIn = daysUntilNextCheckIn(updated),
                     )
                     loadCheckInStats()
+                    // next_check_in_date moved — cancel the old alarm and schedule
+                    // the new one (locally, no push service involved).
+                    rescheduleReminder(updated)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
@@ -262,5 +268,19 @@ class ContactProfileViewModel(
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val next = contact.nextCheckInDateLocal() ?: return 0
         return (next.toEpochDays() - today.toEpochDays()).toInt().coerceAtLeast(0)
+    }
+
+    private fun rescheduleReminder(contact: Contact) {
+        viewModelScope.launch {
+            if (!reminderScheduler.isEnabled()) return@launch
+            reminderScheduler.cancel(contact.id)
+            contact.nextReminder(Clock.System.now().toEpochMilliseconds())?.let { reminder ->
+                reminderScheduler.schedule(
+                    reminder.contactId,
+                    reminder.contactName,
+                    reminder.fireAtEpochMillis,
+                )
+            }
+        }
     }
 }

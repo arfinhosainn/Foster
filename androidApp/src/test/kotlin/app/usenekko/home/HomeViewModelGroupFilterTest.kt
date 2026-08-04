@@ -4,6 +4,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.presentation.HomeViewModel
+import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -61,7 +62,7 @@ class HomeViewModelGroupFilterTest {
                     GroupMembership("c2", "g1"),
                 ),
             )
-            val viewModel = HomeViewModel(dataSource)
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             // Everyone (no filter): all 3 contacts.
@@ -102,7 +103,7 @@ class HomeViewModelGroupFilterTest {
                 groups = emptyList(),
                 memberships = emptyList(),
             )
-            val viewModel = HomeViewModel(dataSource)
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             assertEquals(emptyList<Group>(), viewModel.state.value.groups)

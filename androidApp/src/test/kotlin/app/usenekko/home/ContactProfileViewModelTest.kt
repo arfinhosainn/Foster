@@ -3,6 +3,7 @@ package app.usenekko.home
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.presentation.contactprofile.ContactProfileAction
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
+import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -52,7 +53,7 @@ class ContactProfileViewModelTest {
             val dataSource = FakeContactDataSource(
                 contacts = listOf(contact(next = today.plus(DatePeriod(days = 5)).toString())),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource)
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             assertEquals(5, viewModel.state.value.daysUntilNextCheckIn)
@@ -68,7 +69,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource)
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             assertEquals(0, viewModel.state.value.daysUntilNextCheckIn)
@@ -83,7 +84,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource)
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isRelationshipInfoOpen)
@@ -102,7 +103,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource)
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.CheckIn)
@@ -128,7 +129,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource)
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.CheckIn)
@@ -154,7 +155,7 @@ class ContactProfileViewModelTest {
             val dataSource = FakeContactDataSource(
                 contacts = listOf(contact(next = today.plus(DatePeriod(days = 7)).toString())),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource)
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.CheckIn)
@@ -173,7 +174,7 @@ class ContactProfileViewModelTest {
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
             dataSource.checkInGate = CompletableDeferred()
-            val viewModel = ContactProfileViewModel("c1", dataSource)
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.CheckIn)
@@ -197,7 +198,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = emptyList())
-            val viewModel = ContactProfileViewModel("ghost", dataSource)
+            val viewModel = ContactProfileViewModel("ghost", dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             assertEquals(false, viewModel.state.value.isLoading)

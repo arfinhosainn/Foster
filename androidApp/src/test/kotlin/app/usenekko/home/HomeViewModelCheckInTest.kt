@@ -2,6 +2,7 @@ package app.usenekko.home
 
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.presentation.HomeViewModel
+import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +46,7 @@ class HomeViewModelCheckInTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact("c1")))
-            val viewModel = HomeViewModel(dataSource)
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             assertEquals(1, viewModel.state.value.outstandingCount)
@@ -78,7 +79,7 @@ class HomeViewModelCheckInTest {
             val upToDate = contact("c1", next = today.plus(DatePeriod(days = 7)).toString())
             val outstanding = contact("c2", next = today.minus(DatePeriod(days = 2)).toString())
             val dataSource = FakeContactDataSource(contacts = listOf(upToDate, outstanding))
-            val viewModel = HomeViewModel(dataSource)
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             assertEquals(listOf("c1", "c2"), viewModel.state.value.contacts.map { it.id })
@@ -97,7 +98,7 @@ class HomeViewModelCheckInTest {
                 contacts = listOf(contact("c1"), contact("c2", next = today.minus(DatePeriod(days = 2)).toString())),
             )
             dataSource.checkInGate = CompletableDeferred()
-            val viewModel = HomeViewModel(dataSource)
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
             advanceUntilIdle()
 
             viewModel.checkIn("c1")
