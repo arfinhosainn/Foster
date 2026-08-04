@@ -2,8 +2,12 @@ package app.usenekko.home.addcontact
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
+import app.usenekko.home.domain.initialReminder
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.notifications.ReminderScheduler
+import kotlin.time.Clock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +18,7 @@ import kotlinx.coroutines.launch
 
 class AddContactViewModel(
     private val contactDataSource: ContactDataSource,
+    private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddContactState())
@@ -131,13 +136,16 @@ class AddContactViewModel(
                 )
             ) {
                 is Result.Success -> {
+                    val created = result.data
                     val groupId = _state.value.selectedGroupId
                     if (groupId != null) {
                         contactDataSource.assignContactToGroup(
-                            contactId = result.data.id,
+                            contactId = created.id,
                             groupId = groupId,
                         )
                     }
+                    // Schedule the first reminder locally — never server-sent.
+                    scheduleFirstReminder(created)
                     _state.update { it.copy(isSubmitting = false) }
                     _events.send(AddContactEvent.Saved)
                 }
@@ -158,6 +166,25 @@ class AddContactViewModel(
         val hh = hour24.toString().padStart(2, '0')
         val mm = minute.toString().padStart(2, '0')
         return "$hh:$mm:00"
+    }
+
+    private fun scheduleFirstReminder(contact: Contact) {
+        // Brand-new contact: the first reminder fires at the next occurrence of
+        // the picked reminder time (today if not yet passed, else tomorrow), so
+        // a "few minutes from now" test fires the same day. Follow-up reminders
+        // drive off next_check_in_date after the first real check-in.
+        val now = Clock.System.now().toEpochMilliseconds()
+        viewModelScope.launch {
+            if (!reminderScheduler.isEnabled()) return@launch
+            reminderScheduler.cancel(contact.id)
+            contact.initialReminder(now)?.let { reminder ->
+                reminderScheduler.schedule(
+                    reminder.contactId,
+                    reminder.contactName,
+                    reminder.fireAtEpochMillis,
+                )
+            }
+        }
     }
 
     companion object {

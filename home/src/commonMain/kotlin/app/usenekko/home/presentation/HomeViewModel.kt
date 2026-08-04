@@ -7,8 +7,10 @@ import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.computeReminderPlans
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +25,7 @@ import kotlinx.datetime.todayIn
 
 class HomeViewModel(
     private val contactDataSource: ContactDataSource,
+    private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -66,6 +69,7 @@ class HomeViewModel(
                         checkIns = checkIns,
                     )
                     recomputeCounts(allContacts, effectiveGroupId, memberships)
+                    reconcileReminders(allContacts)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
@@ -143,5 +147,30 @@ class HomeViewModel(
     private fun checkInTo(): String {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         return today.plus(DatePeriod(days = 13)).toString()
+    }
+
+    /**
+     * App-launch / data-change reconciliation: cancel every contact's alarm, then
+     * re-schedule from the current DB state. This keeps things simple and idempotent —
+     * calling it again never duplicates notifications because we first cancel all.
+     *
+     * A brand-new contact has `next_check_in_date` still null (Home's "null =
+     * outstanding" split depends on that), so it falls back to its initial reminder
+     * (created + one cadence). Without this, reconciliation would cancel the
+     * creation-time alarm and never re-schedule it — a fresh contact's first
+     * reminder would never fire.
+     *
+     * iOS only allows 64 pending notifications; [takeSoonest] keeps the soonest
+     * [app.usenekko.shared.notifications.MaxPendingReminders] by fire time.
+     */
+    private fun reconcileReminders(contacts: List<Contact>) {
+        viewModelScope.launch {
+            if (!reminderScheduler.isEnabled()) return@launch
+            val now = Clock.System.now().toEpochMilliseconds()
+            val plans = contacts.computeReminderPlans(now)
+            // Cancel all first (a contact leaving the planned set must drop its alarm).
+            contacts.forEach { reminderScheduler.cancel(it.id) }
+            plans.forEach { reminderScheduler.schedule(it.contactId, it.contactName, it.fireAtEpochMillis) }
+        }
     }
 }
