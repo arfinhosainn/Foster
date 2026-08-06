@@ -51,4 +51,7 @@ sealed class Screen {
 
     @Serializable
     data class GroupDetail(val groupId: String, val groupName: String) : Screen()
+
+    @Serializable
+    data object Paywall : Screen()
 }

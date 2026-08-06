@@ -6,6 +6,9 @@ import app.usenekko.home.domain.BrainstormDataSource
 import app.usenekko.home.domain.BrainstormError
 import app.usenekko.home.domain.BrainstormGeneration
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.subscription.GateResult
+import app.usenekko.shared.subscription.SubscriptionGates
+import app.usenekko.shared.subscription.SubscriptionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +17,7 @@ import kotlinx.coroutines.launch
 class BrainstormViewModel(
     private val contactId: String,
     private val dataSource: BrainstormDataSource,
+    private val subscriptionRepository: SubscriptionRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BrainstormState())
@@ -56,7 +60,36 @@ class BrainstormViewModel(
     private fun generate() {
         if (_state.value.isGenerating) return
         viewModelScope.launch {
-            _state.value = _state.value.copy(isGenerating = true, error = null, notice = null)
+            // Gate 2 — Brainstorming: free users get 3 generations per calendar month.
+            // Block + show paywall when the monthly limit is exceeded.
+            val isSubscribed = subscriptionRepository.isSubscribed.value
+            if (!isSubscribed) {
+                when (val countResult = dataSource.getMonthlyGenerationCount()) {
+                    is Result.Success -> {
+                        val gate = SubscriptionGates.brainstormGate(
+                            isSubscribed = isSubscribed,
+                            monthlyGenerationCount = countResult.data,
+                        )
+                        if (gate is GateResult.Blocked) {
+                            _state.value = _state.value.copy(
+                                isGenerating = false,
+                                paywallReason = gate.reason,
+                            )
+                            return@launch
+                        }
+                    }
+                    is Result.Error -> {
+                        // Can't check count — proceed cautiously (don't block on error).
+                    }
+                }
+            }
+
+            _state.value = _state.value.copy(
+                isGenerating = true,
+                error = null,
+                notice = null,
+                paywallReason = null,
+            )
             when (val result = dataSource.generate(contactId)) {
                 is Result.Success -> when (val generation = result.data) {
                     is BrainstormGeneration.Generated -> {

@@ -9,6 +9,7 @@ import app.usenekko.navigation.Screen
 import app.usenekko.navigation.rememberNavigator
 import app.usenekko.onboarding.OnboardingApp
 import app.usenekko.shared.notifications.ReminderScheduler
+import app.usenekko.shared.subscription.initRevenueCat
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,6 +17,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         ReminderScheduler.init(applicationContext)
+        initRevenueCat()
 
         setContent {
             val navigator = rememberNavigator(startDestination = Screen.Welcome)

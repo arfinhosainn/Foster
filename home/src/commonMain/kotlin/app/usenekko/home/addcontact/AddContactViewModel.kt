@@ -6,6 +6,9 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.initialReminder
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.subscription.GateResult
+import app.usenekko.shared.subscription.SubscriptionGates
+import app.usenekko.shared.subscription.SubscriptionRepository
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
 import kotlinx.coroutines.channels.Channel
@@ -19,6 +22,7 @@ import kotlinx.coroutines.launch
 class AddContactViewModel(
     private val contactDataSource: ContactDataSource,
     private val reminderScheduler: ReminderScheduler,
+    private val subscriptionRepository: SubscriptionRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddContactState())
@@ -123,6 +127,28 @@ class AddContactViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, error = null) }
+
+            // Gate 1 — Unlimited Contacts: free users capped at 10.
+            // Block + show paywall (never silently fail) when the limit is hit.
+            val isSubscribed = subscriptionRepository.isSubscribed.value
+            if (!isSubscribed) {
+                when (val contactsResult = contactDataSource.getContacts()) {
+                    is Result.Success -> {
+                        val gate = SubscriptionGates.contactGate(
+                            isSubscribed = isSubscribed,
+                            currentContactCount = contactsResult.data.size,
+                        )
+                        if (gate is GateResult.Blocked) {
+                            _state.update { it.copy(isSubmitting = false) }
+                            _events.send(AddContactEvent.ShowPaywall(gate.reason))
+                            return@launch
+                        }
+                    }
+                    is Result.Error -> {
+                        // Can't count contacts — proceed cautiously (server insert still runs).
+                    }
+                }
+            }
 
             val colorHex = colorHexes[state.selectedColorIndex ?: 0]
             val reminderTime = formatTime(state.selectedHour, state.selectedMinute, state.isAm)

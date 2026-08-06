@@ -45,7 +45,7 @@ class BrainstormViewModelTest {
                     session("s0", "2026-08-03T09:00:00Z", "Older"),
                 )
             }
-            val vm = BrainstormViewModel("c1", fake)
+            val vm = BrainstormViewModel("c1", fake, FakeSubscriptionRepository())
             advanceUntilIdle()
 
             assertEquals(listOf("Catch up"), vm.state.value.currentTopics?.map { it.title })
@@ -72,7 +72,7 @@ class BrainstormViewModelTest {
                     BrainstormGeneration.Generated(listOf(topic("Anniversary plans")))
                 )
             }
-            val vm = BrainstormViewModel("c1", fake)
+            val vm = BrainstormViewModel("c1", fake, FakeSubscriptionRepository())
             advanceUntilIdle()
             // Before generating, Current Output reflects the first session in
             // History (the fake returns history in the order supplied).
@@ -99,7 +99,7 @@ class BrainstormViewModelTest {
                 history = listOf(session("s1", "2026-08-04T09:00:00Z", "Old topic"))
                 generateResult = Result.Success(BrainstormGeneration.Cooldown)
             }
-            val vm = BrainstormViewModel("c1", fake)
+            val vm = BrainstormViewModel("c1", fake, FakeSubscriptionRepository())
             advanceUntilIdle()
 
             vm.onAction(BrainstormAction.Generate)

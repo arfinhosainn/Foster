@@ -22,6 +22,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlin.time.Clock
 
 private val brainstormJson = Json { ignoreUnknownKeys = true }
 
@@ -50,6 +51,9 @@ private data class SessionDto(
 ) {
     fun toDomain() = BrainstormSession(id = id, createdAt = createdAt, topics = topics.map { it.toDomain() })
 }
+
+@Serializable
+private data class SessionIdDto(val id: String)
 
 /**
  * Generation runs server-side in the `brainstorm` Edge Function (it owns the
@@ -99,6 +103,36 @@ class SupabaseBrainstormDataSource(
                 .map { it.toDomain() }
 
             Result.Success(sessions)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    /**
+     * Counts brainstorm sessions created this calendar month (UTC) for the
+     * current user. RLS on `brainstorm_sessions` scopes rows to the caller's
+     * contacts, so no explicit owner filter is needed.
+     */
+    override suspend fun getMonthlyGenerationCount(): Result<Int, BrainstormError> {
+        return try {
+            client.auth.currentSessionOrNull()
+                ?: return Result.Error(BrainstormError.NotAuthenticated)
+
+            // Instant.toString() is always ISO-8601 in UTC, e.g.
+            // "2026-08-05T13:03:00Z" — so the first 8 chars are "YYYY-MM-".
+            // Appending "01T00:00:00" yields this month's UTC start, matching the
+            // UTC convention the brainstorm Edge Function already uses.
+            val startOfMonth = Clock.System.now().toString().take(8) + "01T00:00:00"
+
+            val count = client.postgrest
+                .from("brainstorm_sessions")
+                .select(Columns.raw("id")) {
+                    filter { gte("created_at", startOfMonth) }
+                }
+                .decodeList<SessionIdDto>()
+                .size
+
+            Result.Success(count)
         } catch (e: Exception) {
             Result.Error(mapError(e))
         }

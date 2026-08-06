@@ -83,6 +83,7 @@ private fun audienceIcon(name: String): DrawableResource = when (name.lowercase(
 fun HomeScreen(
     onContactClick: (Contact) -> Unit,
     onSettingsClick: () -> Unit = {},
+    onShowPaywall: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
 
@@ -224,6 +225,10 @@ fun HomeScreen(
             onSaved = {
                 showAddContact = false
                 viewModel.loadContacts()
+            },
+            onShowPaywall = {
+                showAddContact = false
+                onShowPaywall()
             },
         )
     }
