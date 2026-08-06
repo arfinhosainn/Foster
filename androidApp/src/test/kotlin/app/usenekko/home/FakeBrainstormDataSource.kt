@@ -23,4 +23,9 @@ class FakeBrainstormDataSource : BrainstormDataSource {
     override suspend fun getHistory(contactId: String): Result<List<BrainstormSession>, BrainstormError> {
         return historyError?.let { Result.Error(it) } ?: Result.Success(history)
     }
+
+    var monthlyGenerationCount: Int = 0
+
+    override suspend fun getMonthlyGenerationCount(): Result<Int, BrainstormError> =
+        Result.Success(monthlyGenerationCount)
 }

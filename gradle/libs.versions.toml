@@ -19,6 +19,8 @@ kotlinxSerialization = "1.11.0"
 supabase = "3.7.0"
 ktor = "3.5.1"
 liquid-glass = "1.1.1"
+purchases-kmp = "3.4.0"
+
 
 
 [libraries]
@@ -63,6 +65,13 @@ ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "kto
 
 #Liquid-Glass
 liquid-glass = { module = "io.github.fletchmckee.liquid:liquid", version.ref = "liquid-glass"}
+
+# Revenuecat
+purchases-core = { module = "com.revenuecat.purchases:purchases-kmp-core", version.ref = "purchases-kmp" }
+# Optional: adds suspending functions that return Arrow's Either to indicate success / failure.
+purchases-either = { module = "com.revenuecat.purchases:purchases-kmp-either", version.ref = "purchases-kmp" }
+# Optional: adds suspending functions that return kotlin.Result to indicate success / failure.
+purchases-result = { module = "com.revenuecat.purchases:purchases-kmp-result", version.ref = "purchases-kmp" }
 
 
 [plugins]

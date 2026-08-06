@@ -28,6 +28,13 @@ sealed interface BrainstormGeneration {
 interface BrainstormDataSource {
     suspend fun generate(contactId: String): Result<BrainstormGeneration, BrainstormError>
     suspend fun getHistory(contactId: String): Result<List<BrainstormSession>, BrainstormError>
+
+    /**
+     * Number of brainstorm sessions the current user has created this calendar
+     * month (across all contacts). Used by the free-tier gate (3/month).
+     * RLS on `brainstorm_sessions` scopes rows to the caller's contacts.
+     */
+    suspend fun getMonthlyGenerationCount(): Result<Int, BrainstormError>
 }
 
 sealed interface BrainstormError {

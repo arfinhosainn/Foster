@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,11 +23,16 @@ import app.usenekko.theme.NekkoTheme
 fun BrainstormScreen(
     contactId: String,
     onBack: () -> Unit,
+    onShowPaywall: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberBrainstormViewModel(contactId)
     val state by viewModel.state.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableStateOf(BrainstormTab.CurrentOutput) }
+
+    LaunchedEffect(state.paywallReason) {
+        if (state.paywallReason != null) onShowPaywall()
+    }
 
     Scaffold(
         modifier = modifier,

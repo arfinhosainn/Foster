@@ -30,6 +30,7 @@ import app.usenekko.home.presentation.badges.BadgeRevealStore
 import app.usenekko.home.presentation.badges.PlantUnlockedBadgeOverlay
 import app.usenekko.home.presentation.brainstorm.BrainstormScreen
 import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
+import app.usenekko.home.presentation.paywall.PaywallScreen
 import app.usenekko.home.presentation.settings.AccountScreen
 import app.usenekko.home.presentation.settings.GroupDetailScreen
 import app.usenekko.home.presentation.settings.GroupSettingsScreen
@@ -37,6 +38,7 @@ import app.usenekko.home.presentation.settings.SettingScreen
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.subscription.LocalSubscriptionRepository
 import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.launch
 
@@ -47,7 +49,10 @@ fun OnboardingApp(navigator: Navigator) {
         val supabaseClient = LocalSupabaseClient.current
         val scope = rememberCoroutineScope()
 
+        val subscriptionRepository = LocalSubscriptionRepository.current
+
         LaunchedEffect(Unit) {
+            subscriptionRepository.refresh()
             val session = supabaseClient.auth.currentSessionOrNull()
             logAccount(session?.user?.email, session?.user?.id, "app launch")
             if (session != null) {
@@ -120,6 +125,7 @@ fun OnboardingApp(navigator: Navigator) {
                 is Screen.Home -> HomeScreen(
                     onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
                     onSettingsClick = { navigator.navigate(Screen.Settings) },
+                    onShowPaywall = { navigator.navigate(Screen.Paywall) },
                 )
 
                 is Screen.ContactProfile -> ContactProfileScreen(
@@ -131,6 +137,7 @@ fun OnboardingApp(navigator: Navigator) {
                 is Screen.Brainstorm -> BrainstormScreen(
                     contactId = screen.contactId,
                     onBack = { navigator.goBack() },
+                    onShowPaywall = { navigator.navigate(Screen.Paywall) },
                 )
 
                 is Screen.Settings -> SettingScreen(
@@ -161,6 +168,11 @@ fun OnboardingApp(navigator: Navigator) {
                 is Screen.GroupDetail -> GroupDetailScreen(
                     groupId = screen.groupId,
                     onBack = { navigator.goBack() },
+                )
+
+                is Screen.Paywall -> PaywallScreen(
+                    onBack = { navigator.goBack() },
+                    onSubscribed = { navigator.goBack() },
                 )
             }
             }

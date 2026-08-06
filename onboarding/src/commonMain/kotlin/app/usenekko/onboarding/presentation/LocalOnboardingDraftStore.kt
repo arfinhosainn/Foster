@@ -12,6 +12,8 @@ import app.usenekko.home.di.LocalContactDataSource
 import app.usenekko.home.di.LocalDeleteAccountDataSource
 import app.usenekko.home.di.LocalProfileDataSource
 import app.usenekko.shared.domain.ProfileDataSource
+import app.usenekko.shared.subscription.LocalSubscriptionRepository
+import app.usenekko.shared.subscription.RevenueCatSubscriptionRepository
 import app.usenekko.onboarding.addnote.AddNoteViewModel
 import app.usenekko.onboarding.contact.ContactViewModel
 import app.usenekko.onboarding.customreminder.CustomReminderViewModel
@@ -50,6 +52,7 @@ fun OnboardingDraftStoreProvider(
     val contactDataSource = remember { SupabaseContactDataSource(supabaseClient) }
     val deleteAccountDataSource = remember { SupabaseDeleteAccountDataSource(supabaseClient) }
     val brainstormDataSource = remember { SupabaseBrainstormDataSource(supabaseClient) }
+    val subscriptionRepository = remember { RevenueCatSubscriptionRepository() }
 
     CompositionLocalProvider(
         LocalOnboardingDraftStore provides draftStore,
@@ -59,6 +62,7 @@ fun OnboardingDraftStoreProvider(
         LocalContactDataSource provides contactDataSource,
         LocalDeleteAccountDataSource provides deleteAccountDataSource,
         LocalBrainstormDataSource provides brainstormDataSource,
+        LocalSubscriptionRepository provides subscriptionRepository,
     ) {
         content()
     }

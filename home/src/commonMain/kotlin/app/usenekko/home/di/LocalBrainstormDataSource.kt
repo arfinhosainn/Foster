@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import app.usenekko.home.domain.BrainstormDataSource
 import app.usenekko.home.presentation.brainstorm.BrainstormViewModel
+import app.usenekko.shared.subscription.LocalSubscriptionRepository
 
 val LocalBrainstormDataSource = staticCompositionLocalOf<BrainstormDataSource> {
     error("BrainstormDataSource not provided")
@@ -13,5 +14,6 @@ val LocalBrainstormDataSource = staticCompositionLocalOf<BrainstormDataSource> {
 @Composable
 fun rememberBrainstormViewModel(contactId: String): BrainstormViewModel {
     val dataSource = LocalBrainstormDataSource.current
-    return remember(contactId) { BrainstormViewModel(contactId, dataSource) }
+    val subscriptionRepository = LocalSubscriptionRepository.current
+    return remember(contactId) { BrainstormViewModel(contactId, dataSource, subscriptionRepository) }
 }

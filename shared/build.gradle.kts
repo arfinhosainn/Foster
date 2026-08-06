@@ -59,6 +59,15 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.kotlinx.serialization.json)
+            // RevenueCat KMP SDK — app-wide subscription / entitlement management.
+            implementation(libs.purchases.core)
+        }
+        // RevenueCat KMP uses generated Kotlin/Native bindings on iOS, which require
+        // opting in to ExperimentalForeignApi in every iOS source set.
+        named { it.lowercase().startsWith("ios") }.configureEach {
+            languageSettings {
+                optIn("kotlinx.cinterop.ExperimentalForeignApi")
+            }
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

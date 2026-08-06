@@ -12,6 +12,7 @@ import app.usenekko.home.presentation.settings.GroupDetailViewModel
 import app.usenekko.home.presentation.settings.GroupSettingsViewModel
 import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.shared.notifications.ReminderScheduler
+import app.usenekko.shared.subscription.LocalSubscriptionRepository
 
 val LocalContactDataSource = staticCompositionLocalOf<ContactDataSource> {
     error("ContactDataSource not provided")
@@ -34,7 +35,8 @@ fun rememberHomeViewModel(): HomeViewModel {
 fun rememberAddContactViewModel(): AddContactViewModel {
     val contactDataSource = LocalContactDataSource.current
     val reminderScheduler = remember { ReminderScheduler() }
-    return remember { AddContactViewModel(contactDataSource, reminderScheduler) }
+    val subscriptionRepository = LocalSubscriptionRepository.current
+    return remember { AddContactViewModel(contactDataSource, reminderScheduler, subscriptionRepository) }
 }
 
 @Composable
