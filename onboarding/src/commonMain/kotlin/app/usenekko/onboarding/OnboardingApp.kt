@@ -137,7 +137,6 @@ fun OnboardingApp(navigator: Navigator) {
                 is Screen.Brainstorm -> BrainstormScreen(
                     contactId = screen.contactId,
                     onBack = { navigator.goBack() },
-                    onShowPaywall = { navigator.navigate(Screen.Paywall) },
                 )
 
                 is Screen.Settings -> SettingScreen(

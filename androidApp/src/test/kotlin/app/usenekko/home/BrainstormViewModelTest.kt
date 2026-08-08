@@ -3,7 +3,6 @@ package app.usenekko.home
 import app.usenekko.home.domain.BrainstormGeneration
 import app.usenekko.home.domain.BrainstormSession
 import app.usenekko.home.domain.BrainstormTopic
-import app.usenekko.home.presentation.brainstorm.BrainstormAction
 import app.usenekko.home.presentation.brainstorm.BrainstormViewModel
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +34,48 @@ class BrainstormViewModelTest {
         BrainstormSession(id, createdAt, listOf(topic(title)))
 
     @Test
+    fun generationStartsAutomaticallyWhenViewModelOpens() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val fake = FakeBrainstormDataSource().apply {
+                generateResult = Result.Success(
+                    BrainstormGeneration.Generated(listOf(topic("Automatic idea"))),
+                )
+            }
+
+            BrainstormViewModel("c1", fake)
+            advanceUntilIdle()
+
+            assertEquals(listOf("c1"), fake.generateCalls)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun freeUserCanGenerateWhenMonthlyLimitIsReachedWhilePaywallIsTemporarilyDisabled() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val fake = FakeBrainstormDataSource().apply {
+                monthlyGenerationCount = 3
+                generateResult = Result.Success(
+                    BrainstormGeneration.Generated(listOf(topic("Available idea"))),
+                )
+            }
+
+            val vm = BrainstormViewModel("c1", fake)
+            advanceUntilIdle()
+
+            assertEquals(listOf("c1"), fake.generateCalls)
+            assertEquals(listOf("Available idea"), vm.state.value.currentTopics?.map { it.title })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun currentOutputPopulatedFromNewestSessionOnLoad() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
@@ -45,7 +86,7 @@ class BrainstormViewModelTest {
                     session("s0", "2026-08-03T09:00:00Z", "Older"),
                 )
             }
-            val vm = BrainstormViewModel("c1", fake, FakeSubscriptionRepository())
+            val vm = BrainstormViewModel("c1", fake)
             advanceUntilIdle()
 
             assertEquals(listOf("Catch up"), vm.state.value.currentTopics?.map { it.title })
@@ -56,7 +97,7 @@ class BrainstormViewModelTest {
     }
 
     @Test
-    fun generateReplacesStaleFallbackWithNewPersonalizedBatch() = runTest {
+    fun automaticGenerationReplacesStaleFallbackWithNewPersonalizedBatch() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
@@ -72,17 +113,13 @@ class BrainstormViewModelTest {
                     BrainstormGeneration.Generated(listOf(topic("Anniversary plans")))
                 )
             }
-            val vm = BrainstormViewModel("c1", fake, FakeSubscriptionRepository())
-            advanceUntilIdle()
-            // Before generating, Current Output reflects the first session in
-            // History (the fake returns history in the order supplied).
-            assertEquals(listOf("Catch up"), vm.state.value.currentTopics?.map { it.title })
-
-            vm.onAction(BrainstormAction.Generate)
+            val vm = BrainstormViewModel("c1", fake)
             advanceUntilIdle()
 
-            // The UI must now show the NEW personalized batch, never the old one.
+            // Opening the screen generates automatically and shows the new
+            // personalized batch, never the old history fallback.
             assertEquals(listOf("Anniversary plans"), vm.state.value.currentTopics?.map { it.title })
+            assertEquals(listOf("c1"), fake.generateCalls)
             assertNull(vm.state.value.notice)
             assertFalse(vm.state.value.isGenerating)
         } finally {
@@ -99,10 +136,7 @@ class BrainstormViewModelTest {
                 history = listOf(session("s1", "2026-08-04T09:00:00Z", "Old topic"))
                 generateResult = Result.Success(BrainstormGeneration.Cooldown)
             }
-            val vm = BrainstormViewModel("c1", fake, FakeSubscriptionRepository())
-            advanceUntilIdle()
-
-            vm.onAction(BrainstormAction.Generate)
+            val vm = BrainstormViewModel("c1", fake)
             advanceUntilIdle()
 
             assertEquals(listOf("Old topic"), vm.state.value.currentTopics?.map { it.title })

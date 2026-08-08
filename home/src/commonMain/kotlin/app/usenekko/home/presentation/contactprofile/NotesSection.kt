@@ -68,8 +68,7 @@ fun NotesSection(
     } else {
         Column(
             modifier = modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {

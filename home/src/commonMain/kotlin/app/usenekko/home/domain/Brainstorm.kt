@@ -16,9 +16,9 @@ data class BrainstormSession(
 )
 
 /**
- * Result of a brainstorm "generate" call. Generation always produces a fresh
- * batch (the button is the generate action, not just a view), and the server
- * enforces a once-per-contact-per-day cooldown.
+ * Result of a brainstorm "generate" call. Opening the Brainstorm screen
+ * requests a fresh batch, and the server enforces a once-per-contact-per-day
+ * cooldown.
  */
 sealed interface BrainstormGeneration {
     data class Generated(val topics: List<BrainstormTopic>) : BrainstormGeneration
