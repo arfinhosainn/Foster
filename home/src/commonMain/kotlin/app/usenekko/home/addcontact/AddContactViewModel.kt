@@ -39,8 +39,8 @@ class AddContactViewModel(
         _state.update { it.copy(name = value, error = null) }
     }
 
-    fun onColorSelected(index: Int) {
-        _state.update { it.copy(selectedColorIndex = index, error = null) }
+    fun onAvatarSelected(index: Int) {
+        _state.update { it.copy(selectedAvatarIndex = index, error = null) }
     }
 
     fun onFrequencySelected(frequency: String) {
@@ -49,6 +49,10 @@ class AddContactViewModel(
 
     fun onTimeSelected(hour: Int, minute: Int, isAm: Boolean) {
         _state.update { it.copy(selectedHour = hour, selectedMinute = minute, isAm = isAm, error = null) }
+    }
+
+    fun onTimeDialChanged(totalMinutes: Int) {
+        _state.update { it.withTimeDialValue(totalMinutes).copy(error = null) }
     }
 
     fun onGroupSelected(groupId: String) {
@@ -110,13 +114,16 @@ class AddContactViewModel(
         viewModelScope.launch {
             _state.update { it.copy(groupsLoading = true) }
 
-            when (val result = contactDataSource.getGroups()) {
-                is Result.Success -> {
-                    _state.update { it.copy(groups = result.data, groupsLoading = false) }
-                }
-                is Result.Error -> {
-                    _state.update { it.copy(groupsLoading = false) }
-                }
+            val groupsResult = contactDataSource.getGroups()
+            val contactsResult = contactDataSource.getContacts()
+            val membershipsResult = contactDataSource.getGroupMemberships()
+            _state.update { state ->
+                state.copy(
+                    groups = (groupsResult as? Result.Success)?.data ?: state.groups,
+                    contacts = (contactsResult as? Result.Success)?.data ?: state.contacts,
+                    memberships = (membershipsResult as? Result.Success)?.data ?: state.memberships,
+                    groupsLoading = false,
+                )
             }
         }
     }
@@ -150,7 +157,7 @@ class AddContactViewModel(
                 }
             }
 
-            val colorHex = colorHexes[state.selectedColorIndex ?: 0]
+            val colorHex = colorHexes[state.selectedAvatarIndex ?: 0]
             val reminderTime = formatTime(state.selectedHour, state.selectedMinute, state.isAm)
 
             when (
