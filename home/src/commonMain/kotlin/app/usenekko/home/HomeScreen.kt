@@ -23,6 +23,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,12 +33,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.usenekko.designsystem.buttons.AudienceOption
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
@@ -50,18 +54,19 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.nextCheckInDateLocal
 import app.usenekko.home.presentation.components.CheckInTimelineGrid
+import app.usenekko.home.presentation.components.CHECK_IN_PULSE_DURATION_MILLIS
 import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.home.presentation.components.StatusSummaryCard
-import app.usenekko.home.presentation.components.TimelineEvent
+import app.usenekko.home.presentation.components.buildCheckInTimelineEvents
+import app.usenekko.home.presentation.components.isCheckInPulseAnimationEnabled
 import app.usenekko.home.presentation.components.rememberTimelineSlots
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
 import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
+import kotlinx.coroutines.delay
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_acquaintance
 import nekko.home.generated.resources.ic_family
@@ -251,9 +256,40 @@ private fun CheckInSection(
     onContactClick: (Contact) -> Unit,
 ) {
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
-    val events = remember(checkIns, outstandingCount, today) {
-        buildCheckInEvents(checkIns, outstandingCount, today)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var appInForeground by remember(lifecycleOwner) {
+        mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
     }
+    var pulseWindowActive by remember(lifecycleOwner) { mutableStateOf(appInForeground) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> appInForeground = true
+                Lifecycle.Event.ON_STOP,
+                Lifecycle.Event.ON_DESTROY,
+                -> {
+                    appInForeground = false
+                    pulseWindowActive = false
+                }
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(appInForeground) {
+        if (appInForeground) {
+            pulseWindowActive = true
+            delay(CHECK_IN_PULSE_DURATION_MILLIS)
+            pulseWindowActive = false
+        } else {
+            pulseWindowActive = false
+        }
+    }
+    val events = remember(checkIns, contacts, today) {
+        buildCheckInTimelineEvents(checkIns, contacts, today)
+    }
+    val slots = rememberTimelineSlots(today = today, events = events)
 
     Column {
         Text(
@@ -265,7 +301,7 @@ private fun CheckInSection(
         Spacer(Modifier.height(5.dp))
         Text(
             text = when {
-                outstandingCount == 0 -> "You're all caught up"
+                outstandingCount == 0 -> "No check-in today"
                 outstandingCount == 1 -> "1 contact waiting for check in"
                 else -> "$outstandingCount contacts waiting for check in"
             },
@@ -274,8 +310,12 @@ private fun CheckInSection(
             fontWeight = FontWeight.Medium,
         )
         CheckInTimelineGrid(
-            slots = rememberTimelineSlots(today = today, events = events),
-            animatePulse = true,
+            slots = slots,
+            animatePulse = isCheckInPulseAnimationEnabled(
+                appInForeground = appInForeground,
+                hasPendingToday = slots.any { it.isCurrent && it.hasPendingCheckIn },
+                pulseWindowActive = pulseWindowActive,
+            ),
             modifier = Modifier.padding(top = 24.dp),
         )
         Spacer(Modifier.height(32.dp))
@@ -304,24 +344,6 @@ private fun CheckInSection(
                 )
             }
         }
-    }
-}
-
-private fun buildCheckInEvents(
-    checkIns: List<CheckIn>,
-    outstandingCount: Int,
-    today: LocalDate,
-): List<TimelineEvent> {
-    val byDate = checkIns
-        .mapNotNull { row -> runCatching { Instant.parse(row.checkedInAt) }.getOrNull() }
-        .map { instant -> instant.toLocalDateTime(TimeZone.currentSystemDefault()).date }
-        .groupingBy { it }
-        .eachCount()
-        .map { (date, count) -> TimelineEvent(date = date, checkedIn = true, avatarCount = count) }
-    return if (outstandingCount > 0) {
-        byDate + TimelineEvent(date = today, checkedIn = false, avatarCount = outstandingCount)
-    } else {
-        byDate
     }
 }
 
@@ -383,11 +405,6 @@ private fun contactStatusText(contact: Contact, today: LocalDate): String {
         next <= today -> "Outstanding"
         else -> "Next: $next"
     }
-}
-
-private fun rememberColorFromHex(hex: String): Color {
-    val value = hex.removePrefix("#").toLongOrNull(16) ?: return Color.Gray
-    return Color((0xFF000000L or value).toInt())
 }
 
 @PreviewLightDark
