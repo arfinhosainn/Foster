@@ -67,6 +67,7 @@ fun ContactProfileScreen(
             NotesSection(
                 notes = state.notes,
                 onAddNote = { viewModel.onAction(ContactProfileAction.OpenAddNote) },
+                onDeleteNote = { viewModel.onAction(ContactProfileAction.DeleteNote(it)) },
             )
             // TODO: RelationshipInfoBottomSheet when state.isRelationshipInfoOpen
         }

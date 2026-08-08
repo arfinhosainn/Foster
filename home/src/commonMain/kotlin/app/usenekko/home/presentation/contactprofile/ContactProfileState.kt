@@ -12,6 +12,7 @@ sealed interface ContactProfileAction {
     data class DraftTitleChanged(val title: String) : ContactProfileAction
     data class DraftDescriptionChanged(val description: String) : ContactProfileAction
     data object SaveNote : ContactProfileAction
+    data class DeleteNote(val noteId: String) : ContactProfileAction
     data object OpenAddReminder : ContactProfileAction
     data object CloseAddReminder : ContactProfileAction
     data class ReminderDraftTitleChanged(val title: String) : ContactProfileAction

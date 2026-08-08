@@ -47,6 +47,9 @@ class FakeContactDataSource(
     /** When set, [createNote] fails without storing anything. */
     var createNoteError: ContactError? = null
 
+    /** When set, [deleteNote] fails without removing anything. */
+    var deleteNoteError: ContactError? = null
+
     /** When set, [createNote] suspends until the gate completes. */
     var createNoteGate: CompletableDeferred<Unit>? = null
 
@@ -85,6 +88,7 @@ class FakeContactDataSource(
 
     val logCheckInCalls = mutableListOf<LogCheckInCall>()
     val createNoteCalls = mutableListOf<CreateNoteCall>()
+    val deletedNoteIds = mutableListOf<String>()
     val createReminderCalls = mutableListOf<CreateReminderCall>()
     val deletedReminderIds = mutableListOf<String>()
 
@@ -212,6 +216,13 @@ class FakeContactDataSource(
         )
         notes = notes + note
         return Result.Success(note)
+    }
+
+    override suspend fun deleteNote(noteId: String): Result<Unit, ContactError> {
+        deletedNoteIds += noteId
+        deleteNoteError?.let { return Result.Error(it) }
+        notes = notes.filterNot { it.id == noteId }
+        return Result.Success(Unit)
     }
 
     override suspend fun getReminders(contactId: String): Result<List<Reminder>, ContactError> {
