@@ -48,6 +48,7 @@ fun ContactProfileScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
+                .padding(horizontal = 24.dp)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {
@@ -60,9 +61,12 @@ fun ContactProfileScreen(
                     onNameClick = { viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo) },
                     onNotificationClick = { /* TODO: mute/notification toggle — not built yet */ },
                     onCheckInClick = { viewModel.onAction(ContactProfileAction.CheckIn) },
-                    onBrainstormClick = onBrainstormClick,
                 )
             }
+            Spacer(modifier = Modifier.height(24.dp))
+            BrainstormCard(
+                onClick = onBrainstormClick,
+            )
             Spacer(modifier = Modifier.height(24.dp))
             NotesSection(
                 notes = state.notes,
