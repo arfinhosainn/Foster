@@ -107,6 +107,7 @@ class ContactProfileViewModel(
                 _state.value = _state.value.copy(draftDescription = action.description)
             }
             ContactProfileAction.SaveNote -> saveNote()
+            is ContactProfileAction.DeleteNote -> deleteNote(action.noteId)
             ContactProfileAction.OpenAddReminder -> {
                 _state.value = _state.value.copy(isAddReminderSheetOpen = true)
             }
@@ -206,6 +207,17 @@ class ContactProfileViewModel(
                         isCheckingIn = false,
                         checkInError = result.error.toString(),
                     )
+                }
+            }
+        }
+    }
+
+    private fun deleteNote(noteId: String) {
+        viewModelScope.launch {
+            when (val result = contactDataSource.deleteNote(noteId)) {
+                is Result.Success -> loadNotes()
+                is Result.Error -> {
+                    _state.value = _state.value.copy(notesError = result.error.toString())
                 }
             }
         }

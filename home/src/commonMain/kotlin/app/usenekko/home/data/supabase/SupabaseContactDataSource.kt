@@ -465,6 +465,25 @@ class SupabaseContactDataSource(
         }
     }
 
+    override suspend fun deleteNote(noteId: String): Result<Unit, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("notes")
+                .delete {
+                    filter { eq("id", noteId) }
+                    filter { eq("owner_id", userId) }
+                }
+
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
     override suspend fun getReminders(contactId: String): Result<List<Reminder>, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()

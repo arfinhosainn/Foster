@@ -47,6 +47,7 @@ interface ContactDataSource {
         title: String,
         body: String,
     ): Result<Note, ContactError>
+    suspend fun deleteNote(noteId: String): Result<Unit, ContactError>
     suspend fun getReminders(contactId: String): Result<List<Reminder>, ContactError>
     suspend fun createReminder(
         contactId: String,

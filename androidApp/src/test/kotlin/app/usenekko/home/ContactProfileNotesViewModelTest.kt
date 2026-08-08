@@ -111,6 +111,52 @@ class ContactProfileNotesViewModelTest {
     }
 
     @Test
+    fun deleteNoteRemovesAndReloads() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact()),
+                notes = listOf(note("n1"), note("n2")),
+            )
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.onAction(ContactProfileAction.DeleteNote("n1"))
+            advanceUntilIdle()
+
+            assertEquals(listOf("n1"), dataSource.deletedNoteIds)
+            assertEquals(listOf("n2"), viewModel.state.value.notes.map { it.id })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun deleteNoteFailureKeepsNoteAndSetsError() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact()),
+                notes = listOf(note("n1")),
+            )
+            dataSource.deleteNoteError = ContactError.Network
+            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.onAction(ContactProfileAction.DeleteNote("n1"))
+            advanceUntilIdle()
+
+            assertEquals(listOf("n1"), dataSource.deletedNoteIds)
+            assertEquals(listOf("n1"), viewModel.state.value.notes.map { it.id })
+            assertNotNull(viewModel.state.value.notesError)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun saveNoteWithBlankTitleIsNoOp() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
