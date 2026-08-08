@@ -1,10 +1,13 @@
 package app.usenekko.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,10 +18,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -51,8 +58,10 @@ import app.usenekko.home.di.rememberAddContactViewModel
 import app.usenekko.home.di.rememberHomeViewModel
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
-import app.usenekko.home.domain.isOutstanding
-import app.usenekko.home.domain.nextCheckInDateLocal
+import app.usenekko.home.domain.checkInCountdownLabel
+import app.usenekko.home.domain.forTodayCheckInList
+import app.usenekko.home.domain.isCheckedInToday
+import app.usenekko.home.domain.nextUpcomingCheckInTargetEpochMillis
 import app.usenekko.home.presentation.components.CheckInTimelineGrid
 import app.usenekko.home.presentation.components.CHECK_IN_PULSE_DURATION_MILLIS
 import app.usenekko.home.presentation.components.ContactAvatar
@@ -215,6 +224,7 @@ fun HomeScreen(
                 } else {
                     CheckInSection(
                         checkIns = state.checkIns,
+                        checkInCounts = state.checkInCounts,
                         contacts = state.contacts,
                         outstandingCount = state.outstandingCount,
                         checkingInContactId = state.checkingInContactId,
@@ -249,6 +259,7 @@ fun HomeScreen(
 @Composable
 private fun CheckInSection(
     checkIns: List<CheckIn>,
+    checkInCounts: Map<String, Int>,
     contacts: List<Contact>,
     outstandingCount: Int,
     checkingInContactId: String?,
@@ -256,6 +267,13 @@ private fun CheckInSection(
     onContactClick: (Contact) -> Unit,
 ) {
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
+    var nowEpochMillis by remember { mutableStateOf(Clock.System.now().toEpochMilliseconds()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowEpochMillis = Clock.System.now().toEpochMilliseconds()
+            delay(1_000L)
+        }
+    }
     val lifecycleOwner = LocalLifecycleOwner.current
     var appInForeground by remember(lifecycleOwner) {
         mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
@@ -319,13 +337,6 @@ private fun CheckInSection(
             modifier = Modifier.padding(top = 24.dp),
         )
         Spacer(Modifier.height(32.dp))
-        Text(
-            "Contacts",
-            style = NekkoTheme.typography.heading2,
-            color = NekkoTheme.colors.text.primary,
-            fontWeight = FontWeight.Medium,
-        )
-        Spacer(Modifier.height(8.dp))
         if (contacts.isEmpty()) {
             Text(
                 "No contacts in this audience",
@@ -334,14 +345,33 @@ private fun CheckInSection(
                 fontWeight = FontWeight.Medium,
             )
         } else {
-            contacts.forEach { contact ->
-                ContactCheckInRow(
-                    contact = contact,
-                    today = today,
-                    checkingInContactId = checkingInContactId,
-                    onCheckIn = onCheckIn,
-                    onContactClick = onContactClick,
+            val todayContacts = contacts.forTodayCheckInList(today)
+            val nextUpcomingTarget = contacts.nextUpcomingCheckInTargetEpochMillis(nowEpochMillis)
+            if (todayContacts.isEmpty()) {
+                NextCheckInCard(
+                    targetEpochMillis = nextUpcomingTarget,
+                    nowEpochMillis = nowEpochMillis,
                 )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(NekkoTheme.colors.background.b1)
+                        .padding(horizontal = 16.dp),
+                ) {
+                    todayContacts.forEachIndexed { index, contact ->
+                        ContactCheckInRow(
+                            contact = contact,
+                            checkInCount = checkInCounts[contact.id] ?: 0,
+                            today = today,
+                            checkingInContactId = checkingInContactId,
+                            onCheckIn = onCheckIn,
+                            onContactClick = onContactClick,
+                            showDivider = index < todayContacts.lastIndex,
+                        )
+                    }
+                }
             }
         }
     }
@@ -350,60 +380,128 @@ private fun CheckInSection(
 @Composable
 private fun ContactCheckInRow(
     contact: Contact,
+    checkInCount: Int,
     today: LocalDate,
     checkingInContactId: String?,
     onCheckIn: (String) -> Unit,
     onContactClick: (Contact) -> Unit,
+    showDivider: Boolean,
 ) {
-    val outstanding = contact.isOutstanding(today)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onContactClick(contact) }
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ContactAvatar(
-            avatarColor = contact.avatarColor,
-            modifier = Modifier.size(40.dp),
-        )
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                contact.name,
-                color = NekkoTheme.colors.text.primary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
+    val checkedInToday = contact.isCheckedInToday(today)
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onContactClick(contact) }
+                .padding(vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ContactAvatar(
+                avatarColor = contact.avatarColor,
+                modifier = Modifier
+                    .size(56.dp)
+                    .border(1.5.dp, NekkoTheme.colors.stroke.secondary, CircleShape),
             )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                contactStatusText(contact, today),
-                color = NekkoTheme.colors.text.tertiary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-        if (outstanding) {
-            Spacer(Modifier.width(12.dp))
-            Button(
-                onClick = { onCheckIn(contact.id) },
-                enabled = checkingInContactId == null,
-            ) {
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
                 Text(
-                    if (checkingInContactId == contact.id) "Checking..." else "Check In",
+                    contact.name,
+                    color = NekkoTheme.colors.text.primary,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    checkInCountLabel(checkInCount),
+                    color = NekkoTheme.colors.text.tertiary,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
             }
+            Spacer(Modifier.width(12.dp))
+            if (!checkedInToday) {
+                Button(
+                    onClick = { onCheckIn(contact.id) },
+                    enabled = checkingInContactId == null,
+                    modifier = Modifier.height(40.dp),
+                    shape = RoundedCornerShape(50),
+                    contentPadding = PaddingValues(horizontal = 18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NekkoTheme.colors.background.b2,
+                        contentColor = NekkoTheme.colors.text.primary,
+                        disabledContainerColor = NekkoTheme.colors.background.b2,
+                        disabledContentColor = NekkoTheme.colors.text.tertiary,
+                    ),
+                ) {
+                    Text(
+                        if (checkingInContactId == contact.id) "Checking..." else "Check in",
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(NekkoTheme.colors.fill.tertiary, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Checked in",
+                        tint = NekkoTheme.colors.text.secondary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
         }
+        if (showDivider) DashedContactDivider()
     }
 }
 
-private fun contactStatusText(contact: Contact, today: LocalDate): String {
-    val next = contact.nextCheckInDateLocal()
-    return when {
-        next == null -> "Not scheduled"
-        next <= today -> "Outstanding"
-        else -> "Next: $next"
+@Composable
+private fun NextCheckInCard(
+    targetEpochMillis: Long?,
+    nowEpochMillis: Long,
+) {
+    val label = targetEpochMillis
+        ?.let { checkInCountdownLabel(it - nowEpochMillis) }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(NekkoTheme.colors.background.b1)
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = label?.let { "Next check-in in $it" } ?: "No upcoming check-ins",
+            color = NekkoTheme.colors.text.primary,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+private fun checkInCountLabel(count: Int): String = when (count) {
+    1 -> "1 check-in"
+    else -> "$count check-ins"
+}
+
+@Composable
+private fun DashedContactDivider() {
+    val dividerColor = NekkoTheme.colors.stroke.secondary
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp),
+    ) {
+        drawLine(
+            color = dividerColor,
+            start = androidx.compose.ui.geometry.Offset.Zero,
+            end = androidx.compose.ui.geometry.Offset(size.width, 0f),
+            strokeWidth = 1.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx())),
+        )
     }
 }
 

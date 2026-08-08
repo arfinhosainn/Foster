@@ -48,6 +48,7 @@ class HomeViewModel(
             val groupsResult = contactDataSource.getGroups()
             val membershipsResult = contactDataSource.getGroupMemberships()
             val checkInsResult = contactDataSource.getCheckIns(null, checkInFrom(), checkInTo())
+            val checkInHistoryResult = contactDataSource.getCheckIns(null, "1970-01-01", "2999-12-31")
 
             when (val result = contactsResult) {
                 is Result.Success -> {
@@ -60,6 +61,11 @@ class HomeViewModel(
                     }
 
                     val checkIns = (checkInsResult as? Result.Success)?.data.orEmpty()
+                    val checkInCounts = (checkInHistoryResult as? Result.Success)
+                        ?.data
+                        ?.groupingBy { it.contactId }
+                        ?.eachCount()
+                        .orEmpty()
 
                     val effectiveGroupId = _state.value.selectedGroupId
                         ?.takeIf { selected -> groups.any { it.id == selected } }
@@ -69,6 +75,7 @@ class HomeViewModel(
                         groups = groups,
                         selectedGroupId = effectiveGroupId,
                         checkIns = checkIns,
+                        checkInCounts = checkInCounts,
                     )
                     recomputeCounts(allContacts, effectiveGroupId, memberships)
                     reconcileReminders(allContacts)

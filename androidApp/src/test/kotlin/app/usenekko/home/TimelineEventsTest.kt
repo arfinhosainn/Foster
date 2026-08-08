@@ -9,10 +9,13 @@ import app.usenekko.home.presentation.components.CHECK_IN_PULSE_RING_COUNT
 import app.usenekko.home.presentation.components.avatarCellBackground
 import app.usenekko.home.presentation.components.avatarStackYOffset
 import app.usenekko.home.presentation.components.buildCheckInTimelineEvents
+import app.usenekko.home.presentation.components.buildTimelineSlots
 import app.usenekko.home.presentation.components.defaultTimelinePulseColor
 import app.usenekko.home.presentation.components.isCheckInPulseAnimationEnabled
 import app.usenekko.home.presentation.components.shouldShowAvatarPulse
+import app.usenekko.home.presentation.components.TimelineEvent
 import app.usenekko.home.presentation.components.timelineCellSizeForWidth
+import app.usenekko.home.presentation.components.timelineAvatarOverflowCount
 import app.usenekko.home.presentation.components.timelinePulseAlpha
 import app.usenekko.home.presentation.components.timelinePulseStrokeWidth
 import kotlinx.datetime.LocalDate
@@ -40,6 +43,24 @@ class TimelineEventsTest {
         val checkedIn = events.single { it.date == LocalDate(2026, 8, 7) }
         assertTrue(checkedIn.checkedIn)
         assertEquals(2, checkedIn.avatarCount)
+    }
+
+    @Test
+    fun completedStackShowsOnlyCheckmarkWhilePendingStackKeepsOverflowBadge() {
+        val completedSlot = buildTimelineSlots(
+            startDate = today,
+            today = today,
+            events = listOf(TimelineEvent(today, checkedIn = true, avatarCount = 11)),
+        ).single { it.date == today }
+        val pendingSlot = buildTimelineSlots(
+            startDate = today,
+            today = today,
+            events = listOf(TimelineEvent(today, checkedIn = false, avatarCount = 11)),
+        ).single { it.date == today }
+
+        assertTrue(completedSlot.isCheckedIn)
+        assertEquals(0, timelineAvatarOverflowCount(completedSlot, visibleCount = 2))
+        assertEquals(9, timelineAvatarOverflowCount(pendingSlot, visibleCount = 2))
     }
 
     @Test

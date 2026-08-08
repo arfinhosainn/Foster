@@ -452,7 +452,7 @@ private fun AvatarCell(
 
         if (slot.isCheckedIn) CheckBadge(colors, cellSize)
 
-        val overflow = (slot.avatarCount - visibleCount).coerceAtLeast(0)
+        val overflow = timelineAvatarOverflowCount(slot, visibleCount)
         if (overflow > 0) {
             Box(
                 modifier = Modifier
@@ -477,6 +477,9 @@ private fun AvatarCell(
         }
     }
 }
+
+fun timelineAvatarOverflowCount(slot: TimelineSlot, visibleCount: Int): Int =
+    if (slot.isCheckedIn) 0 else (slot.avatarCount - visibleCount).coerceAtLeast(0)
 
 fun shouldShowAvatarPulse(index: Int, visibleCount: Int, showPulse: Boolean): Boolean =
     showPulse && visibleCount > 0 && index == visibleCount - 1

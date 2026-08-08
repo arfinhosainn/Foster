@@ -1,6 +1,9 @@
 package app.usenekko.home
 
 import app.usenekko.home.domain.Contact
+import app.usenekko.home.domain.checkInCountdownLabel
+import app.usenekko.home.domain.nextCheckInTargetEpochMillis
+import app.usenekko.home.domain.nextUpcomingCheckInTargetEpochMillis
 import app.usenekko.home.domain.initialReminder
 import app.usenekko.home.domain.nextReminder
 import kotlinx.datetime.LocalDateTime
@@ -71,5 +74,36 @@ class ReminderScheduleTest {
         val reminder = checkedIn.nextReminder(at(2026, 8, 4, 12, 0, 0))
         assertNotNull(reminder)
         assertEquals(at(2026, 8, 6, 7, 30, 0), reminder!!.fireAtEpochMillis)
+    }
+
+    @Test
+    fun checkInTargetUsesScheduledDateEvenWhenReminderIsStillAheadToday() {
+        val scheduled = contact(reminderTime = "17:00:00")
+            .copy(nextCheckInDate = "2026-08-04")
+
+        assertEquals(
+            at(2026, 8, 4, 17, 0, 0),
+            scheduled.nextCheckInTargetEpochMillis(at(2026, 8, 4, 12, 0, 0)),
+        )
+    }
+
+    @Test
+    fun countdownUsesCompactHourAndMinuteLabels() {
+        assertEquals("5hr", checkInCountdownLabel(5 * 60 * 60 * 1_000L))
+        assertEquals("4hr 59m", checkInCountdownLabel(4 * 60 * 60 * 1_000L + 59 * 60 * 1_000L))
+        assertEquals("Now", checkInCountdownLabel(0))
+    }
+
+    @Test
+    fun nextUpcomingTargetChoosesSoonestFutureContact() {
+        val now = at(2026, 8, 4, 12, 0, 0)
+        val later = contact("17:00:00").copy(nextCheckInDate = "2026-08-04")
+        val sooner = contact("13:30:00").copy(nextCheckInDate = "2026-08-04")
+        val overdue = contact("08:00:00").copy(nextCheckInDate = "2026-08-04")
+
+        assertEquals(
+            at(2026, 8, 4, 13, 30, 0),
+            listOf(later, sooner, overdue).nextUpcomingCheckInTargetEpochMillis(now),
+        )
     }
 }
