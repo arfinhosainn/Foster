@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +50,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.nextCheckInDateLocal
 import app.usenekko.home.presentation.components.CheckInTimelineGrid
+import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.home.presentation.components.StatusSummaryCard
 import app.usenekko.home.presentation.components.TimelineEvent
 import app.usenekko.home.presentation.components.rememberTimelineSlots
@@ -109,11 +111,14 @@ fun HomeScreen(
         }
     }
     val liquidState = rememberLiquidState()
+    val blurModifier = if (showAddContact) Modifier.blur(20.dp) else Modifier
 
 
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .then(blurModifier),
     ) {
         // Background/source for the liquid effect
         AmbientGlow(
@@ -336,15 +341,9 @@ private fun ContactCheckInRow(
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(
-                    contact.avatarColor
-                        ?.let { rememberColorFromHex(it) }
-                        ?: NekkoTheme.colors.fill.secondary
-                ),
+        ContactAvatar(
+            avatarColor = contact.avatarColor,
+            modifier = Modifier.size(40.dp),
         )
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
