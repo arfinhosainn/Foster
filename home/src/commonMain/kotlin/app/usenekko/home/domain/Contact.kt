@@ -20,3 +20,13 @@ fun Contact.isOutstanding(today: LocalDate): Boolean {
     val next = nextCheckInDateLocal() ?: return true
     return next <= today
 }
+
+fun Contact.isCheckedInToday(today: LocalDate): Boolean =
+    lastCheckInDate == today.toString()
+
+fun Contact.isDueOrCheckedInToday(today: LocalDate): Boolean =
+    isOutstanding(today) || isCheckedInToday(today)
+
+fun List<Contact>.forTodayCheckInList(today: LocalDate): List<Contact> =
+    filter { it.isDueOrCheckedInToday(today) }
+        .sortedBy { it.isCheckedInToday(today) }

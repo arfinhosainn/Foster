@@ -13,6 +13,7 @@ data class HomeState(
     val upToDateCount: Int = 0,
     val contacts: List<Contact> = emptyList(),
     val checkIns: List<CheckIn> = emptyList(),
+    val checkInCounts: Map<String, Int> = emptyMap(),
     val checkingInContactId: String? = null,
     val checkInError: String? = null,
     val error: String? = null,

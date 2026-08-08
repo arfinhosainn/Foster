@@ -1,6 +1,8 @@
 package app.usenekko.home
 
 import app.usenekko.home.domain.Contact
+import app.usenekko.home.domain.CheckIn
+import app.usenekko.home.domain.forTodayCheckInList
 import app.usenekko.home.presentation.HomeViewModel
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.CompletableDeferred
@@ -84,6 +86,41 @@ class HomeViewModelCheckInTest {
 
             assertEquals(listOf("c1", "c2"), viewModel.state.value.contacts.map { it.id })
             assertEquals(1, viewModel.state.value.outstandingCount)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun todayCheckInListExcludesContactsDueLaterAndIncludesCompletedToday() {
+        val completedToday = contact("completed", next = today.plus(DatePeriod(days = 7)).toString())
+            .copy(lastCheckInDate = today.toString())
+        val dueToday = contact("due")
+        val dueLater = contact("later", next = today.plus(DatePeriod(days = 7)).toString())
+
+        assertEquals(
+            listOf("due", "completed"),
+            listOf(completedToday, dueToday, dueLater).forTodayCheckInList(today).map { it.id },
+        )
+    }
+
+    @Test
+    fun stateContainsTotalCheckInsPerContact() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("c1"), contact("c2", next = today.plus(DatePeriod(days = 7)).toString())),
+                checkIns = listOf(
+                    CheckIn("ci1", "c1", "2026-07-01T12:00:00Z"),
+                    CheckIn("ci2", "c1", "2026-07-15T12:00:00Z"),
+                    CheckIn("ci3", "c2", "2026-07-20T12:00:00Z"),
+                ),
+            )
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            assertEquals(mapOf("c1" to 2, "c2" to 1), viewModel.state.value.checkInCounts)
         } finally {
             Dispatchers.resetMain()
         }

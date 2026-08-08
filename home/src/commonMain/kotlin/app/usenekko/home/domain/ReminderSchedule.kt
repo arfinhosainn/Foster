@@ -22,6 +22,16 @@ data class ContactReminder(
  * derived from existing columns — no server push involved.
  */
 fun Contact.reminderAt(date: LocalDate, nowEpochMillis: Long): ContactReminder? {
+    val fireAt = reminderEpochMillis(date) ?: return null
+
+    return if (fireAt > nowEpochMillis) {
+        ContactReminder(contactId = id, contactName = name, fireAtEpochMillis = fireAt)
+    } else {
+        null
+    }
+}
+
+private fun Contact.reminderEpochMillis(date: LocalDate): Long? {
     val time = reminderTime ?: return null
     val parts = time.split(":").mapNotNull { it.toIntOrNull() }
     if (parts.size < 2) return null
@@ -29,16 +39,41 @@ fun Contact.reminderAt(date: LocalDate, nowEpochMillis: Long): ContactReminder? 
     val minute = parts[1].coerceIn(0, 59)
     val second = parts.getOrElse(2) { 0 }.coerceIn(0, 59)
 
-    val fireAt = runCatching {
+    return runCatching {
         LocalDateTime(date.year, date.month, date.day, hour, minute, second)
             .toInstant(TimeZone.currentSystemDefault())
             .toEpochMilliseconds()
-    }.getOrNull() ?: return null
+    }.getOrNull()
+}
 
-    return if (fireAt > nowEpochMillis) {
-        ContactReminder(contactId = id, contactName = name, fireAtEpochMillis = fireAt)
-    } else {
-        null
+/**
+ * Returns the scheduled check-in moment even when it has already passed today.
+ * That lets the Home action show `Now` for overdue contacts instead of rolling
+ * the displayed countdown to the following reminder.
+ */
+fun Contact.nextCheckInTargetEpochMillis(nowEpochMillis: Long): Long? =
+    nextCheckInDateLocal()?.let { reminderEpochMillis(it) }
+        ?: initialReminder(nowEpochMillis)?.fireAtEpochMillis
+
+fun List<Contact>.nextUpcomingCheckInTargetEpochMillis(nowEpochMillis: Long): Long? =
+    mapNotNull { it.nextCheckInTargetEpochMillis(nowEpochMillis) }
+        .filter { it > nowEpochMillis }
+        .minOrNull()
+
+fun checkInCountdownLabel(remainingMillis: Long): String {
+    if (remainingMillis <= 0L) return "Now"
+
+    val totalSeconds = (remainingMillis + 999L) / 1_000L
+    val days = totalSeconds / 86_400L
+    val hours = (totalSeconds % 86_400L) / 3_600L
+    val minutes = (totalSeconds % 3_600L) / 60L
+    val seconds = totalSeconds % 60L
+
+    return when {
+        days > 0L -> "${days}d ${hours}hr"
+        hours > 0L -> if (minutes > 0L) "${hours}hr ${minutes}m" else "${hours}hr"
+        minutes > 0L -> "${minutes}m"
+        else -> "${seconds}s"
     }
 }
 
