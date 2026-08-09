@@ -45,6 +45,12 @@ fun avatarIndexForColor(avatarColor: String?): Int? = when (avatarColor?.removeP
 fun avatarResourceForColor(avatarColor: String?): DrawableResource? =
     avatarIndexForColor(avatarColor)?.let(avatarResources::get)
 
+fun avatarIndexForId(selectedAvatarId: String?): Int? =
+    selectedAvatarId?.toIntOrNull()?.takeIf { it in avatarResources.indices }
+
+fun avatarResourceForId(selectedAvatarId: String?): DrawableResource? =
+    avatarIndexForId(selectedAvatarId)?.let(avatarResources::get)
+
 fun contactsForGroup(
     groupId: String,
     contacts: List<Contact>,
@@ -68,6 +74,7 @@ fun ContactAvatar(
     avatarColor: String?,
     modifier: Modifier = Modifier,
     fallbackColor: Color = NekkoTheme.colors.fill.secondary,
+    selectedAvatarId: String? = null,
 ) {
     Box(
         modifier = modifier
@@ -75,7 +82,7 @@ fun ContactAvatar(
             .background(fallbackColor),
         contentAlignment = Alignment.Center,
     ) {
-        avatarResourceForColor(avatarColor)?.let { resource ->
+        (avatarResourceForId(selectedAvatarId) ?: avatarResourceForColor(avatarColor))?.let { resource ->
             Image(
                 imageVector = vectorResource(resource),
                 contentDescription = null,

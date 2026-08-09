@@ -27,6 +27,7 @@ sealed interface ContactProfileAction {
 data class ContactProfileState(
     val isLoading: Boolean = true,
     val contact: Contact? = null,
+    val userSelectedAvatarId: String? = null,
     val daysUntilNextCheckIn: Int = 0,
     val isRelationshipInfoOpen: Boolean = false,
     val isCheckingIn: Boolean = false,

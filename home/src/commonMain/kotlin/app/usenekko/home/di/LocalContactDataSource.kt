@@ -42,8 +42,11 @@ fun rememberAddContactViewModel(): AddContactViewModel {
 @Composable
 fun rememberContactProfileViewModel(contactId: String): ContactProfileViewModel {
     val contactDataSource = LocalContactDataSource.current
+    val profileDataSource = LocalProfileDataSource.current
     val reminderScheduler = remember { ReminderScheduler() }
-    return remember(contactId) { ContactProfileViewModel(contactId, contactDataSource, reminderScheduler) }
+    return remember(contactId) {
+        ContactProfileViewModel(contactId, contactDataSource, reminderScheduler, profileDataSource)
+    }
 }
 
 @Composable

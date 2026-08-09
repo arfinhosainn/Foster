@@ -2,56 +2,67 @@ package app.usenekko.home.presentation.contactprofile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.usenekko.designsystem.buttons.NekkoActionButton
-import app.usenekko.home.domain.Reminder
+import androidx.compose.ui.zIndex
+import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
-import nekko.home.generated.resources.ic_add
+import nekko.home.generated.resources.grass_1
+import nekko.home.generated.resources.grass_2
+import nekko.home.generated.resources.grass_3
+import nekko.home.generated.resources.grass_4
+import nekko.home.generated.resources.grass_5
+import nekko.home.generated.resources.ic_forwardarrow
+import nekko.home.generated.resources.ic_sprout
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RelationshipInfoSheet(
+    contactName: String,
+    avatarColor: String?,
+    userSelectedAvatarId: String?,
     checkInCount: Int,
     nextCheckInDate: String?,
-    reminders: List<Reminder>,
-    remindersError: String?,
     onDismiss: () -> Unit,
-    onAddReminder: () -> Unit,
-    onEditReminder: (String) -> Unit,
-    onDeleteReminder: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -67,208 +78,280 @@ fun RelationshipInfoSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .imePadding()
-                .verticalScroll(rememberScrollState()),
+                .imePadding(),
         ) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = "Relationship Info",
-                    style = NekkoTheme.typography.heading3Bold,
-                    color = NekkoTheme.colors.text.primary,
-                )
-                Box(
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(NekkoTheme.colors.text.tertiary.copy(alpha = 0.2f))
-                        .clickable(onClick = onDismiss),
-                    contentAlignment = Alignment.Center,
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = NekkoTheme.colors.text.primary,
-                        modifier = Modifier.size(16.dp),
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.Transparent)
+                            .clickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.ic_forwardarrow),
+                            contentDescription = "Close check-in details",
+                            tint = NekkoTheme.colors.text.primary,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+//                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = contactName,
+                        style = NekkoTheme.typography.heading2Bold,
+                        fontWeight = FontWeight.Medium,
+                        color = NekkoTheme.colors.text.primary,
+                        modifier = Modifier.weight(1f),
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            CheckInStatsCard(
-                checkInCount = checkInCount,
-                nextCheckInDate = nextCheckInDate,
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Reminders",
-                style = NekkoTheme.typography.heading3Bold,
-                color = NekkoTheme.colors.text.primary,
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (remindersError != null) {
                 Text(
-                    text = remindersError,
-                    fontSize = 14.sp,
-                    color = NekkoTheme.colors.red.default,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
+                    text = "Next check-in: ${formatLongCheckInDate(nextCheckInDate)}",
+                    style = NekkoTheme.typography.heading4,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NekkoTheme.colors.text.tertiary,
+                    modifier = Modifier.padding(horizontal = 35.dp),
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
 
-            if (reminders.isEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                CheckInStatsCard(
+                    avatarColor = avatarColor,
+                    userSelectedAvatarId = userSelectedAvatarId,
+                    checkInCount = checkInCount,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Text(
-                    text = "No reminders yet",
-                    fontSize = 16.sp,
+                    text = "Updated just now",
                     fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
                     color = NekkoTheme.colors.text.tertiary,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
                 )
-            } else {
-                reminders.forEach { reminder ->
-                    ReminderRow(
-                        reminder = reminder,
-                        onEdit = { onEditReminder(reminder.id) },
-                        onDelete = { onDeleteReminder(reminder.id) },
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                DashedDivider(modifier = Modifier.padding(horizontal = 24.dp))
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                NekkoActionButton(
-                    text = "Add Reminder",
-                    leadingIcon = vectorResource(Res.drawable.ic_add),
-                    onClick = onAddReminder,
-                )
-            }
+            GrassProgress(checkInCount = checkInCount)
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
 private fun CheckInStatsCard(
+    avatarColor: String?,
+    userSelectedAvatarId: String?,
     checkInCount: Int,
-    nextCheckInDate: String?,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .height(95.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(NekkoTheme.colors.fill.secondary)
-            .padding(vertical = 16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .background(NekkoTheme.colors.fill.tertiary),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StatColumn(label = "Next check-in", value = formatCheckInDate(nextCheckInDate))
-        StatColumn(label = "Total check-ins", value = checkInCount.toString())
-    }
-}
-
-@Composable
-private fun StatColumn(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = NekkoTheme.colors.text.tertiary,
+        CheckInCountSummary(
+            checkInCount = checkInCount,
+            modifier = Modifier.weight(1f),
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = NekkoTheme.colors.text.primary,
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(1.dp)
+                .background(NekkoTheme.colors.fill.tertiary),
         )
-    }
-}
-
-@Composable
-private fun ReminderRow(
-    reminder: Reminder,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(NekkoTheme.colors.fill.tertiary)
-            .padding(20.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = reminder.title,
-                style = NekkoTheme.typography.heading4Semibold,
-                color = NekkoTheme.colors.text.primary,
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(NekkoTheme.colors.fill.primary)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                    .width(76.dp)
+                    .height(52.dp),
             ) {
-                Text(
-                    text = formatReminderDate(reminder.dateEpochMillis),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = NekkoTheme.colors.text.primary,
+                RelationshipAvatar(
+                    avatarColor = avatarColor,
+                    modifier = Modifier.zIndex(0f),
                 )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = recurrenceToUiLabel(reminder.recurrence),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            color = NekkoTheme.colors.green.active,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onEdit) {
-                Text(
-                    text = "Edit",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = NekkoTheme.colors.text.primary,
-                )
-            }
-            TextButton(onClick = onDelete) {
-                Text(
-                    text = "Remove",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = NekkoTheme.colors.red.default,
+                RelationshipAvatar(
+                    selectedAvatarId = userSelectedAvatarId ?: "0",
+                    modifier = Modifier
+                        .offset(x = 28.dp)
+                        .zIndex(1f),
                 )
             }
         }
     }
+}
+
+@Composable
+private fun RelationshipAvatar(
+    avatarColor: String? = null,
+    selectedAvatarId: String? = null,
+    modifier: Modifier = Modifier,
+) {
+    ContactAvatar(
+        avatarColor = avatarColor,
+        selectedAvatarId = selectedAvatarId,
+        modifier = modifier
+            .size(46.dp)
+            .border(
+                width = 1.dp,
+                brush = Brush.sweepGradient(
+                    listOf(
+                        NekkoTheme.colors.green.active,
+                        NekkoTheme.colors.yellow.active,
+                        NekkoTheme.colors.green.active,
+                    ),
+                ),
+                shape = CircleShape,
+            )
+            .padding(1.dp),
+    )
+}
+
+@Composable
+private fun CheckInCountSummary(
+    checkInCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = CircleShape,
+            color = NekkoTheme.colors.background.b2,
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.ic_sprout),
+                    contentDescription = "Check-in growth",
+                    modifier = Modifier.size(width = 16.dp, height = 21.dp),
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(
+                text = checkInCountText(checkInCount),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = NekkoTheme.colors.text.primary,
+            )
+            Text(
+                text = "Check-ins",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = NekkoTheme.colors.text.tertiary,
+            )
+        }
+    }
+}
+
+fun checkInCountText(checkInCount: Int): String = checkInCount.toString()
+
+@Composable
+private fun DashedDivider(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        repeat(32) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(2.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(NekkoTheme.colors.fill.tertiary),
+            )
+        }
+    }
+}
+
+@Composable
+private fun GrassProgress(
+    checkInCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(180.dp),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Image(
+            painter = painterResource(grassResourceForCheckInCount(checkInCount)),
+            contentDescription = "Relationship growth",
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.BottomCenter,
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(),
+        )
+    }
+}
+
+fun grassStageForCheckInCount(checkInCount: Int): Int = when {
+    checkInCount <= 0 -> 1
+    checkInCount <= 2 -> 2
+    checkInCount <= 5 -> 3
+    checkInCount <= 9 -> 4
+    else -> 5
+}
+
+private fun grassResourceForCheckInCount(checkInCount: Int): DrawableResource = when (
+    grassStageForCheckInCount(checkInCount)
+) {
+    1 -> Res.drawable.grass_1
+    2 -> Res.drawable.grass_2
+    3 -> Res.drawable.grass_3
+    4 -> Res.drawable.grass_4
+    else -> Res.drawable.grass_5
+}
+
+private fun formatLongCheckInDate(date: String?): String {
+    if (date == null) return "No upcoming"
+    return runCatching {
+        val parsed = kotlinx.datetime.LocalDate.parse(date)
+        val month = parsed.month.name.lowercase().replaceFirstChar { it.uppercaseChar() }
+        val day = parsed.day
+        val suffix = when {
+            day in 11..13 -> "th"
+            day % 10 == 1 -> "st"
+            day % 10 == 2 -> "nd"
+            day % 10 == 3 -> "rd"
+            else -> "th"
+        }
+        "$day$suffix $month, ${parsed.year}"
+    }.getOrDefault("No upcoming")
 }

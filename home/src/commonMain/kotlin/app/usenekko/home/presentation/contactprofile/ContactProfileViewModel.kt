@@ -11,6 +11,7 @@ import app.usenekko.home.domain.nextReminder
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
 import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ class ContactProfileViewModel(
     private val contactId: String,
     private val contactDataSource: ContactDataSource,
     private val reminderScheduler: ReminderScheduler,
+    private val profileDataSource: ProfileDataSource? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ContactProfileState())
@@ -49,6 +51,16 @@ class ContactProfileViewModel(
         loadNotes()
         loadReminders()
         loadCheckInStats()
+        loadUserProfile()
+    }
+
+    private fun loadUserProfile() {
+        profileDataSource ?: return
+        viewModelScope.launch {
+            val result = profileDataSource.getProfile()
+            val profile = (result as? Result.Success)?.data
+            _state.value = _state.value.copy(userSelectedAvatarId = profile?.selectedAvatarId)
+        }
     }
 
     private fun loadNotes() {

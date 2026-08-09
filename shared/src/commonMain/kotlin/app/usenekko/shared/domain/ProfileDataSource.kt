@@ -17,6 +17,7 @@ data class AccountProfile(
     val fullName: String?,
     val displayName: String?,
     val avatarUrl: String?,
+    val selectedAvatarId: String? = null,
     val createdAt: String?,
 ) {
     /** Prefer the ERD-aligned full name, falling back to the onboarding display name. */

@@ -33,6 +33,7 @@ private data class ProfileDto(
     @SerialName("full_name") val fullName: String? = null,
     @SerialName("display_name") val displayName: String? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("selected_avatar_id") val selectedAvatarId: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
 )
 
@@ -115,7 +116,15 @@ class SupabaseOnboardingProfileDataSource(
 
             val profile = client.postgrest
                 .from("profiles")
-                .select(columns = Columns.list("full_name", "display_name", "avatar_url", "created_at")) {
+                .select(
+                    columns = Columns.list(
+                        "full_name",
+                        "display_name",
+                        "avatar_url",
+                        "selected_avatar_id",
+                        "created_at",
+                    ),
+                ) {
                     single()
                 }
                 .decodeAs<ProfileDto>()
@@ -125,6 +134,7 @@ class SupabaseOnboardingProfileDataSource(
                     fullName = profile.fullName,
                     displayName = profile.displayName,
                     avatarUrl = profile.avatarUrl,
+                    selectedAvatarId = profile.selectedAvatarId,
                     createdAt = profile.createdAt,
                 )
             )

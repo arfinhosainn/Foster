@@ -79,14 +79,12 @@ fun ContactProfileScreen(
 
     if (state.isRelationshipInfoOpen) {
         RelationshipInfoSheet(
+            contactName = state.contact?.name.orEmpty(),
+            avatarColor = state.contact?.avatarColor,
+            userSelectedAvatarId = state.userSelectedAvatarId,
             checkInCount = state.checkInCount,
             nextCheckInDate = state.contact?.nextCheckInDate,
-            reminders = state.reminders,
-            remindersError = state.remindersError,
             onDismiss = { viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo) },
-            onAddReminder = { viewModel.onAction(ContactProfileAction.OpenAddReminder) },
-            onEditReminder = { viewModel.onAction(ContactProfileAction.EditReminder(it)) },
-            onDeleteReminder = { viewModel.onAction(ContactProfileAction.DeleteReminder(it)) },
         )
     }
 

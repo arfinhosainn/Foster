@@ -3,6 +3,7 @@ package app.usenekko.home
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.presentation.contactprofile.ContactProfileAction
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
+import app.usenekko.shared.domain.AccountProfile
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -73,6 +74,35 @@ class ContactProfileViewModelTest {
             advanceUntilIdle()
 
             assertEquals(0, viewModel.state.value.daysUntilNextCheckIn)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun signedInUserAvatarIsLoadedForRelationshipSheet() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(contacts = listOf(contact()))
+            val profileDataSource = FakeProfileDataSource(
+                profile = AccountProfile(
+                    fullName = "Jane Bell",
+                    displayName = null,
+                    avatarUrl = null,
+                    selectedAvatarId = "2",
+                    createdAt = "2026-01-15T10:00:00Z",
+                ),
+            )
+            val viewModel = ContactProfileViewModel(
+                "c1",
+                dataSource,
+                ReminderScheduler(),
+                profileDataSource,
+            )
+            advanceUntilIdle()
+
+            assertEquals("2", viewModel.state.value.userSelectedAvatarId)
         } finally {
             Dispatchers.resetMain()
         }
