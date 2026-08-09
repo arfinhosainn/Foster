@@ -3,6 +3,7 @@ package app.usenekko.home
 import app.usenekko.home.domain.Badge
 import app.usenekko.home.domain.UserBadge
 import app.usenekko.home.presentation.badges.BadgeRevealStore
+import app.usenekko.home.presentation.badges.badgeFlowerAsset
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
 import app.usenekko.home.presentation.badges.newlyUnlockedBadge
 import kotlinx.coroutines.test.runTest
@@ -13,6 +14,34 @@ import org.junit.Test
 class BadgeRevealTest {
 
     private fun badge(id: String, threshold: Int) = Badge(id, "b$id", "desc $id", threshold)
+
+    @Test
+    fun badgeIconUsesFlowerNameArtwork() {
+        assertEquals(
+            "lotus",
+            badgeFlowerAsset(Badge("lotus", "Lotus Flower", "desc", 15)),
+        )
+        assertEquals(
+            "bluelotus",
+            badgeFlowerAsset(Badge("blue", "Blue Flower", "desc", 50)),
+        )
+        assertEquals(
+            "pinkflower",
+            badgeFlowerAsset(Badge("red", "Red Flower", "desc", 50)),
+        )
+        assertEquals(
+            listOf("greenflower", "lotus", "mushroom", "pinkflower", "brown", "bluelotus", "sunflower"),
+            listOf(
+                Badge("green", "Green Flower", "desc", 1),
+                Badge("lotus", "Lotus Flower", "desc", 15),
+                Badge("mushroom", "Mushroom Flower", "desc", 30),
+                Badge("red", "Red Flower", "desc", 50),
+                Badge("yellow", "Yellow Flower", "desc", 75),
+                Badge("blue", "Blue Flower", "desc", 100),
+                Badge("sun", "Sunflower", "desc", 150),
+            ).map(::badgeFlowerAsset),
+        )
+    }
 
     @Test
     fun newlyUnlockedPicksLowestThresholdBadge() {

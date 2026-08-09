@@ -3,7 +3,7 @@
 -- count (across ALL the user's contacts).
 --
 --   * adds `badges.description` (missing in migration_v2_erd.sql)
---   * seeds the 4-badge public catalog (thresholds 1 / 15 / 50 / 150)
+--   * seeds the 7-badge public catalog (thresholds 1 / 15 / 30 / 50 / 75 / 100 / 150)
 --   * auto-unlocks badges via a `check_ins` AFTER INSERT trigger
 --
 -- Idempotent / re-runnable: column adds are guarded, seeds only insert rows
@@ -25,21 +25,57 @@ end $$;
 
 -- 2. Seed catalog. Each insert is guarded so re-runs never duplicate and never
 --    clobber admin edits to the name/description of an existing badge.
-insert into public.badges (name, description, threshold)
-select 'Seedling', 'Your very first check-in. A plant is born.', 1
-where not exists (select 1 from public.badges where name = 'Seedling');
+--
+-- Rename the original four catalog rows in place so existing user_badges rows
+-- keep pointing at the same records while the catalog adopts the seven flower
+-- names. These updates are intentionally limited to the original seed names.
+update public.badges
+set name = 'Green Flower',
+    description = 'Your very first check-in. A green flower begins to grow.'
+where name = 'Seedling';
+
+update public.badges
+set name = 'Lotus Flower',
+    description = 'Reach 15 check-ins and your lotus flower begins to bloom.'
+where name = 'Wild Flower';
+
+update public.badges
+set name = 'Red Flower',
+    description = 'Reach 50 check-ins and your red flower begins to bloom.'
+where name = 'Grove Keeper';
+
+update public.badges
+set name = 'Sunflower',
+    description = 'Reach 150 check-ins and grow a sunflower.'
+where name = 'Towering Oak';
 
 insert into public.badges (name, description, threshold)
-select 'Wild Flower', 'Reach 15 check-ins and your plant begins to bloom.', 15
-where not exists (select 1 from public.badges where name = 'Wild Flower');
+select 'Green Flower', 'Your very first check-in. A green flower begins to grow.', 1
+where not exists (select 1 from public.badges where name = 'Green Flower');
 
 insert into public.badges (name, description, threshold)
-select 'Grove Keeper', 'Reach 50 check-ins and your plant grows into a grove.', 50
-where not exists (select 1 from public.badges where name = 'Grove Keeper');
+select 'Lotus Flower', 'Reach 15 check-ins and your lotus flower begins to bloom.', 15
+where not exists (select 1 from public.badges where name = 'Lotus Flower');
 
 insert into public.badges (name, description, threshold)
-select 'Towering Oak', 'Reach 150 check-ins and grow a towering tree.', 150
-where not exists (select 1 from public.badges where name = 'Towering Oak');
+select 'Mushroom Flower', 'Reach 30 check-ins and discover a mushroom flower.', 30
+where not exists (select 1 from public.badges where name = 'Mushroom Flower');
+
+insert into public.badges (name, description, threshold)
+select 'Red Flower', 'Reach 50 check-ins and your red flower begins to bloom.', 50
+where not exists (select 1 from public.badges where name = 'Red Flower');
+
+insert into public.badges (name, description, threshold)
+select 'Yellow Flower', 'Reach 75 check-ins and grow a bright yellow flower.', 75
+where not exists (select 1 from public.badges where name = 'Yellow Flower');
+
+insert into public.badges (name, description, threshold)
+select 'Blue Flower', 'Reach 100 check-ins and grow a calm blue flower.', 100
+where not exists (select 1 from public.badges where name = 'Blue Flower');
+
+insert into public.badges (name, description, threshold)
+select 'Sunflower', 'Reach 150 check-ins and grow a sunflower.', 150
+where not exists (select 1 from public.badges where name = 'Sunflower');
 
 -- 3. Auto-unlock trigger. On every new check-in, unlock any badge whose
 --    threshold the user's all-time check-in count has reached. The count is

@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.usenekko.theme.NekkoTheme
+import app.usenekko.home.presentation.components.ProfilePhotoPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nekko.onboarding.generated.resources.Res
@@ -183,54 +184,5 @@ private fun ProfilePhotoPreviewComponentPreview() {
             )
         }
 
-    }
-}
-
-@Composable
-fun ProfilePhotoPreview(
-    visible: Boolean,
-    photoBitmap: ImageBitmap?,
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn() + scaleIn(initialScale = .92f),
-        exit = fadeOut() + scaleOut(targetScale = .92f)
-    ) {
-        val scale by animateFloatAsState(
-            targetValue = 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessVeryLow
-            ),
-            label = "AvatarPreviewScaleAnimation"
-        )
-
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = .82f)),
-            contentAlignment = Alignment.Center
-        ) {
-            val imageModifier = Modifier
-                .size(340.dp)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                }
-                .clip(CircleShape)
-
-            if (photoBitmap != null) {
-                Image(
-                    bitmap = photoBitmap,
-                    contentDescription = "Full Screen Photo Preview",
-                    modifier = imageModifier,
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = imageModifier.background(Color(0xFFE5E5E5))
-                )
-            }
-        }
     }
 }
