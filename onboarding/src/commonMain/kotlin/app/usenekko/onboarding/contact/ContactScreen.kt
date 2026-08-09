@@ -48,11 +48,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.buttons.NekkoButton
+import app.usenekko.home.presentation.components.ProfilePhotoPreview
 import app.usenekko.onboarding.components.NekkoStepField
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.contact.components.ChooseAvatarBottomSheet
 import app.usenekko.onboarding.contact.components.ProfilePhotoPicker
-import app.usenekko.onboarding.contact.components.ProfilePhotoPreview
 import app.usenekko.onboarding.presentation.rememberContactViewModel
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res

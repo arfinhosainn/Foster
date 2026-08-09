@@ -141,7 +141,7 @@ fun OnboardingApp(navigator: Navigator) {
 
                 is Screen.Settings -> SettingScreen(
                     onBack = { navigator.goBack() },
-                    onAccountClick = { navigator.navigate(Screen.Account) },
+                    onAccountClick = {},
                     onGroupsClick = { navigator.navigate(Screen.GroupSettings) },
                     onAccountDeleted = {
                         scope.launch {

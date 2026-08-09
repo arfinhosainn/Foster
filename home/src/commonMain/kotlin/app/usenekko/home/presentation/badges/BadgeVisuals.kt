@@ -35,26 +35,52 @@ import app.usenekko.home.domain.Badge
 import app.usenekko.home.domain.BadgeSlot
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.ic_bluelotus
+import nekko.home.generated.resources.ic_brown
 import nekko.home.generated.resources.ic_greenflower
-import nekko.home.generated.resources.ic_sprout
+import nekko.home.generated.resources.ic_lotus
+import nekko.home.generated.resources.ic_mushroom
+import nekko.home.generated.resources.ic_pinkflower
 import nekko.home.generated.resources.ic_sunflower
-import nekko.home.generated.resources.ic_tree
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
-/**
- * Maps a badge's unlock threshold to its plant artwork.
- *
- * Tier 1 (Seedling) uses `ic_sprout`, Tier 2 (Wild Flower) uses `ic_greenflower`,
- * Tier 3 (Grove Keeper) uses `ic_sunflower`, Tier 4 (Towering Oak) uses
- * `ic_tree`. `ic_sprout` and `ic_tree` are NEW placeholder vectors; the flower
- * icons are the existing Compose drawables.
- */
-fun badgeIcon(threshold: Int): DrawableResource = when (threshold) {
-    1 -> Res.drawable.ic_sprout
-    15 -> Res.drawable.ic_greenflower
-    50 -> Res.drawable.ic_sunflower
-    else -> Res.drawable.ic_tree
+/** Maps a badge to the matching flower artwork from the resource catalog. */
+fun badgeIcon(badge: Badge): DrawableResource {
+    return when (badgeFlowerAsset(badge)) {
+        "lotus" -> Res.drawable.ic_lotus
+        "mushroom" -> Res.drawable.ic_mushroom
+        "pinkflower" -> Res.drawable.ic_pinkflower
+        "brown" -> Res.drawable.ic_brown
+        "bluelotus" -> Res.drawable.ic_bluelotus
+        "sunflower" -> Res.drawable.ic_sunflower
+        "greenflower" -> Res.drawable.ic_greenflower
+        else -> Res.drawable.ic_greenflower
+    }
+}
+
+fun badgeFlowerAsset(badge: Badge): String {
+    val name = badge.name.lowercase().filter(Char::isLetter)
+
+    return when {
+        "lotus" in name -> "lotus"
+        "mushroom" in name -> "mushroom"
+        "red" in name -> "pinkflower"
+        "yellow" in name || "yello" in name -> "brown"
+        "blue" in name -> "bluelotus"
+        "sunflower" in name -> "sunflower"
+        "green" in name -> "greenflower"
+        else -> when (badge.threshold) {
+            1 -> "greenflower"
+            15 -> "lotus"
+            30 -> "mushroom"
+            50 -> "pinkflower"
+            75 -> "brown"
+            100 -> "bluelotus"
+            150 -> "sunflower"
+            else -> "greenflower"
+        }
+    }
 }
 
 @Composable
@@ -92,22 +118,20 @@ private fun BadgeSlotItem(
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .size(72.dp)
                 .background(NekkoTheme.colors.fill.secondary, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             if (slot.unlocked) {
                 Image(
-                    painter = painterResource(badgeIcon(slot.badge.threshold)),
+                    painter = painterResource(badgeIcon(slot.badge)),
                     contentDescription = slot.badge.name,
-                    modifier = Modifier.size(36.dp),
                 )
             } else {
                 Image(
-                    painter = painterResource(badgeIcon(slot.badge.threshold)),
+                    painter = painterResource(badgeIcon(slot.badge)),
                     contentDescription = null,
-                    modifier = Modifier.size(36.dp),
-                    alpha = 0.45f,
+                    alpha = 1f,
                 )
             }
         }
@@ -194,7 +218,7 @@ fun PlantUnlockedBadgeOverlay(
 
             Spacer(Modifier.height(40.dp))
 
-            DirtMound(plant = if (revealed) badgeIcon(badge.threshold) else null)
+            DirtMound(plant = if (revealed) badgeIcon(badge) else null)
 
             Spacer(Modifier.height(32.dp))
 

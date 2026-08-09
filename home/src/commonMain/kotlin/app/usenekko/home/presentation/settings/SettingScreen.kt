@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
@@ -89,6 +90,7 @@ fun SettingScreen(
     val selectedMode by themeStore?.mode?.collectAsState()
         ?: remember { mutableStateOf(AppThemeMode.SYSTEM) }
     var showAppearanceSheet by remember { mutableStateOf(false) }
+    var showAccountSheet by remember { mutableStateOf(false) }
 
     // Delete Account — destructive & irreversible. Gated behind a typed
     // confirmation sheet; only signs out + routes to Welcome on real success.
@@ -136,10 +138,13 @@ fun SettingScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
+        val backgroundModifier = if (showAccountSheet) Modifier.blur(5.dp) else Modifier
 
         AmbientGlow(
             liquidState = liquidState,
-            modifier = Modifier.matchParentSize(),
+            modifier = Modifier
+                .matchParentSize()
+                .then(backgroundModifier),
         )
 
         // Scrollable content — padded so initial position clears the top bar
@@ -147,6 +152,7 @@ fun SettingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(NekkoTheme.colors.background.b0)
+                .then(backgroundModifier)
                 .padding(
                     top = topBarHeightDp, start = 24.dp, end =
                         24.dp
@@ -161,7 +167,10 @@ fun SettingScreen(
             SettingsGroup(
                 liquidState = liquidState,
                 rows = listOf(
-                    SettingsRow.Item(icon = Res.drawable.ic_greenprofile, title = "Account") { onAccountClick() },
+                    SettingsRow.Item(icon = Res.drawable.ic_greenprofile, title = "Account") {
+                        showAccountSheet = true
+                        onAccountClick()
+                    },
                     SettingsRow.Item(
                         icon = Res.drawable.ic_appearance,
                         title = "Appearance",
@@ -268,6 +277,7 @@ fun SettingScreen(
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
+                .then(backgroundModifier)
                 .onSizeChanged { topBarHeightPx = it.height },
         ) {
             SettingsTopBar(onBack = onBack)
@@ -280,6 +290,10 @@ fun SettingScreen(
                 onSelect = { mode -> themeStore?.setMode(mode) },
                 onDismiss = { showAppearanceSheet = false },
             )
+        }
+
+        if (showAccountSheet) {
+            AccountBottomSheet(onDismiss = { showAccountSheet = false })
         }
 
         // Delete Account — typed-confirmation sheet (destructive, irreversible)
@@ -304,6 +318,7 @@ fun SettingScreen(
                     .fillMaxWidth()
                     .height(56.dp) // taller = smoother, more natural fade
                     .align(Alignment.TopCenter)
+                    .then(backgroundModifier)
                     .offset(y = topBarHeightDp)
                     .background(
                         Brush.verticalGradient(

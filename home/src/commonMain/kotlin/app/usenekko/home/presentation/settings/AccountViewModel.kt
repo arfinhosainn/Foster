@@ -48,9 +48,7 @@ class AccountViewModel(
                 coroutineScope {
                     val profile = async { profileDataSource.getProfile() }
                     val contacts = async { contactDataSource.getContacts() }
-                    // Total check-ins across ALL contacts — derived from the
-                    // existing check_ins rows (same pattern as the profile
-                    // screen's checkInCount), no denormalized column.
+
                     val checkIns = async {
                         contactDataSource.getCheckIns(null, EPOCH_START, EPOCH_END)
                     }

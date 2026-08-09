@@ -87,8 +87,13 @@ class AccountViewModelTest {
             val contactDataSource = FakeContactDataSource(
                 contacts = emptyList(),
                 badges = listOf(
-                    Badge("b2", "Wild Flower", "bloom", 15),
-                    Badge("b1", "Seedling", "first", 1),
+                    Badge("b7", "Sunflower", "sun", 150),
+                    Badge("b3", "Mushroom Flower", "mushroom", 30),
+                    Badge("b5", "Yellow Flower", "yellow", 75),
+                    Badge("b1", "Green Flower", "green", 1),
+                    Badge("b6", "Blue Flower", "blue", 100),
+                    Badge("b4", "Red Flower", "red", 50),
+                    Badge("b2", "Lotus Flower", "lotus", 15),
                 ),
                 userBadges = listOf(UserBadge("b1", "2026-08-04T10:00:00Z")),
             )
@@ -96,11 +101,15 @@ class AccountViewModelTest {
             advanceUntilIdle()
 
             val slots = viewModel.state.value.badgeSlots
-            assertEquals(2, slots.size)
+            assertEquals(7, slots.size)
             assertEquals("b1", slots[0].badge.id)
             assertEquals(true, slots[0].unlocked)
             assertEquals("b2", slots[1].badge.id)
             assertEquals(false, slots[1].unlocked)
+            assertEquals(
+                listOf("Green Flower", "Lotus Flower", "Mushroom Flower", "Red Flower", "Yellow Flower", "Blue Flower", "Sunflower"),
+                slots.map { it.badge.name },
+            )
         } finally {
             Dispatchers.resetMain()
         }
