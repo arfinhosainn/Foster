@@ -16,6 +16,10 @@ interface ContactDataSource {
         name: String,
         color: String?,
     ): Result<Group, ContactError>
+    suspend fun updateGroup(
+        groupId: String,
+        name: String,
+    ): Result<Unit, ContactError>
     suspend fun assignContactToGroup(
         contactId: String,
         groupId: String,

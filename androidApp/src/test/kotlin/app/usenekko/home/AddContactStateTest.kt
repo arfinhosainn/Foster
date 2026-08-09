@@ -67,6 +67,17 @@ class AddContactStateTest {
     }
 
     @Test
+    fun largeGroupsShowFourMembersInContactOrder() {
+        val contacts = (1..7).map { testContact("c$it") }
+        val memberships = contacts.map { contact -> GroupMembership(contact.id, "g1") }
+
+        assertEquals(
+            listOf("c1", "c2", "c3", "c4"),
+            contactsForGroup("g1", contacts, memberships).map { it.id },
+        )
+    }
+
+    @Test
     fun groupMemberCountIncludesAllMemberships() {
         val memberships = listOf(
             GroupMembership("c1", "g1"),

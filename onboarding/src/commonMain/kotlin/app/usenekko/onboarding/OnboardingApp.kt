@@ -142,7 +142,6 @@ fun OnboardingApp(navigator: Navigator) {
                 is Screen.Settings -> SettingScreen(
                     onBack = { navigator.goBack() },
                     onAccountClick = {},
-                    onGroupsClick = { navigator.navigate(Screen.GroupSettings) },
                     onAccountDeleted = {
                         scope.launch {
                             // The server row is already gone (the Edge Function
@@ -161,7 +160,6 @@ fun OnboardingApp(navigator: Navigator) {
 
                 is Screen.GroupSettings -> GroupSettingsScreen(
                     onBack = { navigator.goBack() },
-                    onGroupClick = { group -> navigator.navigate(Screen.GroupDetail(group.id, group.name)) },
                 )
 
                 is Screen.GroupDetail -> GroupDetailScreen(

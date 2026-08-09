@@ -115,6 +115,16 @@ class FakeContactDataSource(
         return Result.Success(group)
     }
 
+    override suspend fun updateGroup(
+        groupId: String,
+        name: String,
+    ): Result<Unit, ContactError> {
+        val index = groups.indexOfFirst { it.id == groupId }
+        if (index == -1) return Result.Error(ContactError.Unknown("group not found"))
+        groups = groups.toMutableList().also { it[index] = it[index].copy(name = name) }
+        return Result.Success(Unit)
+    }
+
     override suspend fun assignContactToGroup(
         contactId: String,
         groupId: String,
