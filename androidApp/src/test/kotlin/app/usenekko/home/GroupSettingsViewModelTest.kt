@@ -88,4 +88,25 @@ class GroupSettingsViewModelTest {
             Dispatchers.resetMain()
         }
     }
+
+    @Test
+    fun saveChangesRenamesGroup() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(groups = listOf(Group("g1", "Family")))
+            val viewModel = GroupSettingsViewModel(dataSource)
+            advanceUntilIdle()
+
+            viewModel.onAction(GroupSettingsAction.StartEditing)
+            viewModel.onAction(GroupSettingsAction.DraftGroupNameChanged("g1", "Close Friends"))
+            viewModel.onAction(GroupSettingsAction.SaveChanges)
+            advanceUntilIdle()
+
+            assertEquals("Close Friends", viewModel.state.value.groups.single().name)
+            assertEquals(false, viewModel.state.value.isEditing)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
 }

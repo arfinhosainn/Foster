@@ -1,5 +1,6 @@
 package app.usenekko.home
 
+import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
@@ -51,6 +52,33 @@ class GroupDetailViewModelTest {
             assertEquals(listOf("Alice", "Bob"), state.members.map { it.name })
             // g2 is a valid move target.
             assertEquals(listOf("Friends"), state.otherGroups.map { it.name })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun loadsTotalCheckInCountsForMembers() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("c1", "Alice"), contact("c2", "Bob")),
+                groups = listOf(Group("g1", "Family")),
+                memberships = listOf(
+                    GroupMembership("c1", "g1"),
+                    GroupMembership("c2", "g1"),
+                ),
+                checkIns = listOf(
+                    CheckIn("ci1", "c1", "2026-01-01T12:00:00Z"),
+                    CheckIn("ci2", "c1", "2026-01-02T12:00:00Z"),
+                    CheckIn("ci3", "c2", "2026-01-03T12:00:00Z"),
+                ),
+            )
+            val viewModel = GroupDetailViewModel("g1", dataSource)
+            advanceUntilIdle()
+
+            assertEquals(mapOf("c1" to 2, "c2" to 1), viewModel.state.value.checkInCounts)
         } finally {
             Dispatchers.resetMain()
         }

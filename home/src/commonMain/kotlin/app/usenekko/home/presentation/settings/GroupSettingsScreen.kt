@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.home.di.rememberGroupSettingsViewModel
-import app.usenekko.home.domain.Group
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
@@ -49,13 +48,13 @@ import org.jetbrains.compose.resources.vectorResource
 @Composable
 fun GroupSettingsScreen(
     onBack: () -> Unit,
-    onGroupClick: (Group) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberGroupSettingsViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val liquidState = rememberLiquidState()
     var isEditOptions by remember { mutableStateOf(false) }
+    var selectedGroupId by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -93,7 +92,7 @@ fun GroupSettingsScreen(
                         memberCount = state.memberCount(group.id),
                         editMode = isEditOptions,
                         onRemove = { viewModel.onAction(GroupSettingsAction.DeleteGroup(group.id)) },
-                        onClick = { onGroupClick(group) },
+                        onClick = { selectedGroupId = group.id },
                     )
                     Spacer(Modifier.height(12.dp))
                 }
@@ -134,6 +133,13 @@ fun GroupSettingsScreen(
             onConfirm = { viewModel.onAction(GroupSettingsAction.CreateGroup) },
             onDismiss = { viewModel.onAction(GroupSettingsAction.CloseCreateDialog) },
             isSaving = state.isSaving,
+        )
+    }
+
+    selectedGroupId?.let { groupId ->
+        GroupBottomSheet(
+            groupId = groupId,
+            onDismiss = { selectedGroupId = null },
         )
     }
 }

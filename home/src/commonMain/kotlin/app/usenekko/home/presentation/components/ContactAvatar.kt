@@ -61,7 +61,7 @@ fun contactsForGroup(
         .filter { it.groupId == groupId }
         .map { it.contactId }
         .toSet()
-    return contacts.filter { it.id in memberIds }.take(2)
+    return contacts.filter { it.id in memberIds }.take(if (memberIds.size > 6) 4 else 2)
 }
 
 fun groupMemberCount(

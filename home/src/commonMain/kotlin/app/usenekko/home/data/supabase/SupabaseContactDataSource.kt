@@ -258,6 +258,28 @@ class SupabaseContactDataSource(
         }
     }
 
+    override suspend fun updateGroup(
+        groupId: String,
+        name: String,
+    ): Result<Unit, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("groups")
+                .update({ this["name"] = name }) {
+                    filter { eq("id", groupId) }
+                    filter { eq("owner_id", userId) }
+                }
+
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
     override suspend fun assignContactToGroup(
         contactId: String,
         groupId: String,

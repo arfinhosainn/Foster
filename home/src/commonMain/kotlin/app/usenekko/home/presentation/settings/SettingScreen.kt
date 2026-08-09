@@ -68,7 +68,6 @@ import org.jetbrains.compose.resources.vectorResource
 fun SettingScreen(
     onBack: () -> Unit,
     onAccountClick: () -> Unit = {},
-    onGroupsClick: () -> Unit = {},
     onAccountDeleted: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -91,6 +90,7 @@ fun SettingScreen(
         ?: remember { mutableStateOf(AppThemeMode.SYSTEM) }
     var showAppearanceSheet by remember { mutableStateOf(false) }
     var showAccountSheet by remember { mutableStateOf(false) }
+    var showGroupSheet by remember { mutableStateOf(false) }
 
     // Delete Account — destructive & irreversible. Gated behind a typed
     // confirmation sheet; only signs out + routes to Welcome on real success.
@@ -138,7 +138,7 @@ fun SettingScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        val backgroundModifier = if (showAccountSheet) Modifier.blur(5.dp) else Modifier
+        val backgroundModifier = if (showAccountSheet || showGroupSheet) Modifier.blur(5.dp) else Modifier
 
         AmbientGlow(
             liquidState = liquidState,
@@ -192,7 +192,9 @@ fun SettingScreen(
                         }
                     },
                     SettingsRow.Item(icon = Res.drawable.ic_contacts, title = "Contacts") {},
-                    SettingsRow.Item(icon = Res.drawable.ic_groups, title = "Groups") { onGroupsClick() },
+                    SettingsRow.Item(icon = Res.drawable.ic_groups, title = "Groups") {
+                        showGroupSheet = true
+                    },
                     SettingsRow.Item(icon = Res.drawable.ic_support, title = "Support") {},
                 ),
             )
@@ -294,6 +296,10 @@ fun SettingScreen(
 
         if (showAccountSheet) {
             AccountBottomSheet(onDismiss = { showAccountSheet = false })
+        }
+
+        if (showGroupSheet) {
+            GroupBottomSheet(onDismiss = { showGroupSheet = false })
         }
 
         // Delete Account — typed-confirmation sheet (destructive, irreversible)

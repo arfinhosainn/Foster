@@ -281,7 +281,7 @@ private fun CheckInCountSummary(
 fun checkInCountText(checkInCount: Int): String = checkInCount.toString()
 
 @Composable
-private fun DashedDivider(modifier: Modifier = Modifier) {
+ fun DashedDivider(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),

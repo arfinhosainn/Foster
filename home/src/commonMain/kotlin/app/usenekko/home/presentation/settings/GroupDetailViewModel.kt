@@ -17,6 +17,7 @@ data class GroupDetailState(
     val groupName: String = "",
     val isLoading: Boolean = true,
     val members: List<Contact> = emptyList(),
+    val checkInCounts: Map<String, Int> = emptyMap(),
     val otherGroups: List<Group> = emptyList(),
     val isMoveDialogOpen: Boolean = false,
     val movingContact: Contact? = null,
@@ -51,10 +52,16 @@ class GroupDetailViewModel(
             val contactsResult = contactDataSource.getContacts()
             val groupsResult = contactDataSource.getGroups()
             val membershipsResult = contactDataSource.getGroupMemberships()
+            val checkInsResult = contactDataSource.getCheckIns(null, "1970-01-01", "2999-12-31")
 
             val allContacts = (contactsResult as? Result.Success)?.data.orEmpty()
             val groups = (groupsResult as? Result.Success)?.data.orEmpty()
             val memberships = (membershipsResult as? Result.Success)?.data.orEmpty()
+            val checkInCounts = (checkInsResult as? Result.Success)
+                ?.data
+                ?.groupingBy { it.contactId }
+                ?.eachCount()
+                .orEmpty()
 
             val memberIds = memberships
                 .filter { it.groupId == groupId }
@@ -66,10 +73,12 @@ class GroupDetailViewModel(
                 isLoading = false,
                 groupName = groupName,
                 members = members,
+                checkInCounts = checkInCounts,
                 otherGroups = groups.filter { it.id != groupId },
                 error = (contactsResult as? Result.Error)?.error?.toString()
                     ?: (groupsResult as? Result.Error)?.error?.toString()
-                    ?: (membershipsResult as? Result.Error)?.error?.toString(),
+                    ?: (membershipsResult as? Result.Error)?.error?.toString()
+                    ?: (checkInsResult as? Result.Error)?.error?.toString(),
             )
         }
     }
