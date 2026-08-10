@@ -6,6 +6,8 @@ import app.usenekko.home.domain.Reminder
 
 sealed interface ContactProfileAction {
     data object ToggleRelationshipInfo : ContactProfileAction
+    data object OpenReminderList : ContactProfileAction
+    data object CloseReminderList : ContactProfileAction
     data object CheckIn : ContactProfileAction
     data object OpenAddNote : ContactProfileAction
     data object CloseAddNote : ContactProfileAction
@@ -40,6 +42,7 @@ data class ContactProfileState(
     val notesError: String? = null,
     val reminders: List<Reminder> = emptyList(),
     val checkInCount: Int = 0,
+    val isReminderListSheetOpen: Boolean = false,
     val isAddReminderSheetOpen: Boolean = false,
     val reminderDraftTitle: String = "",
     val reminderDraftDescription: String = "",

@@ -105,6 +105,12 @@ class ContactProfileViewModel(
                     isRelationshipInfoOpen = !_state.value.isRelationshipInfoOpen,
                 )
             }
+            ContactProfileAction.OpenReminderList -> {
+                _state.value = _state.value.copy(isReminderListSheetOpen = true)
+            }
+            ContactProfileAction.CloseReminderList -> {
+                _state.value = _state.value.copy(isReminderListSheetOpen = false)
+            }
             ContactProfileAction.CheckIn -> checkIn()
             ContactProfileAction.OpenAddNote -> {
                 _state.value = _state.value.copy(isAddNoteSheetOpen = true)
@@ -121,7 +127,10 @@ class ContactProfileViewModel(
             ContactProfileAction.SaveNote -> saveNote()
             is ContactProfileAction.DeleteNote -> deleteNote(action.noteId)
             ContactProfileAction.OpenAddReminder -> {
-                _state.value = _state.value.copy(isAddReminderSheetOpen = true)
+                _state.value = _state.value.copy(
+                    isReminderListSheetOpen = false,
+                    isAddReminderSheetOpen = true,
+                )
             }
             ContactProfileAction.CloseAddReminder -> {
                 _state.value = _state.value.copy(isAddReminderSheetOpen = false)
@@ -255,6 +264,7 @@ class ContactProfileViewModel(
                     _state.value = _state.value.copy(
                         isSavingReminder = false,
                         isAddReminderSheetOpen = false,
+                        isReminderListSheetOpen = true,
                         reminderDraftTitle = "",
                         reminderDraftDescription = "",
                         reminderDraftRecurrence = "None",
@@ -280,6 +290,7 @@ class ContactProfileViewModel(
             reminderDraftDescription = reminder.description,
             reminderDraftRecurrence = recurrenceToUiLabel(reminder.recurrence),
             reminderDraftDateEpochMillis = reminder.dateEpochMillis,
+            isReminderListSheetOpen = false,
             isAddReminderSheetOpen = true,
         )
     }

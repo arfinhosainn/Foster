@@ -81,7 +81,7 @@ fun NekkoActionButton(
             if (hasText) {
                 if (contentAdded) Spacer(Modifier.width(8.dp))
                 Text(
-                    text = text!!,
+                    text = text,
                     style = NekkoTheme.typography.heading4Semibold,
                     color = contentColor,
                 )
