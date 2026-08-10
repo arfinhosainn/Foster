@@ -59,7 +59,9 @@ fun ContactProfileScreen(
                     reminderTime = formatReminderTime(c.reminderTime),
                     isExpanded = state.isRelationshipInfoOpen,
                     onNameClick = { viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo) },
-                    onNotificationClick = { /* TODO: mute/notification toggle — not built yet */ },
+                    onNotificationClick = {
+                        viewModel.onAction(ContactProfileAction.OpenReminderList)
+                    },
                     onCheckInClick = { viewModel.onAction(ContactProfileAction.CheckIn) },
                 )
             }
@@ -85,6 +87,16 @@ fun ContactProfileScreen(
             checkInCount = state.checkInCount,
             nextCheckInDate = state.contact?.nextCheckInDate,
             onDismiss = { viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo) },
+        )
+    }
+
+    if (state.isReminderListSheetOpen) {
+        ReminderBottomSheet(
+            reminders = state.reminders,
+            onDismiss = { viewModel.onAction(ContactProfileAction.CloseReminderList) },
+            onAddReminder = { viewModel.onAction(ContactProfileAction.OpenAddReminder) },
+            onEditReminder = { viewModel.onAction(ContactProfileAction.EditReminder(it)) },
+            onDeleteReminder = { viewModel.onAction(ContactProfileAction.DeleteReminder(it)) },
         )
     }
 

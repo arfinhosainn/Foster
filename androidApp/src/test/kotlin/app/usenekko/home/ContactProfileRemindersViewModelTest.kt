@@ -86,7 +86,7 @@ class ContactProfileRemindersViewModelTest {
     }
 
     @Test
-    fun saveReminderCreatesReloadsAndClosesSheet() = runTest {
+    fun saveReminderCreatesReloadsAndShowsReminderList() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
@@ -111,11 +111,34 @@ class ContactProfileRemindersViewModelTest {
 
             val state = viewModel.state.value
             assertFalse(state.isAddReminderSheetOpen)
+            assertTrue(state.isReminderListSheetOpen)
             assertEquals("", state.reminderDraftTitle)
             assertEquals("", state.reminderDraftDescription)
             assertEquals("None", state.reminderDraftRecurrence)
             assertNull(state.reminderDraftDateEpochMillis)
             assertTrue(state.reminders.any { it.title == "Anniversary" })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun openingReminderListShowsTheReminderSheet() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = ContactProfileViewModel(
+                "c1",
+                FakeContactDataSource(contacts = listOf(contact())),
+                ReminderScheduler(),
+            )
+            advanceUntilIdle()
+
+            viewModel.onAction(ContactProfileAction.OpenReminderList)
+
+            assertTrue(viewModel.state.value.isReminderListSheetOpen)
+            viewModel.onAction(ContactProfileAction.CloseReminderList)
+            assertFalse(viewModel.state.value.isReminderListSheetOpen)
         } finally {
             Dispatchers.resetMain()
         }
