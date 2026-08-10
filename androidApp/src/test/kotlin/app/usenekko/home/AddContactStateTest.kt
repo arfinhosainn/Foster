@@ -1,12 +1,14 @@
 package app.usenekko.home
 
 import app.usenekko.home.addcontact.AddContactState
+import app.usenekko.home.addcontact.withImportedContact
 import app.usenekko.home.addcontact.withTimeDialValue
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.presentation.components.avatarIndexForColor
 import app.usenekko.home.presentation.components.contactsForGroup
 import app.usenekko.home.presentation.components.groupMemberCount
+import app.usenekko.shared.contacts.ImportedContact
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -28,6 +30,30 @@ class AddContactStateTest {
                 selectedAvatarIndex = 0,
             ).canSubmit,
         )
+    }
+
+    @Test
+    fun importingAContactWithoutPhotoSetsItsNameAndKeepsManualAvatar() {
+        val state = AddContactState(
+            name = "Old name",
+            selectedAvatarIndex = 2,
+            importedPhoto = null,
+        ).withImportedContact(ImportedContact(name = "Alex Bell"))
+
+        assertEquals("Alex Bell", state.name)
+        assertEquals(2, state.selectedAvatarIndex)
+        assertNull(state.importedPhoto)
+    }
+
+    @Test
+    fun importingAnUnnamedContactDoesNotOverwriteTheForm() {
+        val state = AddContactState(
+            name = "Existing name",
+            selectedAvatarIndex = 1,
+        ).withImportedContact(ImportedContact(name = "  "))
+
+        assertEquals("Existing name", state.name)
+        assertEquals(1, state.selectedAvatarIndex)
     }
 
     @Test

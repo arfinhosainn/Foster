@@ -73,6 +73,7 @@ import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.home.presentation.components.contactsForGroup
 import app.usenekko.home.presentation.components.groupMemberCount
+import app.usenekko.shared.contacts.rememberContactPicker
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.avatar_blue
@@ -131,6 +132,10 @@ fun AddContactScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val launchContactPicker = rememberContactPicker(
+        onContactSelected = viewModel::onContactImported,
+        onPermissionDenied = { },
+    )
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -164,6 +169,7 @@ fun AddContactScreen(
             onBackStep = viewModel::onBackStep,
             onNextStep = viewModel::onNextStep,
             onSubmit = viewModel::submit,
+            onImportContact = launchContactPicker,
         )
     }
 
@@ -189,6 +195,7 @@ private fun AddContactSheetContent(
     onBackStep: () -> Unit,
     onNextStep: () -> Unit,
     onSubmit: () -> Unit,
+    onImportContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val stepMeta = steps[state.currentStep]
@@ -229,6 +236,7 @@ private fun AddContactSheetContent(
                 state = state,
                 onNameChanged = onNameChanged,
                 onAvatarSelected = onAvatarSelected,
+                onImportContact = onImportContact,
             )
 
             1 -> GroupStep(
@@ -362,6 +370,7 @@ private fun NameAndAvatarStep(
     state: AddContactState,
     onNameChanged: (String) -> Unit,
     onAvatarSelected: (Int) -> Unit,
+    onImportContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showAvatarPicker by remember { mutableStateOf(false) }
@@ -372,6 +381,7 @@ private fun NameAndAvatarStep(
     ) {
         AvatarPreview(
             avatarIndex = state.selectedAvatarIndex,
+            photoBitmap = state.importedPhoto,
             onEditClick = { showAvatarPicker = true },
         )
 
@@ -412,7 +422,7 @@ private fun NameAndAvatarStep(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { /* TODO: wire up contact import in AddContactViewModel */ }
+                .clickable(onClick = onImportContact)
                 .padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
@@ -443,6 +453,7 @@ private fun NameAndAvatarStep(
 @Composable
 private fun AvatarPreview(
     avatarIndex: Int?,
+    photoBitmap: androidx.compose.ui.graphics.ImageBitmap?,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -455,7 +466,13 @@ private fun AvatarPreview(
                 .clickable(onClick = onEditClick),
             contentAlignment = Alignment.Center,
         ) {
-            if (avatarIndex != null) {
+            if (photoBitmap != null) {
+                Image(
+                    bitmap = photoBitmap,
+                    contentDescription = "Imported contact photo",
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else if (avatarIndex != null) {
                 Image(
                     imageVector = vectorResource(avatarResources.getOrElse(avatarIndex) {
                         avatarResources.first()
