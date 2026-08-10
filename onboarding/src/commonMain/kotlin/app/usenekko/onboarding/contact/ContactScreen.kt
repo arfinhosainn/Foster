@@ -35,7 +35,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.TextStyle
@@ -49,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.home.presentation.components.ProfilePhotoPreview
+import app.usenekko.shared.contacts.rememberContactPicker
 import app.usenekko.onboarding.components.NekkoStepField
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.contact.components.ChooseAvatarBottomSheet
@@ -70,18 +70,13 @@ fun ContactScreen(
 ) {
     val viewModel = rememberContactViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var photoBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var isPreviewVisible by remember { mutableStateOf(false) }
 
-    var importContactName by remember { mutableStateOf<String?>(null) }
-
-    val requestPermission = rememberContactPermissionLauncher(
-        onGranted = {
-            importContactName?.let { name ->
-                viewModel.onAction(ContactAction.ContactNameChanged(name))
-            }
+    val launchContactPicker = rememberContactPicker(
+        onContactSelected = { contact ->
+            viewModel.onAction(ContactAction.ContactImported(contact))
         },
-        onDenied = { }
+        onPermissionDenied = { },
     )
 
     LaunchedEffect(Unit) {
@@ -90,14 +85,6 @@ fun ContactScreen(
                 ContactEvent.NavigateToNext -> onNavigateToNext()
                 ContactEvent.NavigateBack -> onBack()
                 ContactEvent.NavigateSkip -> onSkip()
-                ContactEvent.RequestContactPermission -> {
-                    importContactName = "Imported Contact"
-                    requestPermission()
-                }
-                is ContactEvent.ContactImported -> {
-                    viewModel.onAction(ContactAction.ContactNameChanged(event.name))
-                }
-                ContactEvent.ContactPermissionDenied -> { }
             }
         }
     }
@@ -197,7 +184,7 @@ fun ContactScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     ProfilePhotoPicker(
-                        photoBitmap = photoBitmap,
+                        photoBitmap = state.importedPhoto,
                         onEditClick = { viewModel.onShowAvatarPicker() },
                         onPreviewChanged = { isPreviewVisible = it },
                         selectedAvatarIndex = state.selectedAvatarIndex,
@@ -247,7 +234,7 @@ fun ContactScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth()
-                        .clickable { viewModel.onAction(ContactAction.ImportClicked) }
+                        .clickable { launchContactPicker() }
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
@@ -272,7 +259,7 @@ fun ContactScreen(
 
     ProfilePhotoPreview(
         visible = isPreviewVisible,
-        photoBitmap = photoBitmap,
+        photoBitmap = state.importedPhoto,
     )
 
     if (state.showAvatarPicker) {

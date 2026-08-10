@@ -41,7 +41,13 @@ class ContactViewModel(
                 }
             }
             is ContactAction.AvatarSelected -> {
-                _state.update { it.copy(selectedAvatarIndex = action.index, showAvatarPicker = false) }
+                _state.update {
+                    it.copy(
+                        selectedAvatarIndex = action.index,
+                        importedPhoto = null,
+                        showAvatarPicker = false,
+                    )
+                }
                 draftStore.update {
                     it.copy(
                         selectedAvatarId = action.index.toString(),
@@ -50,8 +56,22 @@ class ContactViewModel(
                     )
                 }
             }
-            is ContactAction.ImportClicked -> {
-                sendEvent(ContactEvent.RequestContactPermission)
+            is ContactAction.ContactImported -> {
+                _state.update {
+                    it.copy(
+                        contactName = action.contact.name,
+                        selectedAvatarIndex = if (action.contact.photo != null) null else it.selectedAvatarIndex,
+                        importedPhoto = action.contact.photo,
+                    )
+                }
+                draftStore.update {
+                    it.copy(
+                        contactName = action.contact.name,
+                        selectedAvatarId = if (action.contact.photo != null) null else it.selectedAvatarId,
+                        profilePhotoUri = if (action.contact.photo != null) null else it.profilePhotoUri,
+                        currentStep = OnboardingStep.Contact,
+                    )
+                }
             }
             is ContactAction.NextClicked -> {
                 draftStore.update { it.copy(currentStep = OnboardingStep.Group) }

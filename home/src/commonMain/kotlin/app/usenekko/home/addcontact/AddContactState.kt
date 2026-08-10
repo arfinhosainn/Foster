@@ -1,13 +1,16 @@
 package app.usenekko.home.addcontact
 
+import androidx.compose.ui.graphics.ImageBitmap
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.shared.contacts.ImportedContact
 
 data class AddContactState(
     val currentStep: Int = 0,
     val name: String = "",
     val selectedAvatarIndex: Int? = null,
+    val importedPhoto: ImageBitmap? = null,
     val groups: List<Group> = emptyList(),
     val contacts: List<Contact> = emptyList(),
     val memberships: List<GroupMembership> = emptyList(),
@@ -35,5 +38,16 @@ fun AddContactState.withTimeDialValue(totalMinutes: Int): AddContactState {
     return copy(
         selectedHour = if (hour == 0) 12 else hour,
         selectedMinute = safeTotalMinutes % 60,
+    )
+}
+
+fun AddContactState.withImportedContact(contact: ImportedContact): AddContactState {
+    if (contact.name.isBlank()) return this
+
+    return copy(
+        name = contact.name,
+        selectedAvatarIndex = if (contact.photo != null) null else selectedAvatarIndex,
+        importedPhoto = contact.photo,
+        error = null,
     )
 }

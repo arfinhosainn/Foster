@@ -6,6 +6,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.initialReminder
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.contacts.ImportedContact
 import app.usenekko.shared.subscription.GateResult
 import app.usenekko.shared.subscription.SubscriptionGates
 import app.usenekko.shared.subscription.SubscriptionRepository
@@ -40,7 +41,11 @@ class AddContactViewModel(
     }
 
     fun onAvatarSelected(index: Int) {
-        _state.update { it.copy(selectedAvatarIndex = index, error = null) }
+        _state.update { it.copy(selectedAvatarIndex = index, importedPhoto = null, error = null) }
+    }
+
+    fun onContactImported(contact: ImportedContact) {
+        _state.update { it.withImportedContact(contact) }
     }
 
     fun onFrequencySelected(frequency: String) {
