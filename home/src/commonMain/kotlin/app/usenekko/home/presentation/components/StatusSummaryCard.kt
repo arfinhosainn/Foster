@@ -49,9 +49,9 @@ fun StatusSummaryCard(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(32.dp),
         color = NekkoTheme.colors.background.b1,
-        shadowElevation = 0.dp,
+        shadowElevation = 0.5.dp,
     ) {
         Box(
             modifier = Modifier.fillMaxWidth(),

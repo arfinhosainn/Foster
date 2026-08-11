@@ -1,11 +1,10 @@
 package app.usenekko.home.presentation.components
 
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,7 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.Role
@@ -48,6 +47,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -56,8 +56,11 @@ import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.ic_circlecheckmark
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.vectorResource
 
 const val TIMELINE_COLUMNS = 7
 const val TIMELINE_ROWS = 5
@@ -76,18 +79,43 @@ private enum class RowAlignment { Start, End }
 
 const val TIMELINE_SLOT_COUNT = 26
 const val TIMELINE_CURRENT_SLOT_INDEX = 12
-const val CHECK_IN_PULSE_DURATION_MILLIS = 5_000L
-const val CHECK_IN_PULSE_RING_COUNT = 3
+const val CHECK_IN_BUBBLE_DURATION_MILLIS = 5_000L
+val CHECK_IN_BUBBLE_SIZE = 96.dp
+val CHECK_IN_BUBBLE_MIN_SIZE = 86.dp
 
 private const val MAX_VISIBLE_AVATARS = 2
-private const val SECOND_AVATAR_VERTICAL_OFFSET_RATIO = 0.18f
-private const val PULSE_STROKE_WIDTH_RATIO = 0.02f
-private const val PULSE_MAX_ALPHA = 0.68f
-private const val PULSE_CANVAS_SCALE = 1.7f
+private const val SECOND_AVATAR_VERTICAL_OFFSET_RATIO = 0.20f
+private const val BUBBLE_ANIMATION_DURATION_MILLIS = 1000
 private val MAX_TIMELINE_CELL_SIZE = 50.dp
-private val MIN_TIMELINE_HORIZONTAL_SPACING = 18.dp
-private val MIN_TIMELINE_VERTICAL_SPACING = 8.dp
+private val TIMELINE_AVATAR_SIZE = 40.dp
+private val STACKED_AVATAR_SIZE = 32.dp
+private val STACKED_INDICATOR_INSET = 1.dp
+private const val STACKED_INDICATOR_VERTICAL_LIFT_RATIO = 0.30f
+private val MIN_TIMELINE_HORIZONTAL_SPACING = 8.dp
+private val MIN_TIMELINE_VERTICAL_SPACING = 9.dp
 private val CellShape = RoundedCornerShape(percent = 42)
+
+fun timelineRowSlotIndices(visualRow: Int, rightToLeft: Boolean = true): List<Int> {
+    require(visualRow in 0 until TIMELINE_ROWS) {
+        "visualRow must be between 0 and ${TIMELINE_ROWS - 1}"
+    }
+
+    val rowCapacity = TIMELINE_ROW_CAPACITIES[visualRow]
+    val rowStartIndex = TIMELINE_ROW_CAPACITIES.take(visualRow).sum()
+    return (0 until rowCapacity).map { column ->
+        rowStartIndex + if (rightToLeft) rowCapacity - 1 - column else column
+    }
+}
+
+fun timelineRowLeadingEmptyColumns(visualRow: Int): Int {
+    require(visualRow in 0 until TIMELINE_ROWS) {
+        "visualRow must be between 0 and ${TIMELINE_ROWS - 1}"
+    }
+
+    val emptyColumns = TIMELINE_COLUMNS - TIMELINE_ROW_CAPACITIES[visualRow]
+    val alignment = TIMELINE_ROW_ALIGNMENTS[visualRow]
+    return if (alignment == RowAlignment.End) emptyColumns else 0
+}
 
 fun timelineCellSizeForWidth(
     maxWidth: Dp,
@@ -96,6 +124,40 @@ fun timelineCellSizeForWidth(
     ((maxWidth - horizontalSpacing * (TIMELINE_COLUMNS - 1)) / TIMELINE_COLUMNS)
         .coerceAtMost(MAX_TIMELINE_CELL_SIZE)
         .coerceAtLeast(0.dp)
+
+fun timelineRowSpacing(verticalSpacing: Dp = 6.dp): Dp =
+    verticalSpacing.coerceAtLeast(MIN_TIMELINE_VERTICAL_SPACING)
+
+fun timelineAvatarSize(index: Int, visibleCount: Int, cellSize: Dp): Dp {
+    val targetSize = if (visibleCount > 1 && index == visibleCount - 1) {
+        STACKED_AVATAR_SIZE
+    } else {
+        TIMELINE_AVATAR_SIZE
+    }
+    return cellSize.coerceAtMost(targetSize)
+}
+
+enum class TimelineAvatarIndicatorAnchor {
+    SingleAvatar,
+    StackedAvatarCorner,
+}
+
+fun timelineStackedAvatarIndicatorOffset(cellSize: Dp): DpOffset {
+    val frontAvatarSize = timelineAvatarSize(index = 1, visibleCount = 2, cellSize = cellSize)
+    return DpOffset(
+        x = -((cellSize - frontAvatarSize) / 2 + STACKED_INDICATOR_INSET),
+        y = (cellSize - frontAvatarSize) / 2 +
+            avatarStackYOffset(index = 1, visibleCount = 2, cellSize = cellSize) +
+            STACKED_INDICATOR_INSET - cellSize * STACKED_INDICATOR_VERTICAL_LIFT_RATIO,
+    )
+}
+
+fun timelineAvatarIndicatorAnchor(visibleCount: Int): TimelineAvatarIndicatorAnchor =
+    if (visibleCount > 1) {
+        TimelineAvatarIndicatorAnchor.StackedAvatarCorner
+    } else {
+        TimelineAvatarIndicatorAnchor.SingleAvatar
+    }
 
 @Immutable
 data class TimelineSlot(
@@ -166,7 +228,7 @@ data class TimelineGridColors(
     val selectedOutline: Color,
     val badge: Color,
     val badgeText: Color,
-    val pulse: Color,
+    val bubble: Color,
 )
 
 @Composable
@@ -177,24 +239,30 @@ fun timelineGridColors(
     selectedOutline: Color = Color(0xFFFFD400),
     badge: Color = Color(0xFFF4F4F6),
     badgeText: Color = Color(0xFF1C1C1F),
-    pulse: Color = defaultTimelinePulseColor(currentOutline),
+    bubble: Color = defaultTimelineBubbleColor(NekkoTheme.colors.fill.secondary),
 ): TimelineGridColors = TimelineGridColors(
-    cell, checkedIn, currentOutline, selectedOutline, badge, badgeText, pulse,
+    cell, checkedIn, currentOutline, selectedOutline, badge, badgeText, bubble,
 )
 
-fun defaultTimelinePulseColor(currentOutline: Color): Color = currentOutline
+fun defaultTimelineBubbleColor(fillSecondary: Color): Color = fillSecondary.copy(alpha = 0.05f)
 
 val avatarRingBrush = Brush.sweepGradient(
     listOf(Color(0xFFFFCC33), Color(0xFF34C759), Color(0xFFFFCC33)),
 )
 
-fun avatarCellBackground(surfaceColor: Color): Color = surfaceColor.copy(alpha = 1f)
+fun avatarCellBackground(surfaceColor: Color, baseColor: Color): Color =
+    surfaceColor.compositeOver(baseColor)
 
-fun isCheckInPulseAnimationEnabled(
+fun isCheckInBubbleAnimationEnabled(
     appInForeground: Boolean,
     hasPendingToday: Boolean,
-    pulseWindowActive: Boolean,
-): Boolean = appInForeground && hasPendingToday && pulseWindowActive
+    bubbleWindowActive: Boolean,
+): Boolean = shouldStartCheckInBubbleWindow(appInForeground, hasPendingToday) && bubbleWindowActive
+
+fun shouldStartCheckInBubbleWindow(
+    appInForeground: Boolean,
+    hasPendingToday: Boolean,
+): Boolean = appInForeground && hasPendingToday
 
 @Composable
 fun CheckInTimelineGrid(
@@ -203,7 +271,7 @@ fun CheckInTimelineGrid(
     colors: TimelineGridColors = timelineGridColors(),
     horizontalSpacing: Dp = 6.dp,
     verticalSpacing: Dp = 6.dp,
-    animatePulse: Boolean = true,
+    animateBubble: Boolean = true,
     onSlotClick: ((TimelineSlot) -> Unit)? = null,
 ) {
     require(slots.size == TIMELINE_SLOT_COUNT) {
@@ -213,7 +281,7 @@ fun CheckInTimelineGrid(
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val effectiveHorizontalSpacing =
             horizontalSpacing.coerceAtLeast(MIN_TIMELINE_HORIZONTAL_SPACING)
-        val effectiveVerticalSpacing = verticalSpacing.coerceAtLeast(MIN_TIMELINE_VERTICAL_SPACING)
+        val effectiveVerticalSpacing = timelineRowSpacing(verticalSpacing)
         val cellSize = timelineCellSizeForWidth(maxWidth, effectiveHorizontalSpacing)
         val gridWidth = cellSize * TIMELINE_COLUMNS +
                 effectiveHorizontalSpacing * (TIMELINE_COLUMNS - 1)
@@ -225,10 +293,8 @@ fun CheckInTimelineGrid(
         ) {
             for (visualRow in TIMELINE_ROWS - 1 downTo 0) {
                 val rowCapacity = TIMELINE_ROW_CAPACITIES[visualRow]
-                val rowStartIndex = TIMELINE_ROW_CAPACITIES.take(visualRow).sum()
                 val emptyColumns = TIMELINE_COLUMNS - rowCapacity
-                val leadingEmptyColumns =
-                    if (TIMELINE_ROW_ALIGNMENTS[visualRow] == RowAlignment.End) emptyColumns else 0
+                val leadingEmptyColumns = timelineRowLeadingEmptyColumns(visualRow)
 
                 Row(
                     modifier = Modifier.size(width = gridWidth, height = cellSize),
@@ -237,15 +303,15 @@ fun CheckInTimelineGrid(
                     repeat(leadingEmptyColumns) {
                         Spacer(Modifier.size(cellSize))
                     }
-                    repeat(rowCapacity) { column ->
-                        val slot = slots[rowStartIndex + column]
+                    timelineRowSlotIndices(visualRow).forEach { slotIndex ->
+                        val slot = slots[slotIndex]
                         Box(
                             modifier = Modifier
                                 .size(cellSize)
                                 .zIndex(if (slot.avatarCount > 0) 2f else if (slot.isCurrent) 1f else 0f),
                             contentAlignment = Alignment.Center,
                         ) {
-                            TimelineCell(slot, colors, animatePulse, onSlotClick, cellSize)
+                            TimelineCell(slot, colors, animateBubble, onSlotClick, cellSize)
                         }
                     }
                     repeat(emptyColumns - leadingEmptyColumns) {
@@ -261,7 +327,7 @@ fun CheckInTimelineGrid(
 private fun TimelineCell(
     slot: TimelineSlot,
     colors: TimelineGridColors,
-    animatePulse: Boolean,
+    animateBubble: Boolean,
     onClick: ((TimelineSlot) -> Unit)?,
     cellSize: Dp,
 ) {
@@ -290,9 +356,10 @@ private fun TimelineCell(
                     slot = slot,
                     colors = colors,
                     cellSize = cellSize,
-                    showPulse = slot.isCurrent && slot.hasPendingCheckIn && animatePulse,
-                    animatePulse = animatePulse,
+                    showBubble = slot.isCurrent && slot.hasPendingCheckIn && animateBubble,
+                    animateBubble = animateBubble,
                 )
+
                 slot.isFuture -> FutureDot(slot, colors, cellSize)
                 else -> EmptyOrCheckedCell(slot, colors, cellSize)
             }
@@ -300,54 +367,33 @@ private fun TimelineCell(
     }
 }
 
-fun timelinePulseAlpha(phase: Float): Float {
-    val clampedPhase = phase.coerceIn(0f, 1f)
-    return PULSE_MAX_ALPHA * (1f - clampedPhase)
-}
-
-fun timelinePulseStrokeWidth(cellSize: Dp): Dp =
-    (cellSize * PULSE_STROKE_WIDTH_RATIO).coerceAtLeast(1.dp)
-
-/** Thin stroked waves expanding from the edge of the front avatar. */
+/** A soft bubble that repeatedly shrinks around the front avatar. */
 @Composable
-private fun PulsingAvatarRipple(
+private fun BouncingAvatarBubble(
     color: Color,
     animate: Boolean,
-    cellSize: Dp,
-    ringCount: Int = CHECK_IN_PULSE_RING_COUNT,
+    modifier: Modifier = Modifier,
 ) {
-    val progress = if (animate && !LocalInspectionMode.current) {
-        val transition = rememberInfiniteTransition(label = "checkInPulse")
+    val bubbleScale = if (animate && !LocalInspectionMode.current) {
+        val transition = rememberInfiniteTransition(label = "checkInBubble")
         val value by transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
+            initialValue = 1f,
+            targetValue = CHECK_IN_BUBBLE_MIN_SIZE.value / CHECK_IN_BUBBLE_SIZE.value,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1800, easing = LinearEasing),
+                animation = tween(durationMillis = BUBBLE_ANIMATION_DURATION_MILLIS),
+                repeatMode = RepeatMode.Reverse,
             ),
-            label = "checkInPulseProgress",
+            label = "checkInBubbleSize",
         )
         value
-    } else 0.35f
+    } else 1f
 
-    Canvas(Modifier.requiredSize(cellSize * PULSE_CANVAS_SCALE)) {
-        val avatarRadius = cellSize.toPx() / 2f
-        val minRadius = avatarRadius + 1.dp.toPx()
-        val maxRadius = size.minDimension / 2f
-        val strokeWidth = timelinePulseStrokeWidth(cellSize).toPx()
-        // Draw the oldest/largest wave first so the avatar stays visually unobstructed.
-        val phases = List(ringCount) { index ->
-            (progress + index.toFloat() / ringCount) % 1f
-        }.sortedDescending()
-        phases.forEach { phase ->
-            val radius = minRadius + (maxRadius - minRadius) * phase
-            drawCircle(
-                color = color,
-                radius = radius,
-                alpha = timelinePulseAlpha(phase),
-                style = Stroke(width = strokeWidth),
-            )
-        }
-    }
+    Box(
+        modifier = Modifier
+            .then(modifier)
+            .requiredSize(CHECK_IN_BUBBLE_SIZE * bubbleScale)
+            .background(color, CircleShape),
+    )
 }
 
 @Composable
@@ -392,13 +438,13 @@ private fun AvatarCell(
     slot: TimelineSlot,
     colors: TimelineGridColors,
     cellSize: Dp,
-    showPulse: Boolean,
-    animatePulse: Boolean,
+    showBubble: Boolean,
+    animateBubble: Boolean,
 ) {
     val visibleAvatars = slot.avatars.take(MAX_VISIBLE_AVATARS)
     val visibleCount = maxOf(visibleAvatars.size, minOf(slot.avatarCount, MAX_VISIBLE_AVATARS))
     val ringWidth = 1.5.dp
-    val clusterOffset = cellSize * 0.22f
+    val clusterOffset = cellSize * 0.10f
 
     Box(
         modifier = Modifier.requiredSize(
@@ -407,6 +453,20 @@ private fun AvatarCell(
         ),
         contentAlignment = Alignment.Center,
     ) {
+        if (shouldShowAvatarBubble(visibleCount - 1, visibleCount, showBubble)) {
+            BouncingAvatarBubble(
+                color = colors.bubble,
+                animate = animateBubble,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(
+                        x = if (visibleCount > 1) clusterOffset else 0.dp,
+                        y = avatarStackYOffset(visibleCount - 1, visibleCount, cellSize),
+                    )
+                    .zIndex(visibleCount.toFloat()),
+            )
+        }
+
         // Back avatar first, front avatar last. zIndex makes this deterministic.
         repeat(visibleCount) { index ->
             val xOffset = when {
@@ -415,25 +475,26 @@ private fun AvatarCell(
                 else -> clusterOffset
             }
             val yOffset = avatarStackYOffset(index, visibleCount, cellSize)
+            val avatarSize = timelineAvatarSize(index, visibleCount, cellSize)
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(x = xOffset, y = yOffset)
-                    .size(cellSize)
+                    .size(avatarSize)
                     .zIndex(index.toFloat()),
                 contentAlignment = Alignment.Center,
             ) {
-                if (shouldShowAvatarPulse(index, visibleCount, showPulse)) {
-                    PulsingAvatarRipple(
-                        color = colors.pulse,
-                        animate = animatePulse,
-                        cellSize = cellSize,
-                    )
-                }
                 Box(
                     modifier = Modifier
-                        .size(cellSize)
-                        .background(avatarCellBackground(NekkoTheme.colors.background.b2), CircleShape)
+                        .size(avatarSize)
+                        .background(
+                            if (index == visibleCount - 1) {
+                                avatarCellBackground(colors.cell, NekkoTheme.colors.background.b0)
+                            } else {
+                                colors.cell
+                            },
+                            CircleShape
+                        )
                         .border(ringWidth, avatarRingBrush, CircleShape)
                         .padding(ringWidth + 1.dp),
                     contentAlignment = Alignment.Center,
@@ -450,16 +511,33 @@ private fun AvatarCell(
             }
         }
 
-        if (slot.isCheckedIn) CheckBadge(colors, cellSize)
+        val indicatorAnchor = timelineAvatarIndicatorAnchor(visibleCount)
+        if (slot.isCheckedIn) CheckBadge(cellSize, indicatorAnchor)
 
         val overflow = timelineAvatarOverflowCount(slot, visibleCount)
         if (overflow > 0) {
+            val indicatorOffset = if (
+                indicatorAnchor == TimelineAvatarIndicatorAnchor.StackedAvatarCorner
+            ) {
+                timelineStackedAvatarIndicatorOffset(cellSize)
+            } else {
+                DpOffset(
+                    x = if (slot.isCheckedIn) -(cellSize * 0.12f) else cellSize * 0.16f,
+                    y = -(cellSize * 0.09f),
+                )
+            }
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
+                    .align(
+                        if (indicatorAnchor == TimelineAvatarIndicatorAnchor.StackedAvatarCorner) {
+                            Alignment.TopEnd
+                        } else {
+                            Alignment.TopCenter
+                        }
+                    )
                     .offset(
-                        x = if (slot.isCheckedIn) -(cellSize * 0.12f) else cellSize * 0.16f,
-                        y = -(cellSize * 0.09f),
+                        x = indicatorOffset.x,
+                        y = indicatorOffset.y,
                     )
                     .zIndex(10f)
                     .background(colors.badge, CircleShape)
@@ -481,8 +559,8 @@ private fun AvatarCell(
 fun timelineAvatarOverflowCount(slot: TimelineSlot, visibleCount: Int): Int =
     if (slot.isCheckedIn) 0 else (slot.avatarCount - visibleCount).coerceAtLeast(0)
 
-fun shouldShowAvatarPulse(index: Int, visibleCount: Int, showPulse: Boolean): Boolean =
-    showPulse && visibleCount > 0 && index == visibleCount - 1
+fun shouldShowAvatarBubble(index: Int, visibleCount: Int, showBubble: Boolean): Boolean =
+    showBubble && visibleCount > 0 && index == visibleCount - 1
 
 fun avatarStackYOffset(index: Int, visibleCount: Int, cellSize: Dp): Dp =
     if (visibleCount > 1 && index == 1) {
@@ -492,24 +570,30 @@ fun avatarStackYOffset(index: Int, visibleCount: Int, cellSize: Dp): Dp =
     }
 
 @Composable
-private fun BoxScope.CheckBadge(colors: TimelineGridColors, cellSize: Dp) {
-    val badgeSize = (cellSize * 0.3f).coerceAtLeast(16.dp)
-    Box(
+private fun BoxScope.CheckBadge(
+    cellSize: Dp,
+    indicatorAnchor: TimelineAvatarIndicatorAnchor,
+) {
+    val indicatorOffset = if (
+        indicatorAnchor == TimelineAvatarIndicatorAnchor.StackedAvatarCorner
+    ) {
+        timelineStackedAvatarIndicatorOffset(cellSize)
+    } else {
+        DpOffset(x = cellSize * 0.05f, y = -(cellSize * 0.06f))
+    }
+    Icon(
+        imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
+        contentDescription = null,
+        tint = Color.White,
         modifier = Modifier
             .align(Alignment.TopEnd)
-            .offset(x = cellSize * 0.05f, y = -(cellSize * 0.06f))
+            .offset(
+                x = indicatorOffset.x,
+                y = indicatorOffset.y,
+            )
             .zIndex(11f)
-            .size(badgeSize)
-            .background(colors.badge, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            Icons.Filled.Check,
-            contentDescription = null,
-            tint = colors.badgeText,
-            modifier = Modifier.size((cellSize * 0.18f).coerceAtLeast(11.dp)),
-        )
-    }
+            .size(16.dp),
+    )
 }
 
 private fun Modifier.selectionOutline(
@@ -528,7 +612,7 @@ fun CheckInTimelineGridSample(modifier: Modifier = Modifier) {
     val events = listOf(
         TimelineEvent(today.minus(DatePeriod(days = 11)), checkedIn = true, avatarCount = 4),
         TimelineEvent(today.minus(DatePeriod(days = 4)), checkedIn = true),
-        // This pending event is what enables the pulse on today's slot.
+        // This pending event is what enables the bubble on today's slot.
         TimelineEvent(today, checkedIn = false, avatarCount = 1),
         TimelineEvent(today.plus(DatePeriod(days = 7)), avatarCount = 1),
     )
@@ -550,7 +634,7 @@ fun CheckInTimelineGridSample(modifier: Modifier = Modifier) {
                 events = events,
                 selectedDate = today.minus(DatePeriod(days = 11)),
             ),
-            animatePulse = true,
+            animateBubble = true,
             modifier = Modifier.padding(top = 24.dp),
         )
     }

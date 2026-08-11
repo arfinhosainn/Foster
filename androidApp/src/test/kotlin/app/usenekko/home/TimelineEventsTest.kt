@@ -1,23 +1,31 @@
 package app.usenekko.home
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
-import app.usenekko.home.presentation.components.CHECK_IN_PULSE_DURATION_MILLIS
-import app.usenekko.home.presentation.components.CHECK_IN_PULSE_RING_COUNT
+import app.usenekko.home.presentation.components.CHECK_IN_BUBBLE_DURATION_MILLIS
+import app.usenekko.home.presentation.components.CHECK_IN_BUBBLE_MIN_SIZE
+import app.usenekko.home.presentation.components.CHECK_IN_BUBBLE_SIZE
 import app.usenekko.home.presentation.components.avatarCellBackground
 import app.usenekko.home.presentation.components.avatarStackYOffset
 import app.usenekko.home.presentation.components.buildCheckInTimelineEvents
 import app.usenekko.home.presentation.components.buildTimelineSlots
-import app.usenekko.home.presentation.components.defaultTimelinePulseColor
-import app.usenekko.home.presentation.components.isCheckInPulseAnimationEnabled
-import app.usenekko.home.presentation.components.shouldShowAvatarPulse
+import app.usenekko.home.presentation.components.defaultTimelineBubbleColor
+import app.usenekko.home.presentation.components.isCheckInBubbleAnimationEnabled
+import app.usenekko.home.presentation.components.shouldShowAvatarBubble
+import app.usenekko.home.presentation.components.shouldStartCheckInBubbleWindow
 import app.usenekko.home.presentation.components.TimelineEvent
+import app.usenekko.home.presentation.components.TimelineAvatarIndicatorAnchor
+import app.usenekko.home.presentation.components.timelineAvatarIndicatorAnchor
+import app.usenekko.home.presentation.components.timelineAvatarSize
 import app.usenekko.home.presentation.components.timelineCellSizeForWidth
+import app.usenekko.home.presentation.components.timelineRowLeadingEmptyColumns
+import app.usenekko.home.presentation.components.timelineRowSpacing
+import app.usenekko.home.presentation.components.timelineRowSlotIndices
+import app.usenekko.home.presentation.components.timelineStackedAvatarIndicatorOffset
 import app.usenekko.home.presentation.components.timelineAvatarOverflowCount
-import app.usenekko.home.presentation.components.timelinePulseAlpha
-import app.usenekko.home.presentation.components.timelinePulseStrokeWidth
 import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -82,76 +90,137 @@ class TimelineEventsTest {
     }
 
     @Test
-    fun secondAvatarIsOffsetDownWhileTheFirstAvatarStaysCentered() {
+    fun secondAvatarIsOffsetTwentyPercentDownWhileTheFirstAvatarStaysCentered() {
         assertEquals(0.dp, avatarStackYOffset(index = 0, visibleCount = 2, cellSize = 100.dp))
-        assertEquals(18.dp, avatarStackYOffset(index = 1, visibleCount = 2, cellSize = 100.dp))
+        assertEquals(20.dp, avatarStackYOffset(index = 1, visibleCount = 2, cellSize = 100.dp))
+    }
+
+    @Test
+    fun stackedAvatarUsesSmallerSizeWhileSingleAvatarKeepsFortyDpSize() {
+        assertEquals(40.dp, timelineAvatarSize(index = 0, visibleCount = 1, cellSize = 50.dp))
+        assertEquals(40.dp, timelineAvatarSize(index = 0, visibleCount = 2, cellSize = 50.dp))
+        assertEquals(32.dp, timelineAvatarSize(index = 1, visibleCount = 2, cellSize = 50.dp))
+        assertEquals(28.dp, timelineAvatarSize(index = 1, visibleCount = 2, cellSize = 28.dp))
+    }
+
+    @Test
+    fun stackedAvatarIndicatorsUseTheStackCornerWhileSingleIndicatorsKeepTheirPlacement() {
+        assertEquals(
+            TimelineAvatarIndicatorAnchor.SingleAvatar,
+            timelineAvatarIndicatorAnchor(visibleCount = 1),
+        )
+        assertEquals(
+            TimelineAvatarIndicatorAnchor.StackedAvatarCorner,
+            timelineAvatarIndicatorAnchor(visibleCount = 2),
+        )
+    }
+
+    @Test
+    fun stackedAvatarIndicatorIsInsetIntoTheFrontAvatarCorner() {
+        assertEquals(DpOffset(-10.dp, 7.5.dp), timelineStackedAvatarIndicatorOffset(50.dp))
     }
 
     @Test
     fun calendarUsesFiftyDpCellsAtDesignWidth() {
-        assertEquals(50.dp, timelineCellSizeForWidth(maxWidth = 500.dp, horizontalSpacing = 18.dp))
-        assertEquals(36.dp, timelineCellSizeForWidth(maxWidth = 360.dp, horizontalSpacing = 18.dp))
+        assertEquals(50.dp, timelineCellSizeForWidth(maxWidth = 500.dp, horizontalSpacing = 8.dp))
+        assertEquals(44.57143.dp, timelineCellSizeForWidth(maxWidth = 360.dp, horizontalSpacing = 8.dp))
     }
 
     @Test
-    fun avatarCellBackgroundIsOpaqueToCoverTheAvatarBehindIt() {
-        assertEquals(1f, avatarCellBackground(Color.Black.copy(alpha = 0.08f)).alpha)
+    fun calendarUsesLargerCellsWithTheReducedDefaultGap() {
+        assertEquals(42.dp, timelineCellSizeForWidth(maxWidth = 342.dp))
     }
 
     @Test
-    fun checkInPulseOnlyAnimatesInForegroundWhenTodayHasPendingCheckIn() {
-        assertEquals(5_000L, CHECK_IN_PULSE_DURATION_MILLIS)
+    fun calendarRowsFlowChronologicallyFromRightToLeft() {
+        assertEquals(listOf(25, 24, 23, 22), timelineRowSlotIndices(visualRow = 4))
+        assertEquals(listOf(21, 20, 19, 18, 17, 16, 15), timelineRowSlotIndices(visualRow = 3))
+    }
+
+    @Test
+    fun calendarIncompleteRowsKeepTheirOriginalAlignment() {
+        assertEquals(3, timelineRowLeadingEmptyColumns(visualRow = 4))
+        assertEquals(0, timelineRowLeadingEmptyColumns(visualRow = 0))
+    }
+
+    @Test
+    fun calendarUsesNineDpMinimumRowGap() {
+        assertEquals(9.dp, timelineRowSpacing())
+        assertEquals(9.dp, timelineRowSpacing(8.dp))
+        assertEquals(10.dp, timelineRowSpacing(10.dp))
+    }
+
+    @Test
+    fun avatarCellBackgroundCompositesSecondaryFillOverTheCalendarBackground() {
+        val secondaryFill = Color.Black.copy(alpha = 0.08f)
+        val calendarBackground = Color.White
+
+        assertEquals(Color(0xFFEBEBEB), avatarCellBackground(secondaryFill, calendarBackground))
+    }
+
+    @Test
+    fun checkInBubbleOnlyAnimatesInForegroundWhenTodayHasPendingCheckIn() {
+        assertEquals(5_000L, CHECK_IN_BUBBLE_DURATION_MILLIS)
         assertTrue(
-            isCheckInPulseAnimationEnabled(
+            isCheckInBubbleAnimationEnabled(
                 appInForeground = true,
                 hasPendingToday = true,
-                pulseWindowActive = true,
+                bubbleWindowActive = true,
             ),
         )
         assertTrue(
-            !isCheckInPulseAnimationEnabled(
+            !isCheckInBubbleAnimationEnabled(
                 appInForeground = true,
                 hasPendingToday = true,
-                pulseWindowActive = false,
+                bubbleWindowActive = false,
             ),
         )
         assertTrue(
-            !isCheckInPulseAnimationEnabled(
+            !isCheckInBubbleAnimationEnabled(
                 appInForeground = false,
                 hasPendingToday = true,
-                pulseWindowActive = true,
+                bubbleWindowActive = true,
             ),
         )
         assertTrue(
-            !isCheckInPulseAnimationEnabled(
+            !isCheckInBubbleAnimationEnabled(
                 appInForeground = true,
                 hasPendingToday = false,
-                pulseWindowActive = true,
+                bubbleWindowActive = true,
             ),
         )
     }
 
     @Test
-    fun defaultPulseColorIsOpaqueEnoughToBeVisible() {
-        val currentOutline = Color(0xFF28D86F)
-
-        assertEquals(currentOutline, defaultTimelinePulseColor(currentOutline))
+    fun checkInBubbleWindowStartsWhenPendingTodayLoadsWhileForeground() {
+        assertTrue(shouldStartCheckInBubbleWindow(appInForeground = true, hasPendingToday = true))
+        assertTrue(!shouldStartCheckInBubbleWindow(appInForeground = true, hasPendingToday = false))
+        assertTrue(!shouldStartCheckInBubbleWindow(appInForeground = false, hasPendingToday = true))
     }
 
     @Test
-    fun avatarPulseTargetsOnlyTheFrontAvatar() {
-        assertTrue(shouldShowAvatarPulse(index = 0, visibleCount = 1, showPulse = true))
-        assertTrue(!shouldShowAvatarPulse(index = 0, visibleCount = 2, showPulse = true))
-        assertTrue(shouldShowAvatarPulse(index = 1, visibleCount = 2, showPulse = true))
-        assertTrue(!shouldShowAvatarPulse(index = 1, visibleCount = 2, showPulse = false))
+    fun defaultBubbleColorUsesSecondaryFillAtFivePercentAlpha() {
+        val secondaryFill = Color(0xFF18181B).copy(alpha = 0.08f)
+
+        assertEquals(
+            secondaryFill.copy(alpha = 0.05f),
+            defaultTimelineBubbleColor(secondaryFill),
+        )
     }
 
     @Test
-    fun avatarPulseUsesThinFadingRingParameters() {
-        assertEquals(3, CHECK_IN_PULSE_RING_COUNT)
-        assertTrue(timelinePulseAlpha(phase = 0f) > timelinePulseAlpha(phase = 0.5f))
-        assertEquals(0f, timelinePulseAlpha(phase = 1f))
-        assertEquals(1.dp, timelinePulseStrokeWidth(cellSize = 50.dp))
+    fun avatarBubbleTargetsOnlyTheFrontAvatar() {
+        assertTrue(shouldShowAvatarBubble(index = 0, visibleCount = 1, showBubble = true))
+        assertTrue(!shouldShowAvatarBubble(index = 0, visibleCount = 2, showBubble = true))
+        assertTrue(shouldShowAvatarBubble(index = 1, visibleCount = 2, showBubble = true))
+        assertTrue(!shouldShowAvatarBubble(index = 1, visibleCount = 2, showBubble = false))
+    }
+
+    @Test
+    fun avatarBubbleUsesRequestedSizeAndWindow() {
+        assertEquals(96.dp, CHECK_IN_BUBBLE_SIZE)
+        assertEquals(86.dp, CHECK_IN_BUBBLE_MIN_SIZE)
+        assertEquals(5_000L, CHECK_IN_BUBBLE_DURATION_MILLIS)
     }
 
     private fun checkIn(contactId: String, checkedInAt: String) = CheckIn(

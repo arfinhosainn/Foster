@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -63,12 +64,13 @@ import app.usenekko.home.domain.forTodayCheckInList
 import app.usenekko.home.domain.isCheckedInToday
 import app.usenekko.home.domain.nextUpcomingCheckInTargetEpochMillis
 import app.usenekko.home.presentation.components.CheckInTimelineGrid
-import app.usenekko.home.presentation.components.CHECK_IN_PULSE_DURATION_MILLIS
+import app.usenekko.home.presentation.components.CHECK_IN_BUBBLE_DURATION_MILLIS
 import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.home.presentation.components.StatusSummaryCard
 import app.usenekko.home.presentation.components.buildCheckInTimelineEvents
-import app.usenekko.home.presentation.components.isCheckInPulseAnimationEnabled
+import app.usenekko.home.presentation.components.isCheckInBubbleAnimationEnabled
 import app.usenekko.home.presentation.components.rememberTimelineSlots
+import app.usenekko.home.presentation.components.shouldStartCheckInBubbleWindow
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
 import kotlin.time.Clock
@@ -78,6 +80,8 @@ import kotlinx.datetime.todayIn
 import kotlinx.coroutines.delay
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_acquaintance
+import nekko.home.generated.resources.ic_circlecheck
+import nekko.home.generated.resources.ic_circlecheckmark
 import nekko.home.generated.resources.ic_family
 import nekko.home.generated.resources.ic_fire
 import nekko.home.generated.resources.ic_friends
@@ -86,6 +90,8 @@ import nekko.home.generated.resources.ic_group
 import nekko.home.generated.resources.ic_person
 import nekko.home.generated.resources.img_gradientss
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.vectorResource
+import kotlin.time.Duration.Companion.milliseconds
 
 private fun audienceIcon(name: String): DrawableResource = when (name.lowercase()) {
     "family" -> Res.drawable.ic_family
@@ -174,7 +180,7 @@ fun HomeScreen(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(32.dp))
 
                 StatusSummaryCard(
                     outstandingCount = state.outstandingCount,
@@ -184,7 +190,7 @@ fun HomeScreen(
                     gradientOrbResource = Res.drawable.img_gradientss
                 )
 
-                Spacer(Modifier.height(70.dp))
+                Spacer(Modifier.height(32.dp))
 
                 if (state.totalContactCount == 0 && !state.isLoading) {
                     Column(
@@ -222,6 +228,7 @@ fun HomeScreen(
                         )
                     }
                 } else {
+                    Spacer(Modifier.height(32.dp))
                     CheckInSection(
                         checkIns = state.checkIns,
                         checkInCounts = state.checkInCounts,
@@ -271,43 +278,39 @@ private fun CheckInSection(
     LaunchedEffect(Unit) {
         while (true) {
             nowEpochMillis = Clock.System.now().toEpochMilliseconds()
-            delay(1_000L)
+            delay(1_000L.milliseconds)
         }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     var appInForeground by remember(lifecycleOwner) {
         mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
     }
-    var pulseWindowActive by remember(lifecycleOwner) { mutableStateOf(appInForeground) }
+    var bubbleWindowActive by remember(lifecycleOwner) { mutableStateOf(false) }
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> appInForeground = true
                 Lifecycle.Event.ON_STOP,
                 Lifecycle.Event.ON_DESTROY,
-                -> {
+                    -> {
                     appInForeground = false
-                    pulseWindowActive = false
+                    bubbleWindowActive = false
                 }
+
                 else -> Unit
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    LaunchedEffect(appInForeground) {
-        if (appInForeground) {
-            pulseWindowActive = true
-            delay(CHECK_IN_PULSE_DURATION_MILLIS)
-            pulseWindowActive = false
-        } else {
-            pulseWindowActive = false
-        }
-    }
     val events = remember(checkIns, contacts, today) {
         buildCheckInTimelineEvents(checkIns, contacts, today)
     }
     val slots = rememberTimelineSlots(today = today, events = events)
+    val hasPendingToday = slots.any { it.isCurrent && it.hasPendingCheckIn }
+    LaunchedEffect(appInForeground, hasPendingToday) {
+        bubbleWindowActive = shouldStartCheckInBubbleWindow(appInForeground, hasPendingToday)
+    }
 
     Column {
         Text(
@@ -315,24 +318,28 @@ private fun CheckInSection(
             style = NekkoTheme.typography.heading2,
             color = NekkoTheme.colors.text.primary,
             fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(start = 1.dp)
         )
-        Spacer(Modifier.height(5.dp))
+        Spacer(Modifier.height(4.dp))
         Text(
-            text = when {
-                outstandingCount == 0 -> "No check-in today"
-                outstandingCount == 1 -> "1 contact waiting for check in"
+            text = when (outstandingCount) {
+                0 -> "No check-in today"
+                1 -> "1 contact waiting for check in"
                 else -> "$outstandingCount contacts waiting for check in"
             },
             color = NekkoTheme.colors.text.tertiary,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(start = 1.dp)
+
         )
+        Spacer(Modifier.height(4.dp))
         CheckInTimelineGrid(
             slots = slots,
-            animatePulse = isCheckInPulseAnimationEnabled(
+            animateBubble = isCheckInBubbleAnimationEnabled(
                 appInForeground = appInForeground,
-                hasPendingToday = slots.any { it.isCurrent && it.hasPendingCheckIn },
-                pulseWindowActive = pulseWindowActive,
+                hasPendingToday = hasPendingToday,
+                bubbleWindowActive = bubbleWindowActive,
             ),
             modifier = Modifier.padding(top = 24.dp),
         )
@@ -356,8 +363,8 @@ private fun CheckInSection(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(NekkoTheme.colors.background.b1)
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(NekkoTheme.colors.fill.quaternary)
                         .padding(horizontal = 16.dp),
                 ) {
                     todayContacts.forEachIndexed { index, contact ->
@@ -427,31 +434,28 @@ private fun ContactCheckInRow(
                     shape = RoundedCornerShape(50),
                     contentPadding = PaddingValues(horizontal = 18.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = NekkoTheme.colors.background.b2,
+                        containerColor = Color.White,
                         contentColor = NekkoTheme.colors.text.primary,
-                        disabledContainerColor = NekkoTheme.colors.background.b2,
-                        disabledContentColor = NekkoTheme.colors.text.tertiary,
+                        disabledContainerColor = Color.White,
+                        disabledContentColor = Color.Black,
                     ),
                 ) {
                     Text(
                         if (checkingInContactId == contact.id) "Checking..." else "Check in",
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.Black
                     )
                 }
             } else {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(NekkoTheme.colors.fill.tertiary, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Checked in",
-                        tint = NekkoTheme.colors.text.secondary,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
+
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
+                    contentDescription = "Checked in",
+                    modifier = Modifier.size(24.dp),
+                    tint = NekkoTheme.colors.gray.secondary,
+                )
+
             }
         }
         if (showDivider) DashedContactDivider()
