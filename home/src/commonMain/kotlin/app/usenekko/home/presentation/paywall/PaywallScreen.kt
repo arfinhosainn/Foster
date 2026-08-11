@@ -1,38 +1,47 @@
 package app.usenekko.home.presentation.paywall
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +50,26 @@ import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.home.di.rememberPaywallViewModel
 import app.usenekko.shared.subscription.BillingPeriod
 import app.usenekko.theme.NekkoTheme
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.fire
+import nekko.home.generated.resources.ic_brainstorm
+import nekko.home.generated.resources.ic_calendergradient
+import nekko.home.generated.resources.ic_circlecheckmark
+import nekko.home.generated.resources.ic_close
+import nekko.home.generated.resources.ic_contacts
+import nekko.home.generated.resources.ic_groupgradient
+import nekko.home.generated.resources.ic_headphonegradient
+import nekko.home.generated.resources.ic_insightgradient
+import nekko.home.generated.resources.ic_reminder
+import nekko.home.generated.resources.ic_support
+import nekko.home.generated.resources.ic_treeleft
+import nekko.home.generated.resources.ic_treeright
+import nekko.home.generated.resources.gradients
+import nekko.home.generated.resources.ic_fire
+import nekko.home.generated.resources.paywall_gradient
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun PaywallScreen(
@@ -50,115 +79,183 @@ fun PaywallScreen(
 ) {
     val viewModel = rememberPaywallViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            if (event is PaywallEvent.Subscribed) onSubscribed()
+            when (event) {
+                PaywallEvent.Subscribed -> onSubscribed()
+                is PaywallEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
+            }
         }
     }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = NekkoTheme.colors.text.primary)
+    Box(
+        modifier = modifier.fillMaxSize().background(NekkoTheme.colors.background.b0),
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.ic_treeleft),
+            contentDescription = null,
+            modifier = Modifier.align(Alignment.BottomStart),
+        )
+        Image(
+            painter = painterResource(Res.drawable.ic_treeright),
+            contentDescription = null,
+            modifier = Modifier.align(Alignment.BottomEnd),
+        )
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.size(24.dp).clip(RoundedCornerShape(50))
+                        .background(PaywallCloseBackground),
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = PaywallBackground,
+                        modifier = Modifier.size(24.dp),
+                    )
                 }
             }
-        },
-        containerColor = NekkoTheme.colors.background.b0,
-    ) { innerPadding ->
-        if (state.isLoading) {
-            Box(Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = NekkoTheme.colors.fill.primary)
-            }
-        } else {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(innerPadding)
-                    .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
-            ) {
-                Spacer(Modifier.height(16.dp))
-                Text("Foster Unlimited", fontSize = 28.sp, fontWeight = FontWeight.Bold,
-                    color = NekkoTheme.colors.text.primary)
-                Spacer(Modifier.height(8.dp))
-                Text("Unlock the full Nekko experience", fontSize = 16.sp,
-                    color = NekkoTheme.colors.text.secondary)
-                Spacer(Modifier.height(28.dp))
-                BenefitList()
-                Spacer(Modifier.height(28.dp))
-                PlanToggle(
+            Spacer(Modifier.height(16.dp))
+
+            if (state.isLoading) {
+                Box(Modifier.fillMaxWidth().height(480.dp), contentAlignment = Alignment.Center) {
+                    androidx.compose.material3.CircularProgressIndicator(color = PaywallGreen)
+                }
+            } else {
+                FeatureCard()
+                Spacer(Modifier.height(24.dp))
+                PlanList(
                     selectedPeriod = state.selectedPeriod,
                     monthlyPrice = state.offering?.monthly?.priceString,
                     annualPrice = state.offering?.annual?.priceString,
                     onSelect = { viewModel.onAction(PaywallAction.SelectPeriod(it)) },
                 )
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(48.dp))
                 NekkoButton(
                     text = state.ctaText,
                     onClick = { viewModel.onAction(PaywallAction.Purchase) },
+                    modifier = Modifier.fillMaxWidth().height(58.dp),
                     enabled = !state.isPurchasing && state.selectedPackage != null,
                     loading = state.isPurchasing,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NekkoTheme.colors.background.onBackground,
+                        contentColor = PaywallBackground,
+                        disabledContainerColor = PaywallWhite.copy(alpha = 0.5f),
+                        disabledContentColor = PaywallBackground.copy(alpha = 0.5f),
+                    ),
+                    contentPadding = PaddingValues(0.dp),
+                    textStyle = NekkoTheme.typography.heading3Bold.copy(
+                        color = PaywallBackground,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(32.dp))
                 TextButton(
                     onClick = { viewModel.onAction(PaywallAction.Restore) },
-                    enabled = !state.isRestoring, modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isRestoring,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(if (state.isRestoring) "Restoring…" else "Restore Purchase",
-                        fontSize = 14.sp, color = NekkoTheme.colors.text.secondary)
+                    Text(
+                        if (state.isRestoring) "Restoring…" else "Restore purchase",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PaywallWhite,
+                    )
                 }
-                state.error?.let { errMsg ->
-                    Spacer(Modifier.height(8.dp))
-                    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                        .background(NekkoTheme.colors.fill.secondary).padding(12.dp)) {
-                        Text(errMsg, fontSize = 13.sp, color = NekkoTheme.colors.text.secondary)
-                    }
-                }
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Flexible billing. Simple pricing.\nCancel anytime",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    lineHeight = 20.sp,
+                    color = PaywallMuted,
+                )
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+        )
     }
 }
 
-private data class Benefit(val title: String, val subtitle: String, val comingSoon: Boolean = false)
+private data class PaywallFeature(
+    val title: String,
+    val icon: DrawableResource,
+    val comingSoon: Boolean = false,
+)
 
-private val benefits = listOf(
-    Benefit("Unlimited Contacts", "Add as many contacts as you want"),
-    Benefit("Brainstorming", "Generate unlimited conversation ideas"),
-    Benefit("Smart Reminders", "Coming soon", comingSoon = true),
-    Benefit("Relationship Insights", "Coming soon", comingSoon = true),
+private val paywallFeatures = listOf(
+    PaywallFeature("Unlimited Contacts", Res.drawable.ic_groupgradient),
+    PaywallFeature("Smart Reminder", Res.drawable.ic_calendergradient, comingSoon = true),
+    PaywallFeature("Relationship Insight", Res.drawable.ic_insightgradient, comingSoon = true),
+    PaywallFeature("Premium Support", Res.drawable.ic_headphonegradient),
 )
 
 @Composable
-private fun BenefitList() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        benefits.forEach { benefit ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier.size(24.dp).clip(RoundedCornerShape(50))
-                        .background(NekkoTheme.colors.fill.primary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Default.Check, contentDescription = null,
-                        tint = NekkoTheme.colors.text.primary, modifier = Modifier.size(14.dp))
-                }
+private fun FeatureCard() {
+    Box(
+        modifier = Modifier.fillMaxWidth()
+            .height(270.dp)
+            .clip(RoundedCornerShape(40.dp)),
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.gradients),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.BottomCenter,
+            modifier = Modifier.fillMaxHeight()
+        )
+        Column(
+            modifier = Modifier.fillMaxSize()
+                .padding(start = 32.dp, end = 32.dp, top = 24.dp, bottom = 40.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Nekko",
+                    color = PaywallWhite,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
                 Spacer(Modifier.width(12.dp))
-                Column {
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(50))
+                        .background(Color(0x665A774C))
+                        .border(1.dp, Color(0x8897A98D), RoundedCornerShape(50))
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
                     Text(
-                        benefit.title,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (benefit.comingSoon) NekkoTheme.colors.text.tertiary
-                            else NekkoTheme.colors.text.primary,
+                        "UNLIMITED",
+                        color = PaywallWhite,
+                        fontSize = 14.sp,
+                        fontStyle = FontStyle.Italic,
+                        fontWeight = FontWeight.Bold,
                     )
-                    Text(
-                        benefit.subtitle,
-                        fontSize = 13.sp,
-                        color = NekkoTheme.colors.text.tertiary,
-                    )
+                }
+            }
+            Spacer(Modifier.height(30.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                paywallFeatures.forEach { feature ->
+                    PaywallFeatureRow(feature)
                 }
             }
         }
@@ -166,31 +263,81 @@ private fun BenefitList() {
 }
 
 @Composable
-private fun PlanToggle(
+private fun PaywallFeatureRow(feature: PaywallFeature) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            painter = painterResource(feature.icon),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(15.dp))
+        Text(
+            feature.title,
+            color = PaywallWhite,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+        if (feature.comingSoon) {
+            Text(
+                "COMING SOON",
+                color = NekkoTheme.colors.text.secondary,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clip(RoundedCornerShape(50))
+                    .background(NekkoTheme.colors.fill.secondary)
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PageIndicator() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier.size(width = 24.dp, height = 8.dp)
+                .clip(RoundedCornerShape(50)).background(PaywallWhite),
+        )
+        Spacer(Modifier.width(12.dp))
+        Box(
+            modifier = Modifier.size(8.dp).clip(RoundedCornerShape(50))
+                .background(PaywallIndicatorInactive),
+        )
+    }
+}
+
+@Composable
+private fun PlanList(
     selectedPeriod: BillingPeriod,
     monthlyPrice: String?,
     annualPrice: String?,
     onSelect: (BillingPeriod) -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PlanCard(
-            title = "Monthly",
-            price = monthlyPrice ?: "—",
-            periodLabel = "per month",
-            isSelected = selectedPeriod == BillingPeriod.MONTHLY,
-            modifier = Modifier.weight(1f),
-            onClick = { onSelect(BillingPeriod.MONTHLY) },
+            title = "Annual plan",
+            price = annualPrice ?: "—",
+            periodLabel = "year",
+            originalPrice = "\$99.99",
+            discount = "40% OFF",
+            isSelected = selectedPeriod == BillingPeriod.ANNUAL,
+            onClick = { onSelect(BillingPeriod.ANNUAL) },
         )
         PlanCard(
-            title = "Annual",
-            price = annualPrice ?: "—",
-            periodLabel = "per year",
-            isSelected = selectedPeriod == BillingPeriod.ANNUAL,
-            modifier = Modifier.weight(1f),
-            onClick = { onSelect(BillingPeriod.ANNUAL) },
+            title = "Monthly plan",
+            price = monthlyPrice ?: "—",
+            periodLabel = "month",
+            isSelected = selectedPeriod == BillingPeriod.MONTHLY,
+            onClick = { onSelect(BillingPeriod.MONTHLY) },
         )
     }
 }
@@ -200,28 +347,102 @@ private fun PlanCard(
     title: String,
     price: String,
     periodLabel: String,
+    originalPrice: String? = null,
+    discount: String? = null,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val borderColor = if (isSelected) NekkoTheme.colors.fill.primary
-        else NekkoTheme.colors.fill.secondary
+    val shape = RoundedCornerShape(24.dp)
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .border(width = if (isSelected) 2.dp else 1.dp, color = borderColor,
-                shape = RoundedCornerShape(16.dp))
+            .clip(shape)
+            .background(NekkoTheme.colors.background.b1)
+            .then(
+                if (isSelected) Modifier.border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(listOf(PaywallGreen, PaywallYellow)),
+                    shape = shape,
+                ) else Modifier,
+            )
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .wrapContentHeight()
+            .padding(horizontal = 20.dp, vertical = 15.dp),
     ) {
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium,
-            color = NekkoTheme.colors.text.primary)
-        Spacer(Modifier.height(8.dp))
-        Text(price, fontSize = 20.sp, fontWeight = FontWeight.Bold,
-            color = NekkoTheme.colors.text.primary)
-        Text(periodLabel, fontSize = 12.sp, color = NekkoTheme.colors.text.tertiary)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        title,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PaywallMuted,
+                    )
+                    discount?.let {
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            it,
+                            color = NekkoTheme.colors.yellow.default,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clip(RoundedCornerShape(50))
+                                .background(PaywallYellow)
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    originalPrice?.let {
+                        Text(
+                            it,
+                            color = PaywallMuted,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Medium,
+                            textDecoration = TextDecoration.LineThrough,
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(
+                        price,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PaywallWhite
+                    )
+                    Text(
+                        " /$periodLabel",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PaywallWhite
+                    )
+                }
+            }
+            if (isSelected) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
+                    contentDescription = "Selected",
+                    tint = NekkoTheme.colors.gray.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
     }
 }
+
+private val PaywallBackground = Color(0xFF080809)
+private val PaywallWhite = Color(0xFFF8F8F8)
+private val PaywallMuted = Color(0xFF8F8E98)
+private val PaywallGreen = Color(0xFF22C55E)
+private val PaywallGreenYellow = Color(0xFFB7D82D)
+private val PaywallYellow = Color(0xFFFACC15)
+private val PaywallCloseBackground = Color.Transparent
+private val PaywallPlanBackground = Color(0xFF19191D)
+private val PaywallComingSoonText = Color(0xFFB4B2BC)
+private val PaywallComingSoonBackground = Color(0x332C3A34)
+private val PaywallIndicatorInactive = Color(0xFF404047)
 
 
 @PreviewLightDark

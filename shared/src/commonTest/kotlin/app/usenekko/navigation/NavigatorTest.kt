@@ -28,6 +28,17 @@ class NavigatorTest {
     }
 
     @Test
+    fun paywallNavigationCanReturnToPreviousScreen() {
+        val navigator = Navigator(Screen.Home)
+
+        navigator.navigate(Screen.Paywall)
+
+        assertEquals(Screen.Paywall, navigator.currentScreen)
+        assertTrue(navigator.goBack())
+        assertEquals(Screen.Home, navigator.currentScreen)
+    }
+
+    @Test
     fun replaceAllClearsPreviousStack() {
         val navigator = Navigator(Screen.Welcome)
 

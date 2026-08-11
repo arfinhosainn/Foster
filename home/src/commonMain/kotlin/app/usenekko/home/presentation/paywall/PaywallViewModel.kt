@@ -32,7 +32,6 @@ class PaywallViewModel(
             is PaywallAction.SelectPeriod -> _state.update { it.copy(selectedPeriod = action.period) }
             PaywallAction.Purchase -> purchase()
             PaywallAction.Restore -> restore()
-            PaywallAction.DismissError -> _state.update { it.copy(error = null) }
         }
     }
 
@@ -42,8 +41,11 @@ class PaywallViewModel(
                 is Result.Success -> _state.update {
                     it.copy(isLoading = false, offering = result.data)
                 }
-                is Result.Error -> _state.update {
-                    it.copy(isLoading = false, error = "Couldn't load plans. Please try again.")
+                is Result.Error -> {
+                    _state.update {
+                        it.copy(isLoading = false)
+                    }
+                    _events.send(PaywallEvent.ShowError("Couldn't load plans. Please try again."))
                 }
             }
         }
@@ -53,7 +55,7 @@ class PaywallViewModel(
         val pkg = _state.value.selectedPackage ?: return
         if (_state.value.isPurchasing) return
         viewModelScope.launch {
-            _state.update { it.copy(isPurchasing = true, error = null) }
+            _state.update { it.copy(isPurchasing = true) }
             when (val outcome = subscriptionRepository.purchase(pkg)) {
                 PurchaseOutcome.Success -> {
                     _state.update { it.copy(isPurchasing = false) }
@@ -63,9 +65,8 @@ class PaywallViewModel(
                     _state.update { it.copy(isPurchasing = false) }
                 }
                 is PurchaseOutcome.Error -> {
-                    _state.update {
-                        it.copy(isPurchasing = false, error = outcome.message ?: "Purchase failed.")
-                    }
+                    _state.update { it.copy(isPurchasing = false) }
+                    _events.send(PaywallEvent.ShowError(outcome.message ?: "Purchase failed."))
                 }
             }
         }
@@ -74,18 +75,19 @@ class PaywallViewModel(
     private fun restore() {
         if (_state.value.isRestoring) return
         viewModelScope.launch {
-            _state.update { it.copy(isRestoring = true, error = null) }
+            _state.update { it.copy(isRestoring = true) }
             when (val result = subscriptionRepository.restorePurchases()) {
                 is Result.Success -> {
                     _state.update { it.copy(isRestoring = false) }
                     if (result.data) {
                         _events.send(PaywallEvent.Subscribed)
                     } else {
-                        _state.update { it.copy(error = "No active subscription found to restore.") }
+                        _events.send(PaywallEvent.ShowError("No active subscription found to restore."))
                     }
                 }
                 is Result.Error -> {
-                    _state.update { it.copy(isRestoring = false, error = "Restore failed. Try again.") }
+                    _state.update { it.copy(isRestoring = false) }
+                    _events.send(PaywallEvent.ShowError("Restore failed. Try again."))
                 }
             }
         }
