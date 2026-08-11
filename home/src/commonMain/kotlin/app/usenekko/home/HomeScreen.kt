@@ -152,7 +152,7 @@ fun HomeScreen(
                 },
                 userName = "Jane Bell",
                 onAvatarClick = { onSettingsClick() },
-                onPremiumClick = {},
+                onPremiumClick = onShowPaywall,
             )
 
         }, bottomBar = {

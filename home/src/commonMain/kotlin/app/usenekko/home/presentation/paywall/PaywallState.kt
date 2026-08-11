@@ -8,12 +8,12 @@ sealed interface PaywallAction {
     data class SelectPeriod(val period: BillingPeriod) : PaywallAction
     data object Purchase : PaywallAction
     data object Restore : PaywallAction
-    data object DismissError : PaywallAction
 }
 
 sealed interface PaywallEvent {
     /** Emitted after a successful purchase OR a restore that found an active subscription. */
     data object Subscribed : PaywallEvent
+    data class ShowError(val message: String) : PaywallEvent
 }
 
 data class PaywallState(
@@ -22,7 +22,6 @@ data class PaywallState(
     val selectedPeriod: BillingPeriod = BillingPeriod.ANNUAL,
     val isPurchasing: Boolean = false,
     val isRestoring: Boolean = false,
-    val error: String? = null,
 ) {
     val selectedPackage: PaywallPackage?
         get() = when (selectedPeriod) {
