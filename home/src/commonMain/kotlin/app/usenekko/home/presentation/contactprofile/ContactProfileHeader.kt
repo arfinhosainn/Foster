@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -66,11 +70,12 @@ fun ContactProfileHeader(
             contentAlignment = Alignment.Center
         ) {
             Image(
-                imageVector = vectorResource(Res.drawable.avatar_red), // TODO: map contact.avatarColor -> real avatar resource
+                imageVector = vectorResource(Res.drawable.avatar_red),
                 contentDescription = "Avatar",
                 modifier = Modifier.size(64.dp)
             )
         }
+        Spacer(Modifier.width(16.dp))
         Row(
             modifier = Modifier
                 .clickable(
@@ -81,7 +86,13 @@ fun ContactProfileHeader(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(name, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = NekkoTheme.colors.text.primary)
+            Text(
+                name,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                color = NekkoTheme.colors.text.primary
+            )
+            Spacer(Modifier.width(6.dp))
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_dropdown),
                 contentDescription = if (isExpanded) "Collapse relationship info" else "Expand relationship info",
@@ -89,20 +100,29 @@ fun ContactProfileHeader(
                 modifier = Modifier.padding(start = 2.dp),
             )
         }
+        Spacer(Modifier.height(4.dp))
 
         ContactCadenceRow(frequencyLabel = frequencyLabel, reminderTime = reminderTime)
+        Spacer(Modifier.height(16.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             NekkoActionButton(
                 text = "",
                 leadingIcon = vectorResource(Res.drawable.ic_notification),
                 onClick = onNotificationClick,
             )
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(8.dp))
+
             NekkoButton(
                 "Check-In",
                 onClick = onCheckInClick,
-                modifier = Modifier.padding(end = 8.dp),
+                textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    .wrapContentHeight().wrapContentHeight(),
             )
         }
     }
@@ -127,7 +147,8 @@ fun ContactCadenceRow(
         )
         Text(
             text = "$frequencyLabel • $reminderTime",
-            fontSize = 14.sp,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
             color = NekkoTheme.colors.text.tertiary,
             modifier = Modifier.padding(start = 4.dp),
         )

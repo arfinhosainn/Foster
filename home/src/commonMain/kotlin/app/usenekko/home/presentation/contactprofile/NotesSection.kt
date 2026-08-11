@@ -125,8 +125,9 @@ private fun NoteCard(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val cardColor = NekkoTheme.colors.fill.quaternary
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .height(NOTE_CARD_HEIGHT)
@@ -134,47 +135,53 @@ private fun NoteCard(
             .background(NekkoTheme.colors.fill.quaternary)
             .padding(20.dp),
     ) {
-        Column(
-            modifier = Modifier.fillMaxHeight(),
+        Text(
+            text = note.title,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            color = NekkoTheme.colors.text.primary,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
         ) {
             Text(
-                text = note.title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = NekkoTheme.colors.text.primary,
+                text = note.body,
+                maxLines = 6,
+                overflow = TextOverflow.Clip,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Normal,
+                color = NekkoTheme.colors.text.tertiary,
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Box(modifier = Modifier.height(60.dp)) {
-                Text(
-                    text = note.body,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = NekkoTheme.colors.text.tertiary,
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(24.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    NekkoTheme.colors.fill.secondary,
-                                ),
+            // Large fade mask matching the card background.
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colorStops = arrayOf(
+                                0.00f to Color.Transparent,
+                                0.38f to Color.Transparent,
+                                0.78f to cardColor.copy(alpha = 0.92f),
+                                1.00f to cardColor,
                             ),
                         ),
-                )
-            }
+                    ),
+            )
 
-            Spacer(modifier = Modifier.weight(1f))
-
+            // Footer is drawn after the fade, so it remains visible.
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -184,15 +191,17 @@ private fun NoteCard(
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.tertiary,
                 )
+
                 Box {
                     Icon(
                         imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = "Menu",
+                        contentDescription = "Note options",
                         tint = NekkoTheme.colors.text.tertiary,
                         modifier = Modifier
                             .size(20.dp)
                             .clickable { menuExpanded = true },
                     )
+
                     DropdownMenu(
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false },

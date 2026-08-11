@@ -77,7 +77,7 @@ fun NoteCard(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    NekkoTheme.colors.fill.secondary,
+                                    NekkoTheme.colors.fill.quaternary,
                                 ),
                             ),
                         ),

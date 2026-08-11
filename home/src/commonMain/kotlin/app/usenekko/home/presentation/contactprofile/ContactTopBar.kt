@@ -39,6 +39,7 @@ fun ContactProfileTopBar(
         Text(
             "$daysUntilNextCheckIn days to next\ncheck-in",
             fontSize = 12.sp,
+            lineHeight = 14.sp,
             fontWeight = FontWeight.Normal,
             color = NekkoTheme.colors.text.secondary,
             textAlign = TextAlign.Center,
