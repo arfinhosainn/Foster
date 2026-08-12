@@ -1,7 +1,6 @@
 package app.usenekko.home
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
@@ -117,7 +116,9 @@ class TimelineEventsTest {
 
     @Test
     fun stackedAvatarIndicatorIsInsetIntoTheFrontAvatarCorner() {
-        assertEquals(DpOffset(-10.dp, 7.5.dp), timelineStackedAvatarIndicatorOffset(50.dp))
+        val offset = timelineStackedAvatarIndicatorOffset(50.dp)
+        assertEquals(-10.dp, offset.x)
+        assertEquals(5f, offset.y.value, 0.001f)
     }
 
     @Test

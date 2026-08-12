@@ -101,6 +101,15 @@ class FakeContactDataSource(
         reminderTime: String?,
     ): Result<Contact, ContactError> = Result.Error(ContactError.Unknown("not used"))
 
+    override suspend fun deleteContact(contactId: String): Result<Unit, ContactError> {
+        contacts = contacts.filterNot { it.id == contactId }
+        memberships = memberships.filterNot { it.contactId == contactId }
+        checkIns = checkIns.filterNot { it.contactId == contactId }
+        notes = notes.filterNot { it.contactId == contactId }
+        reminders = reminders.filterNot { it.contactId == contactId }
+        return Result.Success(Unit)
+    }
+
     override suspend fun getGroups(): Result<List<Group>, ContactError> = Result.Success(groups)
 
     override suspend fun getGroupMemberships(): Result<List<GroupMembership>, ContactError> =

@@ -14,6 +14,7 @@ import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,13 +36,16 @@ class HomeViewModel(
 
     private var allContacts: List<Contact> = emptyList()
     private var memberships: List<GroupMembership> = emptyList()
+    private var loadJob: Job? = null
 
     init {
         loadContacts()
     }
 
     fun loadContacts() {
-        viewModelScope.launch {
+        if (loadJob?.isActive == true) return
+
+        loadJob = viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
 
             val contactsResult = contactDataSource.getContacts()
@@ -88,6 +92,10 @@ class HomeViewModel(
                 }
             }
         }
+    }
+
+    fun onScreenVisible() {
+        if (!_state.value.isLoading) loadContacts()
     }
 
     fun onGroupSelected(groupId: String?) {

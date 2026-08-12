@@ -112,6 +112,10 @@ fun HomeScreen(
     val viewModel = rememberHomeViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    LaunchedEffect(viewModel) {
+        viewModel.onScreenVisible()
+    }
+
     var showAddContact by remember { mutableStateOf(false) }
 
     val options = remember(state.groups) {

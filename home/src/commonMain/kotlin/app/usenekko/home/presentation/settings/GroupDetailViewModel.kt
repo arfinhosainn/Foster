@@ -129,7 +129,7 @@ class GroupDetailViewModel(
         if (_state.value.isMutating) return
         viewModelScope.launch {
             _state.value = _state.value.copy(isMutating = true, error = null)
-            when (val result = contactDataSource.removeContactFromGroup(contactId, groupId)) {
+            when (val result = contactDataSource.deleteContact(contactId)) {
                 is Result.Success -> {
                     _state.value = _state.value.copy(isMutating = false)
                     load()

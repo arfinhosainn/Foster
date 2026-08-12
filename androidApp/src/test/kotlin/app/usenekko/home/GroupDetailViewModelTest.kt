@@ -112,7 +112,7 @@ class GroupDetailViewModelTest {
     }
 
     @Test
-    fun removeMemberRemovesFromGroupOnly() = runTest {
+    fun removeMemberDeletesContactFromGroupAndHome() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
@@ -131,6 +131,7 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             assertTrue(dataSource.memberships.none { it.contactId == "c1" && it.groupId == "g1" })
+            assertEquals(listOf("c2"), dataSource.contacts.map { it.id })
             assertEquals(listOf("Bob"), viewModel.state.value.members.map { it.name })
         } finally {
             Dispatchers.resetMain()

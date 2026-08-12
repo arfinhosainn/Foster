@@ -114,5 +114,30 @@ class HomeViewModelGroupFilterTest {
             Dispatchers.resetMain()
         }
     }
+
+    @Test
+    fun returningToHomeRefreshesDeletedContacts() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(cOutstanding, cUpToDate),
+                groups = listOf(Group("g1", "Family")),
+                memberships = listOf(GroupMembership("c1", "g1")),
+            )
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            assertEquals(listOf("c1", "c2"), viewModel.state.value.contacts.map { it.id })
+
+            dataSource.deleteContact("c1")
+            viewModel.onScreenVisible()
+            advanceUntilIdle()
+
+            assertEquals(listOf("c2"), viewModel.state.value.contacts.map { it.id })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
 }
 
