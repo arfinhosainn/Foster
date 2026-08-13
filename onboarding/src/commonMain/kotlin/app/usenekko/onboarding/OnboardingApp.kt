@@ -27,7 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import app.usenekko.home.HomeScreen
 import app.usenekko.home.presentation.badges.BadgeRevealStore
-import app.usenekko.home.presentation.badges.PlantUnlockedBadgeOverlay
+import app.usenekko.home.presentation.badges.PlantRewardOverlay
 import app.usenekko.home.presentation.brainstorm.BrainstormScreen
 import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
 import app.usenekko.home.presentation.paywall.PaywallScreen
@@ -176,7 +176,7 @@ fun OnboardingApp(navigator: Navigator) {
 
             pendingBadge?.let { badge ->
                 NekkoTheme {
-                    PlantUnlockedBadgeOverlay(
+                    PlantRewardOverlay(
                         badge = badge,
                         onCollect = {
                             BadgeRevealStore.consume()
