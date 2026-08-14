@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import app.usenekko.home.addcontact.AddContactViewModel
 import app.usenekko.home.data.HomeRepository
+import app.usenekko.home.data.ContactProfileRepository
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.presentation.HomeViewModel
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
@@ -21,6 +22,10 @@ val LocalContactDataSource = staticCompositionLocalOf<ContactDataSource> {
 
 val LocalHomeRepository = staticCompositionLocalOf<HomeRepository> {
     error("HomeRepository not provided")
+}
+
+val LocalContactProfileRepository = staticCompositionLocalOf<ContactProfileRepository> {
+    error("Home contact profile repository not provided")
 }
 
 val LocalProfileDataSource = staticCompositionLocalOf<ProfileDataSource> {
@@ -52,9 +57,16 @@ fun rememberAddContactViewModel(): AddContactViewModel {
 fun rememberContactProfileViewModel(contactId: String): ContactProfileViewModel {
     val contactDataSource = LocalContactDataSource.current
     val profileDataSource = LocalProfileDataSource.current
+    val profileRepository = LocalContactProfileRepository.current
     val reminderScheduler = remember { ReminderScheduler() }
     return remember(contactId) {
-        ContactProfileViewModel(contactId, contactDataSource, reminderScheduler, profileDataSource)
+        ContactProfileViewModel(
+            contactId,
+            contactDataSource,
+            reminderScheduler,
+            profileDataSource,
+            profileRepository,
+        )
     }
 }
 

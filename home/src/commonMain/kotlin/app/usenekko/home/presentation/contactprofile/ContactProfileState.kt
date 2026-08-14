@@ -28,6 +28,7 @@ sealed interface ContactProfileAction {
 
 data class ContactProfileState(
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val contact: Contact? = null,
     val userSelectedAvatarId: String? = null,
     val daysUntilNextCheckIn: Int = 0,
@@ -50,4 +51,5 @@ data class ContactProfileState(
     val reminderDraftDateEpochMillis: Long? = null,
     val isSavingReminder: Boolean = false,
     val remindersError: String? = null,
+    val refreshError: String? = null,
 )

@@ -9,10 +9,12 @@ import app.usenekko.home.data.supabase.SupabaseBrainstormDataSource
 import app.usenekko.home.data.supabase.SupabaseContactDataSource
 import app.usenekko.home.data.supabase.SupabaseDeleteAccountDataSource
 import app.usenekko.home.data.InMemoryHomeRepository
+import app.usenekko.home.data.InMemoryContactProfileRepository
 import app.usenekko.home.di.LocalBrainstormDataSource
 import app.usenekko.home.di.LocalContactDataSource
 import app.usenekko.home.di.LocalDeleteAccountDataSource
 import app.usenekko.home.di.LocalHomeRepository
+import app.usenekko.home.di.LocalContactProfileRepository
 import app.usenekko.home.di.LocalProfileDataSource
 import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
@@ -63,6 +65,13 @@ fun OnboardingDraftStoreProvider(
             scope = repositoryScope,
         )
     }
+    val contactProfileRepository = remember(client) {
+        InMemoryContactProfileRepository(
+            contactDataSource = contactDataSource,
+            accountKeyProvider = { client.auth.currentSessionOrNull()?.user?.id },
+            scope = repositoryScope,
+        )
+    }
     val deleteAccountDataSource = remember(client) { SupabaseDeleteAccountDataSource(client) }
     val brainstormDataSource = remember(client) { SupabaseBrainstormDataSource(client) }
     val subscriptionRepository = remember { RevenueCatSubscriptionRepository() }
@@ -74,6 +83,7 @@ fun OnboardingDraftStoreProvider(
         LocalSupabaseClient provides client,
         LocalContactDataSource provides contactDataSource,
         LocalHomeRepository provides homeRepository,
+        LocalContactProfileRepository provides contactProfileRepository,
         LocalDeleteAccountDataSource provides deleteAccountDataSource,
         LocalBrainstormDataSource provides brainstormDataSource,
         LocalSubscriptionRepository provides subscriptionRepository,
