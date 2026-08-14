@@ -2,10 +2,11 @@ package app.usenekko.home.presentation.brainstorm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.usenekko.home.domain.BrainstormDataSource
+import app.usenekko.home.data.BrainstormRepository
 import app.usenekko.home.domain.BrainstormError
 import app.usenekko.home.domain.BrainstormGeneration
 import app.usenekko.shared.domain.Result
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,13 +14,14 @@ import kotlinx.coroutines.launch
 
 class BrainstormViewModel(
     private val contactId: String,
-    private val dataSource: BrainstormDataSource,
+    private val repository: BrainstormRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BrainstormState())
     val state: StateFlow<BrainstormState> = _state.asStateFlow()
 
     init {
+        observeHistory()
         loadHistory()
         generate()
     }
@@ -32,16 +34,32 @@ class BrainstormViewModel(
         }
     }
 
-    private fun loadHistory() {
+    fun refreshIfStale() {
+        loadHistory()
+    }
+
+    private fun observeHistory() {
         viewModelScope.launch {
-            when (val result = dataSource.getHistory(contactId)) {
+            repository.state(contactId).collectLatest { repositoryState ->
+                _state.value = _state.value.copy(
+                    history = repositoryState.snapshot?.history.orEmpty(),
+                    isLoadingHistory = repositoryState.snapshot == null,
+                    isRefreshing = repositoryState.isRefreshing,
+                    error = repositoryState.error?.let(::messageOf) ?: _state.value.error,
+                )
+            }
+        }
+    }
+
+    private fun loadHistory(forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            when (val result = repository.load(contactId, forceRefresh)) {
                 is Result.Success -> {
-                    val history = result.data
                     _state.value = _state.value.copy(
-                        history = history,
+                        history = result.data.history,
                         isLoadingHistory = false,
                         currentTopics = _state.value.currentTopics
-                            ?: history.firstOrNull()?.topics,
+                            ?: result.data.history.firstOrNull()?.topics,
                     )
                 }
                 is Result.Error -> {
@@ -62,15 +80,15 @@ class BrainstormViewModel(
                 error = null,
                 notice = null,
             )
-            when (val result = dataSource.generate(contactId)) {
+            when (val result = repository.generate(contactId)) {
                 is Result.Success -> when (val generation = result.data) {
                     is BrainstormGeneration.Generated -> {
                         _state.value = _state.value.copy(
                             isGenerating = false,
                             currentTopics = generation.topics,
                         )
-                        // Refresh History + cooldown state from the server.
-                        loadHistory()
+                        // Invalidate and refresh history after the server mutation.
+                        loadHistory(forceRefresh = true)
                     }
                     is BrainstormGeneration.Cooldown -> {
                         _state.value = _state.value.copy(

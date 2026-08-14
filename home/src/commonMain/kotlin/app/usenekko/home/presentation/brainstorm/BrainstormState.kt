@@ -12,6 +12,7 @@ sealed interface BrainstormAction {
 
 data class BrainstormState(
     val isGenerating: Boolean = false,
+    val isRefreshing: Boolean = false,
     val error: String? = null,
     val notice: String? = null,
     val currentTopics: List<BrainstormTopic>? = null,

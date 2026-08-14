@@ -5,6 +5,7 @@ import app.usenekko.home.domain.BrainstormError
 import app.usenekko.home.domain.BrainstormGeneration
 import app.usenekko.home.domain.BrainstormSession
 import app.usenekko.shared.domain.Result
+import kotlinx.coroutines.CompletableDeferred
 
 class FakeBrainstormDataSource : BrainstormDataSource {
 
@@ -12,8 +13,11 @@ class FakeBrainstormDataSource : BrainstormDataSource {
         Result.Error(BrainstormError.Unknown("not set"))
     var history: List<BrainstormSession> = emptyList()
     var historyError: BrainstormError? = null
+    var historyGate: CompletableDeferred<Unit>? = null
 
     val generateCalls = mutableListOf<String>()
+    var getHistoryCalls: Int = 0
+        private set
 
     override suspend fun generate(contactId: String): Result<BrainstormGeneration, BrainstormError> {
         generateCalls += contactId
@@ -21,6 +25,8 @@ class FakeBrainstormDataSource : BrainstormDataSource {
     }
 
     override suspend fun getHistory(contactId: String): Result<List<BrainstormSession>, BrainstormError> {
+        getHistoryCalls++
+        historyGate?.await()
         return historyError?.let { Result.Error(it) } ?: Result.Success(history)
     }
 
