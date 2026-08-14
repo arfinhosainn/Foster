@@ -45,7 +45,10 @@ class CustomReminderViewModel(
                 _state.value = _state.value.copy(draftRecurrence = action.recurrence)
             }
             is CustomReminderAction.DraftDateChanged -> {
-                _state.value = _state.value.copy(draftDate = action.date)
+                _state.value = _state.value.copy(
+                    draftDate = action.date,
+                    draftDateEpochMillis = action.dateEpochMillis,
+                )
             }
             is CustomReminderAction.SaveReminderClicked -> {
                 val s = _state.value
@@ -54,6 +57,7 @@ class CustomReminderViewModel(
                     title = s.draftTitle.ifEmpty { "New Reminder" },
                     description = s.draftDescription,
                     recurrence = s.draftRecurrence.toReminderFrequency(),
+                    dateEpochMillis = s.draftDateEpochMillis,
                 )
                 draftStore.update {
                     it.copy(
@@ -68,6 +72,7 @@ class CustomReminderViewModel(
                     draftDescription = "",
                     draftRecurrence = "None",
                     draftDate = "Choose Date",
+                    draftDateEpochMillis = null,
                 )
             }
         }
@@ -93,7 +98,7 @@ private fun CustomReminderDraft.toReminderItem(): ReminderItem = ReminderItem(
     title = title,
     description = description,
     recurrence = recurrence.toUiLabel(),
-    date = dateEpochMillis?.toString() ?: "Choose Date",
+    date = dateEpochMillis?.toReminderDate() ?: "Choose Date",
 )
 
 private fun ReminderFrequency.toUiLabel(): String = when (this) {

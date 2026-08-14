@@ -135,7 +135,6 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                     onNavigateToNext = { navigator.navigate(Screen.Notification) },
                     onBack = { navigator.goBack() },
                     onSkip = { navigator.navigate(Screen.Notification) },
-                    onComplete = { navigator.replaceAll(Screen.Home) },
                 )
 
                 is Screen.Notification -> NotificationScreen(

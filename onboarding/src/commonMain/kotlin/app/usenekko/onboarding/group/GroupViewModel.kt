@@ -33,6 +33,15 @@ class GroupViewModel(
         _showCreateGroupSheet.value = false
     }
 
+    fun onGroupSelected(groupId: String) {
+        draftStore.update {
+            it.copy(
+                selectedGroupId = groupId,
+                currentStep = OnboardingStep.Group,
+            )
+        }
+    }
+
     fun onSaveGroup(name: String) {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return

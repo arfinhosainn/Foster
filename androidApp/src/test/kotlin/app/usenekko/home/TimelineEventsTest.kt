@@ -90,6 +90,46 @@ class TimelineEventsTest {
     }
 
     @Test
+    fun sameDayCheckInEventWinsOverStaleOutstandingContactCache() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = listOf(checkIn("c1", "2026-08-08T12:00:00Z")),
+            contacts = listOf(contact("c1", "#007AFF", nextCheckInDate = "2026-08-08")),
+            today = today,
+        )
+
+        val slots = buildTimelineSlots(
+            startDate = today,
+            today = today,
+            events = events,
+        )
+        val current = slots.single { it.date == today }
+
+        assertTrue(current.isCheckedIn)
+        assertTrue(!current.hasPendingCheckIn)
+    }
+
+    @Test
+    fun cachedTodayCheckInStillShowsCheckedCalendarStateWhenEventReadIsUnavailable() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("c1", "#007AFF", nextCheckInDate = "2026-08-08")
+                    .copy(lastCheckInDate = "2026-08-08"),
+            ),
+            today = today,
+        )
+
+        val current = buildTimelineSlots(
+            startDate = today,
+            today = today,
+            events = events,
+        ).single { it.date == today }
+
+        assertTrue(current.isCheckedIn)
+        assertTrue(!current.hasPendingCheckIn)
+    }
+
+    @Test
     fun secondAvatarIsOffsetTwentyPercentDownWhileTheFirstAvatarStaysCentered() {
         assertEquals(0.dp, avatarStackYOffset(index = 0, visibleCount = 2, cellSize = 100.dp))
         assertEquals(20.dp, avatarStackYOffset(index = 1, visibleCount = 2, cellSize = 100.dp))

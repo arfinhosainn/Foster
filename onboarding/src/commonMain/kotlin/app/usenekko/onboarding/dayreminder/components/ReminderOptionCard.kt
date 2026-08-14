@@ -35,7 +35,7 @@ fun ReminderOptionCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(NekkoTheme.colors.fill.secondary)
+            .background(NekkoTheme.colors.fill.tertiary)
             .clickable(onClick = onClick)
             .padding(vertical = 22.dp),
         contentAlignment = Alignment.Center

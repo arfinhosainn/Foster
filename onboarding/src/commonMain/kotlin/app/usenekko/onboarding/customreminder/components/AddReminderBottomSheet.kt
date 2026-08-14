@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
@@ -16,17 +18,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.customreminder.CustomReminderAction
 import app.usenekko.onboarding.customreminder.CustomReminderState
+import app.usenekko.onboarding.customreminder.toReminderDate
 import app.usenekko.theme.NekkoTheme
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +42,8 @@ fun AddReminderBottomSheet(
     var recurrenceMenuExpanded by remember { mutableStateOf(false) }
     var datePickerVisible by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     if (datePickerVisible) {
         DatePickerDialog(
@@ -47,7 +52,12 @@ fun AddReminderBottomSheet(
                 TextButton(
                     onClick = {
                         datePickerState.selectedDateMillis?.let { selectedDateMillis ->
-                            onAction(CustomReminderAction.DraftDateChanged(selectedDateMillis.toReminderDate()))
+                            onAction(
+                                CustomReminderAction.DraftDateChanged(
+                                    date = selectedDateMillis.toReminderDate(),
+                                    dateEpochMillis = selectedDateMillis,
+                                )
+                            )
                         }
                         datePickerVisible = false
                     }
@@ -128,7 +138,7 @@ fun AddReminderBottomSheet(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(40.dp))
                     .background(NekkoTheme.colors.fill.tertiary) // Slightly different background for card
                     .padding(20.dp)
             ) {
@@ -137,13 +147,14 @@ fun AddReminderBottomSheet(
                         value = state.draftTitle,
                         onValueChange = { onAction(CustomReminderAction.DraftTitleChanged(it)) },
                         textStyle = TextStyle(
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             color = NekkoTheme.colors.text.primary,
                             fontWeight = FontWeight.Medium,
                             fontFamily = NekkoTheme.typography.bodyMedium.fontFamily,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
                         modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
                         decorationBox = { innerTextField ->
                             if (state.draftTitle.isEmpty()) {
                                 Text(
@@ -154,7 +165,12 @@ fun AddReminderBottomSheet(
                                 )
                             }
                             innerTextField()
-                        }
+                        },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        })
                     )
                     
                     Spacer(modifier = Modifier.height(12.dp))
@@ -186,7 +202,12 @@ fun AddReminderBottomSheet(
                                 )
                             }
                             innerTextField()
-                        }
+                        },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        })
                     )
                 }
             }
@@ -253,14 +274,6 @@ fun AddReminderBottomSheet(
 
                 ReminderPickerPill(
                     text = state.draftDate,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            tint = NekkoTheme.colors.text.primary,
-                            modifier = Modifier.size(17.dp)
-                        )
-                    },
                     onClick = { datePickerVisible = true }
                 )
             }
@@ -288,7 +301,7 @@ private fun ReminderPickerPill(
         modifier = modifier
             .heightIn(min = 40.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(NekkoTheme.colors.fill.secondary)
+            .background(NekkoTheme.colors.background.b1)
             .clickable(onClick = onClick)
             .padding(start = if (leadingIcon == null) 14.dp else 12.dp, end = 10.dp)
             .padding(vertical = 9.dp)
@@ -313,25 +326,3 @@ private fun ReminderPickerPill(
         )
     }
 }
-
-private fun Long.toReminderDate(): String {
-    val date = Instant.fromEpochMilliseconds(this)
-        .toLocalDateTime(TimeZone.currentSystemDefault())
-        .date
-    return "${monthLabels[date.month.ordinal]} ${date.day}, ${date.year}"
-}
-
-private val monthLabels = listOf(
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec"
-)

@@ -29,6 +29,9 @@ class NotificationViewModel(
     fun onAction(action: NotificationAction) {
         when (action) {
             NotificationAction.TurnOnClicked -> Unit
+            is NotificationAction.PermissionStateChanged -> {
+                _state.value = _state.value.copy(isNotificationEnabled = action.enabled)
+            }
             is NotificationAction.PermissionResult -> completeOnboarding(
                 notificationPermissionAsked = true,
                 notificationPermissionGranted = action.granted,

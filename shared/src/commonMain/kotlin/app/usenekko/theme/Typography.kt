@@ -76,7 +76,7 @@ fun appTypography(): AppTypography {
         heading3 = heading(20, 26, FontWeight.Normal),
         heading3Bold = heading(20, 26, FontWeight.Bold),
         heading4 = heading(17, 21, FontWeight.Medium),
-        heading4Semibold = heading(16, 21, FontWeight.SemiBold),
+        heading4Semibold = heading(17, 21, FontWeight.SemiBold),
         heading5 = heading(14, 18, FontWeight.Normal),
         heading5Semibold = heading(14, 18, FontWeight.SemiBold),
         body = body(14, 20, FontWeight.Normal),

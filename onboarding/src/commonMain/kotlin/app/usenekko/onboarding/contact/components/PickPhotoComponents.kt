@@ -54,7 +54,7 @@ fun ProfilePhotoPicker(
     onEditClick: () -> Unit,
     onPreviewChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    avatarSize: Dp = 130.dp,
+    avatarSize: Dp = 120.dp,
     selectedAvatarIndex: Int? = null,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -80,8 +80,10 @@ fun ProfilePhotoPicker(
         Box(
             Modifier
                 .fillMaxSize()
+
                 .clip(CircleShape)
                 .border(4.dp, NekkoTheme.colors.stroke.secondary, CircleShape)
+                .background(NekkoTheme.colors.fill.secondary)
 
                 .pointerInput(Unit) {
                     detectTapGestures(
@@ -130,10 +132,10 @@ fun ProfilePhotoPicker(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .offset(y = 16.dp)
-                .size(32.dp)
+                .offset(y = 10.dp)
+                .size(height = 24.dp, width = 36.dp)
                 .clip(CircleShape)
-                .border(2.dp, NekkoTheme.colors.stroke.secondary, CircleShape)
+                .border(2.dp, NekkoTheme.colors.stroke.secondary.copy(alpha = 0.03f), CircleShape)
                 .background(NekkoTheme.colors.background.b2),
             contentAlignment = Alignment.Center
         ) {

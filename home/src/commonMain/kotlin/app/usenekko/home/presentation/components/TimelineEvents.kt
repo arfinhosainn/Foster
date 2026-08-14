@@ -2,11 +2,11 @@ package app.usenekko.home.presentation.components
 
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
+import app.usenekko.home.domain.contactIdsCheckedInOn
+import app.usenekko.home.domain.isCheckedInToday
 import app.usenekko.home.domain.isOutstanding
-import kotlin.time.Instant
+import app.usenekko.home.domain.localDate
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 fun buildCheckInTimelineEvents(
     checkIns: List<CheckIn>,
@@ -17,11 +17,7 @@ fun buildCheckInTimelineEvents(
     val checkedInEvents = checkIns
         .filter { it.contactId in contactsById }
         .mapNotNull { checkIn ->
-            val date = runCatching {
-                Instant.parse(checkIn.checkedInAt)
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .date
-            }.getOrNull() ?: return@mapNotNull null
+            val date = checkIn.localDate() ?: return@mapNotNull null
             date to checkIn
         }
         .groupBy({ it.first }, { it.second })
@@ -35,15 +31,34 @@ fun buildCheckInTimelineEvents(
             )
         }
 
-    val outstandingContacts = contacts.filter { it.isOutstanding(today) }
-    return if (outstandingContacts.isEmpty()) {
-        checkedInEvents
+    val checkedInTodayContactIds = checkIns.contactIdsCheckedInOn(today)
+    val cachedOnlyCheckedInToday = contacts.filter {
+        it.isCheckedInToday(today) && it.id !in checkedInTodayContactIds
+    }
+    val cachedCheckInEvent = if (cachedOnlyCheckedInToday.isEmpty()) {
+        null
     } else {
-        checkedInEvents + TimelineEvent(
+        TimelineEvent(
+            date = today,
+            checkedIn = true,
+            avatars = cachedOnlyCheckedInToday.mapNotNull { avatarResourceForColor(it.avatarColor) },
+            avatarCount = cachedOnlyCheckedInToday.size,
+        )
+    }
+    val cachedOnlyCheckedInTodayIds = cachedOnlyCheckedInToday.mapTo(mutableSetOf()) { it.id }
+    val outstandingContacts = contacts.filter {
+        it.isOutstanding(today) && it.id !in checkedInTodayContactIds
+            && it.id !in cachedOnlyCheckedInTodayIds
+    }
+    val pendingEvent = if (outstandingContacts.isEmpty()) {
+        null
+    } else {
+        TimelineEvent(
             date = today,
             checkedIn = false,
             avatars = outstandingContacts.mapNotNull { avatarResourceForColor(it.avatarColor) },
             avatarCount = outstandingContacts.size,
         )
     }
+    return checkedInEvents + listOfNotNull(cachedCheckInEvent, pendingEvent)
 }

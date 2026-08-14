@@ -136,7 +136,7 @@ private fun ReminderScreenContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Spacer(Modifier.height(42.dp))
+                Spacer(Modifier.height(40.dp))
 
                 Text(
                     text = "Every day is precious",
@@ -147,7 +147,7 @@ private fun ReminderScreenContent(
                     lineHeight = 36.sp,
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
 
                 Text(
                     text = "How often do you want to be\nreminded?",
@@ -158,14 +158,14 @@ private fun ReminderScreenContent(
                 )
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(40.dp))
 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 contentPadding = PaddingValues(horizontal = 30.dp),
-                verticalArrangement = Arrangement.spacedBy(15.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(ReminderOptions.all) { option ->
                     ReminderOptionCard(

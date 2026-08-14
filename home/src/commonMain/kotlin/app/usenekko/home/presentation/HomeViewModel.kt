@@ -3,12 +3,14 @@ package app.usenekko.home.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.usenekko.home.domain.CheckIn
+import app.usenekko.home.domain.contactIdsCheckedInOn
 import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.computeReminderPlans
 import app.usenekko.home.domain.isOutstanding
+import app.usenekko.home.domain.isCheckedInToday
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
 import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.shared.domain.Result
@@ -61,6 +63,9 @@ class HomeViewModel(
                     }
 
                     val checkIns = (checkInsResult as? Result.Success)?.data.orEmpty()
+                    val today = today()
+                    val checkedInTodayContactIds = checkIns.contactIdsCheckedInOn(today) +
+                        allContacts.filter { it.isCheckedInToday(today) }.map { it.id }
                     val checkInCounts = (checkInHistoryResult as? Result.Success)
                         ?.data
                         ?.groupingBy { it.contactId }
@@ -77,7 +82,7 @@ class HomeViewModel(
                         checkIns = checkIns,
                         checkInCounts = checkInCounts,
                     )
-                    recomputeCounts(allContacts, effectiveGroupId, memberships)
+                    recomputeCounts(allContacts, effectiveGroupId, memberships, checkedInTodayContactIds)
                     reconcileReminders(allContacts)
                 }
                 is Result.Error -> {
@@ -93,7 +98,12 @@ class HomeViewModel(
     fun onGroupSelected(groupId: String?) {
         if (_state.value.selectedGroupId == groupId) return
         _state.value = _state.value.copy(selectedGroupId = groupId)
-        recomputeCounts(allContacts, groupId, memberships)
+        recomputeCounts(
+            contacts = allContacts,
+            groupId = groupId,
+            memberships = memberships,
+            checkedInTodayContactIds = _state.value.checkIns.contactIdsCheckedInOn(today()),
+        )
     }
 
     fun checkIn(contactId: String) {
@@ -137,8 +147,9 @@ class HomeViewModel(
         contacts: List<Contact>,
         groupId: String?,
         memberships: List<GroupMembership>,
+        checkedInTodayContactIds: Set<String>,
     ) {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val today = today()
         val filtered = if (groupId == null) {
             contacts
         } else {
@@ -149,11 +160,17 @@ class HomeViewModel(
         }
         _state.value = _state.value.copy(
             totalContactCount = contacts.size,
-            outstandingCount = filtered.count { it.isOutstanding(today) },
-            upToDateCount = filtered.count { !it.isOutstanding(today) },
+            outstandingCount = filtered.count {
+                it.isOutstanding(today) && it.id !in checkedInTodayContactIds
+            },
+            upToDateCount = filtered.count {
+                !it.isOutstanding(today) || it.id in checkedInTodayContactIds
+            },
             contacts = filtered,
         )
     }
+
+    private fun today() = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
     private fun checkInFrom(): String {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())

@@ -33,33 +33,71 @@
 --    One convention across the whole schema (matches the ERD). Renames
 --    propagate through FK constraints and indexes; RLS policy expressions are
 --    separate objects and must be dropped/recreated below.
+--
+--    This block is intentionally re-run safe. The migration may already have
+--    been applied, in which case owner_user_id no longer exists.
 -- =============================================================================
 
-alter table public.groups rename column owner_user_id to owner_id;
-alter table public.notes rename column owner_user_id to owner_id;
-alter table public.custom_reminders rename column owner_user_id to owner_id;
+do $$
+declare
+  v_table_name text;
+begin
+  foreach v_table_name in array array['groups', 'notes', 'custom_reminders'] loop
+    if exists (
+      select 1
+        from information_schema.columns
+       where table_schema = 'public'
+         and table_name = v_table_name
+         and column_name = 'owner_user_id'
+    ) then
+      if exists (
+        select 1
+          from information_schema.columns
+         where table_schema = 'public'
+           and table_name = v_table_name
+           and column_name = 'owner_id'
+      ) then
+        raise exception 'Table public.% has both owner_user_id and owner_id', v_table_name;
+      end if;
+
+      execute format(
+        'alter table public.%I rename column owner_user_id to owner_id',
+        v_table_name
+      );
+    end if;
+  end loop;
+end $$;
 
 -- Recreate the RLS policies that referenced the old column name. Instead of
 -- guessing policy names, drop ALL policies on these tables via pg_policies,
 -- then recreate them explicitly below. This is re-run safe and immune to
 -- policy-name drift.
 do $$
-declare pol record;
+declare
+  pol record;
+  v_table_name text;
 begin
-  for pol in select policyname from pg_policies
-             where schemaname = 'public' and tablename = 'groups'
-  loop
-    execute format('drop policy %I on public.groups', pol.policyname);
-  end loop;
-  for pol in select policyname from pg_policies
-             where schemaname = 'public' and tablename = 'custom_reminders'
-  loop
-    execute format('drop policy %I on public.custom_reminders', pol.policyname);
-  end loop;
-  for pol in select policyname from pg_policies
-             where schemaname = 'public' and tablename = 'notes'
-  loop
-    execute format('drop policy %I on public.notes', pol.policyname);
+  foreach v_table_name in array array[
+    'groups',
+    'custom_reminders',
+    'notes',
+    'contacts',
+    'contact_groups',
+    'check_ins',
+    'brainstorm_sessions',
+    'brainstorm_topics',
+    'badges',
+    'user_badges',
+    'subscriptions'
+  ] loop
+    for pol in
+      select policyname
+        from pg_policies
+       where schemaname = 'public'
+         and tablename = v_table_name
+    loop
+      execute format('drop policy %I on public.%I', pol.policyname, v_table_name);
+    end loop;
   end loop;
 end $$;
 
@@ -238,6 +276,28 @@ create policy "contacts_delete_own" on public.contacts for delete using (auth.ui
 drop trigger if exists trg_set_updated_at on public.contacts;
 create trigger trg_set_updated_at before update on public.contacts
   for each row execute function public.set_updated_at();
+
+-- Backfill the contact collected by onboarding for accounts that completed
+-- before the onboarding RPC started inserting into contacts.
+insert into public.contacts (owner_id, name, avatar_color)
+select
+  p.id,
+  p.contact_name,
+  case p.selected_avatar_id
+    when '0' then '#FFCC33'
+    when '1' then '#34C759'
+    when '2' then '#FF9500'
+    when '3' then '#FF3B30'
+    when '4' then '#AF52DE'
+    when '5' then '#007AFF'
+    else null
+  end
+from public.profiles p
+where p.onboarding_completed_at is not null
+  and nullif(p.contact_name, '') is not null
+  and not exists (
+    select 1 from public.contacts c where c.owner_id = p.id
+  );
 
 -- =============================================================================
 -- 8. Wire existing content to contacts (nullable for now so existing rows
@@ -524,6 +584,8 @@ declare
   v_user_id uuid;
   v_time time;
   v_already_complete boolean;
+  v_contact_id uuid;
+  v_selected_group_id uuid;
 begin
   v_user_id := auth.uid();
   if v_user_id is null then
@@ -576,15 +638,56 @@ begin
     onboarding_completed_at = now(),
     updated_at            = now();
 
-  -- Non-destructive seeding. For a first-time user this inserts the
-  -- onboarding-created rows. For anyone else it inserts nothing: no deletes,
-  -- no re-inserts, so real groups/notes/reminders added later are never wiped.
+  -- Non-destructive seeding. The built-in groups are ensured for every account
+  -- so users who completed onboarding before they were persisted are repaired.
+  -- For a first-time user, onboarding-created rows are inserted without
+  -- deleting or replacing real data.
+  insert into public.groups (owner_id, name, color)
+  select v_user_id, starter.name, null
+    from (values ('Family'::text), ('Friends'::text)) as starter(name)
+   where not exists (
+     select 1
+       from public.groups existing
+      where existing.owner_id = v_user_id
+        and lower(existing.name) = lower(starter.name)
+   );
+
   if not v_already_complete then
-    -- groups: only seed if the account has none yet
-    if not exists (select 1 from public.groups where owner_id = v_user_id) then
-      insert into groups (owner_id, name, color)
-      select v_user_id, g->>'name', g->>'color'
-      from jsonb_array_elements(payload->'groups') as g;
+    -- Custom groups are seeded once, while built-in groups are handled above.
+    insert into public.groups (owner_id, name, color)
+    select v_user_id, g->>'name', g->>'color'
+      from jsonb_array_elements(coalesce(payload->'groups', '[]'::jsonb)) as g
+     where nullif(trim(g->>'name'), '') is not null
+       and lower(trim(g->>'name')) not in ('family', 'friends')
+       and not exists (
+         select 1
+           from public.groups existing
+          where existing.owner_id = v_user_id
+            and lower(existing.name) = lower(trim(g->>'name'))
+       );
+
+    -- The onboarding contact is the first Home contact. Keep this seed
+    -- idempotent and retain the selected avatar as the Home avatar color.
+    if nullif(payload->>'contactName', '') is not null
+       and not exists (select 1 from public.contacts where owner_id = v_user_id) then
+      insert into public.contacts (owner_id, name, avatar_color)
+      values (v_user_id, payload->>'contactName', payload->>'selectedAvatarColor')
+      returning id into v_contact_id;
+    end if;
+
+    if v_contact_id is not null and nullif(payload->>'selectedGroupName', '') is not null then
+      select id into v_selected_group_id
+        from public.groups
+       where owner_id = v_user_id
+         and lower(name) = lower(payload->>'selectedGroupName')
+       order by created_at
+       limit 1;
+
+      if v_selected_group_id is not null then
+        insert into public.contact_groups (contact_id, group_id)
+        values (v_contact_id, v_selected_group_id)
+        on conflict (contact_id, group_id) do nothing;
+      end if;
     end if;
 
     -- custom reminders: only seed if the account has none yet

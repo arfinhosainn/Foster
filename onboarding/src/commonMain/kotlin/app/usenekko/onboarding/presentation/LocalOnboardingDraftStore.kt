@@ -108,8 +108,7 @@ fun rememberCustomReminderViewModel(): CustomReminderViewModel {
 @Composable
 fun rememberAddNoteViewModel(): AddNoteViewModel {
     val draftStore = LocalOnboardingDraftStore.current
-    val profileDataSource = LocalOnboardingProfileDataSource.current
-    return remember { AddNoteViewModel(draftStore, profileDataSource) }
+    return remember { AddNoteViewModel(draftStore) }
 }
 
 @Composable
