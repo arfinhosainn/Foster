@@ -3,6 +3,7 @@ package app.usenekko.home
 import app.usenekko.home.domain.BrainstormGeneration
 import app.usenekko.home.domain.BrainstormSession
 import app.usenekko.home.domain.BrainstormTopic
+import app.usenekko.home.data.InMemoryBrainstormRepository
 import app.usenekko.home.presentation.brainstorm.BrainstormViewModel
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +45,7 @@ class BrainstormViewModelTest {
                 )
             }
 
-            BrainstormViewModel("c1", fake)
+            BrainstormViewModel("c1", repository(fake, this))
             advanceUntilIdle()
 
             assertEquals(listOf("c1"), fake.generateCalls)
@@ -65,7 +66,7 @@ class BrainstormViewModelTest {
                 )
             }
 
-            val vm = BrainstormViewModel("c1", fake)
+            val vm = BrainstormViewModel("c1", repository(fake, this))
             advanceUntilIdle()
 
             assertEquals(listOf("c1"), fake.generateCalls)
@@ -86,7 +87,7 @@ class BrainstormViewModelTest {
                     session("s0", "2026-08-03T09:00:00Z", "Older"),
                 )
             }
-            val vm = BrainstormViewModel("c1", fake)
+            val vm = BrainstormViewModel("c1", repository(fake, this))
             advanceUntilIdle()
 
             assertEquals(listOf("Catch up"), vm.state.value.currentTopics?.map { it.title })
@@ -113,7 +114,7 @@ class BrainstormViewModelTest {
                     BrainstormGeneration.Generated(listOf(topic("Anniversary plans")))
                 )
             }
-            val vm = BrainstormViewModel("c1", fake)
+            val vm = BrainstormViewModel("c1", repository(fake, this))
             advanceUntilIdle()
 
             // Opening the screen generates automatically and shows the new
@@ -136,7 +137,7 @@ class BrainstormViewModelTest {
                 history = listOf(session("s1", "2026-08-04T09:00:00Z", "Old topic"))
                 generateResult = Result.Success(BrainstormGeneration.Cooldown)
             }
-            val vm = BrainstormViewModel("c1", fake)
+            val vm = BrainstormViewModel("c1", repository(fake, this))
             advanceUntilIdle()
 
             assertEquals(listOf("Old topic"), vm.state.value.currentTopics?.map { it.title })
@@ -145,4 +146,13 @@ class BrainstormViewModelTest {
             Dispatchers.resetMain()
         }
     }
+
+    private fun repository(
+        dataSource: FakeBrainstormDataSource,
+        scope: kotlinx.coroutines.CoroutineScope,
+    ) = InMemoryBrainstormRepository(
+        dataSource = dataSource,
+        accountKeyProvider = { "account-a" },
+        scope = scope,
+    )
 }
