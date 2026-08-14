@@ -1,5 +1,6 @@
 package app.usenekko.home
 
+import app.usenekko.home.data.InMemoryContactProfileRepository
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.presentation.contactprofile.ContactProfileAction
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
@@ -23,6 +24,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactProfileViewModelTest {
@@ -103,6 +105,35 @@ class ContactProfileViewModelTest {
             advanceUntilIdle()
 
             assertEquals("2", viewModel.state.value.userSelectedAvatarId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun cachedRepositorySnapshotPopulatesProfileState() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(contacts = listOf(contact()))
+            val repository = InMemoryContactProfileRepository(
+                contactDataSource = dataSource,
+                accountKeyProvider = { "account-a" },
+                scope = this,
+                now = { Instant.parse("2026-08-14T12:00:00Z") },
+            )
+            repository.load("c1")
+
+            val viewModel = ContactProfileViewModel(
+                "c1",
+                dataSource,
+                ReminderScheduler(),
+                contactProfileRepository = repository,
+            )
+            advanceUntilIdle()
+
+            assertEquals("Liam", viewModel.state.value.contact?.name)
+            assertFalse(viewModel.state.value.isLoading)
         } finally {
             Dispatchers.resetMain()
         }

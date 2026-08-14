@@ -2,6 +2,8 @@ package app.usenekko.home.presentation.contactprofile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.data.ContactProfileRepository
+import app.usenekko.home.data.ContactProfileRepositoryState
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.computeCheckInUpdate
@@ -17,6 +19,7 @@ import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -27,16 +30,61 @@ class ContactProfileViewModel(
     private val contactDataSource: ContactDataSource,
     private val reminderScheduler: ReminderScheduler,
     private val profileDataSource: ProfileDataSource? = null,
+    private val contactProfileRepository: ContactProfileRepository? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ContactProfileState())
     val state: StateFlow<ContactProfileState> = _state.asStateFlow()
 
     init {
+        if (contactProfileRepository != null) observeProfileRepository()
         loadContact()
     }
 
-    private fun loadContact() {
+    private fun observeProfileRepository() {
+        viewModelScope.launch {
+            contactProfileRepository?.state?.collectLatest { repositoryState ->
+                applyRepositoryState(repositoryState)
+            }
+        }
+    }
+
+    private fun applyRepositoryState(repositoryState: ContactProfileRepositoryState) {
+        val snapshot = repositoryState.snapshots[contactId]
+        val error = repositoryState.errors[contactId]
+        if (snapshot != null) {
+            val contact = snapshot.contact
+            _state.value = _state.value.copy(
+                isLoading = false,
+                isRefreshing = contactId in repositoryState.refreshingContactIds,
+                contact = contact,
+                notes = snapshot.notes,
+                reminders = snapshot.reminders,
+                checkInCount = snapshot.checkInCount,
+                daysUntilNextCheckIn = contact?.let { daysUntilNextCheckIn(it) } ?: 0,
+                refreshError = error?.toString(),
+            )
+        } else if (error != null) {
+            _state.value = _state.value.copy(
+                isLoading = false,
+                isRefreshing = false,
+                refreshError = error.toString(),
+            )
+        }
+    }
+
+    fun refreshIfStale() {
+        loadContact()
+    }
+
+    private fun loadContact(forceRefresh: Boolean = false) {
+        if (contactProfileRepository != null) {
+            viewModelScope.launch {
+                contactProfileRepository.load(contactId, forceRefresh)
+            }
+            return
+        }
+
         viewModelScope.launch {
             // Reuses the already-fetched contacts list rather than adding a new
             // single-row query. Missing contact => gracefully pop back to Home.
@@ -174,7 +222,7 @@ class ContactProfileViewModel(
                         draftTitle = "",
                         draftDescription = "",
                     )
-                    loadNotes()
+                    refreshProfileAfterMutation()
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
@@ -215,7 +263,7 @@ class ContactProfileViewModel(
                         contact = updated,
                         daysUntilNextCheckIn = daysUntilNextCheckIn(updated),
                     )
-                    loadCheckInStats()
+                    refreshProfileAfterMutation()
                     // next_check_in_date moved — cancel the old alarm and schedule
                     // the new one (locally, no push service involved).
                     rescheduleReminder(updated)
@@ -236,7 +284,7 @@ class ContactProfileViewModel(
     private fun deleteNote(noteId: String) {
         viewModelScope.launch {
             when (val result = contactDataSource.deleteNote(noteId)) {
-                is Result.Success -> loadNotes()
+                is Result.Success -> refreshProfileAfterMutation()
                 is Result.Error -> {
                     _state.value = _state.value.copy(notesError = result.error.toString())
                 }
@@ -270,7 +318,7 @@ class ContactProfileViewModel(
                         reminderDraftRecurrence = "None",
                         reminderDraftDateEpochMillis = null,
                     )
-                    loadReminders()
+                    refreshProfileAfterMutation()
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
@@ -298,12 +346,17 @@ class ContactProfileViewModel(
     private fun deleteReminder(reminderId: String) {
         viewModelScope.launch {
             when (val result = contactDataSource.deleteReminder(reminderId)) {
-                is Result.Success -> loadReminders()
+                is Result.Success -> refreshProfileAfterMutation()
                 is Result.Error -> {
                     _state.value = _state.value.copy(remindersError = result.error.toString())
                 }
             }
         }
+    }
+
+    private fun refreshProfileAfterMutation() {
+        contactProfileRepository?.invalidate(contactId)
+        loadContact(forceRefresh = contactProfileRepository != null)
     }
 
     private fun daysUntilNextCheckIn(contact: Contact): Int {
