@@ -3,6 +3,8 @@ package app.usenekko.home.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.usenekko.home.data.HomeRepository
+import app.usenekko.home.data.HomeRepositoryState
+import app.usenekko.home.data.HomeSnapshot
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.Group
@@ -11,6 +13,7 @@ import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 data class GroupDetailState(
@@ -20,6 +23,7 @@ data class GroupDetailState(
     val members: List<Contact> = emptyList(),
     val checkInCounts: Map<String, Int> = emptyMap(),
     val otherGroups: List<Group> = emptyList(),
+    val isRefreshing: Boolean = false,
     val isMoveDialogOpen: Boolean = false,
     val movingContact: Contact? = null,
     val isMutating: Boolean = false,
@@ -44,10 +48,65 @@ class GroupDetailViewModel(
     val state: StateFlow<GroupDetailState> = _state.asStateFlow()
 
     init {
+        if (homeRepository != null) observeHomeRepository()
         load()
     }
 
-    fun load() {
+    private fun observeHomeRepository() {
+        viewModelScope.launch {
+            homeRepository?.state?.collectLatest { repositoryState ->
+                applyRepositoryState(repositoryState)
+            }
+        }
+    }
+
+    private fun applyRepositoryState(repositoryState: HomeRepositoryState) {
+        val snapshot = repositoryState.snapshot
+        if (snapshot != null) {
+            applySnapshot(snapshot, repositoryState)
+        } else if (repositoryState.error != null) {
+            _state.value = _state.value.copy(
+                isLoading = false,
+                isRefreshing = false,
+                error = repositoryState.error.toString(),
+            )
+        } else if (repositoryState.isRefreshing) {
+            _state.value = _state.value.copy(isLoading = true, isRefreshing = true)
+        }
+    }
+
+    private fun applySnapshot(snapshot: HomeSnapshot, repositoryState: HomeRepositoryState) {
+        val memberIds = snapshot.memberships
+            .filter { it.groupId == groupId }
+            .mapTo(mutableSetOf()) { it.contactId }
+        val members = snapshot.contacts.filter { it.id in memberIds }
+        val checkInCounts = snapshot.checkInHistory
+            .groupingBy { it.contactId }
+            .eachCount()
+
+        _state.value = _state.value.copy(
+            isLoading = false,
+            isRefreshing = repositoryState.isRefreshing,
+            groupName = snapshot.groups.firstOrNull { it.id == groupId }?.name.orEmpty(),
+            members = members,
+            checkInCounts = checkInCounts,
+            otherGroups = snapshot.groups.filter { it.id != groupId },
+            error = repositoryState.error?.toString(),
+        )
+    }
+
+    fun refreshIfStale() {
+        load()
+    }
+
+    fun load(forceRefresh: Boolean = false) {
+        if (homeRepository != null) {
+            viewModelScope.launch {
+                homeRepository.load(forceRefresh)
+            }
+            return
+        }
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
 
@@ -116,7 +175,7 @@ class GroupDetailViewModel(
                         movingContact = null,
                     )
                     homeRepository?.invalidate()
-                    load()
+                    load(forceRefresh = true)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
@@ -136,7 +195,7 @@ class GroupDetailViewModel(
                 is Result.Success -> {
                     _state.value = _state.value.copy(isMutating = false)
                     homeRepository?.invalidate()
-                    load()
+                    load(forceRefresh = true)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
