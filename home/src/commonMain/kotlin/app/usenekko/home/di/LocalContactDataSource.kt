@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import app.usenekko.home.addcontact.AddContactViewModel
+import app.usenekko.home.data.HomeRepository
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.presentation.HomeViewModel
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
@@ -18,6 +19,10 @@ val LocalContactDataSource = staticCompositionLocalOf<ContactDataSource> {
     error("ContactDataSource not provided")
 }
 
+val LocalHomeRepository = staticCompositionLocalOf<HomeRepository> {
+    error("HomeRepository not provided")
+}
+
 val LocalProfileDataSource = staticCompositionLocalOf<ProfileDataSource> {
     error("ProfileDataSource not provided")
 }
@@ -25,18 +30,22 @@ val LocalProfileDataSource = staticCompositionLocalOf<ProfileDataSource> {
 @Composable
 fun rememberHomeViewModel(): HomeViewModel {
     val contactDataSource = LocalContactDataSource.current
+    val homeRepository = LocalHomeRepository.current
     val reminderScheduler = remember { ReminderScheduler() }
     return remember {
-        HomeViewModel(contactDataSource, reminderScheduler)
+        HomeViewModel(contactDataSource, reminderScheduler, homeRepository)
     }
 }
 
 @Composable
 fun rememberAddContactViewModel(): AddContactViewModel {
     val contactDataSource = LocalContactDataSource.current
+    val homeRepository = LocalHomeRepository.current
     val reminderScheduler = remember { ReminderScheduler() }
     val subscriptionRepository = LocalSubscriptionRepository.current
-    return remember { AddContactViewModel(contactDataSource, reminderScheduler, subscriptionRepository) }
+    return remember {
+        AddContactViewModel(contactDataSource, reminderScheduler, subscriptionRepository, homeRepository)
+    }
 }
 
 @Composable
@@ -59,11 +68,13 @@ fun rememberAccountViewModel(): AccountViewModel {
 @Composable
 fun rememberGroupSettingsViewModel(): GroupSettingsViewModel {
     val contactDataSource = LocalContactDataSource.current
-    return remember { GroupSettingsViewModel(contactDataSource) }
+    val homeRepository = LocalHomeRepository.current
+    return remember { GroupSettingsViewModel(contactDataSource, homeRepository) }
 }
 
 @Composable
 fun rememberGroupDetailViewModel(groupId: String): GroupDetailViewModel {
     val contactDataSource = LocalContactDataSource.current
-    return remember(groupId) { GroupDetailViewModel(groupId, contactDataSource) }
+    val homeRepository = LocalHomeRepository.current
+    return remember(groupId) { GroupDetailViewModel(groupId, contactDataSource, homeRepository) }
 }

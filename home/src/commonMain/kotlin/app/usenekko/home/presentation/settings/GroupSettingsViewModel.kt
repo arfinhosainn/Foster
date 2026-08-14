@@ -2,6 +2,7 @@ package app.usenekko.home.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.data.HomeRepository
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.Group
@@ -42,6 +43,7 @@ sealed interface GroupSettingsAction {
 
 class GroupSettingsViewModel(
     private val contactDataSource: ContactDataSource,
+    private val homeRepository: HomeRepository? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GroupSettingsState())
@@ -126,6 +128,7 @@ class GroupSettingsViewModel(
                         isCreateDialogOpen = false,
                         draftName = "",
                     )
+                    homeRepository?.invalidate()
                     load()
                 }
                 is Result.Error -> {
@@ -170,6 +173,7 @@ class GroupSettingsViewModel(
                 isEditing = false,
                 draftNames = emptyMap(),
             )
+            homeRepository?.invalidate()
             load()
         }
     }
@@ -180,6 +184,7 @@ class GroupSettingsViewModel(
             when (val result = contactDataSource.deleteGroup(groupId)) {
                 is Result.Success -> {
                     _state.value = _state.value.copy(draftNames = _state.value.draftNames - groupId)
+                    homeRepository?.invalidate()
                     load()
                 }
                 is Result.Error -> {

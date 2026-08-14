@@ -2,7 +2,9 @@ package app.usenekko.home.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.usenekko.home.domain.CheckIn
+import app.usenekko.home.data.HomeRepository
+import app.usenekko.home.data.HomeSnapshot
+import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.domain.contactIdsCheckedInOn
 import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.Contact
@@ -19,17 +21,15 @@ import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DatePeriod
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 
 class HomeViewModel(
     private val contactDataSource: ContactDataSource,
     private val reminderScheduler: ReminderScheduler,
+    homeRepository: HomeRepository? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -37,62 +37,76 @@ class HomeViewModel(
 
     private var allContacts: List<Contact> = emptyList()
     private var memberships: List<GroupMembership> = emptyList()
+    private val homeRepository: HomeRepository
+    private var hasLoadedRepository = false
 
     init {
+        this.homeRepository = homeRepository ?: InMemoryHomeRepository(
+            contactDataSource = contactDataSource,
+            accountKeyProvider = { "default" },
+            scope = viewModelScope,
+        )
+        observeRepository()
         loadContacts()
     }
 
-    fun loadContacts() {
+    fun loadContacts(forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
+            if (homeRepository.state.value.snapshot == null) {
+                _state.value = _state.value.copy(isLoading = true, error = null)
+            }
 
-            val contactsResult = contactDataSource.getContacts()
-            val groupsResult = contactDataSource.getGroups()
-            val membershipsResult = contactDataSource.getGroupMemberships()
-            val checkInsResult = contactDataSource.getCheckIns(null, checkInFrom(), checkInTo())
-            val checkInHistoryResult = contactDataSource.getCheckIns(null, "1970-01-01", "2999-12-31")
+            when (val result = homeRepository.load(forceRefresh)) {
+                is Result.Success -> applySnapshot(result.data)
+                is Result.Error -> _state.value = _state.value.copy(
+                    isLoading = false,
+                    isRefreshing = false,
+                    error = result.error.toString(),
+                )
+            }
+            hasLoadedRepository = true
+        }
+    }
 
-            when (val result = contactsResult) {
-                is Result.Success -> {
-                    allContacts = result.data
-                    memberships = (membershipsResult as? Result.Success)?.data.orEmpty()
+    fun refreshIfStale() {
+        loadContacts()
+    }
 
-                    val groups = when (val g = groupsResult) {
-                        is Result.Success -> g.data
-                        is Result.Error -> _state.value.groups
-                    }
-
-                    val checkIns = (checkInsResult as? Result.Success)?.data.orEmpty()
-                    val today = today()
-                    val checkedInTodayContactIds = checkIns.contactIdsCheckedInOn(today) +
-                        allContacts.filter { it.isCheckedInToday(today) }.map { it.id }
-                    val checkInCounts = (checkInHistoryResult as? Result.Success)
-                        ?.data
-                        ?.groupingBy { it.contactId }
-                        ?.eachCount()
-                        .orEmpty()
-
-                    val effectiveGroupId = _state.value.selectedGroupId
-                        ?.takeIf { selected -> groups.any { it.id == selected } }
-
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        groups = groups,
-                        selectedGroupId = effectiveGroupId,
-                        checkIns = checkIns,
-                        checkInCounts = checkInCounts,
-                    )
-                    recomputeCounts(allContacts, effectiveGroupId, memberships, checkedInTodayContactIds)
-                    reconcileReminders(allContacts)
-                }
-                is Result.Error -> {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = result.error.toString(),
-                    )
-                }
+    private fun observeRepository() {
+        viewModelScope.launch {
+            homeRepository.state.drop(1).collect { repositoryState ->
+                if (!hasLoadedRepository) return@collect
+                repositoryState.snapshot?.let(::applySnapshot)
+                _state.value = _state.value.copy(
+                    isRefreshing = repositoryState.isRefreshing,
+                    error = repositoryState.error?.toString(),
+                )
             }
         }
+    }
+
+    private fun applySnapshot(snapshot: HomeSnapshot) {
+        allContacts = snapshot.contacts
+        memberships = snapshot.memberships
+
+        val checkedInTodayContactIds = snapshot.recentCheckIns.contactIdsCheckedInOn(today()) +
+            allContacts.filter { it.isCheckedInToday(today()) }.map { it.id }
+        val checkInCounts = snapshot.checkInHistory
+            .groupingBy { it.contactId }
+            .eachCount()
+        val effectiveGroupId = _state.value.selectedGroupId
+            ?.takeIf { selected -> snapshot.groups.any { it.id == selected } }
+
+        _state.value = _state.value.copy(
+            isLoading = false,
+            groups = snapshot.groups,
+            selectedGroupId = effectiveGroupId,
+            checkIns = snapshot.recentCheckIns,
+            checkInCounts = checkInCounts,
+            error = null,
+        )
+        recomputeCounts(allContacts, effectiveGroupId, memberships, checkedInTodayContactIds)
+        reconcileReminders(allContacts)
     }
 
     fun onGroupSelected(groupId: String?) {
@@ -134,7 +148,8 @@ class HomeViewModel(
                     if (previousBadges != null) {
                         contactDataSource.detectAndTriggerBadgeReveal(previousBadges)
                     }
-                    loadContacts()
+                    homeRepository.invalidate()
+                    loadContacts(forceRefresh = true)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(checkInError = result.error.toString())
@@ -171,16 +186,6 @@ class HomeViewModel(
     }
 
     private fun today() = Clock.System.todayIn(TimeZone.currentSystemDefault())
-
-    private fun checkInFrom(): String {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        return today.minus(DatePeriod(days = 12)).toString()
-    }
-
-    private fun checkInTo(): String {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        return today.plus(DatePeriod(days = 13)).toString()
-    }
 
     /**
      * App-launch / data-change reconciliation: cancel every contact's alarm, then

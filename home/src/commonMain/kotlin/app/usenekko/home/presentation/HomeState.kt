@@ -6,6 +6,7 @@ import app.usenekko.home.domain.Group
 
 data class HomeState(
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val groups: List<Group> = emptyList(),
     val selectedGroupId: String? = null,
     val totalContactCount: Int = 0,

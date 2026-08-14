@@ -2,6 +2,7 @@ package app.usenekko.home.addcontact
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.data.HomeRepository
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.initialReminder
@@ -24,6 +25,7 @@ class AddContactViewModel(
     private val contactDataSource: ContactDataSource,
     private val reminderScheduler: ReminderScheduler,
     private val subscriptionRepository: SubscriptionRepository,
+    private val homeRepository: HomeRepository? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AddContactState())
@@ -182,6 +184,7 @@ class AddContactViewModel(
                             groupId = groupId,
                         )
                     }
+                    homeRepository?.invalidate()
                     // Schedule the first reminder locally — never server-sent.
                     scheduleFirstReminder(created)
                     _state.update { it.copy(isSubmitting = false) }
