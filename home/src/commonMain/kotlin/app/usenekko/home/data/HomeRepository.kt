@@ -11,9 +11,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -46,8 +49,17 @@ data class HomeRepositoryState(
     val error: ContactError? = null,
 )
 
+data class HomeGroupPickerState(
+    val groups: List<Group> = emptyList(),
+    val contacts: List<Contact> = emptyList(),
+    val memberships: List<GroupMembership> = emptyList(),
+    val isLoading: Boolean = true,
+    val error: ContactError? = null,
+)
+
 interface HomeRepository {
     val state: StateFlow<HomeRepositoryState>
+    val groupPickerState: Flow<HomeGroupPickerState>
 
     suspend fun load(forceRefresh: Boolean = false): Result<HomeSnapshot, ContactError>
 
@@ -66,6 +78,18 @@ class InMemoryHomeRepository(
 ) : HomeRepository {
     private val _state = MutableStateFlow(HomeRepositoryState())
     override val state: StateFlow<HomeRepositoryState> = _state.asStateFlow()
+    override val groupPickerState: Flow<HomeGroupPickerState> = state
+        .map { repositoryState ->
+            val snapshot = repositoryState.snapshot
+            HomeGroupPickerState(
+                groups = snapshot?.groups.orEmpty(),
+                contacts = snapshot?.contacts.orEmpty(),
+                memberships = snapshot?.memberships.orEmpty(),
+                isLoading = snapshot == null && repositoryState.error == null,
+                error = repositoryState.error,
+            )
+        }
+        .distinctUntilChanged()
 
     private val mutex = Mutex()
     private var invalidated = false

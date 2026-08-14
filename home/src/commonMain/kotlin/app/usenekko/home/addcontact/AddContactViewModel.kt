@@ -3,6 +3,7 @@ package app.usenekko.home.addcontact
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.usenekko.home.data.HomeRepository
+import app.usenekko.home.data.HomeGroupPickerState
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.initialReminder
@@ -17,6 +18,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,7 +37,31 @@ class AddContactViewModel(
     val events = _events.receiveAsFlow()
 
     init {
+        if (homeRepository != null) {
+            _state.update { it.copy(groupsLoading = true) }
+            observeHomeGroups()
+        }
         loadGroups()
+    }
+
+    private fun observeHomeGroups() {
+        viewModelScope.launch {
+            homeRepository?.groupPickerState?.collectLatest { pickerState ->
+                applyHomeGroups(pickerState)
+            }
+        }
+    }
+
+    private fun applyHomeGroups(pickerState: HomeGroupPickerState) {
+        _state.update { state ->
+            state.copy(
+                groups = pickerState.groups,
+                contacts = pickerState.contacts,
+                memberships = pickerState.memberships,
+                groupsLoading = pickerState.isLoading,
+                error = pickerState.error?.toString(),
+            )
+        }
     }
 
     fun onNameChanged(value: String) {
@@ -107,6 +133,7 @@ class AddContactViewModel(
                             isCreatingGroup = false,
                         )
                     }
+                    homeRepository?.invalidate()
                 }
                 is Result.Error -> {
                     _state.update {
@@ -119,6 +146,11 @@ class AddContactViewModel(
 
     private fun loadGroups() {
         viewModelScope.launch {
+            if (homeRepository != null) {
+                homeRepository.load()
+                return@launch
+            }
+
             _state.update { it.copy(groupsLoading = true) }
 
             val groupsResult = contactDataSource.getGroups()
