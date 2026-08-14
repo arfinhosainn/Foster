@@ -8,9 +8,11 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import app.usenekko.home.data.supabase.SupabaseBrainstormDataSource
 import app.usenekko.home.data.supabase.SupabaseContactDataSource
 import app.usenekko.home.data.supabase.SupabaseDeleteAccountDataSource
+import app.usenekko.home.data.InMemoryAccountRepository
 import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.data.InMemoryContactProfileRepository
 import app.usenekko.home.di.LocalBrainstormDataSource
+import app.usenekko.home.di.LocalAccountRepository
 import app.usenekko.home.di.LocalContactDataSource
 import app.usenekko.home.di.LocalDeleteAccountDataSource
 import app.usenekko.home.di.LocalHomeRepository
@@ -65,6 +67,14 @@ fun OnboardingDraftStoreProvider(
             scope = repositoryScope,
         )
     }
+    val accountRepository = remember(client) {
+        InMemoryAccountRepository(
+            profileDataSource = profileDataSource,
+            contactDataSource = contactDataSource,
+            accountKeyProvider = { client.auth.currentSessionOrNull()?.user?.id },
+            scope = repositoryScope,
+        )
+    }
     val contactProfileRepository = remember(client) {
         InMemoryContactProfileRepository(
             contactDataSource = contactDataSource,
@@ -83,6 +93,7 @@ fun OnboardingDraftStoreProvider(
         LocalSupabaseClient provides client,
         LocalContactDataSource provides contactDataSource,
         LocalHomeRepository provides homeRepository,
+        LocalAccountRepository provides accountRepository,
         LocalContactProfileRepository provides contactProfileRepository,
         LocalDeleteAccountDataSource provides deleteAccountDataSource,
         LocalBrainstormDataSource provides brainstormDataSource,

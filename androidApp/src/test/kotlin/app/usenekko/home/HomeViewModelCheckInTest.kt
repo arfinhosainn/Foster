@@ -2,6 +2,8 @@ package app.usenekko.home
 
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.CheckIn
+import app.usenekko.home.data.InMemoryAccountRepository
+import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.domain.forTodayCheckInList
 import app.usenekko.home.presentation.HomeViewModel
 import app.usenekko.shared.notifications.ReminderScheduler
@@ -167,6 +169,46 @@ class HomeViewModelCheckInTest {
             dataSource.checkInGate?.complete(Unit)
             advanceUntilIdle()
             assertEquals(1, dataSource.logCheckInCalls.size)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun successfulCheckInInvalidatesAccountBadgeCache() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("c1")),
+            )
+            val homeRepository = InMemoryHomeRepository(
+                contactDataSource = dataSource,
+                accountKeyProvider = { "account-a" },
+                scope = this,
+            )
+            val accountRepository = InMemoryAccountRepository(
+                profileDataSource = FakeProfileDataSource(),
+                contactDataSource = dataSource,
+                accountKeyProvider = { "account-a" },
+                scope = this,
+            )
+            accountRepository.load()
+            val viewModel = HomeViewModel(
+                dataSource,
+                ReminderScheduler(),
+                homeRepository,
+                accountRepository,
+            )
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+            val badgeReadsBeforeAccountRefresh = dataSource.getBadgesCalls
+            accountRepository.load()
+            advanceUntilIdle()
+
+            assertEquals(badgeReadsBeforeAccountRefresh + 1, dataSource.getBadgesCalls)
         } finally {
             Dispatchers.resetMain()
         }

@@ -51,12 +51,18 @@ class FakeContactDataSource(
         private set
     var getCheckInsCalls: Int = 0
         private set
+    var getBadgesCalls: Int = 0
+        private set
+    var getUserBadgesCalls: Int = 0
+        private set
 
     fun resetCounts() {
         getContactsCalls = 0
         getGroupsCalls = 0
         getGroupMembershipsCalls = 0
         getCheckInsCalls = 0
+        getBadgesCalls = 0
+        getUserBadgesCalls = 0
     }
 
     /** When set, [getNotes] returns this error instead of the stored notes. */
@@ -73,6 +79,9 @@ class FakeContactDataSource(
 
     /** When set, [getReminders] returns this error instead of the stored reminders. */
     var remindersError: ContactError? = null
+
+    var badgesError: ContactError? = null
+    var userBadgesError: ContactError? = null
 
     /** When set, [createReminder] fails without storing anything. */
     var createReminderError: ContactError? = null
@@ -203,6 +212,16 @@ class FakeContactDataSource(
         return Result.Success(filtered)
     }
 
+    override suspend fun getBadges(): Result<List<Badge>, ContactError> {
+        getBadgesCalls++
+        return badgesError?.let { Result.Error(it) } ?: Result.Success(badges)
+    }
+
+    override suspend fun getUserBadges(): Result<List<UserBadge>, ContactError> {
+        getUserBadgesCalls++
+        return userBadgesError?.let { Result.Error(it) } ?: Result.Success(userBadges)
+    }
+
     override suspend fun logCheckIn(
         contactId: String,
         lastCheckInDate: String,
@@ -302,8 +321,4 @@ class FakeContactDataSource(
         return Result.Success(Unit)
     }
 
-    override suspend fun getBadges(): Result<List<Badge>, ContactError> = Result.Success(badges)
-
-    override suspend fun getUserBadges(): Result<List<UserBadge>, ContactError> =
-        Result.Success(userBadges)
 }

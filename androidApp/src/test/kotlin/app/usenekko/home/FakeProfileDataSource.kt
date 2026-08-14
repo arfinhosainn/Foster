@@ -4,6 +4,7 @@ import app.usenekko.shared.domain.AccountProfile
 import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.shared.domain.ProfileError
 import app.usenekko.shared.domain.Result
+import kotlinx.coroutines.CompletableDeferred
 
 class FakeProfileDataSource(
     var profile: AccountProfile? = AccountProfile(
@@ -14,8 +15,13 @@ class FakeProfileDataSource(
     ),
 ) : ProfileDataSource {
     var error: ProfileError? = null
+    var getProfileCalls: Int = 0
+        private set
+    var getProfileGate: CompletableDeferred<Unit>? = null
 
     override suspend fun getProfile(): Result<AccountProfile, ProfileError> {
+        getProfileCalls++
+        getProfileGate?.await()
         error?.let { return Result.Error(it) }
         return profile?.let { Result.Success(it) }
             ?: Result.Error(ProfileError.Unknown("missing profile"))

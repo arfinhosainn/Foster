@@ -148,3 +148,11 @@ The Add Contact group picker reads groups from the shared `HomeRepository` and h
 - Show a loading state when Add Contact is opened before the repository has a snapshot.
 - Ensure successful contact creation invalidates the shared snapshot for both Add Contact and Home.
 - Add focused tests for warm data, cold loading, refresh updates, and mutation invalidation.
+
+### ✓ Step 6: Cache the Account screen
+The Account screen renders cached profile, badge, contact-count, and check-in-count data immediately, then refreshes stale sources in the background.
+
+- Add a process-scoped Account repository for profile and badge data with the same 30-second TTL, deduplication, invalidation, and account isolation as Home.
+- Derive Account contact and check-in totals from the shared Home snapshot instead of issuing duplicate reads.
+- Refresh stale Account data on foreground entry and invalidate badge/profile data after relevant mutations.
+- Add focused tests for warm loading, stale-while-revalidate, refresh deduplication, failure retention, account isolation, and check-in invalidation.

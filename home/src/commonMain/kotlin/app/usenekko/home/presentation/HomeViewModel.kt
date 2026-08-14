@@ -9,6 +9,7 @@ import app.usenekko.home.domain.contactIdsCheckedInOn
 import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
+import app.usenekko.home.data.AccountRepository
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.computeReminderPlans
 import app.usenekko.home.domain.isOutstanding
@@ -30,6 +31,7 @@ class HomeViewModel(
     private val contactDataSource: ContactDataSource,
     private val reminderScheduler: ReminderScheduler,
     homeRepository: HomeRepository? = null,
+    private val accountRepository: AccountRepository? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -149,6 +151,7 @@ class HomeViewModel(
                         contactDataSource.detectAndTriggerBadgeReveal(previousBadges)
                     }
                     homeRepository.invalidate()
+                    accountRepository?.invalidate()
                     loadContacts(forceRefresh = true)
                 }
                 is Result.Error -> {

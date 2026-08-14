@@ -2,23 +2,21 @@ package app.usenekko.home.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.data.AccountRepository
+import app.usenekko.home.data.HomeRepository
 import app.usenekko.home.domain.BadgeSlot
-import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.shared.domain.AccountProfile
-import app.usenekko.shared.domain.ProfileDataSource
-import app.usenekko.shared.domain.Result
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-private const val EPOCH_START = "1970-01-01"
-private const val EPOCH_END = "2999-12-31"
-
 data class AccountState(
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val profile: AccountProfile? = null,
     val fullName: String? = null,
     val createdAt: String? = null,
@@ -29,78 +27,46 @@ data class AccountState(
 )
 
 class AccountViewModel(
-    private val profileDataSource: ProfileDataSource,
-    private val contactDataSource: ContactDataSource,
+    private val homeRepository: HomeRepository,
+    private val accountRepository: AccountRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AccountState())
     val state: StateFlow<AccountState> = _state.asStateFlow()
 
     init {
+        observeRepositories()
         load()
     }
 
-    fun load() {
+    private fun observeRepositories() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
-
-            val result = runCatching {
-                coroutineScope {
-                    val profile = async { profileDataSource.getProfile() }
-                    val contacts = async { contactDataSource.getContacts() }
-
-                    val checkIns = async {
-                        contactDataSource.getCheckIns(null, EPOCH_START, EPOCH_END)
-                    }
-                    val badges = async { contactDataSource.getBadges() }
-                    val userBadges = async { contactDataSource.getUserBadges() }
-                    Quintuple(
-                        profile.await(),
-                        contacts.await(),
-                        checkIns.await(),
-                        badges.await(),
-                        userBadges.await(),
-                    )
-                }
-            }
-
-            result.fold(
-                onSuccess = { (profile, contacts, checkIns, badges, userBadges) ->
-                    val profileData = (profile as? Result.Success)?.data
-                    val contactList = (contacts as? Result.Success)?.data.orEmpty()
-                    val checkInCount = (checkIns as? Result.Success)?.data?.size ?: 0
-                    val catalog = (badges as? Result.Success)?.data.orEmpty()
-                    val unlockedIds = (userBadges as? Result.Success)?.data
-                        .orEmpty()
-                        .mapTo(mutableSetOf()) { it.badgeId }
-                    val badgeSlots = catalog
-                        .sortedBy { it.threshold }
-                        .map { badge -> BadgeSlot(badge, badge.id in unlockedIds) }
-                    _state.value = AccountState(
-                        isLoading = false,
-                        profile = profileData,
-                        fullName = profileData?.resolvedName,
-                        createdAt = profileData?.createdAt,
-                        totalContacts = contactList.size,
-                        totalCheckIns = checkInCount,
-                        badgeSlots = badgeSlots,
-                    )
-                },
-                onFailure = { e ->
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        error = e.message,
-                    )
-                },
-            )
+            combine(homeRepository.state, accountRepository.state) { home, account ->
+                AccountState(
+                    isLoading = home.snapshot == null || account.snapshot == null,
+                    isRefreshing = home.isRefreshing || account.isRefreshing,
+                    profile = account.snapshot?.profile,
+                    fullName = account.snapshot?.profile?.resolvedName,
+                    createdAt = account.snapshot?.profile?.createdAt,
+                    totalContacts = home.snapshot?.contacts?.size ?: 0,
+                    totalCheckIns = home.snapshot?.checkInHistory?.size ?: 0,
+                    badgeSlots = account.snapshot?.badgeSlots.orEmpty(),
+                    error = account.error ?: home.error?.toString(),
+                )
+            }.collectLatest { _state.value = it }
         }
     }
-}
 
-private data class Quintuple<A, B, C, D, E>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D,
-    val fifth: E,
-)
+    fun load(forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            coroutineScope {
+                launch { homeRepository.load(forceRefresh) }
+                launch { accountRepository.load(forceRefresh) }
+            }
+        }
+    }
+
+    fun refreshIfStale() {
+        load()
+    }
+}
