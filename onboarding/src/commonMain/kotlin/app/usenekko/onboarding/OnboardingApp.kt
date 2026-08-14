@@ -54,12 +54,28 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
         val subscriptionRepository = LocalSubscriptionRepository.current
 
         LaunchedEffect(Unit) {
-            subscriptionRepository.refresh()
+            var recoveryAttempted = false
+            launch {
+                subscriptionRepository.refresh()
+            }
             supabaseClient.auth.sessionStatus.collect { status ->
-                if (status is SessionStatus.Authenticated && navigator.currentScreen is Screen.Welcome) {
-                    val session = supabaseClient.auth.currentSessionOrNull()
-                    logAccount(session?.user?.email, session?.user?.id, "authenticated session")
-                    routeAfterAuth(profileDataSource, navigator)
+                when (authSessionAction(status, navigator.currentScreen is Screen.Welcome)) {
+                    AuthSessionAction.Route -> {
+                        recoveryAttempted = false
+                        val session = supabaseClient.auth.currentSessionOrNull()
+                        logAccount(session?.user?.email, session?.user?.id, "authenticated session")
+                        routeAfterAuth(profileDataSource, navigator)
+                    }
+                    AuthSessionAction.Recover -> {
+                        if (!recoveryAttempted) {
+                            recoveryAttempted = true
+                            runCatching { supabaseClient.auth.refreshCurrentSession() }
+                                .onFailure { error ->
+                                    println("NekkoAuth[session refresh failed]: ${error.message}")
+                                }
+                        }
+                    }
+                    AuthSessionAction.Ignore -> Unit
                 }
             }
         }
@@ -72,18 +88,12 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                 is Screen.Welcome -> WelcomeScreen(
                     supabaseClient = supabaseClient,
                     onGoogleSignInSuccess = {
-                        scope.launch {
-                            val session = supabaseClient.auth.currentSessionOrNull()
-                            logAccount(session?.user?.email, session?.user?.id, "Google sign-in")
-                            routeAfterAuth(profileDataSource, navigator)
-                        }
+                        val session = supabaseClient.auth.currentSessionOrNull()
+                        logAccount(session?.user?.email, session?.user?.id, "Google sign-in")
                     },
                     onAppleSignInSuccess = {
-                        scope.launch {
-                            val session = supabaseClient.auth.currentSessionOrNull()
-                            logAccount(session?.user?.email, session?.user?.id, "Apple sign-in")
-                            routeAfterAuth(profileDataSource, navigator)
-                        }
+                        val session = supabaseClient.auth.currentSessionOrNull()
+                        logAccount(session?.user?.email, session?.user?.id, "Apple sign-in")
                     },
                 )
 
@@ -198,6 +208,23 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                 }
             }
         }
+    }
+}
+
+internal enum class AuthSessionAction {
+    Route,
+    Recover,
+    Ignore,
+}
+
+internal fun authSessionAction(status: SessionStatus, isWelcome: Boolean): AuthSessionAction {
+    if (!isWelcome) return AuthSessionAction.Ignore
+    return when (status) {
+        is SessionStatus.Authenticated -> AuthSessionAction.Route
+        is SessionStatus.RefreshFailure -> AuthSessionAction.Recover
+        SessionStatus.Initializing,
+        is SessionStatus.NotAuthenticated,
+        -> AuthSessionAction.Ignore
     }
 }
 

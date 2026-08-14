@@ -26,6 +26,10 @@ fun createAppSupabaseClient(): SupabaseClient = createSupabaseClient(
     install(Auth) {
         host = "auth-callback"
         scheme = "app.usenekko"
+        autoLoadFromStorage = true
+        autoSaveToStorage = true
+        alwaysAutoRefresh = true
+        enableLifecycleCallbacks = true
     }
     install(Postgrest)
     install(Storage)
