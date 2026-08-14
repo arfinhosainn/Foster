@@ -3,6 +3,7 @@ package app.usenekko.home.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.usenekko.home.data.HomeRepository
+import app.usenekko.home.data.HomeRepositoryState
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.Group
@@ -11,6 +12,7 @@ import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 data class GroupSettingsState(
@@ -18,6 +20,7 @@ data class GroupSettingsState(
     val groups: List<Group> = emptyList(),
     val contacts: List<Contact> = emptyList(),
     val memberships: List<GroupMembership> = emptyList(),
+    val isRefreshing: Boolean = false,
     val isCreateDialogOpen: Boolean = false,
     val draftName: String = "",
     val isSaving: Boolean = false,
@@ -50,10 +53,52 @@ class GroupSettingsViewModel(
     val state: StateFlow<GroupSettingsState> = _state.asStateFlow()
 
     init {
+        if (homeRepository != null) observeHomeRepository()
         load()
     }
 
-    fun load() {
+    private fun observeHomeRepository() {
+        viewModelScope.launch {
+            homeRepository?.state?.collectLatest { repositoryState ->
+                applyRepositoryState(repositoryState)
+            }
+        }
+    }
+
+    private fun applyRepositoryState(repositoryState: HomeRepositoryState) {
+        val snapshot = repositoryState.snapshot
+        if (snapshot != null) {
+            _state.value = _state.value.copy(
+                isLoading = false,
+                isRefreshing = repositoryState.isRefreshing,
+                groups = snapshot.groups,
+                contacts = snapshot.contacts,
+                memberships = snapshot.memberships,
+                error = repositoryState.error?.toString(),
+            )
+        } else if (repositoryState.error != null) {
+            _state.value = _state.value.copy(
+                isLoading = false,
+                isRefreshing = false,
+                error = repositoryState.error.toString(),
+            )
+        } else if (repositoryState.isRefreshing) {
+            _state.value = _state.value.copy(isLoading = true, isRefreshing = true)
+        }
+    }
+
+    fun refreshIfStale() {
+        load()
+    }
+
+    fun load(forceRefresh: Boolean = false) {
+        if (homeRepository != null) {
+            viewModelScope.launch {
+                homeRepository.load(forceRefresh)
+            }
+            return
+        }
+
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
 
@@ -129,7 +174,7 @@ class GroupSettingsViewModel(
                         draftName = "",
                     )
                     homeRepository?.invalidate()
-                    load()
+                    load(forceRefresh = true)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
@@ -174,7 +219,7 @@ class GroupSettingsViewModel(
                 draftNames = emptyMap(),
             )
             homeRepository?.invalidate()
-            load()
+            load(forceRefresh = true)
         }
     }
 
@@ -185,7 +230,7 @@ class GroupSettingsViewModel(
                 is Result.Success -> {
                     _state.value = _state.value.copy(draftNames = _state.value.draftNames - groupId)
                     homeRepository?.invalidate()
-                    load()
+                    load(forceRefresh = true)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(error = result.error.toString())
