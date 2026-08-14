@@ -18,6 +18,7 @@ import app.usenekko.onboarding.presentation.LocalSupabaseClient
 import app.usenekko.onboarding.presentation.OnboardingDraftStoreProvider
 import app.usenekko.onboarding.data.supabase.SupabaseOnboardingProfileDataSource
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
 import androidx.compose.foundation.layout.Box
@@ -41,10 +42,11 @@ import app.usenekko.shared.domain.Result
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
 import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.launch
+import io.github.jan.supabase.SupabaseClient
 
 @Composable
-fun OnboardingApp(navigator: Navigator) {
-    OnboardingDraftStoreProvider {
+fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) {
+    OnboardingDraftStoreProvider(supabaseClient) {
         val profileDataSource = LocalOnboardingProfileDataSource.current
         val supabaseClient = LocalSupabaseClient.current
         val scope = rememberCoroutineScope()
@@ -53,10 +55,12 @@ fun OnboardingApp(navigator: Navigator) {
 
         LaunchedEffect(Unit) {
             subscriptionRepository.refresh()
-            val session = supabaseClient.auth.currentSessionOrNull()
-            logAccount(session?.user?.email, session?.user?.id, "app launch")
-            if (session != null) {
-                routeAfterAuth(profileDataSource, navigator)
+            supabaseClient.auth.sessionStatus.collect { status ->
+                if (status is SessionStatus.Authenticated && navigator.currentScreen is Screen.Welcome) {
+                    val session = supabaseClient.auth.currentSessionOrNull()
+                    logAccount(session?.user?.email, session?.user?.id, "authenticated session")
+                    routeAfterAuth(profileDataSource, navigator)
+                }
             }
         }
 
@@ -71,6 +75,13 @@ fun OnboardingApp(navigator: Navigator) {
                         scope.launch {
                             val session = supabaseClient.auth.currentSessionOrNull()
                             logAccount(session?.user?.email, session?.user?.id, "Google sign-in")
+                            routeAfterAuth(profileDataSource, navigator)
+                        }
+                    },
+                    onAppleSignInSuccess = {
+                        scope.launch {
+                            val session = supabaseClient.auth.currentSessionOrNull()
+                            logAccount(session?.user?.email, session?.user?.id, "Apple sign-in")
                             routeAfterAuth(profileDataSource, navigator)
                         }
                     },

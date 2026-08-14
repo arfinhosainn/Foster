@@ -36,6 +36,7 @@ import app.usenekko.onboarding.components.TermsAndPrivacyNotice
 import app.usenekko.theme.NekkoTheme
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
+import io.github.jan.supabase.compose.auth.composable.rememberSignInWithApple
 import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
 import io.github.jan.supabase.compose.auth.composeAuth
 import nekko.onboarding.generated.resources.Res
@@ -48,6 +49,7 @@ import org.jetbrains.compose.resources.painterResource
 fun WelcomeScreen(
     supabaseClient: SupabaseClient,
     onGoogleSignInSuccess: () -> Unit = {},
+    onAppleSignInSuccess: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var errorMessage by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
@@ -70,6 +72,28 @@ fun WelcomeScreen(
                 }
                 NativeSignInResult.ClosedByUser -> {
                     kotlin.io.println("GoogleSignIn: User cancelled")
+                }
+            }
+        },
+    )
+    val appleSignInAction = supabaseClient.composeAuth.rememberSignInWithApple(
+        onResult = { result ->
+            when (result) {
+                is NativeSignInResult.Success -> {
+                    kotlin.io.println("AppleSignIn Success!")
+                    errorMessage = null
+                    onAppleSignInSuccess()
+                }
+                is NativeSignInResult.Error -> {
+                    kotlin.io.println("AppleSignIn Error: ${result.message}")
+                    errorMessage = result.message
+                }
+                is NativeSignInResult.NetworkError -> {
+                    kotlin.io.println("AppleSignIn NetworkError: ${result.message}")
+                    errorMessage = "Network error. Check your connection."
+                }
+                NativeSignInResult.ClosedByUser -> {
+                    kotlin.io.println("AppleSignIn: User cancelled")
                 }
             }
         },
@@ -145,7 +169,16 @@ fun WelcomeScreen(
 
                 NekkoButton(
                     text = "Continue with Apple",
-                    onClick = {},
+                    onClick = {
+                        try {
+                            kotlin.io.println("Starting Apple Sign-In flow...")
+                            appleSignInAction.startFlow()
+                            kotlin.io.println("Apple startFlow returned (no exception)")
+                        } catch (e: Exception) {
+                            kotlin.io.println("Apple startFlow threw: ${e.message}")
+                            errorMessage = "Error: ${e.message}"
+                        }
+                    },
                     leadingIcon = {
                         Image(
                             painter = painterResource(Res.drawable.ic_apple),

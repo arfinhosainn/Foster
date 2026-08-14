@@ -15,6 +15,9 @@ dependencies {
     implementation(project(":onboarding"))
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.supabase.kt)
+    implementation(libs.supabase.auth.kt)
+    implementation(libs.supabase.compose.auth)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)

@@ -42,23 +42,24 @@ val LocalSupabaseClient = staticCompositionLocalOf<SupabaseClient> {
 
 @Composable
 fun OnboardingDraftStoreProvider(
+    supabaseClient: SupabaseClient? = null,
     content: @Composable () -> Unit,
 ) {
     val dataSource = rememberOnboardingDraftDataSource()
     val draftStore = remember { OnboardingDraftStore(dataSource) }
 
-    val supabaseClient = remember { createAppSupabaseClient() }
-    val profileDataSource = remember { SupabaseOnboardingProfileDataSource(supabaseClient) }
-    val contactDataSource = remember { SupabaseContactDataSource(supabaseClient) }
-    val deleteAccountDataSource = remember { SupabaseDeleteAccountDataSource(supabaseClient) }
-    val brainstormDataSource = remember { SupabaseBrainstormDataSource(supabaseClient) }
+    val client = remember(supabaseClient) { supabaseClient ?: createAppSupabaseClient() }
+    val profileDataSource = remember(client) { SupabaseOnboardingProfileDataSource(client) }
+    val contactDataSource = remember(client) { SupabaseContactDataSource(client) }
+    val deleteAccountDataSource = remember(client) { SupabaseDeleteAccountDataSource(client) }
+    val brainstormDataSource = remember(client) { SupabaseBrainstormDataSource(client) }
     val subscriptionRepository = remember { RevenueCatSubscriptionRepository() }
 
     CompositionLocalProvider(
         LocalOnboardingDraftStore provides draftStore,
         LocalOnboardingProfileDataSource provides profileDataSource,
         LocalProfileDataSource provides (profileDataSource as ProfileDataSource),
-        LocalSupabaseClient provides supabaseClient,
+        LocalSupabaseClient provides client,
         LocalContactDataSource provides contactDataSource,
         LocalDeleteAccountDataSource provides deleteAccountDataSource,
         LocalBrainstormDataSource provides brainstormDataSource,

@@ -4,6 +4,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.compose.auth.ComposeAuth
+import io.github.jan.supabase.compose.auth.appleNativeLogin
 import io.github.jan.supabase.compose.auth.composeAuth
 import io.github.jan.supabase.compose.auth.googleNativeLogin
 import io.github.jan.supabase.functions.Functions
@@ -22,11 +23,15 @@ fun createAppSupabaseClient(): SupabaseClient = createSupabaseClient(
     supabaseUrl = SupabaseConfig.SUPABASE_URL,
     supabaseKey = SupabaseConfig.SUPABASE_ANON_KEY,
 ) {
-    install(Auth)
+    install(Auth) {
+        host = "auth-callback"
+        scheme = "app.usenekko"
+    }
     install(Postgrest)
     install(Storage)
     install(ComposeAuth) {
         googleNativeLogin(serverClientId = SupabaseConfig.GOOGLE_WEB_CLIENT_ID)
+        appleNativeLogin()
     }
     install(Functions)
     // The brainstorm Edge Function calls an LLM whose response can take a few

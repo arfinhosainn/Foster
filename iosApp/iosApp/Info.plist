@@ -14,6 +14,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.874656360216-h79g2ccnq5t5sihsd8e4u7tpu22rg7k5</string>
+				<string>app.usenekko</string>
 			</array>
 		</dict>
 	</array>
