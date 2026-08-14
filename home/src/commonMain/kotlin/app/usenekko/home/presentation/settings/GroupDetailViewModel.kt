@@ -2,6 +2,7 @@ package app.usenekko.home.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.usenekko.home.data.HomeRepository
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.Group
@@ -36,6 +37,7 @@ sealed interface GroupDetailAction {
 class GroupDetailViewModel(
     private val groupId: String,
     private val contactDataSource: ContactDataSource,
+    private val homeRepository: HomeRepository? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GroupDetailState(groupId = groupId))
@@ -113,6 +115,7 @@ class GroupDetailViewModel(
                         isMoveDialogOpen = false,
                         movingContact = null,
                     )
+                    homeRepository?.invalidate()
                     load()
                 }
                 is Result.Error -> {
@@ -132,6 +135,7 @@ class GroupDetailViewModel(
             when (val result = contactDataSource.removeContactFromGroup(contactId, groupId)) {
                 is Result.Success -> {
                     _state.value = _state.value.copy(isMutating = false)
+                    homeRepository?.invalidate()
                     load()
                 }
                 is Result.Error -> {

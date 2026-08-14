@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -111,6 +112,17 @@ fun HomeScreen(
 
     val viewModel = rememberHomeViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                viewModel.refreshIfStale()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     var showAddContact by remember { mutableStateOf(false) }
 
@@ -190,6 +202,28 @@ fun HomeScreen(
                     gradientOrbResource = Res.drawable.img_gradientss
                 )
 
+                if (state.isRefreshing) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            color = NekkoTheme.colors.text.tertiary,
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Updating",
+                            color = NekkoTheme.colors.text.tertiary,
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+
                 Spacer(Modifier.height(32.dp))
 
                 if (state.totalContactCount == 0 && !state.isLoading) {
@@ -251,7 +285,7 @@ fun HomeScreen(
             onDismiss = { showAddContact = false },
             onSaved = {
                 showAddContact = false
-                viewModel.loadContacts()
+                viewModel.loadContacts(forceRefresh = true)
             },
             onShowPaywall = {
                 showAddContact = false

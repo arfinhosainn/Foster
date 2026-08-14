@@ -3,13 +3,16 @@ package app.usenekko.onboarding.presentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import app.usenekko.home.data.supabase.SupabaseBrainstormDataSource
 import app.usenekko.home.data.supabase.SupabaseContactDataSource
 import app.usenekko.home.data.supabase.SupabaseDeleteAccountDataSource
+import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.di.LocalBrainstormDataSource
 import app.usenekko.home.di.LocalContactDataSource
 import app.usenekko.home.di.LocalDeleteAccountDataSource
+import app.usenekko.home.di.LocalHomeRepository
 import app.usenekko.home.di.LocalProfileDataSource
 import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
@@ -24,6 +27,7 @@ import app.usenekko.onboarding.dayreminder.ReminderViewModel
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.group.GroupViewModel
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import app.usenekko.onboarding.name.NameViewModel
 import app.usenekko.onboarding.notification.NotificationViewModel
 import app.usenekko.onboarding.timereminder.TimeReminderViewModel
@@ -51,6 +55,14 @@ fun OnboardingDraftStoreProvider(
     val client = remember(supabaseClient) { supabaseClient ?: createAppSupabaseClient() }
     val profileDataSource = remember(client) { SupabaseOnboardingProfileDataSource(client) }
     val contactDataSource = remember(client) { SupabaseContactDataSource(client) }
+    val repositoryScope = rememberCoroutineScope()
+    val homeRepository = remember(client) {
+        InMemoryHomeRepository(
+            contactDataSource = contactDataSource,
+            accountKeyProvider = { client.auth.currentSessionOrNull()?.user?.id },
+            scope = repositoryScope,
+        )
+    }
     val deleteAccountDataSource = remember(client) { SupabaseDeleteAccountDataSource(client) }
     val brainstormDataSource = remember(client) { SupabaseBrainstormDataSource(client) }
     val subscriptionRepository = remember { RevenueCatSubscriptionRepository() }
@@ -61,6 +73,7 @@ fun OnboardingDraftStoreProvider(
         LocalProfileDataSource provides (profileDataSource as ProfileDataSource),
         LocalSupabaseClient provides client,
         LocalContactDataSource provides contactDataSource,
+        LocalHomeRepository provides homeRepository,
         LocalDeleteAccountDataSource provides deleteAccountDataSource,
         LocalBrainstormDataSource provides brainstormDataSource,
         LocalSubscriptionRepository provides subscriptionRepository,
