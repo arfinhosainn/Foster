@@ -2,7 +2,10 @@ package app.usenekko.home.domain
 
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 data class CheckIn(
     val id: String,
@@ -10,6 +13,14 @@ data class CheckIn(
     val checkedInAt: String,
     val note: String? = null,
 )
+
+fun CheckIn.localDate(timeZone: TimeZone = TimeZone.currentSystemDefault()): LocalDate? =
+    runCatching { Instant.parse(checkedInAt).toLocalDateTime(timeZone).date }.getOrNull()
+
+fun List<CheckIn>.contactIdsCheckedInOn(
+    date: LocalDate,
+    timeZone: TimeZone = TimeZone.currentSystemDefault(),
+): Set<String> = filter { it.localDate(timeZone) == date }.mapTo(mutableSetOf()) { it.contactId }
 
 data class CheckInUpdate(
     val lastCheckInDate: String,

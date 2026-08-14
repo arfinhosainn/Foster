@@ -9,6 +9,8 @@ data class CompleteOnboardingPayload(
     val contactName: String? = null,
     val avatarUrl: String? = null,
     val selectedAvatarId: String? = null,
+    val selectedAvatarColor: String? = null,
+    val selectedGroupName: String? = null,
     val email: String? = null,
     val emailVerified: Boolean = false,
     val groups: List<GroupDto> = emptyList(),

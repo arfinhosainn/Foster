@@ -144,7 +144,7 @@ fun NameScreen(
                     .padding(innerPadding)
                     .padding(horizontal = 30.dp)
             ) {
-                Spacer(Modifier.height(42.dp))
+                Spacer(Modifier.height(40.dp))
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -160,7 +160,7 @@ fun NameScreen(
                     )
                 }
 
-                Spacer(Modifier.height(25.dp))
+                Spacer(Modifier.height(24.dp))
 
                 NameField(
                     value = name,
@@ -197,11 +197,11 @@ private fun NameField(
         },
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp),
+            .height(62.dp),
         shape = RoundedCornerShape(25.dp),
         singleLine = true,
         textStyle = TextStyle(
-            fontSize = 20.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Medium,
             fontFamily = NekkoTheme.typography.heading3.fontFamily,
             color = NekkoTheme.colors.text.primary,

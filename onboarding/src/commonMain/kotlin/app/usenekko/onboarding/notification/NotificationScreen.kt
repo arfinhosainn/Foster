@@ -59,6 +59,9 @@ fun NotificationScreen(
         onDenied = {
             viewModel.onAction(NotificationAction.PermissionResult(granted = false))
         },
+        onStatusChanged = { enabled ->
+            viewModel.onAction(NotificationAction.PermissionStateChanged(enabled))
+        },
     )
 
     LaunchedEffect(Unit) {
@@ -77,6 +80,7 @@ fun NotificationScreen(
                 NotificationAction.TurnOnClicked -> {
                     requestNotificationPermission()
                 }
+                is NotificationAction.PermissionStateChanged -> viewModel.onAction(action)
                 is NotificationAction.PermissionResult -> viewModel.onAction(action)
                 NotificationAction.SkipClicked -> {
                     viewModel.onAction(NotificationAction.SkipClicked)
@@ -148,7 +152,7 @@ private fun NotificationScreenContent(
             ) {
                 Spacer(Modifier.width(12.dp))
                 NekkoButton(
-                    text = "Turn on Notification",
+                    text = if (state.isNotificationEnabled) "Finish" else "Turn on Notification",
                     onClick = { onAction(NotificationAction.TurnOnClicked) },
                     modifier = Modifier.weight(1f),
                     loading = state.isSubmitting,

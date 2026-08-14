@@ -173,6 +173,18 @@ begin
   select v_user_id, g->>'name', g->>'color'
   from jsonb_array_elements(payload->'groups') as g;
 
+  -- Family and Friends are built-in onboarding groups and must be available
+  -- on Home even when an older client sends no groups in its payload.
+  insert into groups (owner_user_id, name)
+  select v_user_id, starter.name
+  from (values ('Family'::text), ('Friends'::text)) as starter(name)
+  where not exists (
+    select 1
+    from groups existing
+    where existing.owner_user_id = v_user_id
+      and lower(existing.name) = lower(starter.name)
+  );
+
   -- upsert reminder preferences
   insert into user_reminder_preferences (user_id, reminder_frequency, reminder_hour, reminder_minute, updated_at)
   values (

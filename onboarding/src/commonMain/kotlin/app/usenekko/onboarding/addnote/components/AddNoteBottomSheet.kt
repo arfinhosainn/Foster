@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -55,7 +56,8 @@ fun AddNoteBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 32.dp)
+                .imePadding(),
         ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
@@ -135,7 +137,7 @@ fun AddNoteBottomSheet(
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(220.dp),
+                            .height(160.dp),
                         decorationBox = { innerTextField ->
                             if (state.draftDescription.isEmpty()) {
                                 Text(
@@ -155,7 +157,7 @@ fun AddNoteBottomSheet(
             NekkoButton(
                 text = "Save",
                 onClick = { onAction(AddNoteAction.SaveClicked) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(58.dp),
             )
         }
     }

@@ -159,7 +159,7 @@ private fun TimeReminderScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(Modifier.height(42.dp))
+                Spacer(Modifier.height(40.dp))
 
                 Text(
                     text = "Choose reminder time",
@@ -169,7 +169,7 @@ private fun TimeReminderScreenContent(
                     color = NekkoTheme.colors.text.primary,
                 )
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
 
                 Text(
                     text = "How often do you want to be reminded?",
@@ -180,7 +180,7 @@ private fun TimeReminderScreenContent(
                 )
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(54.dp))
 
             TimeScrollDial(
                 totalMinutes = state.totalMinutes,

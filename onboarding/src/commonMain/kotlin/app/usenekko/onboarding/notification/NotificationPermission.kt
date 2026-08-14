@@ -6,4 +6,5 @@ import androidx.compose.runtime.Composable
 expect fun rememberNotificationPermissionLauncher(
     onGranted: () -> Unit,
     onDenied: () -> Unit,
+    onStatusChanged: (Boolean) -> Unit,
 ): () -> Unit

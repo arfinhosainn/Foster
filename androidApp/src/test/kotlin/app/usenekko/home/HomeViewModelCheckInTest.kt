@@ -74,6 +74,25 @@ class HomeViewModelCheckInTest {
     }
 
     @Test
+    fun todayCheckInEventDoesNotRemainOutstandingWhenContactCacheIsStale() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("c1")),
+                checkIns = listOf(CheckIn("ci1", "c1", "${today}T12:00:00Z")),
+            )
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            assertEquals(0, viewModel.state.value.outstandingCount)
+            assertEquals(1, viewModel.state.value.upToDateCount)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun onlyOutstandingContactsGetAButtonState() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)

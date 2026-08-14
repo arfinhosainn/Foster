@@ -6,7 +6,8 @@ data class CustomReminderState(
     val draftTitle: String = "",
     val draftDescription: String = "",
     val draftRecurrence: String = "None",
-    val draftDate: String = "Choose Date"
+    val draftDate: String = "Choose Date",
+    val draftDateEpochMillis: Long? = null,
 )
 
 data class ReminderItem(

@@ -8,6 +8,7 @@ data class OnboardingDraft(
     val contactName: String = "",
     val profilePhotoUri: String? = null,
     val selectedAvatarId: String? = null,
+    val selectedGroupId: String? = null,
     val groups: List<GroupDraft> = emptyList(),
     val reminderFrequency: ReminderFrequency? = null,
     val reminderTime: ReminderTimeDraft? = null,

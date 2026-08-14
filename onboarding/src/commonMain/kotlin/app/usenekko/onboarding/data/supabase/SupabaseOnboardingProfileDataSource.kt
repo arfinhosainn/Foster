@@ -46,28 +46,9 @@ class SupabaseOnboardingProfileDataSource(
             val session = client.auth.currentSessionOrNull()
                 ?: return Result.Error(OnboardingProfileError.NotAuthenticated)
 
-            val payload = CompleteOnboardingPayload(
-                displayName = draft.name.ifEmpty { null },
-                contactName = draft.contactName.ifEmpty { null },
-                avatarUrl = draft.profilePhotoUri,
-                selectedAvatarId = draft.selectedAvatarId,
+            val payload = draft.toCompleteOnboardingPayload(
                 email = session.user?.email,
                 emailVerified = session.user?.emailConfirmedAt != null,
-                groups = draft.groups.map { GroupDto(name = it.name, color = it.color) },
-                reminderFrequency = draft.reminderFrequency?.name,
-                reminderHour = draft.reminderTime?.hour,
-                reminderMinute = draft.reminderTime?.minute,
-                customReminders = draft.customReminders.map {
-                    CustomReminderDto(
-                        title = it.title,
-                        description = it.description,
-                        recurrence = it.recurrence.name.lowercase(),
-                        dateEpochMillis = it.dateEpochMillis,
-                    )
-                },
-                notes = draft.notes.map { NoteDto(title = it.title, body = it.body) },
-                notificationPermissionAsked = draft.notificationPermissionAsked,
-                notificationPermissionGranted = draft.notificationPermissionGranted,
             )
 
             val jsonElement = payloadJson.encodeToJsonElement(payload)
@@ -201,4 +182,60 @@ class SupabaseOnboardingProfileDataSource(
             else -> ProfileError.Unknown(detail = e.message)
         }
     }
+}
+
+internal fun OnboardingDraft.toCompleteOnboardingPayload(
+    email: String?,
+    emailVerified: Boolean,
+): CompleteOnboardingPayload {
+    val starterGroupNames = setOf("family", "friends")
+    val onboardingGroups = buildList {
+        add(GroupDto(name = "Family"))
+        add(GroupDto(name = "Friends"))
+        groups
+            .filterNot { it.name.trim().lowercase() in starterGroupNames }
+            .forEach { add(GroupDto(name = it.name, color = it.color)) }
+    }
+
+    return CompleteOnboardingPayload(
+        displayName = name.ifEmpty { null },
+        contactName = contactName.ifEmpty { null },
+        avatarUrl = profilePhotoUri,
+        selectedAvatarId = selectedAvatarId,
+        selectedAvatarColor = selectedAvatarId.toOnboardingAvatarColor(),
+        selectedGroupName = selectedGroupName(),
+        email = email,
+        emailVerified = emailVerified,
+        groups = onboardingGroups,
+        reminderFrequency = reminderFrequency?.name,
+        reminderHour = reminderTime?.hour,
+        reminderMinute = reminderTime?.minute,
+        customReminders = customReminders.map {
+            CustomReminderDto(
+                title = it.title,
+                description = it.description,
+                recurrence = it.recurrence.name.lowercase(),
+                dateEpochMillis = it.dateEpochMillis,
+            )
+        },
+        notes = notes.map { NoteDto(title = it.title, body = it.body) },
+        notificationPermissionAsked = notificationPermissionAsked,
+        notificationPermissionGranted = notificationPermissionGranted,
+    )
+}
+
+private fun OnboardingDraft.selectedGroupName(): String? = when (selectedGroupId) {
+    "family" -> "Family"
+    "friends" -> "Friends"
+    else -> groups.firstOrNull { it.id == selectedGroupId }?.name
+}
+
+private fun String?.toOnboardingAvatarColor(): String? = when (this) {
+    "0" -> "#FFCC33"
+    "1" -> "#34C759"
+    "2" -> "#FF9500"
+    "3" -> "#FF3B30"
+    "4" -> "#AF52DE"
+    "5" -> "#007AFF"
+    else -> null
 }

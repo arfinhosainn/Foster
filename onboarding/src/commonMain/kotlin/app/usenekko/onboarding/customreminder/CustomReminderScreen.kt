@@ -157,7 +157,7 @@ private fun CustomReminderScreenContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Spacer(Modifier.height(42.dp))
+                    Spacer(Modifier.height(40.dp))
 
                     Text(
                         text = "Add more reminder",
@@ -167,7 +167,7 @@ private fun CustomReminderScreenContent(
                         color = NekkoTheme.colors.text.primary,
                     )
 
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
 
                     Text(
                         text = "Like birthdays, anniversaries, etc",
@@ -186,18 +186,18 @@ private fun CustomReminderScreenContent(
                         contentAlignment = Alignment.TopCenter
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Spacer(modifier = Modifier.height(40.dp))
+                            Spacer(modifier = Modifier.height(54.dp))
                             NekkoActionButton(
                                 leadingIcon = vectorResource(Res.drawable.ic_add),
                                 onClick = { onAction(CustomReminderAction.AddClicked) })
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
                             Text(
                                 text = "Add reminder",
                                 fontSize = 20.sp,
                                 color = NekkoTheme.colors.text.secondary,
                                 fontWeight = FontWeight.Medium
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = "Tap on the plus button",
                                 fontSize = 15.sp,

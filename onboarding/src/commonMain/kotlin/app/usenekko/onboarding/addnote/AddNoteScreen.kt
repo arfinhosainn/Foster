@@ -63,7 +63,6 @@ fun AddNoteScreen(
     onNavigateToNext: () -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit,
-    onComplete: () -> Unit = onNavigateToNext,
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberAddNoteViewModel()
@@ -76,7 +75,6 @@ fun AddNoteScreen(
                 AddNoteEvent.NavigateToNext -> onNavigateToNext()
                 AddNoteEvent.NavigateBack -> onBack()
                 AddNoteEvent.NavigateSkip -> onSkip()
-                AddNoteEvent.NavigateToHome -> onComplete()
                 is AddNoteEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
             }
         }
@@ -186,7 +184,7 @@ private fun AddNoteScreenContent(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 30.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Spacer(Modifier.height(42.dp))
+                    Spacer(Modifier.height(40.dp))
                     Text(
                         text = "Add a Note",
                         style = NekkoTheme.typography.heading1Bold,
@@ -194,10 +192,9 @@ private fun AddNoteScreenContent(
                         textAlign = TextAlign.Center,
                         color = NekkoTheme.colors.text.primary,
                     )
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
                     Text(
                         text = "Capture thoughts & memories\nabout your conversation",
-                        style = NekkoTheme.typography.heading4,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.secondary,
@@ -213,18 +210,18 @@ private fun AddNoteScreenContent(
                         contentAlignment = Alignment.TopCenter,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Spacer(modifier = Modifier.height(40.dp))
+                            Spacer(modifier = Modifier.height(69.dp))
                             Icon(
                                 imageVector = vectorResource(Res.drawable.ic_flower),
                                 contentDescription = null,
                                 tint = Color.Unspecified,
-                                modifier = Modifier.size(64.dp),
+                                modifier = Modifier.size(74.dp),
                             )
-                            Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
                             Text(
                                 text = "Capture thoughts & memories\nabout your conversation",
-                                fontSize = 16.sp,
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = NekkoTheme.colors.text.tertiary,
                                 textAlign = TextAlign.Center,
@@ -239,9 +236,11 @@ private fun AddNoteScreenContent(
                         }
                     }
                 } else {
+
+                    Spacer(Modifier.height(40.dp))
                     LazyColumn(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                        contentPadding = PaddingValues(horizontal = 40.dp, vertical = 40.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
@@ -279,7 +278,6 @@ fun PreviewAddNoteScreen() {
             onNavigateToNext = {},
             onBack = {},
             onSkip = {},
-            onComplete = {},
         )
     }
 }

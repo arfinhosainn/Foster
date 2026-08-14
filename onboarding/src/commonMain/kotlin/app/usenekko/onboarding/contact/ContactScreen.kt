@@ -151,7 +151,7 @@ fun ContactScreen(
                     .padding(innerPadding)
                     .padding(horizontal = 30.dp)
             ) {
-                Spacer(Modifier.height(42.dp))
+                Spacer(Modifier.height(40.dp))
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -163,10 +163,10 @@ fun ContactScreen(
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
                         color = NekkoTheme.colors.text.primary,
-                        lineHeight = 36.sp,
+                        lineHeight = 38.sp,
                     )
 
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
 
                     Text(
                         text = "You can fill out or import from your contacts",
@@ -191,7 +191,7 @@ fun ContactScreen(
                     )
                 }
 
-                Spacer(Modifier.height(50.dp))
+                Spacer(Modifier.height(40.dp))
 
                 NekkoStepField(isConfirmed = false) {
                     Box(modifier = Modifier.weight(1f)) {
@@ -230,7 +230,7 @@ fun ContactScreen(
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(32.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth()
