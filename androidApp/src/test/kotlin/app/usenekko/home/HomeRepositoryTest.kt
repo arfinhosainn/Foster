@@ -105,6 +105,22 @@ class HomeRepositoryTest {
     }
 
     @Test
+    fun invalidatedSnapshotRefreshesWithFreshBatch() = runTest {
+        val dataSource = CountingDataSource()
+        val repository = repository(dataSource, this)
+        repository.load()
+        dataSource.contactsResult = Result.Success(listOf(contact.copy(name = "Updated")))
+        dataSource.resetCounts()
+
+        repository.invalidate()
+        val result = repository.load(forceRefresh = true)
+
+        assertEquals("Updated", (result as Result.Success).data.contacts.single().name)
+        assertEquals(5, dataSource.totalHomeReads)
+        assertFalse(repository.state.value.isRefreshing)
+    }
+
+    @Test
     fun failedRefreshRetainsUsableSnapshotAndReportsError() = runTest {
         var now = Instant.parse("2026-08-14T12:00:00Z")
         val dataSource = CountingDataSource()

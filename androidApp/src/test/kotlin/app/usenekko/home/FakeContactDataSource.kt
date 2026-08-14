@@ -41,6 +41,8 @@ class FakeContactDataSource(
     var userBadges: List<UserBadge> = userBadges
         private set
 
+    var createContactResult: Result<Contact, ContactError>? = null
+
     var getContactsCalls: Int = 0
         private set
     var getGroupsCalls: Int = 0
@@ -49,6 +51,13 @@ class FakeContactDataSource(
         private set
     var getCheckInsCalls: Int = 0
         private set
+
+    fun resetCounts() {
+        getContactsCalls = 0
+        getGroupsCalls = 0
+        getGroupMembershipsCalls = 0
+        getCheckInsCalls = 0
+    }
 
     /** When set, [getNotes] returns this error instead of the stored notes. */
     var notesError: ContactError? = null
@@ -100,6 +109,8 @@ class FakeContactDataSource(
     val deletedNoteIds = mutableListOf<String>()
     val createReminderCalls = mutableListOf<CreateReminderCall>()
     val deletedReminderIds = mutableListOf<String>()
+    var createContactCalls: Int = 0
+        private set
 
     override suspend fun getContacts(): Result<List<Contact>, ContactError> {
         getContactsCalls++
@@ -111,7 +122,12 @@ class FakeContactDataSource(
         avatarColor: String?,
         checkInFrequency: String,
         reminderTime: String?,
-    ): Result<Contact, ContactError> = Result.Error(ContactError.Unknown("not used"))
+    ): Result<Contact, ContactError> {
+        createContactCalls++
+        val result = createContactResult ?: return Result.Error(ContactError.Unknown("not used"))
+        if (result is Result.Success) contacts = contacts + result.data
+        return result
+    }
 
     override suspend fun getGroups(): Result<List<Group>, ContactError> {
         getGroupsCalls++

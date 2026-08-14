@@ -140,3 +140,11 @@ Home cache behavior is covered by deterministic tests and existing Home behavior
 - Extend the fake data source with request counters and controllable refresh results.
 - Test cold load, warm cached load, stale-while-revalidate, refresh de-duplication, mutation invalidation, refresh failure retention, account isolation, and date rollover.
 - Run focused Home tests, configured module tests, Android compilation, and whitespace validation.
+
+### ✓ Step 5: Cache the Add Contact group picker
+The Add Contact group picker reads groups from the shared `HomeRepository` and handles both warm and cold cache entry paths.
+
+- Expose a narrow derived groups flow from the repository rather than issuing a separate group query.
+- Show a loading state when Add Contact is opened before the repository has a snapshot.
+- Ensure successful contact creation invalidates the shared snapshot for both Add Contact and Home.
+- Add focused tests for warm data, cold loading, refresh updates, and mutation invalidation.
