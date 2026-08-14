@@ -2,6 +2,7 @@ package app.usenekko.home
 
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.presentation.settings.GroupSettingsAction
 import app.usenekko.home.presentation.settings.GroupSettingsViewModel
 import kotlinx.coroutines.Dispatchers
@@ -105,6 +106,35 @@ class GroupSettingsViewModelTest {
 
             assertEquals("Close Friends", viewModel.state.value.groups.single().name)
             assertEquals(false, viewModel.state.value.isEditing)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun warmHomeRepositoryRendersGroupsWithoutAnotherServerBatch() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                groups = listOf(Group("g1", "Family")),
+                memberships = listOf(GroupMembership("c1", "g1")),
+            )
+            val repository = InMemoryHomeRepository(
+                contactDataSource = dataSource,
+                accountKeyProvider = { "user-1" },
+                scope = this,
+            )
+            repository.load()
+            advanceUntilIdle()
+            val initialCalls = dataSource.getGroupsCalls
+
+            val viewModel = GroupSettingsViewModel(dataSource, repository)
+            advanceUntilIdle()
+
+            assertEquals(listOf("Family"), viewModel.state.value.groups.map { it.name })
+            assertEquals(1, viewModel.state.value.memberCount("g1"))
+            assertEquals(initialCalls, dataSource.getGroupsCalls)
         } finally {
             Dispatchers.resetMain()
         }

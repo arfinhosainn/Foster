@@ -41,6 +41,15 @@ class FakeContactDataSource(
     var userBadges: List<UserBadge> = userBadges
         private set
 
+    var getContactsCalls: Int = 0
+        private set
+    var getGroupsCalls: Int = 0
+        private set
+    var getGroupMembershipsCalls: Int = 0
+        private set
+    var getCheckInsCalls: Int = 0
+        private set
+
     /** When set, [getNotes] returns this error instead of the stored notes. */
     var notesError: ContactError? = null
 
@@ -92,7 +101,10 @@ class FakeContactDataSource(
     val createReminderCalls = mutableListOf<CreateReminderCall>()
     val deletedReminderIds = mutableListOf<String>()
 
-    override suspend fun getContacts(): Result<List<Contact>, ContactError> = Result.Success(contacts)
+    override suspend fun getContacts(): Result<List<Contact>, ContactError> {
+        getContactsCalls++
+        return Result.Success(contacts)
+    }
 
     override suspend fun createContact(
         name: String,
@@ -101,10 +113,15 @@ class FakeContactDataSource(
         reminderTime: String?,
     ): Result<Contact, ContactError> = Result.Error(ContactError.Unknown("not used"))
 
-    override suspend fun getGroups(): Result<List<Group>, ContactError> = Result.Success(groups)
+    override suspend fun getGroups(): Result<List<Group>, ContactError> {
+        getGroupsCalls++
+        return Result.Success(groups)
+    }
 
-    override suspend fun getGroupMemberships(): Result<List<GroupMembership>, ContactError> =
-        Result.Success(memberships)
+    override suspend fun getGroupMemberships(): Result<List<GroupMembership>, ContactError> {
+        getGroupMembershipsCalls++
+        return Result.Success(memberships)
+    }
 
     override suspend fun createGroup(
         name: String,
@@ -165,6 +182,7 @@ class FakeContactDataSource(
         from: String,
         to: String,
     ): Result<List<CheckIn>, ContactError> {
+        getCheckInsCalls++
         val filtered = if (contactId == null) checkIns else checkIns.filter { it.contactId == contactId }
         return Result.Success(filtered)
     }
