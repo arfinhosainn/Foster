@@ -4,6 +4,8 @@ import app.usenekko.home.domain.Badge
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.UserBadge
+import app.usenekko.home.data.InMemoryAccountRepository
+import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.presentation.settings.AccountViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +47,7 @@ class AccountViewModelTest {
                     checkIn("c1"), checkIn("c1"), checkIn("c2"), checkIn("c2"),
                 ),
             )
-            val viewModel = AccountViewModel(profileDataSource, contactDataSource)
+            val viewModel = viewModel(profileDataSource, contactDataSource, this)
             advanceUntilIdle()
 
             val state = viewModel.state.value
@@ -66,7 +68,7 @@ class AccountViewModelTest {
         try {
             val profileDataSource = FakeProfileDataSource().apply { profile = null }
             val contactDataSource = FakeContactDataSource(contacts = emptyList())
-            val viewModel = AccountViewModel(profileDataSource, contactDataSource)
+            val viewModel = viewModel(profileDataSource, contactDataSource, this)
             advanceUntilIdle()
 
             val state = viewModel.state.value
@@ -97,7 +99,7 @@ class AccountViewModelTest {
                 ),
                 userBadges = listOf(UserBadge("b1", "2026-08-04T10:00:00Z")),
             )
-            val viewModel = AccountViewModel(profileDataSource, contactDataSource)
+            val viewModel = viewModel(profileDataSource, contactDataSource, this)
             advanceUntilIdle()
 
             val slots = viewModel.state.value.badgeSlots
@@ -113,5 +115,24 @@ class AccountViewModelTest {
         } finally {
             Dispatchers.resetMain()
         }
+    }
+
+    private fun viewModel(
+        profileDataSource: FakeProfileDataSource,
+        contactDataSource: FakeContactDataSource,
+        scope: kotlinx.coroutines.CoroutineScope,
+    ): AccountViewModel {
+        val homeRepository = InMemoryHomeRepository(
+            contactDataSource = contactDataSource,
+            accountKeyProvider = { "account-a" },
+            scope = scope,
+        )
+        val accountRepository = InMemoryAccountRepository(
+            profileDataSource = profileDataSource,
+            contactDataSource = contactDataSource,
+            accountKeyProvider = { "account-a" },
+            scope = scope,
+        )
+        return AccountViewModel(homeRepository, accountRepository)
     }
 }
