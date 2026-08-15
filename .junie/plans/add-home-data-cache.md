@@ -165,3 +165,10 @@ Brainstorm history renders the latest available entries immediately and refreshe
 - Keep `generate()` network-backed and preserve the existing daily cooldown and error behavior.
 - Update `BrainstormViewModel` and `BrainstormScreen` to consume cached history and refresh on foreground entry with a subtle refresh state.
 - Add focused tests for cold loading, warm cached history, stale refresh, refresh deduplication, failure retention, account isolation, and generation invalidation.
+
+### ✓ Step 8: Add Home initial loading shimmer
+Home shows a Facebook-style shimmer skeleton only while the initial Home snapshot is unavailable.
+
+- Add skeleton placeholders for the status summary, timeline, and contact rows using the existing Home layout proportions.
+- Keep the existing empty state for a successfully loaded account with no contacts.
+- Keep warm cached content visible during stale-while-revalidate refreshes and validate the Home module build.
