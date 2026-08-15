@@ -72,6 +72,7 @@ import app.usenekko.home.presentation.components.buildCheckInTimelineEvents
 import app.usenekko.home.presentation.components.isCheckInBubbleAnimationEnabled
 import app.usenekko.home.presentation.components.rememberTimelineSlots
 import app.usenekko.home.presentation.components.shouldStartCheckInBubbleWindow
+import app.usenekko.home.presentation.HomeLoadingSkeleton
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
 import kotlin.time.Clock
@@ -194,84 +195,89 @@ fun HomeScreen(
             ) {
                 Spacer(Modifier.height(32.dp))
 
-                StatusSummaryCard(
-                    outstandingCount = state.outstandingCount,
-                    upToDateCount = state.upToDateCount,
-                    outstandingBgResource = Res.drawable.ic_globe,
-                    upToDateBgResource = Res.drawable.ic_fire,
-                    gradientOrbResource = Res.drawable.img_gradientss
-                )
+                if (state.isLoading) {
+                    HomeLoadingSkeleton()
+                } else {
+                    StatusSummaryCard(
+                        outstandingCount = state.outstandingCount,
+                        upToDateCount = state.upToDateCount,
+                        outstandingBgResource = Res.drawable.ic_globe,
+                        upToDateBgResource = Res.drawable.ic_fire,
+                        gradientOrbResource = Res.drawable.img_gradientss
+                    )
 
-                if (state.isRefreshing) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(14.dp),
-                            color = NekkoTheme.colors.text.tertiary,
-                            strokeWidth = 2.dp,
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            text = "Updating",
-                            color = NekkoTheme.colors.text.tertiary,
-                            fontSize = 12.sp,
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(32.dp))
-
-                if (state.totalContactCount == 0 && !state.isLoading) {
-                    Column(
-                        modifier = Modifier.clickable { showAddContact = true },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Box(
+                    if (state.isRefreshing) {
+                        Row(
                             modifier = Modifier
-                                .size(200.dp)
-                                .clip(SawToothCircleShape())
-                                .background(NekkoTheme.colors.background.b2),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                tint = NekkoTheme.colors.text.tertiary,
-                                modifier = Modifier.size(50.dp)
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                color = NekkoTheme.colors.text.tertiary,
+                                strokeWidth = 2.dp,
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = "Updating",
+                                color = NekkoTheme.colors.text.tertiary,
+                                fontSize = 12.sp,
                             )
                         }
-                        Spacer(Modifier.height(30.dp))
+                    }
 
-                        Text(
-                            "Get started",
-                            color = NekkoTheme.colors.text.primary,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            "Import from your contact",
-                            color = NekkoTheme.colors.text.tertiary,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
+                    Spacer(Modifier.height(32.dp))
+
+                    if (state.totalContactCount == 0) {
+                        Column(
+                            modifier = Modifier.clickable { showAddContact = true },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(200.dp)
+                                    .clip(SawToothCircleShape())
+                                    .background(NekkoTheme.colors.background.b2),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = NekkoTheme.colors.text.tertiary,
+                                    modifier = Modifier.size(50.dp)
+                                )
+                            }
+                            Spacer(Modifier.height(30.dp))
+
+                            Text(
+                                "Get started",
+                                color = NekkoTheme.colors.text.primary,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(Modifier.height(10.dp))
+
+                            Text(
+                                "Import from your contact",
+                                color = NekkoTheme.colors.text.tertiary,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    } else {
+                        Spacer(Modifier.height(32.dp))
+                        CheckInSection(
+                            checkIns = state.checkIns,
+                            checkInCounts = state.checkInCounts,
+                            contacts = state.contacts,
+                            outstandingCount = state.outstandingCount,
+                            checkingInContactId = state.checkingInContactId,
+                            onCheckIn = viewModel::checkIn,
+                            onContactClick = onContactClick,
                         )
                     }
-                } else {
-                    Spacer(Modifier.height(32.dp))
-                    CheckInSection(
-                        checkIns = state.checkIns,
-                        checkInCounts = state.checkInCounts,
-                        contacts = state.contacts,
-                        outstandingCount = state.outstandingCount,
-                        checkingInContactId = state.checkingInContactId,
-                        onCheckIn = viewModel::checkIn,
-                        onContactClick = onContactClick,
-                    )
                 }
             }
 
