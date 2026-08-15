@@ -172,3 +172,10 @@ Home shows a Facebook-style shimmer skeleton only while the initial Home snapsho
 - Add skeleton placeholders for the status summary, timeline, and contact rows using the existing Home layout proportions.
 - Keep the existing empty state for a successfully loaded account with no contacts.
 - Keep warm cached content visible during stale-while-revalidate refreshes and validate the Home module build.
+
+### ✓ Step 9: Add Brainstorm history loading shimmer
+Brainstorm history shows a Facebook-style shimmer skeleton only while the initial history cache is unavailable.
+
+- Replace the initial centered spinner with date-heading and topic-card placeholders matching the history layout.
+- Keep warm history visible during stale-while-revalidate refreshes and preserve the existing empty and error states.
+- Add focused coverage for the initial loading presentation and validate the Brainstorm module build.

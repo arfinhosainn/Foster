@@ -1,5 +1,11 @@
 package app.usenekko.home.presentation.brainstorm.components
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,14 +13,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.usenekko.home.domain.BrainstormSession
@@ -41,12 +50,7 @@ fun HistoryContent(
             .padding(horizontal = 24.dp),
     ) {
         when {
-            isLoading -> CircularProgressIndicator(
-                modifier = Modifier
-                    .size(28.dp)
-                    .align(Alignment.Center),
-                color = NekkoTheme.colors.green.active,
-            )
+            isLoading -> HistoryLoadingSkeleton()
             error != null -> ErrorBanner(text = error, modifier = Modifier.padding(top = 16.dp))
             sessions.isEmpty() -> Text(
                 text = "No past brainstorms yet. Generate your first batch of ideas in the Current Output tab.",
@@ -82,6 +86,49 @@ fun HistoryContent(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryLoadingSkeleton(
+    modifier: Modifier = Modifier,
+) {
+    val transition = rememberInfiniteTransition(label = "brainstormHistoryShimmer")
+    val shimmerPosition by transition.animateFloat(
+        initialValue = -1f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1_100, easing = LinearEasing),
+        ),
+        label = "brainstormHistoryShimmerPosition",
+    )
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            NekkoTheme.colors.fill.quaternary,
+            NekkoTheme.colors.fill.secondary,
+            NekkoTheme.colors.fill.quaternary,
+        ),
+        start = Offset(shimmerPosition * 500f, 0f),
+        end = Offset((shimmerPosition + 1f) * 500f, 500f),
+    )
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
+        repeat(2) { sectionIndex ->
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 12.dp)
+                    .width(if (sectionIndex == 0) 76.dp else 112.dp)
+                    .height(20.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(shimmerBrush),
+            )
+            repeat(if (sectionIndex == 0) 3 else 2) {
+                ShimmerTopicCard()
             }
         }
     }
