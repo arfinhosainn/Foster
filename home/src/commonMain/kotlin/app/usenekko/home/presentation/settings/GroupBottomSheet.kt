@@ -1,5 +1,10 @@
 package app.usenekko.home.presentation.settings
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -125,12 +131,7 @@ fun GroupBottomSheet(
                 Spacer(Modifier.height(28.dp))
 
                 when {
-                    state.isLoading -> Box(
-                        modifier = Modifier.fillMaxWidth().height(180.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(color = NekkoTheme.colors.green.active)
-                    }
+                    state.isLoading -> GroupGridLoadingSkeleton()
 
                     state.groups.isEmpty() -> Text(
                         text = "No groups yet",
@@ -535,6 +536,83 @@ private fun GroupGrid(
                 if (rowGroups.size == 1) Spacer(Modifier.weight(1f))
             }
         }
+    }
+}
+
+@Composable
+private fun GroupGridLoadingSkeleton(
+    modifier: Modifier = Modifier,
+) {
+    val transition = rememberInfiniteTransition(label = "groupGridShimmer")
+    val shimmerPosition by transition.animateFloat(
+        initialValue = -1f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1_100, easing = LinearEasing),
+        ),
+        label = "groupGridShimmerPosition",
+    )
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            NekkoTheme.colors.fill.quaternary,
+            NekkoTheme.colors.fill.secondary,
+            NekkoTheme.colors.fill.quaternary,
+        ),
+        start = Offset(shimmerPosition * 500f, 0f),
+        end = Offset((shimmerPosition + 1f) * 500f, 500f),
+    )
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(28.dp),
+    ) {
+        repeat(2) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                repeat(2) {
+                    GroupItemLoadingSkeleton(
+                        brush = shimmerBrush,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupItemLoadingSkeleton(
+    brush: Brush,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(159.dp)
+                .clip(SawToothCircleShape())
+                .background(brush),
+        )
+        Spacer(Modifier.height(10.dp))
+        Box(
+            modifier = Modifier
+                .width(88.dp)
+                .height(22.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(brush),
+        )
+        Spacer(Modifier.height(2.dp))
+        Box(
+            modifier = Modifier
+                .width(64.dp)
+                .height(16.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(brush),
+        )
     }
 }
 

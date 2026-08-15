@@ -179,3 +179,10 @@ Brainstorm history shows a Facebook-style shimmer skeleton only while the initia
 - Replace the initial centered spinner with date-heading and topic-card placeholders matching the history layout.
 - Keep warm history visible during stale-while-revalidate refreshes and preserve the existing empty and error states.
 - Add focused coverage for the initial loading presentation and validate the Brainstorm module build.
+
+### ✓ Step 10: Add Groups bottom-sheet loading shimmer
+The Groups bottom sheet shows Facebook-style group-card placeholders while its initial group data is unavailable.
+
+- Replace the initial centered spinner with a small grid of group-card skeletons matching the existing sheet layout.
+- Keep warm group content visible during background refreshes and preserve the existing empty and error states.
+- Add focused coverage for the initial loading presentation and validate the Home module build.

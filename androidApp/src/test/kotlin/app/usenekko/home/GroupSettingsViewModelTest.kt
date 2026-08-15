@@ -139,4 +139,30 @@ class GroupSettingsViewModelTest {
             Dispatchers.resetMain()
         }
     }
+
+    @Test
+    fun coldHomeRepositoryKeepsGroupsLoadingBeforeTheFirstSnapshot() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(groups = listOf(Group("g1", "Family")))
+            val repository = InMemoryHomeRepository(
+                contactDataSource = dataSource,
+                accountKeyProvider = { "user-1" },
+                scope = this,
+            )
+
+            val viewModel = GroupSettingsViewModel(dataSource, repository)
+
+            assertEquals(true, viewModel.state.value.isLoading)
+            assertEquals(emptyList<Group>(), viewModel.state.value.groups)
+
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.state.value.isLoading)
+            assertEquals(listOf("Family"), viewModel.state.value.groups.map { it.name })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
 }
