@@ -100,48 +100,50 @@ class GroupDetailViewModel(
     }
 
     fun load(forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            loadInternal(forceRefresh)
+        }
+    }
+
+    private suspend fun loadInternal(forceRefresh: Boolean = false) {
         if (homeRepository != null) {
-            viewModelScope.launch {
-                homeRepository.load(forceRefresh)
-            }
+            homeRepository.load(forceRefresh)
             return
         }
 
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
+        _state.value = _state.value.copy(isLoading = true, error = null)
 
-            val contactsResult = contactDataSource.getContacts()
-            val groupsResult = contactDataSource.getGroups()
-            val membershipsResult = contactDataSource.getGroupMemberships()
-            val checkInsResult = contactDataSource.getCheckIns(null, "1970-01-01", "2999-12-31")
+        val contactsResult = contactDataSource.getContacts()
+        val groupsResult = contactDataSource.getGroups()
+        val membershipsResult = contactDataSource.getGroupMemberships()
+        val checkInsResult = contactDataSource.getCheckIns(null, "1970-01-01", "2999-12-31")
 
-            val allContacts = (contactsResult as? Result.Success)?.data.orEmpty()
-            val groups = (groupsResult as? Result.Success)?.data.orEmpty()
-            val memberships = (membershipsResult as? Result.Success)?.data.orEmpty()
-            val checkInCounts = (checkInsResult as? Result.Success)
-                ?.data
-                ?.groupingBy { it.contactId }
-                ?.eachCount()
-                .orEmpty()
+        val allContacts = (contactsResult as? Result.Success)?.data.orEmpty()
+        val groups = (groupsResult as? Result.Success)?.data.orEmpty()
+        val memberships = (membershipsResult as? Result.Success)?.data.orEmpty()
+        val checkInCounts = (checkInsResult as? Result.Success)
+            ?.data
+            ?.groupingBy { it.contactId }
+            ?.eachCount()
+            .orEmpty()
 
-            val memberIds = memberships
-                .filter { it.groupId == groupId }
-                .mapTo(mutableSetOf()) { it.contactId }
-            val members = allContacts.filter { it.id in memberIds }
-            val groupName = groups.firstOrNull { it.id == groupId }?.name.orEmpty()
+        val memberIds = memberships
+            .filter { it.groupId == groupId }
+            .mapTo(mutableSetOf()) { it.contactId }
+        val members = allContacts.filter { it.id in memberIds }
+        val groupName = groups.firstOrNull { it.id == groupId }?.name.orEmpty()
 
-            _state.value = _state.value.copy(
-                isLoading = false,
-                groupName = groupName,
-                members = members,
-                checkInCounts = checkInCounts,
-                otherGroups = groups.filter { it.id != groupId },
-                error = (contactsResult as? Result.Error)?.error?.toString()
-                    ?: (groupsResult as? Result.Error)?.error?.toString()
-                    ?: (membershipsResult as? Result.Error)?.error?.toString()
-                    ?: (checkInsResult as? Result.Error)?.error?.toString(),
-            )
-        }
+        _state.value = _state.value.copy(
+            isLoading = false,
+            groupName = groupName,
+            members = members,
+            checkInCounts = checkInCounts,
+            otherGroups = groups.filter { it.id != groupId },
+            error = (contactsResult as? Result.Error)?.error?.toString()
+                ?: (groupsResult as? Result.Error)?.error?.toString()
+                ?: (membershipsResult as? Result.Error)?.error?.toString()
+                ?: (checkInsResult as? Result.Error)?.error?.toString(),
+        )
     }
 
     fun onAction(action: GroupDetailAction) {
@@ -170,12 +172,12 @@ class GroupDetailViewModel(
             ) {
                 is Result.Success -> {
                     _state.value = _state.value.copy(
-                        isMutating = false,
                         isMoveDialogOpen = false,
                         movingContact = null,
                     )
                     homeRepository?.invalidate()
-                    load(forceRefresh = true)
+                    loadInternal(forceRefresh = true)
+                    _state.value = _state.value.copy(isMutating = false)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(
@@ -191,11 +193,11 @@ class GroupDetailViewModel(
         if (_state.value.isMutating) return
         viewModelScope.launch {
             _state.value = _state.value.copy(isMutating = true, error = null)
-            when (val result = contactDataSource.removeContactFromGroup(contactId, groupId)) {
+            when (val result = contactDataSource.deleteContact(contactId)) {
                 is Result.Success -> {
-                    _state.value = _state.value.copy(isMutating = false)
                     homeRepository?.invalidate()
-                    load(forceRefresh = true)
+                    loadInternal(forceRefresh = true)
+                    _state.value = _state.value.copy(isMutating = false)
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(

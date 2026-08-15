@@ -10,6 +10,7 @@ interface ContactDataSource {
         checkInFrequency: String,
         reminderTime: String?,
     ): Result<Contact, ContactError>
+    suspend fun deleteContact(contactId: String): Result<Unit, ContactError>
     suspend fun getGroups(): Result<List<Group>, ContactError>
     suspend fun getGroupMemberships(): Result<List<GroupMembership>, ContactError>
     suspend fun createGroup(

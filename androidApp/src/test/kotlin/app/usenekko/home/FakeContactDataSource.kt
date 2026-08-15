@@ -92,6 +92,9 @@ class FakeContactDataSource(
     /** When set, [logCheckIn] suspends until the gate completes. */
     var checkInGate: CompletableDeferred<Unit>? = null
 
+    /** When set, [getContacts] suspends until the gate completes. */
+    var getContactsGate: CompletableDeferred<Unit>? = null
+
     data class LogCheckInCall(
         val contactId: String,
         val lastCheckInDate: String,
@@ -123,6 +126,7 @@ class FakeContactDataSource(
 
     override suspend fun getContacts(): Result<List<Contact>, ContactError> {
         getContactsCalls++
+        getContactsGate?.await()
         return Result.Success(contacts)
     }
 
@@ -136,6 +140,15 @@ class FakeContactDataSource(
         val result = createContactResult ?: return Result.Error(ContactError.Unknown("not used"))
         if (result is Result.Success) contacts = contacts + result.data
         return result
+    }
+
+    override suspend fun deleteContact(contactId: String): Result<Unit, ContactError> {
+        contacts = contacts.filterNot { it.id == contactId }
+        memberships = memberships.filterNot { it.contactId == contactId }
+        checkIns = checkIns.filterNot { it.contactId == contactId }
+        notes = notes.filterNot { it.contactId == contactId }
+        reminders = reminders.filterNot { it.contactId == contactId }
+        return Result.Success(Unit)
     }
 
     override suspend fun getGroups(): Result<List<Group>, ContactError> {

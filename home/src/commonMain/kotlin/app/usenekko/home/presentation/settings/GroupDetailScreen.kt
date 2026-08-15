@@ -86,7 +86,7 @@ fun GroupDetailScreen(
                 .padding(top = 120.dp, start = 24.dp, end = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (state.isRefreshing) {
+            if (state.isRefreshing || state.isMutating) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -98,6 +98,12 @@ fun GroupDetailScreen(
                         modifier = Modifier.size(14.dp),
                         color = NekkoTheme.colors.text.tertiary,
                         strokeWidth = 1.5.dp,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = if (state.isMutating) "Updating members…" else "Refreshing…",
+                        color = NekkoTheme.colors.text.tertiary,
+                        fontSize = 12.sp,
                     )
                 }
             }
@@ -121,6 +127,7 @@ fun GroupDetailScreen(
                 state.members.forEach { member ->
                     MemberRow(
                         contact = member,
+                        actionsEnabled = !state.isMutating,
                         onMove = { viewModel.onAction(GroupDetailAction.OpenMoveDialog(member)) },
                         onRemove = {
                             viewModel.onAction(GroupDetailAction.RemoveMember(member.id))
@@ -224,6 +231,7 @@ private fun GroupDetailLoadingSkeleton(
 @Composable
 private fun MemberRow(
     contact: Contact,
+    actionsEnabled: Boolean,
     onMove: () -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -255,14 +263,20 @@ private fun MemberRow(
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = onMove) {
+        IconButton(
+            onClick = onMove,
+            enabled = actionsEnabled,
+        ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_edit),
                 contentDescription = "Move to another group",
                 tint = NekkoTheme.colors.text.secondary,
             )
         }
-        IconButton(onClick = onRemove) {
+        IconButton(
+            onClick = onRemove,
+            enabled = actionsEnabled,
+        ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_trashbin),
                 contentDescription = "Remove from group",

@@ -5,16 +5,21 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.data.InMemoryHomeRepository
+import app.usenekko.home.presentation.HomeViewModel
 import app.usenekko.home.presentation.settings.GroupDetailAction
 import app.usenekko.home.presentation.settings.GroupDetailViewModel
+import app.usenekko.shared.notifications.ReminderScheduler
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -113,7 +118,7 @@ class GroupDetailViewModelTest {
     }
 
     @Test
-    fun removeMemberRemovesFromGroupOnly() = runTest {
+    fun removeMemberDeletesContactFromHome() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
@@ -124,14 +129,77 @@ class GroupDetailViewModelTest {
                     GroupMembership("c1", "g1"),
                     GroupMembership("c2", "g1"),
                 ),
+                checkIns = listOf(
+                    CheckIn("ci1", "c1", "2026-08-15T10:00:00Z"),
+                    CheckIn("ci2", "c2", "2026-08-15T11:00:00Z"),
+                ),
             )
-            val viewModel = GroupDetailViewModel("g1", dataSource)
+            val repository = InMemoryHomeRepository(
+                contactDataSource = dataSource,
+                accountKeyProvider = { "user-1" },
+                scope = this,
+            )
+            repository.load()
+            advanceUntilIdle()
+
+            val viewModel = GroupDetailViewModel("g1", dataSource, repository)
             advanceUntilIdle()
 
             viewModel.onAction(GroupDetailAction.RemoveMember("c1"))
             advanceUntilIdle()
 
+            assertTrue(dataSource.contacts.none { it.id == "c1" })
             assertTrue(dataSource.memberships.none { it.contactId == "c1" && it.groupId == "g1" })
+            assertEquals(listOf("Bob"), viewModel.state.value.members.map { it.name })
+
+            val homeViewModel = HomeViewModel(dataSource, ReminderScheduler(), repository)
+            advanceUntilIdle()
+
+            assertEquals(listOf("Bob"), homeViewModel.state.value.contacts.map { it.name })
+            assertEquals(1, homeViewModel.state.value.totalContactCount)
+            assertTrue(homeViewModel.state.value.checkIns.none { it.contactId == "c1" })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun removeMemberKeepsProgressVisibleUntilRefreshCompletes() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("c1", "Alice"), contact("c2", "Bob")),
+                groups = listOf(Group("g1", "Family")),
+                memberships = listOf(
+                    GroupMembership("c1", "g1"),
+                    GroupMembership("c2", "g1"),
+                ),
+            )
+            val repository = InMemoryHomeRepository(
+                contactDataSource = dataSource,
+                accountKeyProvider = { "user-1" },
+                scope = this,
+            )
+            repository.load()
+            advanceUntilIdle()
+
+            val viewModel = GroupDetailViewModel("g1", dataSource, repository)
+            advanceUntilIdle()
+            dataSource.getContactsGate = CompletableDeferred()
+
+            viewModel.onAction(GroupDetailAction.RemoveMember("c1"))
+            runCurrent()
+
+            assertTrue(viewModel.state.value.isMutating)
+            assertTrue(viewModel.state.value.isRefreshing)
+            assertEquals(listOf("Alice", "Bob"), viewModel.state.value.members.map { it.name })
+
+            dataSource.getContactsGate?.complete(Unit)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isMutating)
+            assertFalse(viewModel.state.value.isRefreshing)
             assertEquals(listOf("Bob"), viewModel.state.value.members.map { it.name })
         } finally {
             Dispatchers.resetMain()

@@ -234,6 +234,28 @@ private fun GroupMembersContent(
 
         Spacer(Modifier.height(20.dp))
 
+        if (state.isRefreshing || state.isMutating) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    color = NekkoTheme.colors.text.tertiary,
+                    strokeWidth = 1.5.dp,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = if (state.isMutating) "Updating members…" else "Refreshing…",
+                    color = NekkoTheme.colors.text.tertiary,
+                    fontSize = 12.sp,
+                )
+            }
+        }
+
         when {
             state.isLoading -> Box(
                 modifier = Modifier.fillMaxWidth().height(180.dp),

@@ -195,6 +195,25 @@ class SupabaseContactDataSource(
         }
     }
 
+    override suspend fun deleteContact(contactId: String): Result<Unit, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("contacts")
+                .delete {
+                    filter { eq("id", contactId) }
+                    filter { eq("owner_id", userId) }
+                }
+
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
     override suspend fun getGroups(): Result<List<Group>, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()
