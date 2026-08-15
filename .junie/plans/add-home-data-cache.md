@@ -200,3 +200,10 @@ Group Settings shows Facebook-style group-row placeholders only while its initia
 - Replace the initial centered loading label with skeleton rows matching the existing group settings layout.
 - Keep warm group content visible during background refreshes and preserve the existing empty and error states.
 - Add focused coverage for the initial loading presentation and validate the Home module build.
+
+### ✓ Step 13: Add Add Contact group-picker loading shimmer
+The Add Contact group picker shows Facebook-style group-card placeholders while its initial group data is unavailable.
+
+- Replace the centered cold-cache spinner with a shimmer grid matching the existing group picker layout.
+- Keep warm group content visible during background refreshes and preserve the existing empty state and shared cache invalidation.
+- Add focused coverage for the cold loading state and validate the Home module build.

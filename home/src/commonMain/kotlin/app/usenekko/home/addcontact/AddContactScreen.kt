@@ -1,5 +1,10 @@
 package app.usenekko.home.addcontact
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,7 +36,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -49,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -665,14 +670,7 @@ private fun GroupStep(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (groupsLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = NekkoTheme.colors.green.active)
-            }
+            GroupPickerLoadingSkeleton()
         } else if (groups.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -723,6 +721,84 @@ private fun GroupStep(
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun GroupPickerLoadingSkeleton(
+    modifier: Modifier = Modifier,
+) {
+    val transition = rememberInfiniteTransition(label = "addContactGroupShimmer")
+    val shimmerPosition by transition.animateFloat(
+        initialValue = -1f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1_100, easing = LinearEasing),
+        ),
+        label = "addContactGroupShimmerPosition",
+    )
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            NekkoTheme.colors.fill.quaternary,
+            NekkoTheme.colors.fill.secondary,
+            NekkoTheme.colors.fill.quaternary,
+        ),
+        start = Offset(shimmerPosition * 500f, 0f),
+        end = Offset((shimmerPosition + 1f) * 500f, 500f),
+    )
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(28.dp),
+    ) {
+        repeat(2) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                repeat(2) {
+                    GroupPickerItemLoadingSkeleton(
+                        brush = shimmerBrush,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupPickerItemLoadingSkeleton(
+    brush: Brush,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(SawToothCircleShape())
+                .background(brush),
+        )
+        Spacer(Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .width(88.dp)
+                .height(22.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(brush),
+        )
+        Spacer(Modifier.height(2.dp))
+        Box(
+            modifier = Modifier
+                .width(64.dp)
+                .height(16.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(brush),
         )
     }
 }
