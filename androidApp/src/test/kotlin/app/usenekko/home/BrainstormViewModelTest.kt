@@ -35,6 +35,26 @@ class BrainstormViewModelTest {
         BrainstormSession(id, createdAt, listOf(topic(title)))
 
     @Test
+    fun historyStartsInLoadingStateBeforeTheFirstSnapshotArrives() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val vm = BrainstormViewModel(
+                contactId = "c1",
+                repository = repository(FakeBrainstormDataSource(), this),
+            )
+
+            assertEquals(true, vm.state.value.isLoadingHistory)
+
+            advanceUntilIdle()
+
+            assertEquals(false, vm.state.value.isLoadingHistory)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun generationStartsAutomaticallyWhenViewModelOpens() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
