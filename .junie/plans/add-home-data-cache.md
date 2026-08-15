@@ -193,3 +193,10 @@ Group Detail shows Facebook-style member-row placeholders only while its initial
 - Replace the initial centered loader with member-row skeletons matching the existing Group Detail layout.
 - Keep warm member content visible during background refreshes and preserve the existing empty and error states.
 - Add focused coverage for the initial loading presentation and validate the Home module build.
+
+### ✓ Step 12: Add Group Settings loading shimmer
+Group Settings shows Facebook-style group-row placeholders only while its initial group data is unavailable.
+
+- Replace the initial centered loading label with skeleton rows matching the existing group settings layout.
+- Keep warm group content visible during background refreshes and preserve the existing empty and error states.
+- Add focused coverage for the initial loading presentation and validate the Home module build.

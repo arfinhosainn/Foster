@@ -1,5 +1,10 @@
 package app.usenekko.home.presentation.settings
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -32,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -99,8 +106,7 @@ fun GroupSettingsScreen(
                 }
             }
             if (state.isLoading) {
-                Spacer(Modifier.height(16.dp))
-                Text("Loading…", color = NekkoTheme.colors.text.tertiary)
+                GroupSettingsLoadingSkeleton()
             } else if (state.groups.isEmpty()) {
                 Spacer(Modifier.height(32.dp))
                 Text(
@@ -171,6 +177,69 @@ fun GroupSettingsScreen(
             groupId = groupId,
             onDismiss = { selectedGroupId = null },
         )
+    }
+}
+
+@Composable
+private fun GroupSettingsLoadingSkeleton(
+    modifier: Modifier = Modifier,
+) {
+    val transition = rememberInfiniteTransition(label = "groupSettingsShimmer")
+    val shimmerPosition by transition.animateFloat(
+        initialValue = -1f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1_100, easing = LinearEasing),
+        ),
+        label = "groupSettingsShimmerPosition",
+    )
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            NekkoTheme.colors.fill.quaternary,
+            NekkoTheme.colors.fill.secondary,
+            NekkoTheme.colors.fill.quaternary,
+        ),
+        start = Offset(shimmerPosition * 500f, 0f),
+        end = Offset((shimmerPosition + 1f) * 500f, 500f),
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        repeat(4) { rowIndex ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(NekkoTheme.colors.background.b1, RoundedCornerShape(20.dp))
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(shimmerBrush, CircleShape),
+                )
+                Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .width(if (rowIndex % 2 == 0) 132.dp else 104.dp)
+                            .height(18.dp)
+                            .background(shimmerBrush, RoundedCornerShape(8.dp)),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(76.dp)
+                            .height(14.dp)
+                            .background(shimmerBrush, RoundedCornerShape(6.dp)),
+                    )
+                }
+            }
+        }
     }
 }
 
