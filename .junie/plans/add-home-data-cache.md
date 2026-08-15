@@ -186,3 +186,10 @@ The Groups bottom sheet shows Facebook-style group-card placeholders while its i
 - Replace the initial centered spinner with a small grid of group-card skeletons matching the existing sheet layout.
 - Keep warm group content visible during background refreshes and preserve the existing empty and error states.
 - Add focused coverage for the initial loading presentation and validate the Home module build.
+
+### ✓ Step 11: Add Group Detail loading shimmer
+Group Detail shows Facebook-style member-row placeholders only while its initial member data is unavailable.
+
+- Replace the initial centered loader with member-row skeletons matching the existing Group Detail layout.
+- Keep warm member content visible during background refreshes and preserve the existing empty and error states.
+- Add focused coverage for the initial loading presentation and validate the Home module build.
