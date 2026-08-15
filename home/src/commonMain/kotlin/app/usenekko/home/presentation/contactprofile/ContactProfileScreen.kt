@@ -86,29 +86,37 @@ fun ContactProfileScreen(
                     )
                 }
             }
-            state.contact?.let { c ->
-                ContactProfileHeader(
-                    name = c.name,
-                    frequencyLabel = formatFrequencyLabel(c.checkInFrequency),
-                    reminderTime = formatReminderTime(c.reminderTime),
-                    isExpanded = state.isRelationshipInfoOpen,
-                    onNameClick = { viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo) },
-                    onNotificationClick = {
-                        viewModel.onAction(ContactProfileAction.OpenReminderList)
-                    },
-                    onCheckInClick = { viewModel.onAction(ContactProfileAction.CheckIn) },
+            if (state.isLoading && state.contact == null) {
+                ContactProfileLoadingSkeleton(
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            } else {
+                state.contact?.let { c ->
+                    ContactProfileHeader(
+                        name = c.name,
+                        frequencyLabel = formatFrequencyLabel(c.checkInFrequency),
+                        reminderTime = formatReminderTime(c.reminderTime),
+                        isExpanded = state.isRelationshipInfoOpen,
+                        onNameClick = {
+                            viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo)
+                        },
+                        onNotificationClick = {
+                            viewModel.onAction(ContactProfileAction.OpenReminderList)
+                        },
+                        onCheckInClick = { viewModel.onAction(ContactProfileAction.CheckIn) },
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                BrainstormCard(
+                    onClick = onBrainstormClick,
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                NotesSection(
+                    notes = state.notes,
+                    onAddNote = { viewModel.onAction(ContactProfileAction.OpenAddNote) },
+                    onDeleteNote = { viewModel.onAction(ContactProfileAction.DeleteNote(it)) },
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            BrainstormCard(
-                onClick = onBrainstormClick,
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            NotesSection(
-                notes = state.notes,
-                onAddNote = { viewModel.onAction(ContactProfileAction.OpenAddNote) },
-                onDeleteNote = { viewModel.onAction(ContactProfileAction.DeleteNote(it)) },
-            )
         }
     }
 
