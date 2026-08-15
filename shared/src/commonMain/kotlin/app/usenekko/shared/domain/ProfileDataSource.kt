@@ -11,6 +11,7 @@ package app.usenekko.shared.domain
  */
 interface ProfileDataSource {
     suspend fun getProfile(): Result<AccountProfile, ProfileError>
+    suspend fun updateSelectedAvatarId(selectedAvatarId: String): EmptyResult<ProfileError>
 }
 
 data class AccountProfile(

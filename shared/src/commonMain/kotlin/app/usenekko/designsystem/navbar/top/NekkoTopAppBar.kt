@@ -46,6 +46,9 @@ fun NekkoTopBar(
     userName: String,
     onAvatarClick: () -> Unit,
     onPremiumClick: () -> Unit,
+    avatarContent: @Composable () -> Unit = {
+        MonogramAvatar(name = userName)
+    },
     modifier: Modifier = Modifier,
 ) = CenterAlignedTopAppBar(
     modifier = modifier,
@@ -62,10 +65,13 @@ fun NekkoTopBar(
         )
     },
     navigationIcon = {
-        MonogramAvatar(
-            name = userName,
-            modifier = Modifier.padding(start = 12.dp).clickable(onClick = onAvatarClick),
-        )
+        Box(
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .clickable(onClick = onAvatarClick),
+        ) {
+            avatarContent()
+        }
     },
     actions = {
         IconButton(onClick = onPremiumClick) {

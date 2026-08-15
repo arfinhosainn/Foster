@@ -31,6 +31,7 @@ data class AccountSnapshot(
 data class AccountRepositoryState(
     val snapshot: AccountSnapshot? = null,
     val isRefreshing: Boolean = false,
+    val isUpdatingAvatar: Boolean = false,
     val error: String? = null,
 )
 
@@ -38,6 +39,8 @@ interface AccountRepository {
     val state: StateFlow<AccountRepositoryState>
 
     suspend fun load(forceRefresh: Boolean = false): Result<AccountSnapshot, String>
+
+    suspend fun updateSelectedAvatarId(selectedAvatarId: String): Result<Unit, String>
 
     fun invalidate()
 }
@@ -99,6 +102,28 @@ class InMemoryAccountRepository(
     override fun invalidate() {
         invalidated = true
         _state.value = _state.value.copy(error = null)
+    }
+
+    override suspend fun updateSelectedAvatarId(selectedAvatarId: String): Result<Unit, String> {
+        _state.value = _state.value.copy(isUpdatingAvatar = true, error = null)
+
+        return when (val result = profileDataSource.updateSelectedAvatarId(selectedAvatarId)) {
+            is Result.Success -> when (val refreshResult = load(forceRefresh = true)) {
+                is Result.Success -> {
+                    _state.value = _state.value.copy(isUpdatingAvatar = false)
+                    Result.Success(Unit)
+                }
+                is Result.Error -> {
+                    _state.value = _state.value.copy(isUpdatingAvatar = false)
+                    Result.Error(refreshResult.error)
+                }
+            }
+            is Result.Error -> {
+                val error = result.error.toString()
+                _state.value = _state.value.copy(isUpdatingAvatar = false, error = error)
+                Result.Error(error)
+            }
+        }
     }
 
     private suspend fun clearCache() {
@@ -172,7 +197,10 @@ class InMemoryAccountRepository(
             fetchedAt = now(),
             accountKey = accountKey,
         )
-        _state.value = AccountRepositoryState(snapshot = snapshot)
+        _state.value = AccountRepositoryState(
+            snapshot = snapshot,
+            isUpdatingAvatar = _state.value.isUpdatingAvatar,
+        )
         return Result.Success(snapshot)
     }
 

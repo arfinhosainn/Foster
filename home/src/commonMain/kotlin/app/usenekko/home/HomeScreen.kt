@@ -35,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,7 @@ import app.usenekko.designsystem.shapes.SawToothCircleShape
 import app.usenekko.home.addcontact.AddContactScreen
 import app.usenekko.home.di.rememberAddContactViewModel
 import app.usenekko.home.di.rememberHomeViewModel
+import app.usenekko.home.di.LocalAccountRepository
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.checkInCountdownLabel
@@ -94,6 +96,7 @@ import nekko.home.generated.resources.img_gradientss
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.launch
 
 private fun audienceIcon(name: String): DrawableResource = when (name.lowercase()) {
     "family" -> Res.drawable.ic_family
@@ -113,12 +116,20 @@ fun HomeScreen(
 
     val viewModel = rememberHomeViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val accountRepository = LocalAccountRepository.current
+    val accountState by accountRepository.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(accountRepository) {
+        accountRepository.load()
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
                 viewModel.refreshIfStale()
+                coroutineScope.launch { accountRepository.load() }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -169,7 +180,14 @@ fun HomeScreen(
                         if (index <= 0) null else state.groups[index - 1].id
                     )
                 },
-                userName = "Jane Bell",
+                userName = accountState.snapshot?.profile?.resolvedName.orEmpty(),
+                avatarContent = {
+                    ContactAvatar(
+                        avatarColor = null,
+                        selectedAvatarId = accountState.snapshot?.profile?.selectedAvatarId,
+                        modifier = Modifier.size(44.dp),
+                    )
+                },
                 onAvatarClick = { onSettingsClick() },
                 onPremiumClick = onShowPaywall,
             )

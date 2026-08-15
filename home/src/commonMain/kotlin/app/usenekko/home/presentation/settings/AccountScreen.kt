@@ -20,6 +20,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +36,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.home.di.rememberAccountViewModel
 import app.usenekko.home.presentation.badges.BadgeRow
+import app.usenekko.home.presentation.components.avatarIndexForId
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
@@ -46,6 +50,7 @@ fun AccountScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val liquidState = rememberLiquidState()
+    var showAvatarPicker by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -82,7 +87,10 @@ fun AccountScreen(
             }
             Spacer(Modifier.height(120.dp))
 
-            MonogramAvatar(name = state.fullName.orEmpty())
+            AccountAvatar(
+                selectedAvatarId = state.profile?.selectedAvatarId,
+                onEditClick = { showAvatarPicker = true },
+            )
 
             Spacer(Modifier.height(16.dp))
 
@@ -138,30 +146,12 @@ fun AccountScreen(
             SettingsTopBar(onBack = onBack, title = "Account")
         }
     }
-}
 
-@Composable
-private fun MonogramAvatar(name: String) {
-    val initials = name
-        .trim()
-        .split(Regex("\\s+"))
-        .filter { it.isNotBlank() }
-        .take(2)
-        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
-        .joinToString("")
-        .ifEmpty { "?" }
-
-    Box(
-        modifier = Modifier
-            .size(84.dp)
-            .background(NekkoTheme.colors.fill.secondary, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = initials,
-            color = NekkoTheme.colors.text.primary,
-            fontSize = 30.sp,
-            fontWeight = FontWeight.Medium,
+    if (showAvatarPicker) {
+        ChooseProfileAvatarBottomSheet(
+            selectedAvatarIndex = avatarIndexForId(state.profile?.selectedAvatarId),
+            onAvatarSelected = viewModel::selectAvatar,
+            onDismiss = { showAvatarPicker = false },
         )
     }
 }
