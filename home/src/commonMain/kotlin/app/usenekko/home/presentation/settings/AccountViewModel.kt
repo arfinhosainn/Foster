@@ -23,6 +23,7 @@ data class AccountState(
     val totalContacts: Int = 0,
     val totalCheckIns: Int = 0,
     val badgeSlots: List<BadgeSlot> = emptyList(),
+    val isUpdatingAvatar: Boolean = false,
     val error: String? = null,
 )
 
@@ -51,6 +52,7 @@ class AccountViewModel(
                     totalContacts = home.snapshot?.contacts?.size ?: 0,
                     totalCheckIns = home.snapshot?.checkInHistory?.size ?: 0,
                     badgeSlots = account.snapshot?.badgeSlots.orEmpty(),
+                    isUpdatingAvatar = account.isUpdatingAvatar,
                     error = account.error ?: home.error?.toString(),
                 )
             }.collectLatest { _state.value = it }
@@ -68,5 +70,11 @@ class AccountViewModel(
 
     fun refreshIfStale() {
         load()
+    }
+
+    fun selectAvatar(index: Int) {
+        viewModelScope.launch {
+            accountRepository.updateSelectedAvatarId(index.toString())
+        }
     }
 }

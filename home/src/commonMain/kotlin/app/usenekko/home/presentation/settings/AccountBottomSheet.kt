@@ -32,6 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -48,7 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.home.domain.BadgeSlot
 import app.usenekko.home.di.rememberAccountViewModel
 import app.usenekko.home.presentation.badges.badgeIcon
-import app.usenekko.home.presentation.components.ProfilePhotoPreview
+import app.usenekko.home.presentation.components.avatarIndexForId
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_close
@@ -67,6 +70,7 @@ fun AccountBottomSheet(
     val viewModel = rememberAccountViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showAvatarPicker by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -102,14 +106,19 @@ fun AccountBottomSheet(
             }
 
             Spacer(Modifier.height(28.dp))
-            ProfilePhotoPreview(
-                visible = true,
-                photoBitmap = null,
+            AccountAvatar(
+                selectedAvatarId = state.profile?.selectedAvatarId,
+                onEditClick = { showAvatarPicker = true },
                 modifier = Modifier.size(120.dp),
-                photoSize = 120.dp,
-                fullScreen = false,
-                showEditButton = true,
             )
+            if (state.isUpdatingAvatar) {
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    text = "Saving avatar…",
+                    color = NekkoTheme.colors.text.tertiary,
+                    fontSize = 13.sp,
+                )
+            }
             Spacer(Modifier.height(30.dp))
 
             Text(
@@ -173,6 +182,14 @@ fun AccountBottomSheet(
                 )
             }
         }
+    }
+
+    if (showAvatarPicker) {
+        ChooseProfileAvatarBottomSheet(
+            selectedAvatarIndex = avatarIndexForId(state.profile?.selectedAvatarId),
+            onAvatarSelected = viewModel::selectAvatar,
+            onDismiss = { showAvatarPicker = false },
+        )
     }
 }
 

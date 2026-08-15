@@ -7,6 +7,8 @@ import app.usenekko.home.domain.UserBadge
 import app.usenekko.home.data.InMemoryAccountRepository
 import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.presentation.settings.AccountViewModel
+import app.usenekko.shared.domain.AccountProfile
+import app.usenekko.shared.domain.ProfileError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -112,6 +114,54 @@ class AccountViewModelTest {
                 listOf("Green Flower", "Lotus Flower", "Mushroom Flower", "Red Flower", "Yellow Flower", "Blue Flower", "Sunflower"),
                 slots.map { it.badge.name },
             )
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun selectingAvatarPersistsAndPublishesTheSelectedAvatar() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val profileDataSource = FakeProfileDataSource()
+            val contactDataSource = FakeContactDataSource(contacts = emptyList())
+            val viewModel = viewModel(profileDataSource, contactDataSource, this)
+            advanceUntilIdle()
+
+            viewModel.selectAvatar(4)
+            advanceUntilIdle()
+
+            assertEquals("4", profileDataSource.profile?.selectedAvatarId)
+            assertEquals("4", viewModel.state.value.profile?.selectedAvatarId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun failedAvatarUpdateRetainsExistingAvatarAndReportsError() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val profileDataSource = FakeProfileDataSource(
+                profile = AccountProfile(
+                    fullName = "Jane Bell",
+                    displayName = null,
+                    avatarUrl = null,
+                    selectedAvatarId = "1",
+                    createdAt = "2026-01-15T10:00:00Z",
+                ),
+            )
+            val viewModel = viewModel(profileDataSource, FakeContactDataSource(contacts = emptyList()), this)
+            advanceUntilIdle()
+
+            profileDataSource.error = ProfileError.Network
+            viewModel.selectAvatar(4)
+            advanceUntilIdle()
+
+            assertEquals("1", viewModel.state.value.profile?.selectedAvatarId)
+            assertEquals("Network", viewModel.state.value.error)
         } finally {
             Dispatchers.resetMain()
         }

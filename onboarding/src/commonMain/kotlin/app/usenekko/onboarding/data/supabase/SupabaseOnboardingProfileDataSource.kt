@@ -124,6 +124,24 @@ class SupabaseOnboardingProfileDataSource(
         }
     }
 
+    override suspend fun updateSelectedAvatarId(selectedAvatarId: String): EmptyResult<ProfileError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ProfileError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ProfileError.NotAuthenticated)
+
+            client.postgrest
+                .from("profiles")
+                .update(mapOf("selected_avatar_id" to selectedAvatarId)) {
+                    filter { eq("id", userId) }
+                }
+
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(mapProfileError(e))
+        }
+    }
+
     override suspend fun ensureProfileExists(): EmptyResult<OnboardingProfileError> {
         return try {
             val session = client.auth.currentSessionOrNull()
