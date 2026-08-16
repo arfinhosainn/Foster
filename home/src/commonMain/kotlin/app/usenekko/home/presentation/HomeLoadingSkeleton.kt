@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,12 +26,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.usenekko.home.presentation.components.TIMELINE_COLUMNS
+import app.usenekko.home.presentation.components.TIMELINE_ROWS
+import app.usenekko.home.presentation.components.timelineCellSizeForWidth
+import app.usenekko.home.presentation.components.timelineRowLeadingEmptyColumns
+import app.usenekko.home.presentation.components.timelineRowSpacing
+import app.usenekko.home.presentation.components.timelineRowSlotIndices
 import app.usenekko.theme.NekkoTheme
 
 @Composable
 fun HomeLoadingSkeleton(
     modifier: Modifier = Modifier,
+    timelineMaxCellSize: Dp? = null,
 ) {
     val transition = rememberInfiniteTransition(label = "homeShimmer")
     val shimmerPosition by transition.animateFloat(
@@ -56,7 +65,7 @@ fun HomeLoadingSkeleton(
     ) {
         SummarySkeleton(shimmerBrush)
         Spacer(modifier = Modifier.height(32.dp))
-        CheckInSkeleton(shimmerBrush)
+        CheckInSkeleton(shimmerBrush, timelineMaxCellSize)
         Spacer(modifier = Modifier.height(32.dp))
         ContactListSkeleton(shimmerBrush)
     }
@@ -116,7 +125,10 @@ private fun SummaryItemSkeleton(
 }
 
 @Composable
-private fun CheckInSkeleton(brush: Brush) {
+private fun CheckInSkeleton(
+    brush: Brush,
+    maxCellSize: Dp?,
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         SkeletonBlock(
             brush = brush,
@@ -134,30 +146,54 @@ private fun CheckInSkeleton(brush: Brush) {
             shape = RoundedCornerShape(8.dp),
         )
         Spacer(modifier = Modifier.height(24.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            repeat(7) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    SkeletonBlock(
-                        brush = brush,
-                        modifier = Modifier.size(34.dp),
-                        shape = CircleShape,
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    SkeletonBlock(
-                        brush = brush,
-                        modifier = Modifier
-                            .width(28.dp)
-                            .height(10.dp),
-                        shape = RoundedCornerShape(5.dp),
-                    )
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val horizontalSpacing = 8.dp
+            val verticalSpacing = timelineRowSpacing()
+            val cellSize = timelineCellSizeForWidth(
+                maxWidth = maxWidth,
+                horizontalSpacing = horizontalSpacing,
+                maxCellSize = maxCellSize,
+            )
+            val gridWidth = cellSize * TIMELINE_COLUMNS +
+                horizontalSpacing * (TIMELINE_COLUMNS - 1)
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(verticalSpacing),
+            ) {
+                homeLoadingTimelineRowSlotCounts().forEachIndexed { rowIndex, visibleColumns ->
+                    val visualRow = TIMELINE_ROWS - 1 - rowIndex
+                    val leadingEmptyColumns = timelineRowLeadingEmptyColumns(visualRow)
+
+                    Row(
+                        modifier = Modifier.size(width = gridWidth, height = cellSize),
+                        horizontalArrangement = Arrangement.spacedBy(horizontalSpacing),
+                    ) {
+                        repeat(leadingEmptyColumns) {
+                            Spacer(Modifier.size(cellSize))
+                        }
+                        repeat(visibleColumns) {
+                            SkeletonBlock(
+                                brush = brush,
+                                modifier = Modifier.size(cellSize),
+                                shape = RoundedCornerShape(percent = 42),
+                            )
+                        }
+                        repeat(TIMELINE_COLUMNS - leadingEmptyColumns - visibleColumns) {
+                            Spacer(Modifier.size(cellSize))
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+fun homeLoadingTimelineRowSlotCounts(): List<Int> =
+    (TIMELINE_ROWS - 1 downTo 0).map { visualRow ->
+        timelineRowSlotIndices(visualRow).size
+    }
 
 @Composable
 private fun ContactListSkeleton(brush: Brush) {

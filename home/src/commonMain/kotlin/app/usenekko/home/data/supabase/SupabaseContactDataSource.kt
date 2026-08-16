@@ -429,26 +429,16 @@ class SupabaseContactDataSource(
         return try {
             val session = client.auth.currentSessionOrNull()
                 ?: return Result.Error(ContactError.NotAuthenticated)
-            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
 
-            client.postgrest
-                .from("check_ins")
-                .insert(mapOf("contact_id" to contactId))
-
+            val rpcParams = buildJsonObject {
+                put("p_contact_id", contactId)
+                put("p_last_check_in_date", lastCheckInDate)
+                put("p_next_check_in_date", nextCheckInDate?.let(::JsonPrimitive) ?: JsonNull)
+                put("p_streak_count", streakCount)
+            }
             val updated = client.postgrest
-                .from("contacts")
-                .update(
-                    {
-                        this["last_check_in_date"] = lastCheckInDate
-                        this["next_check_in_date"] = nextCheckInDate
-                        this["streak_count"] = streakCount
-                    }
-                ) {
-                    filter { eq("id", contactId) }
-                    filter { eq("owner_id", userId) }
-                    select(Columns.list("id", "name", "avatar_color", "check_in_frequency", "reminder_time", "next_check_in_date", "last_check_in_date", "streak_count"))
-                }
-                .decodeSingle<ContactDto>()
+                .rpc("log_check_in", rpcParams)
+                .decodeAs<ContactDto>()
 
             Result.Success(updated.toDomain())
         } catch (e: Exception) {

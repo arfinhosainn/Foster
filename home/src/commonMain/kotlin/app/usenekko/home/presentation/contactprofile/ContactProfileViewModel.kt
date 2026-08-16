@@ -8,6 +8,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.isOutstanding
+import app.usenekko.home.domain.isCheckedInToday
 import app.usenekko.home.domain.nextCheckInDateLocal
 import app.usenekko.home.domain.nextReminder
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
@@ -240,7 +241,7 @@ class ContactProfileViewModel(
         // Same-day idempotency: only outstanding contacts can check in, matching
         // Home's list. After a successful check-in nextCheckInDate moves into the
         // future, so a second tap on the same day is a no-op.
-        if (_state.value.isCheckingIn || !current.isOutstanding(today)) return
+        if (_state.value.isCheckingIn || !current.isOutstanding(today) || current.isCheckedInToday(today)) return
 
         viewModelScope.launch {
             _state.value = _state.value.copy(isCheckingIn = true, checkInError = null)
