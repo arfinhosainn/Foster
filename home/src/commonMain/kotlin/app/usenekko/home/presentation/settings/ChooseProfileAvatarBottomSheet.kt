@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import app.usenekko.designsystem.buttons.NekkoButton
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.avatar_blue
@@ -63,7 +65,7 @@ fun ChooseProfileAvatarBottomSheet(
     onAvatarSelected: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var pendingAvatarIndex by remember { mutableStateOf(selectedAvatarIndex) }
+    var pendingAvatarIndex by rememberSaveable { mutableStateOf(selectedAvatarIndex) }
     val selectionRingBrush = Brush.sweepGradient(
         listOf(Color(0xFFFFCC33), Color(0xFF34C759), Color(0xFFFFCC33)),
     )
@@ -75,12 +77,12 @@ fun ChooseProfileAvatarBottomSheet(
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
+            ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Choose Avatar",
@@ -159,6 +161,7 @@ fun ChooseProfileAvatarBottomSheet(
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
+            }
         }
     }
 }

@@ -50,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,6 +79,7 @@ import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.home.presentation.components.contactsForGroup
 import app.usenekko.home.presentation.components.groupMemberCount
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.shared.contacts.rememberContactPicker
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
@@ -162,20 +164,22 @@ fun AddContactScreen(
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
         modifier = modifier,
     ) {
-        AddContactSheetContent(
-            state = state,
-            onNameChanged = viewModel::onNameChanged,
-            onAvatarSelected = viewModel::onAvatarSelected,
-            onGroupSelected = viewModel::onGroupSelected,
-            onCreateGroupClicked = viewModel::onCreateGroupClicked,
-            onFrequencySelected = viewModel::onFrequencySelected,
-            onTimeSelected = viewModel::onTimeSelected,
-            onTimeDialChanged = viewModel::onTimeDialChanged,
-            onBackStep = viewModel::onBackStep,
-            onNextStep = viewModel::onNextStep,
-            onSubmit = viewModel::submit,
-            onImportContact = launchContactPicker,
-        )
+        AdaptiveSurface {
+            AddContactSheetContent(
+                state = state,
+                onNameChanged = viewModel::onNameChanged,
+                onAvatarSelected = viewModel::onAvatarSelected,
+                onGroupSelected = viewModel::onGroupSelected,
+                onCreateGroupClicked = viewModel::onCreateGroupClicked,
+                onFrequencySelected = viewModel::onFrequencySelected,
+                onTimeSelected = viewModel::onTimeSelected,
+                onTimeDialChanged = viewModel::onTimeDialChanged,
+                onBackStep = viewModel::onBackStep,
+                onNextStep = viewModel::onNextStep,
+                onSubmit = viewModel::submit,
+                onImportContact = launchContactPicker,
+            )
+        }
     }
 
     if (state.showCreateGroupSheet) {
@@ -209,7 +213,6 @@ private fun AddContactSheetContent(
         modifier = modifier
             .fillMaxWidth()
             .imePadding()
-            .padding(horizontal = 24.dp)
             .verticalScroll(rememberScrollState()),
     ) {
 
@@ -378,7 +381,7 @@ private fun NameAndAvatarStep(
     onImportContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showAvatarPicker by remember { mutableStateOf(false) }
+    var showAvatarPicker by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -549,7 +552,7 @@ private fun ChooseAvatarBottomSheet(
     onAvatarSelected: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var pendingAvatarIndex by remember { mutableStateOf(selectedAvatarIndex) }
+    var pendingAvatarIndex by rememberSaveable { mutableStateOf(selectedAvatarIndex) }
     val selectionRingBrush = Brush.sweepGradient(
         listOf(Color(0xFFFFCC33), Color(0xFF34C759), Color(0xFFFFCC33)),
     )
@@ -1052,7 +1055,7 @@ private fun CreateGroupSheet(
     onSave: (String) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var groupName by remember { mutableStateOf("") }
+    var groupName by rememberSaveable { mutableStateOf("") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -1061,14 +1064,14 @@ private fun CreateGroupSheet(
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
-                .imePadding(),
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 24.dp)
+                    .imePadding(),
+            ) {
             Text(
                 text = "Create Group",
                 style = NekkoTheme.typography.heading3,
@@ -1111,6 +1114,7 @@ private fun CreateGroupSheet(
                 enabled = groupName.isNotBlank() && !isSaving,
                 loading = isSaving,
             )
+            }
         }
     }
 }

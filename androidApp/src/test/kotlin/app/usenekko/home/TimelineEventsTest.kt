@@ -21,6 +21,8 @@ import app.usenekko.home.presentation.components.TimelineAvatarIndicatorAnchor
 import app.usenekko.home.presentation.components.timelineAvatarIndicatorAnchor
 import app.usenekko.home.presentation.components.timelineAvatarSize
 import app.usenekko.home.presentation.components.timelineCellSizeForWidth
+import app.usenekko.home.presentation.components.timelineBubbleSize
+import app.usenekko.home.presentation.components.timelineMaxCellSizeForWidth
 import app.usenekko.home.presentation.components.timelineRowLeadingEmptyColumns
 import app.usenekko.home.presentation.components.timelineRowSpacing
 import app.usenekko.home.presentation.components.timelineRowSlotIndices
@@ -157,13 +159,31 @@ class TimelineEventsTest {
 
     @Test
     fun stackedAvatarIndicatorIsInsetIntoTheFrontAvatarCorner() {
-        assertEquals(DpOffset(-10.dp, 7.5.dp), timelineStackedAvatarIndicatorOffset(50.dp))
+        val offset = timelineStackedAvatarIndicatorOffset(50.dp)
+        assertEquals(-10f, offset.x.value, 0.001f)
+        assertEquals(5f, offset.y.value, 0.001f)
     }
 
     @Test
     fun calendarUsesFiftyDpCellsAtDesignWidth() {
         assertEquals(50.dp, timelineCellSizeForWidth(maxWidth = 500.dp, horizontalSpacing = 8.dp))
         assertEquals(44.57143.dp, timelineCellSizeForWidth(maxWidth = 360.dp, horizontalSpacing = 8.dp))
+    }
+
+    @Test
+    fun calendarGrowsAtMediumAndExpandedWidthsWithoutStretchingIndefinitely() {
+        assertEquals(50.dp, timelineMaxCellSizeForWidth(599.dp))
+        assertEquals(56.dp, timelineMaxCellSizeForWidth(600.dp))
+        assertEquals(56.dp, timelineCellSizeForWidth(maxWidth = 720.dp))
+        assertEquals(64.dp, timelineMaxCellSizeForWidth(840.dp))
+        assertEquals(64.dp, timelineCellSizeForWidth(maxWidth = 1200.dp))
+    }
+
+    @Test
+    fun largerCalendarCellsScaleAvatarsAndPendingBubble() {
+        assertEquals(44.8.dp, timelineAvatarSize(index = 0, visibleCount = 1, cellSize = 56.dp))
+        assertEquals(35.84.dp, timelineAvatarSize(index = 1, visibleCount = 2, cellSize = 56.dp))
+        assertEquals(107.52f, timelineBubbleSize(56.dp).value, 0.001f)
     }
 
     @Test

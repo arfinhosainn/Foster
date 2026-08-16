@@ -32,6 +32,10 @@ fun NekkoNavHost(
                 ScreenTransitionStyle.Horizontal -> horizontalTransform(isBackward)
                 ScreenTransitionStyle.Vertical -> verticalTransform(isBackward)
                 ScreenTransitionStyle.Reset -> resetTransform()
+                ScreenTransitionStyle.None -> ContentTransform(
+                    targetContentEnter = fadeIn(tween(0)),
+                    initialContentExit = fadeOut(tween(0)),
+                )
             }
 
             ContentTransform(

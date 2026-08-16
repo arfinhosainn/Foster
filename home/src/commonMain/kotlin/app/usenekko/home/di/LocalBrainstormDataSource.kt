@@ -1,8 +1,10 @@
 package app.usenekko.home.di
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import app.usenekko.home.data.BrainstormRepository
 import app.usenekko.home.domain.BrainstormDataSource
 import app.usenekko.home.presentation.brainstorm.BrainstormViewModel
@@ -18,5 +20,10 @@ val LocalBrainstormRepository = staticCompositionLocalOf<BrainstormRepository> {
 @Composable
 fun rememberBrainstormViewModel(contactId: String): BrainstormViewModel {
     val repository = LocalBrainstormRepository.current
-    return remember(contactId) { BrainstormViewModel(contactId, repository) }
+    return viewModel(
+        key = "brainstorm-$contactId",
+        factory = viewModelFactory {
+            initializer { BrainstormViewModel(contactId, repository) }
+        },
+    )
 }

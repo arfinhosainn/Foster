@@ -38,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,8 +69,8 @@ fun AddReminderSheet(
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var recurrenceMenuExpanded by remember { mutableStateOf(false) }
-    var datePickerVisible by remember { mutableStateOf(false) }
+    var recurrenceMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    var datePickerVisible by rememberSaveable { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = draftDateEpochMillis)
 
     if (datePickerVisible) {
@@ -119,13 +121,13 @@ fun AddReminderSheet(
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
         modifier = modifier,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .imePadding(),
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+                    .imePadding(),
+            ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Create Reminder",
@@ -301,6 +303,7 @@ fun AddReminderSheet(
                 enabled = draftTitle.isNotBlank() && !isSaving,
                 loading = isSaving,
             )
+            }
         }
     }
 }

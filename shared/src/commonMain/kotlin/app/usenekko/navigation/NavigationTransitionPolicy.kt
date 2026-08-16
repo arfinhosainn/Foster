@@ -6,6 +6,13 @@ sealed class ScreenTransitionStyle {
     data object Vertical : ScreenTransitionStyle()
 
     data object Reset : ScreenTransitionStyle()
+
+    data object None : ScreenTransitionStyle()
+}
+
+enum class NavigationPresentation {
+    FullScreen,
+    InPlacePane,
 }
 
 object NavAnimationSpecs {
@@ -16,7 +23,15 @@ object NavAnimationSpecs {
     const val ForwardParallaxFraction = 0.3f
 }
 
-fun transitionStyle(initial: NavState, target: NavState): ScreenTransitionStyle {
+fun transitionStyle(
+    initial: NavState,
+    target: NavState,
+    presentation: NavigationPresentation = NavigationPresentation.FullScreen,
+): ScreenTransitionStyle {
+    if (presentation == NavigationPresentation.InPlacePane) {
+        return ScreenTransitionStyle.None
+    }
+
     return when (target.operation) {
         NavigationOperation.Backward -> screenTransitionStyle(initial.screen)
         NavigationOperation.Forward,

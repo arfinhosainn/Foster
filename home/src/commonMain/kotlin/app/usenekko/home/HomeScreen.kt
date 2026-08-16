@@ -6,16 +6,19 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,8 +47,12 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -54,7 +62,13 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.usenekko.designsystem.buttons.AudienceOption
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
+import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassNavigationRail
 import app.usenekko.designsystem.navbar.top.NekkoTopBar
+import app.usenekko.adaptive.WindowWidthSizeClass
+import app.usenekko.adaptive.AdaptivePresentation
+import app.usenekko.adaptive.contactPresentation
+import app.usenekko.adaptive.retainPaneSelection
+import app.usenekko.adaptive.windowWidthSizeClass
 import app.usenekko.designsystem.shapes.SawToothCircleShape
 import app.usenekko.home.addcontact.AddContactScreen
 import app.usenekko.home.di.rememberAddContactViewModel
@@ -74,6 +88,8 @@ import app.usenekko.home.presentation.components.buildCheckInTimelineEvents
 import app.usenekko.home.presentation.components.isCheckInBubbleAnimationEnabled
 import app.usenekko.home.presentation.components.rememberTimelineSlots
 import app.usenekko.home.presentation.components.shouldStartCheckInBubbleWindow
+import app.usenekko.home.presentation.components.timelineMaxCellSizeForWidth
+import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
 import app.usenekko.home.presentation.HomeLoadingSkeleton
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
@@ -109,6 +125,7 @@ private fun audienceIcon(name: String): DrawableResource = when (name.lowercase(
 @Composable
 fun HomeScreen(
     onContactClick: (Contact) -> Unit,
+    onBrainstormClick: (String) -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onShowPaywall: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -136,7 +153,7 @@ fun HomeScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    var showAddContact by remember { mutableStateOf(false) }
+    var showAddContact by rememberSaveable { mutableStateOf(false) }
 
     val options = remember(state.groups) {
         buildList {
@@ -159,18 +176,47 @@ fun HomeScreen(
 
 
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .then(blurModifier),
     ) {
+        val widthSizeClass = windowWidthSizeClass(maxWidth)
+        val useNavigationRail = widthSizeClass == WindowWidthSizeClass.Expanded
+        val useSupportingPane = contactPresentation(widthSizeClass) == AdaptivePresentation.SupportingPane
+        val timelineMaxCellSize = timelineMaxCellSizeForWidth(maxWidth)
+
+        var selectedContactId by rememberSaveable { mutableStateOf<String?>(null) }
+        val selectedContact = state.contacts.firstOrNull { it.id == selectedContactId }
+
+        LaunchedEffect(state.contacts) {
+            selectedContactId = retainPaneSelection(
+                selectedId = selectedContactId,
+                availableIds = state.contacts.map(Contact::id),
+            )
+        }
+
         // Background/source for the liquid effect
         AmbientGlow(
             liquidState = liquidState,
             modifier = Modifier.matchParentSize()
         )
 
-        Scaffold(topBar = {
+        if (useNavigationRail) {
+            GlassNavigationRail(
+                selectedIndex = 1,
+                onItemSelected = {},
+                onAddClick = { showAddContact = true },
+                liquidState = liquidState,
+                modifier = Modifier.align(Alignment.CenterStart),
+            )
+        }
+
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(if (useNavigationRail) Modifier.padding(start = 88.dp) else Modifier),
+            topBar = {
             NekkoTopBar(
                 audienceOptions = options,
                 selectedAudience = selectedAudience,
@@ -191,26 +237,45 @@ fun HomeScreen(
                 onAvatarClick = { onSettingsClick() },
                 onPremiumClick = onShowPaywall,
             )
-
-        }, bottomBar = {
-            GlassBottomNavBar(
-                // EFFECT, sibling
-                selectedIndex = 1,
-                onItemSelected = {},
-                onAddClick = { showAddContact = true },
-                liquidState = liquidState,
-            )
-
-        }, containerColor = NekkoTheme.colors.background.b0)
+            },
+            bottomBar = {
+                if (!useNavigationRail) {
+                    GlassBottomNavBar(
+                        selectedIndex = 1,
+                        onItemSelected = {},
+                        onAddClick = { showAddContact = true },
+                        liquidState = liquidState,
+                    )
+                }
+            },
+            containerColor = NekkoTheme.colors.background.b0,
+        )
         { innerPadding ->
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 24.dp)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(innerPadding),
+                horizontalArrangement = if (useSupportingPane) {
+                    Arrangement.spacedBy(16.dp)
+                } else {
+                    Arrangement.Center
+                },
+                verticalAlignment = Alignment.Top,
             ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = 720.dp)
+                            .padding(horizontal = 24.dp)
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                 Spacer(Modifier.height(32.dp))
 
                 if (state.isLoading) {
@@ -250,7 +315,7 @@ fun HomeScreen(
 
                     if (state.totalContactCount == 0) {
                         Column(
-                            modifier = Modifier.clickable { showAddContact = true },
+                            modifier = Modifier.clickable(role = Role.Button) { showAddContact = true },
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Box(
@@ -293,8 +358,42 @@ fun HomeScreen(
                             outstandingCount = state.outstandingCount,
                             checkingInContactId = state.checkingInContactId,
                             onCheckIn = viewModel::checkIn,
-                            onContactClick = onContactClick,
+                            onContactClick = { contact ->
+                                if (useSupportingPane) {
+                                    selectedContactId = contact.id
+                                } else {
+                                    onContactClick(contact)
+                                }
+                            },
+                            timelineMaxCellSize = timelineMaxCellSize,
                         )
+                    }
+                }
+                    }
+                }
+
+                if (useSupportingPane) {
+                    Box(
+                        modifier = Modifier
+                            .width(380.dp)
+                            .fillMaxHeight()
+                            .padding(end = 16.dp, bottom = 16.dp)
+                            .background(
+                                color = NekkoTheme.colors.background.b1,
+                                shape = RoundedCornerShape(28.dp),
+                            ),
+                    ) {
+                        if (selectedContact != null) {
+                            ContactProfileScreen(
+                                contactId = selectedContact.id,
+                                onBack = { selectedContactId = null },
+                                onBrainstormClick = { onBrainstormClick(selectedContact.id) },
+                                isSupportingPane = true,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        } else {
+                            ContactPaneEmptyState(modifier = Modifier.fillMaxSize())
+                        }
                     }
                 }
             }
@@ -322,6 +421,34 @@ fun HomeScreen(
 
 
 @Composable
+private fun ContactPaneEmptyState(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.padding(24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "Select a contact",
+                color = NekkoTheme.colors.text.primary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Choose someone from your timeline to view their profile here.",
+                color = NekkoTheme.colors.text.tertiary,
+                fontSize = 14.sp,
+            )
+        }
+    }
+}
+
+
+@Composable
 private fun CheckInSection(
     checkIns: List<CheckIn>,
     checkInCounts: Map<String, Int>,
@@ -330,6 +457,7 @@ private fun CheckInSection(
     checkingInContactId: String?,
     onCheckIn: (String) -> Unit,
     onContactClick: (Contact) -> Unit,
+    timelineMaxCellSize: Dp,
 ) {
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     var nowEpochMillis by remember { mutableStateOf(Clock.System.now().toEpochMilliseconds()) }
@@ -394,6 +522,7 @@ private fun CheckInSection(
         Spacer(Modifier.height(4.dp))
         CheckInTimelineGrid(
             slots = slots,
+            maxCellSize = timelineMaxCellSize,
             animateBubble = isCheckInBubbleAnimationEnabled(
                 appInForeground = appInForeground,
                 hasPendingToday = hasPendingToday,
@@ -457,7 +586,7 @@ private fun ContactCheckInRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onContactClick(contact) }
+                .clickable(role = Role.Button) { onContactClick(contact) }
                 .padding(vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -567,6 +696,10 @@ private fun DashedContactDivider() {
     }
 }
 
+@Preview(name = "Phone", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Foldable", device = Devices.FOLDABLE, showBackground = true)
+@Preview(name = "Tablet", device = Devices.TABLET, showBackground = true)
+@Preview(name = "Desktop", device = Devices.DESKTOP, showBackground = true)
 @PreviewLightDark
 @Composable
 fun PreviewHomeScreen() {
