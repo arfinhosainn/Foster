@@ -17,7 +17,7 @@ fun Contact.nextCheckInDateLocal(): LocalDate? =
     nextCheckInDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
 
 fun Contact.isOutstanding(today: LocalDate): Boolean {
-    val next = nextCheckInDateLocal() ?: return true
+    val next = nextCheckInDateLocal() ?: return !isCheckedInToday(today)
     return next <= today
 }
 

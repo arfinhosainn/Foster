@@ -260,8 +260,32 @@ create table if not exists public.contacts (
   constraint contacts_owner_id_fkey foreign key (owner_id)
     references auth.users (id) on delete cascade,
   constraint contacts_check_in_frequency_check
-    check (check_in_frequency in ('none','daily','weekly','biweekly','monthly'))
+    check (check_in_frequency in ('none','daily','weekly','biweekly','monthly','semiannually','annually'))
 );
+
+-- Keep an already-created contacts table aligned with all onboarding and
+-- Add Contact frequency options as well.
+alter table public.contacts
+  drop constraint if exists contacts_check_in_frequency_check;
+alter table public.contacts
+  add constraint contacts_check_in_frequency_check
+  check (check_in_frequency in ('none','daily','weekly','biweekly','monthly','semiannually','annually'));
+
+-- Backfill the onboarding contact's schedule when the contact was created by
+-- an earlier version of the RPC that only stored its name and avatar.
+update public.contacts c
+   set check_in_frequency = coalesce(nullif(lower(p.default_frequency), ''), 'none'),
+       reminder_time = p.default_reminder_time
+  from public.profiles p
+ where c.owner_id = p.id
+   and c.id = (
+     select first_contact.id
+       from public.contacts first_contact
+      where first_contact.owner_id = p.id
+      order by first_contact.created_at
+      limit 1
+   )
+   and p.default_frequency is not null;
 
 create index if not exists idx_contacts_owner         on public.contacts(owner_id);
 create index if not exists idx_contacts_next_check_in on public.contacts(next_check_in_date);
@@ -667,11 +691,28 @@ begin
        );
 
     -- The onboarding contact is the first Home contact. Keep this seed
-    -- idempotent and retain the selected avatar as the Home avatar color.
-    if nullif(payload->>'contactName', '') is not null
-       and not exists (select 1 from public.contacts where owner_id = v_user_id) then
-      insert into public.contacts (owner_id, name, avatar_color)
-      values (v_user_id, payload->>'contactName', payload->>'selectedAvatarColor')
+    -- idempotent and retain all relationship settings selected during setup.
+    select id into v_contact_id
+      from public.contacts
+     where owner_id = v_user_id
+     order by created_at
+     limit 1;
+
+    if v_contact_id is null and nullif(payload->>'contactName', '') is not null then
+      insert into public.contacts (
+        owner_id,
+        name,
+        avatar_color,
+        check_in_frequency,
+        reminder_time
+      )
+      values (
+        v_user_id,
+        payload->>'contactName',
+        payload->>'selectedAvatarColor',
+        coalesce(nullif(lower(payload->>'reminderFrequency'), ''), 'none'),
+        v_time
+      )
       returning id into v_contact_id;
     end if;
 
@@ -690,23 +731,22 @@ begin
       end if;
     end if;
 
-    -- custom reminders: only seed if the account has none yet
-    if not exists (select 1 from public.custom_reminders where owner_id = v_user_id) then
+    -- Custom reminders and notes created during onboarding belong to the
+    -- onboarding contact. The payload intentionally has no contactId because
+    -- the contact UUID does not exist until this transaction creates it.
+    if v_contact_id is not null
+       and not exists (select 1 from public.custom_reminders where owner_id = v_user_id) then
       insert into custom_reminders (owner_id, title, description, recurrence, date_epoch_millis, contact_id)
       select v_user_id, r->>'title', r->>'description', r->>'recurrence',
-             (r->>'dateEpochMillis')::bigint, c.id
-      from jsonb_array_elements(payload->'customReminders') as r
-      left join public.contacts c
-        on c.id = (r->>'contactId')::uuid and c.owner_id = v_user_id;
+             (r->>'dateEpochMillis')::bigint, v_contact_id
+      from jsonb_array_elements(coalesce(payload->'customReminders', '[]'::jsonb)) as r;
     end if;
 
-    -- notes: only seed if the account has none yet
-    if not exists (select 1 from public.notes where owner_id = v_user_id) then
+    if v_contact_id is not null
+       and not exists (select 1 from public.notes where owner_id = v_user_id) then
       insert into notes (owner_id, title, body, contact_id)
-      select v_user_id, n->>'title', n->>'body', c.id
-      from jsonb_array_elements(payload->'notes') as n
-      left join public.contacts c
-        on c.id = (n->>'contactId')::uuid and c.owner_id = v_user_id;
+      select v_user_id, n->>'title', n->>'body', v_contact_id
+      from jsonb_array_elements(coalesce(payload->'notes', '[]'::jsonb)) as n;
     end if;
   end if;
 

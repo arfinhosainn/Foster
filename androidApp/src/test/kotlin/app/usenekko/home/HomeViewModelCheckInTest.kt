@@ -113,6 +113,30 @@ class HomeViewModelCheckInTest {
     }
 
     @Test
+    fun alreadyCheckedInContactCannotBeCheckedInAgain() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(
+                    contact("c1", next = today.plus(DatePeriod(days = 1)).toString())
+                        .copy(lastCheckInDate = today.toString()),
+                ),
+            )
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+
+            assertEquals(0, dataSource.logCheckInCalls.size)
+            assertEquals(0, dataSource.checkIns.size)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun todayCheckInListExcludesContactsDueLaterAndIncludesCompletedToday() {
         val completedToday = contact("completed", next = today.plus(DatePeriod(days = 7)).toString())
             .copy(lastCheckInDate = today.toString())

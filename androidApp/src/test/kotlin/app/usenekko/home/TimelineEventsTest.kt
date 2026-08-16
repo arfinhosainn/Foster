@@ -28,6 +28,7 @@ import app.usenekko.home.presentation.components.timelineRowSpacing
 import app.usenekko.home.presentation.components.timelineRowSlotIndices
 import app.usenekko.home.presentation.components.timelineStackedAvatarIndicatorOffset
 import app.usenekko.home.presentation.components.timelineAvatarOverflowCount
+import app.usenekko.home.presentation.homeLoadingTimelineRowSlotCounts
 import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -201,6 +202,12 @@ class TimelineEventsTest {
     fun calendarIncompleteRowsKeepTheirOriginalAlignment() {
         assertEquals(3, timelineRowLeadingEmptyColumns(visualRow = 4))
         assertEquals(0, timelineRowLeadingEmptyColumns(visualRow = 0))
+    }
+
+    @Test
+    fun loadingCalendarUsesTheSameFiveRowsAndTwentySixVisibleCellsAsTheNormalCalendar() {
+        assertEquals(listOf(4, 7, 7, 7, 1), homeLoadingTimelineRowSlotCounts())
+        assertEquals(26, homeLoadingTimelineRowSlotCounts().sum())
     }
 
     @Test

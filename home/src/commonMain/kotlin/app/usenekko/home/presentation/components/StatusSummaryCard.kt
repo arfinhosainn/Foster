@@ -23,7 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -80,7 +82,13 @@ fun StatusSummaryCard(
                     bgResource = outstandingBgResource,
                     modifier = Modifier
                         .weight(1f)
-                        .clickable(onClick = onOutstandingClick)
+                        .clip(RoundedCornerShape(topStart = 32.dp, bottomStart = 32.dp))
+                        .clickable(
+                            interactionSource = null,
+                            indication = null,
+                            role = Role.Button,
+                            onClick = onOutstandingClick,
+                        )
                 )
 
                 // Divider
@@ -97,7 +105,13 @@ fun StatusSummaryCard(
                     bgResource = upToDateBgResource,
                     modifier = Modifier
                         .weight(1f)
-                        .clickable(onClick = onUpToDateClick)
+                        .clip(RoundedCornerShape(topEnd = 32.dp, bottomEnd = 32.dp))
+                        .clickable(
+                            interactionSource = null,
+                            indication = null,
+                            role = Role.Button,
+                            onClick = onUpToDateClick,
+                        )
                 )
             }
         }

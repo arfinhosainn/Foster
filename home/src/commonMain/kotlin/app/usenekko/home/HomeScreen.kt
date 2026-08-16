@@ -279,7 +279,7 @@ fun HomeScreen(
                 Spacer(Modifier.height(32.dp))
 
                 if (state.isLoading) {
-                    HomeLoadingSkeleton()
+                    HomeLoadingSkeleton(timelineMaxCellSize = timelineMaxCellSize)
                 } else {
                     StatusSummaryCard(
                         outstandingCount = state.outstandingCount,

@@ -124,18 +124,15 @@ class HomeViewModel(
 
     fun checkIn(contactId: String) {
         if (_state.value.checkingInContactId != null) return
+        val today = today()
+        val contact = allContacts.firstOrNull { it.id == contactId }
+        if (contact == null || !contact.isOutstanding(today) || contact.isCheckedInToday(today)) return
+
         viewModelScope.launch {
             _state.value = _state.value.copy(checkingInContactId = contactId, checkInError = null)
 
-            val contact = allContacts.firstOrNull { it.id == contactId }
-            if (contact == null) {
-                _state.value = _state.value.copy(checkingInContactId = null)
-                return@launch
-            }
-
             val previousBadges = contactDataSource.unlockedBadgeIdsOrNull()
 
-            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
             val update = computeCheckInUpdate(contact, today)
             val result = contactDataSource.logCheckIn(
                 contactId = contact.id,
@@ -147,6 +144,17 @@ class HomeViewModel(
             _state.value = _state.value.copy(checkingInContactId = null)
             when (result) {
                 is Result.Success -> {
+                    allContacts = allContacts.map { existing ->
+                        if (existing.id == result.data.id) result.data else existing
+                    }
+                    val checkedInTodayContactIds = _state.value.checkIns.contactIdsCheckedInOn(today) +
+                        allContacts.filter { it.isCheckedInToday(today) }.map { it.id }
+                    recomputeCounts(
+                        contacts = allContacts,
+                        groupId = _state.value.selectedGroupId,
+                        memberships = memberships,
+                        checkedInTodayContactIds = checkedInTodayContactIds,
+                    )
                     if (previousBadges != null) {
                         contactDataSource.detectAndTriggerBadgeReveal(previousBadges)
                     }
