@@ -86,7 +86,9 @@ val CHECK_IN_BUBBLE_MIN_SIZE = 86.dp
 private const val MAX_VISIBLE_AVATARS = 2
 private const val SECOND_AVATAR_VERTICAL_OFFSET_RATIO = 0.20f
 private const val BUBBLE_ANIMATION_DURATION_MILLIS = 1000
-private val MAX_TIMELINE_CELL_SIZE = 50.dp
+private val BASE_TIMELINE_CELL_SIZE = 50.dp
+private val MEDIUM_TIMELINE_CELL_SIZE = 56.dp
+private val EXPANDED_TIMELINE_CELL_SIZE = 64.dp
 private val TIMELINE_AVATAR_SIZE = 40.dp
 private val STACKED_AVATAR_SIZE = 32.dp
 private val STACKED_INDICATOR_INSET = 1.dp
@@ -120,10 +122,17 @@ fun timelineRowLeadingEmptyColumns(visualRow: Int): Int {
 fun timelineCellSizeForWidth(
     maxWidth: Dp,
     horizontalSpacing: Dp = MIN_TIMELINE_HORIZONTAL_SPACING,
+    maxCellSize: Dp? = null,
 ): Dp =
     ((maxWidth - horizontalSpacing * (TIMELINE_COLUMNS - 1)) / TIMELINE_COLUMNS)
-        .coerceAtMost(MAX_TIMELINE_CELL_SIZE)
+        .coerceAtMost(maxCellSize ?: timelineMaxCellSizeForWidth(maxWidth))
         .coerceAtLeast(0.dp)
+
+fun timelineMaxCellSizeForWidth(maxWidth: Dp): Dp = when {
+    maxWidth < 600.dp -> BASE_TIMELINE_CELL_SIZE
+    maxWidth < 840.dp -> MEDIUM_TIMELINE_CELL_SIZE
+    else -> EXPANDED_TIMELINE_CELL_SIZE
+}
 
 fun timelineRowSpacing(verticalSpacing: Dp = 6.dp): Dp =
     verticalSpacing.coerceAtLeast(MIN_TIMELINE_VERTICAL_SPACING)
@@ -134,8 +143,15 @@ fun timelineAvatarSize(index: Int, visibleCount: Int, cellSize: Dp): Dp {
     } else {
         TIMELINE_AVATAR_SIZE
     }
-    return cellSize.coerceAtMost(targetSize)
+    val scale = (cellSize / BASE_TIMELINE_CELL_SIZE).coerceAtLeast(1f)
+    return (targetSize * scale).coerceAtMost(cellSize)
 }
+
+fun timelineBubbleSize(cellSize: Dp): Dp =
+    CHECK_IN_BUBBLE_SIZE * (cellSize / BASE_TIMELINE_CELL_SIZE).coerceAtLeast(1f)
+
+private fun timelineBubbleMinSize(cellSize: Dp): Dp =
+    CHECK_IN_BUBBLE_MIN_SIZE * (cellSize / BASE_TIMELINE_CELL_SIZE).coerceAtLeast(1f)
 
 enum class TimelineAvatarIndicatorAnchor {
     SingleAvatar,
@@ -271,6 +287,7 @@ fun CheckInTimelineGrid(
     colors: TimelineGridColors = timelineGridColors(),
     horizontalSpacing: Dp = 6.dp,
     verticalSpacing: Dp = 6.dp,
+    maxCellSize: Dp? = null,
     animateBubble: Boolean = true,
     onSlotClick: ((TimelineSlot) -> Unit)? = null,
 ) {
@@ -282,7 +299,7 @@ fun CheckInTimelineGrid(
         val effectiveHorizontalSpacing =
             horizontalSpacing.coerceAtLeast(MIN_TIMELINE_HORIZONTAL_SPACING)
         val effectiveVerticalSpacing = timelineRowSpacing(verticalSpacing)
-        val cellSize = timelineCellSizeForWidth(maxWidth, effectiveHorizontalSpacing)
+        val cellSize = timelineCellSizeForWidth(maxWidth, effectiveHorizontalSpacing, maxCellSize)
         val gridWidth = cellSize * TIMELINE_COLUMNS +
                 effectiveHorizontalSpacing * (TIMELINE_COLUMNS - 1)
 
@@ -372,13 +389,16 @@ private fun TimelineCell(
 private fun BouncingAvatarBubble(
     color: Color,
     animate: Boolean,
+    cellSize: Dp,
     modifier: Modifier = Modifier,
 ) {
+    val bubbleSize = timelineBubbleSize(cellSize)
+    val bubbleMinSize = timelineBubbleMinSize(cellSize)
     val bubbleScale = if (animate && !LocalInspectionMode.current) {
         val transition = rememberInfiniteTransition(label = "checkInBubble")
         val value by transition.animateFloat(
             initialValue = 1f,
-            targetValue = CHECK_IN_BUBBLE_MIN_SIZE.value / CHECK_IN_BUBBLE_SIZE.value,
+            targetValue = bubbleMinSize.value / bubbleSize.value,
             animationSpec = infiniteRepeatable(
                 animation = tween(durationMillis = BUBBLE_ANIMATION_DURATION_MILLIS),
                 repeatMode = RepeatMode.Reverse,
@@ -391,7 +411,7 @@ private fun BouncingAvatarBubble(
     Box(
         modifier = Modifier
             .then(modifier)
-            .requiredSize(CHECK_IN_BUBBLE_SIZE * bubbleScale)
+            .requiredSize(bubbleSize * bubbleScale)
             .background(color, CircleShape),
     )
 }
@@ -457,6 +477,7 @@ private fun AvatarCell(
             BouncingAvatarBubble(
                 color = colors.bubble,
                 animate = animateBubble,
+                cellSize = cellSize,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .offset(

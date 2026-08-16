@@ -144,6 +144,7 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
 
                 is Screen.Home -> HomeScreen(
                     onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
+                    onBrainstormClick = { contactId -> navigator.navigate(Screen.Brainstorm(contactId)) },
                     onSettingsClick = { navigator.navigate(Screen.Settings) },
                     onShowPaywall = { navigator.navigate(Screen.Paywall) },
                 )

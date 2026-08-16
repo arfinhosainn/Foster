@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -41,6 +43,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -67,6 +70,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
 import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.home.presentation.components.contactsForGroup
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_add
@@ -90,7 +94,7 @@ fun GroupBottomSheet(
     val viewModel = rememberGroupSettingsViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true,)
-    var selectedGroupId by remember(groupId) { mutableStateOf(groupId) }
+    var selectedGroupId by rememberSaveable(groupId) { mutableStateOf(groupId) }
 
 
 
@@ -106,19 +110,19 @@ fun GroupBottomSheet(
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
     ) {
-        selectedGroupId?.let { groupId ->
-            GroupMembersContent(
-                groupId = groupId,
-                onBack = { selectedGroupId = null },
-            )
-        } ?: run {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 24.dp),
-            ) {
+        AdaptiveSurface {
+            selectedGroupId?.let { groupId ->
+                GroupMembersContent(
+                    groupId = groupId,
+                    onBack = { selectedGroupId = null },
+                )
+            } ?: run {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = 24.dp),
+                ) {
                 Text(
                     text = "Groups",
                     color = NekkoTheme.colors.text.primary,
@@ -178,6 +182,7 @@ fun GroupBottomSheet(
                     enabled = !state.isSaving,
                     loading = state.isSaving,
                 )
+                }
             }
         }
     }
@@ -195,7 +200,6 @@ private fun GroupMembersContent(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
             .padding(bottom = 24.dp),
     ) {
         Box(
@@ -536,26 +540,32 @@ private fun GroupGrid(
     onDelete: (String) -> Unit,
     onGroupClick: (String) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
-        state.groups.chunked(2).forEach { rowGroups ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                rowGroups.forEach { group ->
-                    GroupItem(
-                        group = group,
-                        members = contactsForGroup(group.id, state.contacts, state.memberships),
-                        memberCount = state.memberCount(group.id),
-                        isEditing = state.isEditing,
-                        name = state.draftNames[group.id] ?: group.name,
-                        onNameChanged = { onGroupNameChanged(group.id, it) },
-                        onDelete = { onDelete(group.id) },
-                        onClick = { onGroupClick(group.id) },
-                        modifier = Modifier.weight(1f),
-                    )
+    BoxWithConstraints {
+        val columns = (maxWidth / 180.dp).toInt().coerceIn(2, 4)
+
+        Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
+            state.groups.chunked(columns).forEach { rowGroups ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    rowGroups.forEach { group ->
+                        GroupItem(
+                            group = group,
+                            members = contactsForGroup(group.id, state.contacts, state.memberships),
+                            memberCount = state.memberCount(group.id),
+                            isEditing = state.isEditing,
+                            name = state.draftNames[group.id] ?: group.name,
+                            onNameChanged = { onGroupNameChanged(group.id, it) },
+                            onDelete = { onDelete(group.id) },
+                            onClick = { onGroupClick(group.id) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    repeat(columns - rowGroups.size) {
+                        Spacer(Modifier.weight(1f))
+                    }
                 }
-                if (rowGroups.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     }
@@ -584,20 +594,21 @@ private fun GroupGridLoadingSkeleton(
         end = Offset((shimmerPosition + 1f) * 500f, 500f),
     )
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(28.dp),
-    ) {
-        repeat(2) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                repeat(2) {
-                    GroupItemLoadingSkeleton(
-                        brush = shimmerBrush,
-                        modifier = Modifier.weight(1f),
-                    )
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val columns = (maxWidth / 180.dp).toInt().coerceIn(2, 4)
+
+        Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
+            repeat(2) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    repeat(columns) {
+                        GroupItemLoadingSkeleton(
+                            brush = shimmerBrush,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
         }

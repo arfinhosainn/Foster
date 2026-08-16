@@ -32,6 +32,7 @@ fun ContactProfileScreen(
     contactId: String,
     onBack: () -> Unit,
     onBrainstormClick: () -> Unit,
+    isSupportingPane: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberContactProfileViewModel(contactId)
@@ -54,12 +55,15 @@ fun ContactProfileScreen(
     }
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.then(
+            if (isSupportingPane) Modifier.padding(horizontal = 8.dp) else Modifier,
+        ),
         topBar = {
             ContactProfileTopBar(
                 daysUntilNextCheckIn = state.daysUntilNextCheckIn,
                 onBack = onBack,
                 onEditClick = {}, // no-op — no edit screen yet, deferred
+                modifier = if (isSupportingPane) Modifier.padding(horizontal = 8.dp) else Modifier,
             )
         },
         containerColor = NekkoTheme.colors.background.b0,
@@ -67,7 +71,7 @@ fun ContactProfileScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = if (isSupportingPane) 16.dp else 24.dp)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
         ) {

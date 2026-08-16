@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,10 +20,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -98,6 +101,39 @@ fun GlassBottomNavBar(
 }
 
 @Composable
+fun GlassNavigationRail(
+    selectedIndex: Int,
+    onItemSelected: (Int) -> Unit,
+    onAddClick: () -> Unit,
+    liquidState: LiquidState,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier
+            .width(88.dp)
+            .fillMaxHeight()
+            .padding(horizontal = 12.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        NavRailPill(
+            destinations = Destinations,
+            selectedIndex = selectedIndex,
+            onSelect = onItemSelected,
+            liquidState = liquidState,
+        )
+        Spacer(Modifier.weight(1f))
+        GlassIconButton(
+            icon = Res.drawable.ic_contact,
+            contentDescription = "Invite someone",
+            onClick = onAddClick,
+            liquidState = liquidState,
+            size = BarHeight.dp,
+            iconSize = 26.dp,
+        )
+    }
+}
+
+@Composable
 private fun NavPill(
     destinations: List<NavDestination>,
     selectedIndex: Int,
@@ -153,6 +189,67 @@ private fun NavPill(
                     selected = index == selectedIndex,
                     onClick = { onSelect(index) },
                     modifier = Modifier.width(cellWidth).fillMaxHeight(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NavRailPill(
+    destinations: List<NavDestination>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    liquidState: LiquidState,
+    modifier: Modifier = Modifier,
+) {
+    val cellHeight = CellWidth.dp
+    val innerPadding = PillInnerPadding.dp
+    val glassTint = if (isSystemInDarkTheme()) NekkoTheme.colors.fill.secondary
+    else Color.White.copy(alpha = 0.45f)
+
+    Box(
+        modifier
+            .width(BarHeight.dp)
+            .height(cellHeight * destinations.size + innerPadding * 2)
+            .liquid(liquidState) {
+                frost = 5.dp
+                shape = RoundedCornerShape(34.dp)
+                refraction = 0.18f
+                curve = 0.30f
+                edge = 0.06f
+                tint = glassTint
+                saturation = 1.15f
+                dispersion = 0f
+            }
+            .clip(RoundedCornerShape(34.dp)),
+    ) {
+        val indicatorY by animateDpAsState(
+            targetValue = innerPadding + cellHeight * selectedIndex + (cellHeight - IndicatorSize.dp) / 2,
+            animationSpec = spring(dampingRatio = 0.68f, stiffness = 340f),
+            label = "indicatorY",
+        )
+
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .offset(y = indicatorY)
+                .size(IndicatorSize.dp)
+                .background(NekkoTheme.colors.fill.tertiary, CircleShape),
+        )
+
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(vertical = innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            destinations.forEachIndexed { index, destination ->
+                NavCell(
+                    destination = destination,
+                    selected = index == selectedIndex,
+                    onClick = { onSelect(index) },
+                    modifier = Modifier.width(cellHeight).height(cellHeight),
                 )
             }
         }

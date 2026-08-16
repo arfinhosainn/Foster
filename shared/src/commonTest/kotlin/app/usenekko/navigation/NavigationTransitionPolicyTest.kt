@@ -100,6 +100,18 @@ class NavigationTransitionPolicyTest {
     }
 
     @Test
+    fun inPlacePanePresentationDoesNotReplayRouteAnimation() {
+        assertEquals(
+            ScreenTransitionStyle.None,
+            transitionStyle(
+                initial = state(Screen.Home),
+                target = state(Screen.ContactProfile("contact-id"), NavigationOperation.Replace),
+                presentation = NavigationPresentation.InPlacePane,
+            ),
+        )
+    }
+
+    @Test
     fun animationSpecsAreCentralized() {
         assertEquals(300, NavAnimationSpecs.HorizontalDurationMillis)
         assertEquals(400, NavAnimationSpecs.VerticalDurationMillis)

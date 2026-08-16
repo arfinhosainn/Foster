@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import app.usenekko.theme.AppThemeMode
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.theme_dark
@@ -72,12 +73,12 @@ fun AppearanceBottomSheet(
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+            ) {
             Text(
                 text = "Appearance",
                 style = NekkoTheme.typography.heading1Bold,
@@ -100,6 +101,7 @@ fun AppearanceBottomSheet(
                         modifier = Modifier.weight(1f),
                     )
                 }
+            }
             }
         }
     }

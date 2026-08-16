@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
@@ -75,14 +76,15 @@ fun RelationshipInfoSheet(
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
         modifier = modifier,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .imePadding(),
-        ) {
+        AdaptiveSurface {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding(),
             ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -149,13 +151,14 @@ fun RelationshipInfoSheet(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 DashedDivider(modifier = Modifier.padding(horizontal = 24.dp))
-            }
+                }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             GrassProgress(checkInCount = checkInCount)
 
             Spacer(modifier = Modifier.height(16.dp))
+            }
         }
     }
 }

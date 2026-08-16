@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,7 +50,7 @@ fun DeleteAccountBottomSheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var confirmedText by remember { mutableStateOf("") }
+    var confirmedText by rememberSaveable { mutableStateOf("") }
     val confirmed = !isLoading && confirmedText.uppercase() == "DELETE"
 
     ModalBottomSheet(
@@ -58,12 +60,12 @@ fun DeleteAccountBottomSheet(
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+            ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Delete Account",
@@ -189,6 +191,7 @@ fun DeleteAccountBottomSheet(
                         disabledContentColor = Color.White.copy(alpha = 0.6f),
                     ),
                 )
+            }
             }
         }
     }

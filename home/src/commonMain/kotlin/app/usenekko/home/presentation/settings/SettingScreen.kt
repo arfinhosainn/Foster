@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -25,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +37,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,14 +93,14 @@ fun SettingScreen(
     val themeStore = LocalThemeStore.current
     val selectedMode by themeStore?.mode?.collectAsState()
         ?: remember { mutableStateOf(AppThemeMode.SYSTEM) }
-    var showAppearanceSheet by remember { mutableStateOf(false) }
-    var showAccountSheet by remember { mutableStateOf(false) }
-    var showGroupSheet by remember { mutableStateOf(false) }
+    var showAppearanceSheet by rememberSaveable { mutableStateOf(false) }
+    var showAccountSheet by rememberSaveable { mutableStateOf(false) }
+    var showGroupSheet by rememberSaveable { mutableStateOf(false) }
 
     // Delete Account — destructive & irreversible. Gated behind a typed
     // confirmation sheet; only signs out + routes to Welcome on real success.
     val deleteAccountDataSource = LocalDeleteAccountDataSource.current
-    var showDeleteSheet by remember { mutableStateOf(false) }
+    var showDeleteSheet by rememberSaveable { mutableStateOf(false) }
     var deleteLoading by remember { mutableStateOf(false) }
     var deleteError by remember { mutableStateOf<String?>(null) }
 
@@ -150,7 +155,9 @@ fun SettingScreen(
         // Scrollable content — padded so initial position clears the top bar
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxHeight()
+                .widthIn(max = 720.dp)
+                .align(Alignment.TopCenter)
                 .background(NekkoTheme.colors.background.b0)
                 .then(backgroundModifier)
                 .padding(
@@ -344,6 +351,10 @@ fun SettingScreen(
 
 
 @PreviewLightDark
+@Preview(name = "Phone", device = Devices.PHONE, showBackground = true)
+@Preview(name = "Foldable", device = Devices.FOLDABLE, showBackground = true)
+@Preview(name = "Tablet", device = Devices.TABLET, showBackground = true)
+@Preview(name = "Desktop", device = Devices.DESKTOP, showBackground = true)
 @Composable
 fun PreviewSettingScreen() = NekkoTheme {
     SettingScreen(onBack = {})

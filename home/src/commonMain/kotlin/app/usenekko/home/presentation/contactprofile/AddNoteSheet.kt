@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,13 +56,13 @@ fun AddNoteSheet(
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
         modifier = modifier,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .imePadding(),
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+                    .imePadding(),
+            ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Add Note",
@@ -164,6 +165,7 @@ fun AddNoteSheet(
                 enabled = draftTitle.isNotBlank() && !isSaving,
                 loading = isSaving,
             )
+            }
         }
     }
 }

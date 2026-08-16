@@ -33,6 +33,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Alignment
@@ -67,8 +68,8 @@ fun GroupSettingsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val liquidState = rememberLiquidState()
-    var isEditOptions by remember { mutableStateOf(false) }
-    var selectedGroupId by remember { mutableStateOf<String?>(null) }
+    var isEditOptions by rememberSaveable { mutableStateOf(false) }
+    var selectedGroupId by rememberSaveable { mutableStateOf<String?>(null) }
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->

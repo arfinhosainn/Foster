@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +53,7 @@ import app.usenekko.home.domain.BadgeSlot
 import app.usenekko.home.di.rememberAccountViewModel
 import app.usenekko.home.presentation.badges.badgeIcon
 import app.usenekko.home.presentation.components.avatarIndexForId
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_close
@@ -70,7 +72,7 @@ fun AccountBottomSheet(
     val viewModel = rememberAccountViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var showAvatarPicker by remember { mutableStateOf(false) }
+    var showAvatarPicker by rememberSaveable { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -81,14 +83,14 @@ fun AccountBottomSheet(
             BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary)
         },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center,
@@ -180,6 +182,7 @@ fun AccountBottomSheet(
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,
                 )
+            }
             }
         }
     }

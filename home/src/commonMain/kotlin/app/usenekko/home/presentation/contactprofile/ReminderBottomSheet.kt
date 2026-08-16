@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.Animatable
 import app.usenekko.designsystem.buttons.NekkoActionButton
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.home.domain.Reminder
 import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.launch
@@ -71,13 +72,13 @@ fun ReminderBottomSheet(
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
         modifier = modifier,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 32.dp),
+            ) {
             Text(
                 text = "Reminders",
                 style = NekkoTheme.typography.heading3Bold,
@@ -110,6 +111,7 @@ fun ReminderBottomSheet(
                     onClick = onAddReminder,
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
+            }
             }
         }
     }
