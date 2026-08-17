@@ -155,7 +155,7 @@ private fun StatusItem(
             Text(
                 text = count.toString(),
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Black,
+                fontWeight = FontWeight.ExtraBold,
                 color = NekkoTheme.colors.text.primary,
                 modifier = Modifier.offset(y = (20).dp)   // Fine-tune vertical position
             )

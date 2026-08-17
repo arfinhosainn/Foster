@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -49,6 +50,7 @@ import nekko.home.generated.resources.grass_2
 import nekko.home.generated.resources.grass_3
 import nekko.home.generated.resources.grass_4
 import nekko.home.generated.resources.grass_5
+import nekko.home.generated.resources.ic_back
 import nekko.home.generated.resources.ic_forwardarrow
 import nekko.home.generated.resources.ic_sprout
 import org.jetbrains.compose.resources.DrawableResource
@@ -74,7 +76,7 @@ fun RelationshipInfoSheet(
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
-        modifier = modifier,
+        modifier = modifier.padding(horizontal = 10.dp),
     ) {
         AdaptiveSurface {
             Column(
@@ -85,79 +87,82 @@ fun RelationshipInfoSheet(
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(Color.Transparent)
-                            .clickable(onClick = onDismiss),
-                        contentAlignment = Alignment.Center,
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            imageVector = vectorResource(Res.drawable.ic_forwardarrow),
-                            contentDescription = "Close check-in details",
-                            tint = NekkoTheme.colors.text.primary,
-                            modifier = Modifier.size(24.dp),
+                        IconButton(onClick = {}) {
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.ic_forwardarrow),
+                                contentDescription = "Close check-in details",
+                            )
+                        }
+
+
+//                        Box(
+//                            modifier = Modifier
+//                                .size(40.dp)
+//                                .clip(CircleShape)
+//                                .background(Color.Transparent)
+//                                .clickable(onClick = onDismiss),
+//                            contentAlignment = Alignment.Center,
+//                        ) {
+//                            Icon(
+//                                imageVector = vectorResource(Res.drawable.ic_forwardarrow),
+//                                contentDescription = "Close check-in details",
+//                                tint = NekkoTheme.colors.text.primary,
+//                                modifier = Modifier.size(24.dp),
+//                            )
+//                        }
+                        Text(
+                            text = contactName,
+                            style = NekkoTheme.typography.heading2Bold,
+                            fontWeight = FontWeight.Medium,
+                            color = NekkoTheme.colors.text.primary,
+                            modifier = Modifier.weight(1f),
                         )
                     }
-//                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Text(
-                        text = contactName,
-                        style = NekkoTheme.typography.heading2Bold,
-                        fontWeight = FontWeight.Medium,
-                        color = NekkoTheme.colors.text.primary,
-                        modifier = Modifier.weight(1f),
+                        text = "Next check-in: ${formatLongCheckInDate(nextCheckInDate)}",
+                        style = NekkoTheme.typography.heading4,
+                        fontWeight = FontWeight.SemiBold,
+                        color = NekkoTheme.colors.text.tertiary,
+                        modifier = Modifier.padding(horizontal = 12.dp),
                     )
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    CheckInStatsCard(
+                        avatarColor = avatarColor,
+                        userSelectedAvatarId = userSelectedAvatarId,
+                        checkInCount = checkInCount,
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "Updated just now",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp,
+                        color = NekkoTheme.colors.text.tertiary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    DashedDivider(modifier = Modifier.padding(horizontal = 24.dp))
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = "Next check-in: ${formatLongCheckInDate(nextCheckInDate)}",
-                    style = NekkoTheme.typography.heading4,
-                    fontWeight = FontWeight.SemiBold,
-                    color = NekkoTheme.colors.text.tertiary,
-                    modifier = Modifier.padding(horizontal = 35.dp),
-                )
+                GrassProgress(checkInCount = checkInCount)
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                CheckInStatsCard(
-                    avatarColor = avatarColor,
-                    userSelectedAvatarId = userSelectedAvatarId,
-                    checkInCount = checkInCount,
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Updated just now",
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    color = NekkoTheme.colors.text.tertiary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                DashedDivider(modifier = Modifier.padding(horizontal = 24.dp))
-                }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            GrassProgress(checkInCount = checkInCount)
-
-            Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -255,15 +260,16 @@ private fun CheckInCountSummary(
         ) {
             Box(
                 contentAlignment = Alignment.Center,
+                modifier  = modifier.background(Color.White.copy(alpha = 0.3f))
             ) {
                 Image(
                     painter = painterResource(Res.drawable.ic_sprout),
                     contentDescription = "Check-in growth",
-                    modifier = Modifier.size(width = 16.dp, height = 21.dp),
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Column {
             Text(
                 text = checkInCountText(checkInCount),
@@ -284,7 +290,7 @@ private fun CheckInCountSummary(
 fun checkInCountText(checkInCount: Int): String = checkInCount.toString()
 
 @Composable
- fun DashedDivider(modifier: Modifier = Modifier) {
+fun DashedDivider(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -309,7 +315,7 @@ private fun GrassProgress(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(180.dp),
+            .height(100.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Image(

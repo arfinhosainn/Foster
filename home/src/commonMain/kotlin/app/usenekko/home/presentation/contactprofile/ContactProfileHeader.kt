@@ -1,6 +1,5 @@
 package app.usenekko.home.presentation.contactprofile
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,9 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
+import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
-import nekko.home.generated.resources.avatar_red
 import nekko.home.generated.resources.ic_dropdown
 import nekko.home.generated.resources.ic_notification
 import nekko.home.generated.resources.ic_reminder
@@ -46,6 +45,7 @@ import org.jetbrains.compose.resources.vectorResource
 @Composable
 fun ContactProfileHeader(
     name: String,
+    avatarColor: String?,
     frequencyLabel: String,
     reminderTime: String,
     isExpanded: Boolean,
@@ -69,10 +69,9 @@ fun ContactProfileHeader(
                 .background(NekkoTheme.colors.fill.secondary),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                imageVector = vectorResource(Res.drawable.avatar_red),
-                contentDescription = "Avatar",
-                modifier = Modifier.size(64.dp)
+            ContactAvatar(
+                avatarColor = avatarColor,
+                modifier = Modifier.size(80.dp),
             )
         }
         Spacer(Modifier.width(16.dp))
@@ -163,8 +162,9 @@ fun PreviewContactProfileHeader() {
         Surface {
             ContactProfileHeader(
                 name = "Liam Hemsworth",
-                frequencyLabel = "Bi-Weekly",
-                reminderTime = "7:30",
+                avatarColor = "#007AFF",
+                frequencyLabel = "Bi-weekly",
+                reminderTime = "7:30AM",
                 isExpanded = true,
                 onNameClick = {},
                 onNotificationClick = {},

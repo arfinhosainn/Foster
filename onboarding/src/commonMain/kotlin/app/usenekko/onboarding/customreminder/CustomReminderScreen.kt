@@ -214,7 +214,12 @@ private fun CustomReminderScreenContent(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         items(state.reminders) { reminder ->
-                            CustomReminderCard(reminder = reminder)
+                            CustomReminderCard(
+                                reminder = reminder,
+                                onClick = {
+                                    onAction(CustomReminderAction.EditClicked(reminder.id))
+                                },
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                             val dividerColor = NekkoTheme.colors.gray.quaternary
                             Box(

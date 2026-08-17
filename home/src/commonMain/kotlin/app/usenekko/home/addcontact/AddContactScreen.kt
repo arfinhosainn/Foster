@@ -167,6 +167,7 @@ fun AddContactScreen(
         AdaptiveSurface {
             AddContactSheetContent(
                 state = state,
+                isEditing = state.isEditing,
                 onNameChanged = viewModel::onNameChanged,
                 onAvatarSelected = viewModel::onAvatarSelected,
                 onGroupSelected = viewModel::onGroupSelected,
@@ -194,6 +195,7 @@ fun AddContactScreen(
 @Composable
 private fun AddContactSheetContent(
     state: AddContactState,
+    isEditing: Boolean,
     onNameChanged: (String) -> Unit,
     onAvatarSelected: (Int) -> Unit,
     onGroupSelected: (String) -> Unit,
@@ -207,7 +209,13 @@ private fun AddContactSheetContent(
     onImportContact: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val stepMeta = steps[state.currentStep]
+    val stepMeta = steps[state.currentStep].let {
+        if (isEditing && state.currentStep == 0) {
+            StepMeta("Edit contact", "Update the contact details")
+        } else {
+            it
+        }
+    }
 
     Column(
         modifier = modifier
@@ -374,7 +382,7 @@ private fun FooterRow(
 }
 
 @Composable
-private fun NameAndAvatarStep(
+internal fun NameAndAvatarStep(
     state: AddContactState,
     onNameChanged: (String) -> Unit,
     onAvatarSelected: (Int) -> Unit,
@@ -658,7 +666,7 @@ private fun ChooseAvatarBottomSheet(
 }
 
 @Composable
-private fun GroupStep(
+internal fun GroupStep(
     groups: List<Group>,
     contacts: List<Contact>,
     memberships: List<GroupMembership>,
@@ -995,7 +1003,7 @@ private fun SingleMemberAvatar(
 }
 
 @Composable
-private fun FrequencyStep(
+internal fun FrequencyStep(
     state: AddContactState,
     onFrequencySelected: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -1017,7 +1025,7 @@ private fun FrequencyStep(
 }
 
 @Composable
-private fun ReminderTimeStep(
+internal fun ReminderTimeStep(
     state: AddContactState,
     onTimeSelected: (Int, Int, Boolean) -> Unit,
     onTimeDialChanged: (Int) -> Unit,
@@ -1049,7 +1057,7 @@ private fun ReminderTimeStep(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CreateGroupSheet(
+internal fun CreateGroupSheet(
     isSaving: Boolean,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,

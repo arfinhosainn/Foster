@@ -1,6 +1,7 @@
 package app.usenekko.onboarding.addnote.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import app.usenekko.theme.NekkoTheme
 fun NoteCard(
     note: NoteItem,
     onDelete: () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -50,6 +52,7 @@ fun NoteCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(NekkoTheme.colors.fill.quaternary)
+            .clickable(onClick = onClick)
             .padding(20.dp)
     ) {
         Column {
@@ -143,7 +146,8 @@ private fun NoteCardPreview() {
                     date = "Oct 24, 2023",
                     id = "34"
                 ),
-                onDelete = {}
+                onDelete = {},
+                onClick = {}
             )
         }
     }

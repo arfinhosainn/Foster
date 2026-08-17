@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.ButtonDefaults
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -42,8 +44,10 @@ import io.github.jan.supabase.compose.auth.composeAuth
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.gradients
 import nekko.onboarding.generated.resources.ic_apple
+import nekko.onboarding.generated.resources.ic_google
 import nekko.onboarding.generated.resources.users
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun WelcomeScreen(
@@ -171,11 +175,11 @@ fun WelcomeScreen(
                     text = "Continue with Apple",
                     onClick = {
                         try {
-                            kotlin.io.println("Starting Apple Sign-In flow...")
+                            println("Starting Apple Sign-In flow...")
                             appleSignInAction.startFlow()
-                            kotlin.io.println("Apple startFlow returned (no exception)")
+                            println("Apple startFlow returned (no exception)")
                         } catch (e: Exception) {
-                            kotlin.io.println("Apple startFlow threw: ${e.message}")
+                            println("Apple startFlow threw: ${e.message}")
                             errorMessage = "Error: ${e.message}"
                         }
                     },
@@ -197,18 +201,19 @@ fun WelcomeScreen(
                     ),
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Filled.Email,
+                            imageVector = vectorResource(Res.drawable.ic_google),
                             contentDescription = "Google",
+                            tint = Color.Unspecified,
                         )
                     },
                     text = "Continue with Google",
                     onClick = {
                         try {
-                            kotlin.io.println("Starting Google Sign-In flow...")
+                            println("Starting Google Sign-In flow...")
                             googleSignInAction.startFlow()
-                            kotlin.io.println("startFlow returned (no exception)")
+                            println("startFlow returned (no exception)")
                         } catch (e: Exception) {
-                            kotlin.io.println("startFlow threw: ${e.message}")
+                            println("startFlow threw: ${e.message}")
                             errorMessage = "Error: ${e.message}"
                         }
                     },

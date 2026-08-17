@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -42,12 +43,13 @@ import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun NekkoTopBar(
-    audienceOptions: List<AudienceOption>,
-    selectedAudience: AudienceOption,
-    onAudienceSelect: (AudienceOption) -> Unit,
-    userName: String,
-    onAvatarClick: () -> Unit,
-    onPremiumClick: () -> Unit,
+    audienceOptions: List<AudienceOption> = emptyList(),
+    selectedAudience: AudienceOption? = null,
+    onAudienceSelect: (AudienceOption) -> Unit = {},
+    userName: String = "",
+    onAvatarClick: () -> Unit = {},
+    onPremiumClick: () -> Unit = {},
+    title: String? = null,
     avatarContent: @Composable () -> Unit = {
         MonogramAvatar(name = userName)
     },
@@ -59,12 +61,20 @@ fun NekkoTopBar(
         scrolledContainerColor = NekkoTheme.colors.background.b0,
     ),
     title = {
-        NekkoDropDownButton(
-            options = audienceOptions,
-            selected = selectedAudience,
-            onSelect = onAudienceSelect,
-            chevron = Res.drawable.ic_dropdown,
-        )
+        if (title != null) {
+            Text(
+                text = title,
+                color = NekkoTheme.colors.text.primary,
+                style = NekkoTheme.typography.heading3Bold,
+            )
+        } else if (selectedAudience != null) {
+            NekkoDropDownButton(
+                options = audienceOptions,
+                selected = selectedAudience,
+                onSelect = onAudienceSelect,
+                chevron = Res.drawable.ic_dropdown,
+            )
+        }
     },
     navigationIcon = {
         Box(

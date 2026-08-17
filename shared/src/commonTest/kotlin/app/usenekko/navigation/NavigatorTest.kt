@@ -64,6 +64,17 @@ class NavigatorTest {
     }
 
     @Test
+    fun checkInsNavigationCanReturnHome() {
+        val navigator = Navigator(Screen.Home)
+
+        navigator.navigate(Screen.CheckIns)
+
+        assertEquals(Screen.CheckIns, navigator.currentScreen)
+        assertTrue(navigator.goBack())
+        assertEquals(Screen.Home, navigator.currentScreen)
+    }
+
+    @Test
     fun replaceAllClearsPreviousStack() {
         val navigator = Navigator(Screen.Welcome)
 

@@ -42,6 +42,7 @@ class FakeContactDataSource(
         private set
 
     var createContactResult: Result<Contact, ContactError>? = null
+    var updateContactResult: Result<Contact, ContactError>? = null
 
     var getContactsCalls: Int = 0
         private set
@@ -92,6 +93,9 @@ class FakeContactDataSource(
     /** When set, [logCheckIn] suspends until the gate completes. */
     var checkInGate: CompletableDeferred<Unit>? = null
 
+    /** When set, [logCheckIn] returns this backend failure. */
+    var logCheckInError: ContactError? = null
+
     /** When set, [getContacts] suspends until the gate completes. */
     var getContactsGate: CompletableDeferred<Unit>? = null
 
@@ -108,6 +112,14 @@ class FakeContactDataSource(
         val body: String,
     )
 
+    data class UpdateContactCall(
+        val contactId: String,
+        val name: String,
+        val avatarColor: String?,
+        val checkInFrequency: String,
+        val reminderTime: String?,
+    )
+
     data class CreateReminderCall(
         val contactId: String,
         val title: String,
@@ -118,6 +130,7 @@ class FakeContactDataSource(
 
     val logCheckInCalls = mutableListOf<LogCheckInCall>()
     val createNoteCalls = mutableListOf<CreateNoteCall>()
+    val updateContactCalls = mutableListOf<UpdateContactCall>()
     val deletedNoteIds = mutableListOf<String>()
     val createReminderCalls = mutableListOf<CreateReminderCall>()
     val deletedReminderIds = mutableListOf<String>()
@@ -149,6 +162,30 @@ class FakeContactDataSource(
         notes = notes.filterNot { it.contactId == contactId }
         reminders = reminders.filterNot { it.contactId == contactId }
         return Result.Success(Unit)
+    }
+
+    override suspend fun updateContact(
+        contactId: String,
+        name: String,
+        avatarColor: String?,
+        checkInFrequency: String,
+        reminderTime: String?,
+    ): Result<Contact, ContactError> {
+        updateContactCalls += UpdateContactCall(
+            contactId,
+            name,
+            avatarColor,
+            checkInFrequency,
+            reminderTime,
+        )
+        val result = updateContactResult ?: Result.Error(ContactError.Unknown("not used"))
+        if (result is Result.Success) {
+            val index = contacts.indexOfFirst { it.id == contactId }
+            if (index >= 0) {
+                contacts = contacts.toMutableList().also { it[index] = result.data }
+            }
+        }
+        return result
     }
 
     override suspend fun getGroups(): Result<List<Group>, ContactError> {
@@ -243,6 +280,7 @@ class FakeContactDataSource(
     ): Result<Contact, ContactError> {
         logCheckInCalls += LogCheckInCall(contactId, lastCheckInDate, nextCheckInDate, streakCount)
         checkInGate?.await()
+        logCheckInError?.let { return Result.Error(it) }
         val index = contacts.indexOfFirst { it.id == contactId }
         if (index == -1) return Result.Error(ContactError.Unknown("contact not found"))
         val updated = contacts[index].copy(

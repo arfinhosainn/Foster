@@ -11,6 +11,7 @@ import app.usenekko.home.data.AccountRepository
 import app.usenekko.home.data.HomeRepository
 import app.usenekko.home.data.ContactProfileRepository
 import app.usenekko.home.domain.ContactDataSource
+import app.usenekko.home.domain.Contact
 import app.usenekko.home.presentation.HomeViewModel
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
 import app.usenekko.home.presentation.settings.AccountViewModel
@@ -79,6 +80,7 @@ fun addContactViewModelFactory(
     reminderScheduler: ReminderScheduler,
     subscriptionRepository: SubscriptionRepository,
     homeRepository: HomeRepository? = null,
+    editingContact: Contact? = null,
 ) = viewModelFactory {
     initializer {
         AddContactViewModel(
@@ -86,8 +88,27 @@ fun addContactViewModelFactory(
             reminderScheduler = reminderScheduler,
             subscriptionRepository = subscriptionRepository,
             homeRepository = homeRepository,
+            editingContact = editingContact,
         )
     }
+}
+
+@Composable
+fun rememberEditContactViewModel(contact: Contact): AddContactViewModel {
+    val contactDataSource = LocalContactDataSource.current
+    val homeRepository = LocalHomeRepository.current
+    val reminderScheduler = remember { ReminderScheduler() }
+    val subscriptionRepository = LocalSubscriptionRepository.current
+    return viewModel(
+        key = "edit-contact-${contact.id}",
+        factory = addContactViewModelFactory(
+            contactDataSource = contactDataSource,
+            reminderScheduler = reminderScheduler,
+            subscriptionRepository = subscriptionRepository,
+            homeRepository = homeRepository,
+            editingContact = contact,
+        ),
+    )
 }
 
 @Composable

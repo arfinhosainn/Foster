@@ -53,6 +53,7 @@ private fun screenTransitionStyle(screen: Screen): ScreenTransitionStyle {
         Screen.Notification,
         is Screen.ContactProfile,
         Screen.Settings,
+        Screen.CheckIns,
         is Screen.GroupDetail -> ScreenTransitionStyle.Horizontal
 
         Screen.Home -> ScreenTransitionStyle.Reset

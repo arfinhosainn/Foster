@@ -125,7 +125,7 @@ private fun NoteCard(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    val cardColor = NekkoTheme.colors.fill.quaternary
+    val cardColor = NekkoTheme.colors.background.b0
 
     Column(
         modifier = modifier

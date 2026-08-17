@@ -95,17 +95,7 @@ fun NameScreen(
                     },
                     navigationIcon = { },
                     actions = {
-                        Button(
-                            onClick = { viewModel.onSkipClicked() },
-                            colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
-                        ) {
-                            Text(
-                                text = "Skip",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = NekkoTheme.colors.text.secondary,
-                            )
-                        }
+
                     },
                     scrollBehavior = scrollBehavior,
                 )

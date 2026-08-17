@@ -195,6 +195,44 @@ class SupabaseContactDataSource(
         }
     }
 
+    override suspend fun updateContact(
+        contactId: String,
+        name: String,
+        avatarColor: String?,
+        checkInFrequency: String,
+        reminderTime: String?,
+    ): Result<Contact, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest
+                .from("contacts")
+                .update({
+                    this["name"] = name
+                    this["avatar_color"] = avatarColor
+                    this["check_in_frequency"] = checkInFrequency
+                    this["reminder_time"] = reminderTime
+                }) {
+                    filter { eq("id", contactId) }
+                    filter { eq("owner_id", userId) }
+                }
+
+            val updated = client.postgrest
+                .from("contacts")
+                .select {
+                    filter { eq("id", contactId) }
+                    filter { eq("owner_id", userId) }
+                }
+                .decodeSingle<ContactDto>()
+
+            Result.Success(updated.toDomain())
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
     override suspend fun deleteContact(contactId: String): Result<Unit, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()
