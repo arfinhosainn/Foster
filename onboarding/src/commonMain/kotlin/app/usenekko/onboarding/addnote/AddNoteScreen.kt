@@ -248,6 +248,7 @@ private fun AddNoteScreenContent(
                             NoteCard(
                                 note = note,
                                 onDelete = { onAction(AddNoteAction.DeleteNote(note.id)) },
+                                onClick = { onAction(AddNoteAction.EditClicked(note.id)) },
                             )
                         }
                         item {

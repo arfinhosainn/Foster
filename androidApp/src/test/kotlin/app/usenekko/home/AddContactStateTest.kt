@@ -33,6 +33,46 @@ class AddContactStateTest {
     }
 
     @Test
+    fun editSaveIsDisabledUntilAContactValueChanges() {
+        val state = AddContactState(
+            editingContactId = "c1",
+            name = "Alex",
+            initialName = "Alex",
+            selectedAvatarIndex = 2,
+            initialAvatarIndex = 2,
+            selectedGroupId = "g1",
+            initialGroupId = "g1",
+            initialGroupResolved = true,
+            selectedFrequency = "weekly",
+            initialFrequency = "weekly",
+            selectedHour = 10,
+            initialHour = 10,
+            selectedMinute = 30,
+            initialMinute = 30,
+            isAm = true,
+            initialIsAm = true,
+        )
+
+        assertTrue(!state.hasChanges)
+        assertTrue(!state.canSaveChanges)
+        assertTrue(state.copy(name = "Alex Cooper").canSaveChanges)
+        assertTrue(!state.copy(name = "Alex Cooper", initialName = "Alex Cooper").hasChanges)
+    }
+
+    @Test
+    fun editSaveWaitsUntilTheOriginalGroupHasLoaded() {
+        val state = AddContactState(
+            editingContactId = "c1",
+            name = "Alex Cooper",
+            initialName = "Alex",
+            initialGroupResolved = false,
+        )
+
+        assertTrue(!state.hasChanges)
+        assertTrue(!state.canSaveChanges)
+    }
+
+    @Test
     fun importingAContactWithoutPhotoSetsItsNameAndKeepsManualAvatar() {
         val state = AddContactState(
             name = "Old name",

@@ -17,6 +17,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
@@ -25,6 +28,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.usenekko.home.di.rememberContactProfileViewModel
+import app.usenekko.home.di.rememberEditContactViewModel
+import app.usenekko.home.addcontact.EditContactSheet
 import app.usenekko.theme.NekkoTheme
 
 @Composable
@@ -38,6 +43,7 @@ fun ContactProfileScreen(
     val viewModel = rememberContactProfileViewModel(contactId)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
+    var showEditContact by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -62,7 +68,7 @@ fun ContactProfileScreen(
             ContactProfileTopBar(
                 daysUntilNextCheckIn = state.daysUntilNextCheckIn,
                 onBack = onBack,
-                onEditClick = {}, // no-op — no edit screen yet, deferred
+                onEditClick = { showEditContact = true },
                 modifier = if (isSupportingPane) Modifier.padding(horizontal = 8.dp) else Modifier,
             )
         },
@@ -98,8 +104,9 @@ fun ContactProfileScreen(
                 state.contact?.let { c ->
                     ContactProfileHeader(
                         name = c.name,
-                        frequencyLabel = formatFrequencyLabel(c.checkInFrequency),
-                        reminderTime = formatReminderTime(c.reminderTime),
+                        avatarColor = c.avatarColor,
+                        frequencyLabel = formatContactFrequencyLabel(c.checkInFrequency),
+                        reminderTime = formatContactReminderTime(c.reminderTime),
                         isExpanded = state.isRelationshipInfoOpen,
                         onNameClick = {
                             viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo)
@@ -180,20 +187,18 @@ fun ContactProfileScreen(
             onSave = { viewModel.onAction(ContactProfileAction.SaveNote) },
         )
     }
-}
 
-private fun formatFrequencyLabel(frequency: String): String = when (frequency) {
-    "daily" -> "Daily"
-    "weekly" -> "Weekly"
-    "biweekly" -> "Bi-Weekly"
-    "monthly" -> "Monthly"
-    else -> "No schedule"
-}
-
-private fun formatReminderTime(time: String?): String {
-    if (time == null) return ""
-    val parts = time.split(":")
-    val hour = parts.getOrNull(0)?.toIntOrNull()?.toString() ?: return ""
-    val minute = parts.getOrNull(1) ?: return ""
-    return "$hour:$minute"
+    if (showEditContact) {
+        state.contact?.let { contact ->
+            val editViewModel = rememberEditContactViewModel(contact)
+            EditContactSheet(
+                viewModel = editViewModel,
+                onDismiss = { showEditContact = false },
+                onSaved = {
+                    showEditContact = false
+                    viewModel.refreshIfStale(forceRefresh = true)
+                },
+            )
+        }
+    }
 }

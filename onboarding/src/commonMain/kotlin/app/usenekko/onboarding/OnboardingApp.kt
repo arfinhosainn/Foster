@@ -27,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import app.usenekko.home.HomeScreen
+import app.usenekko.home.presentation.CheckInsScreen
 import app.usenekko.home.presentation.badges.BadgeRevealStore
 import app.usenekko.home.presentation.badges.PlantRewardOverlay
 import app.usenekko.home.presentation.brainstorm.BrainstormScreen
@@ -145,6 +146,13 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                 is Screen.Home -> HomeScreen(
                     onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
                     onBrainstormClick = { contactId -> navigator.navigate(Screen.Brainstorm(contactId)) },
+                    onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
+                    onSettingsClick = { navigator.navigate(Screen.Settings) },
+                    onShowPaywall = { navigator.navigate(Screen.Paywall) },
+                )
+
+                is Screen.CheckIns -> CheckInsScreen(
+                    onHomeClick = { navigator.replaceAll(Screen.Home) },
                     onSettingsClick = { navigator.navigate(Screen.Settings) },
                     onShowPaywall = { navigator.navigate(Screen.Paywall) },
                 )
@@ -163,6 +171,7 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                 is Screen.Settings -> SettingScreen(
                     onBack = { navigator.goBack() },
                     onAccountClick = {},
+                    onPremiumClick = { navigator.navigate(Screen.Paywall) },
                     onAccountDeleted = {
                         scope.launch {
                             // The server row is already gone (the Edge Function

@@ -375,8 +375,7 @@ create policy "contact_groups_delete_own" on public.contact_groups for delete
 --     Matches the ERD exactly (no denormalized owner column); RLS resolves
 --     ownership through the contact via a PK-indexed subquery.
 --     contacts.streak_count / last_check_in_date / next_check_in_date are
---     denormalized caches — TODO: update them from the app (or add a trigger)
---     on every check_ins insert, or they'll drift.
+--     denormalized caches maintained by the log_check_in RPC below.
 -- =============================================================================
 
 create table if not exists public.check_ins (
@@ -404,6 +403,57 @@ create policy "check_ins_delete_own" on public.check_ins for delete
   using (
     exists (select 1 from public.contacts c where c.id = contact_id and c.owner_id = auth.uid())
   );
+
+-- Advance a due contact and record its check-in atomically. Keeping this RPC in
+-- the main schema migration ensures a fresh database can use the Home action;
+-- migration_check_in_idempotency.sql repeats the same definition for existing
+-- databases that already applied this migration.
+create or replace function public.log_check_in(
+  p_contact_id uuid,
+  p_last_check_in_date date,
+  p_next_check_in_date date,
+  p_streak_count integer
+)
+returns public.contacts
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  updated_contact public.contacts;
+begin
+  update public.contacts
+  set
+    last_check_in_date = p_last_check_in_date,
+    next_check_in_date = p_next_check_in_date,
+    streak_count = p_streak_count
+  where id = p_contact_id
+    and owner_id = auth.uid()
+    and (
+      next_check_in_date <= p_last_check_in_date
+      or (
+        next_check_in_date is null
+        and (
+          last_check_in_date is null
+          or last_check_in_date < p_last_check_in_date
+        )
+      )
+    )
+  returning * into updated_contact;
+
+  if not found then
+    raise exception 'CONTACT_NOT_DUE';
+  end if;
+
+  insert into public.check_ins (contact_id)
+  values (p_contact_id);
+
+  return updated_contact;
+end;
+$$;
+
+grant execute on function public.log_check_in(uuid, date, date, integer)
+  to authenticated;
 
 -- =============================================================================
 -- 11. brainstorm_sessions / brainstorm_topics — contact-level brainstorming

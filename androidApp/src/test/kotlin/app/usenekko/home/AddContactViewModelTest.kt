@@ -133,6 +133,68 @@ class AddContactViewModelTest {
         }
     }
 
+    @Test
+    fun editingContactPrefillsAndPersistsContactAndGroupChanges() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = dataSource()
+            val repository = repository(dataSource, this)
+            val existing = dataSource.contacts.single()
+            val updated = existing.copy(
+                name = "Alice Cooper",
+                avatarColor = "#FF3B30",
+                checkInFrequency = "monthly",
+                reminderTime = "18:45:00",
+            )
+            dataSource.updateContactResult = Result.Success(updated)
+
+            val viewModel = AddContactViewModel(
+                contactDataSource = dataSource,
+                reminderScheduler = ReminderScheduler(),
+                subscriptionRepository = FakeSubscriptionRepository(),
+                homeRepository = repository,
+                editingContact = existing,
+            )
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.isEditing)
+            assertEquals("Alice", viewModel.state.value.name)
+            assertEquals(5, viewModel.state.value.selectedAvatarIndex)
+            assertEquals("weekly", viewModel.state.value.selectedFrequency)
+            assertEquals("g1", viewModel.state.value.selectedGroupId)
+
+            viewModel.onNameChanged("Alice Cooper")
+            viewModel.onAvatarSelected(3)
+            viewModel.onFrequencySelected("monthly")
+            viewModel.onTimeSelected(6, 45, false)
+            viewModel.onGroupSelected("g2")
+            viewModel.onNextStep()
+            viewModel.onNextStep()
+            viewModel.onNextStep()
+            viewModel.submit()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    FakeContactDataSource.UpdateContactCall(
+                        contactId = "c1",
+                        name = "Alice Cooper",
+                        avatarColor = "#FF3B30",
+                        checkInFrequency = "monthly",
+                        reminderTime = "18:45:00",
+                    ),
+                ),
+                dataSource.updateContactCalls,
+            )
+            assertEquals("Alice Cooper", dataSource.contacts.single().name)
+            assertEquals(listOf(GroupMembership("c1", "g2")), dataSource.memberships)
+            assertFalse(viewModel.state.value.isSubmitting)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private fun viewModel(
         dataSource: FakeContactDataSource,
         repository: InMemoryHomeRepository,

@@ -126,6 +126,7 @@ private fun audienceIcon(name: String): DrawableResource = when (name.lowercase(
 fun HomeScreen(
     onContactClick: (Contact) -> Unit,
     onBrainstormClick: (String) -> Unit = {},
+    onCheckInsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onShowPaywall: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -204,8 +205,8 @@ fun HomeScreen(
 
         if (useNavigationRail) {
             GlassNavigationRail(
-                selectedIndex = 1,
-                onItemSelected = {},
+                selectedIndex = 0,
+                onItemSelected = { index -> if (index == 1) onCheckInsClick() },
                 onAddClick = { showAddContact = true },
                 liquidState = liquidState,
                 modifier = Modifier.align(Alignment.CenterStart),
@@ -241,8 +242,8 @@ fun HomeScreen(
             bottomBar = {
                 if (!useNavigationRail) {
                     GlassBottomNavBar(
-                        selectedIndex = 1,
-                        onItemSelected = {},
+                        selectedIndex = 0,
+                        onItemSelected = { index -> if (index == 1) onCheckInsClick() },
                         onAddClick = { showAddContact = true },
                         liquidState = liquidState,
                     )
@@ -288,6 +289,18 @@ fun HomeScreen(
                         upToDateBgResource = Res.drawable.ic_fire,
                         gradientOrbResource = Res.drawable.img_gradientss
                     )
+
+                    state.checkInError?.let {
+                        Text(
+                            text = "Couldn't check in. Please try again.",
+                            color = NekkoTheme.colors.text.tertiary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                        )
+                    }
 
                     if (state.isRefreshing) {
                         Row(

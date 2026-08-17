@@ -74,8 +74,8 @@ class ContactProfileViewModel(
         }
     }
 
-    fun refreshIfStale() {
-        loadContact()
+    fun refreshIfStale(forceRefresh: Boolean = false) {
+        loadContact(forceRefresh)
     }
 
     private fun loadContact(forceRefresh: Boolean = false) {

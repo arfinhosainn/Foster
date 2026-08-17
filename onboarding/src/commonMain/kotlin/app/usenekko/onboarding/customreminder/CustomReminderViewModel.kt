@@ -30,10 +30,40 @@ class CustomReminderViewModel(
     fun onAction(action: CustomReminderAction) {
         when (action) {
             is CustomReminderAction.AddClicked -> {
-                _state.value = _state.value.copy(isBottomSheetVisible = true)
+                _state.value = _state.value.copy(
+                    isBottomSheetVisible = true,
+                    draftTitle = "",
+                    draftDescription = "",
+                    draftRecurrence = "None",
+                    draftDate = "Choose Date",
+                    draftDateEpochMillis = null,
+                    editingReminderId = null,
+                )
+            }
+            is CustomReminderAction.EditClicked -> {
+                val reminder = draftStore.draft.value.customReminders
+                    .firstOrNull { it.id == action.reminderId }
+                    ?: return
+                _state.value = _state.value.copy(
+                    isBottomSheetVisible = true,
+                    draftTitle = reminder.title,
+                    draftDescription = reminder.description,
+                    draftRecurrence = reminder.recurrence.toUiLabel(),
+                    draftDate = reminder.dateEpochMillis?.toReminderDate() ?: "Choose Date",
+                    draftDateEpochMillis = reminder.dateEpochMillis,
+                    editingReminderId = reminder.id,
+                )
             }
             is CustomReminderAction.BottomSheetDismissed -> {
-                _state.value = _state.value.copy(isBottomSheetVisible = false)
+                _state.value = _state.value.copy(
+                    isBottomSheetVisible = false,
+                    draftTitle = "",
+                    draftDescription = "",
+                    draftRecurrence = "None",
+                    draftDate = "Choose Date",
+                    draftDateEpochMillis = null,
+                    editingReminderId = null,
+                )
             }
             is CustomReminderAction.DraftTitleChanged -> {
                 _state.value = _state.value.copy(draftTitle = action.title)
@@ -52,8 +82,10 @@ class CustomReminderViewModel(
             }
             is CustomReminderAction.SaveReminderClicked -> {
                 val s = _state.value
+                val reminderId = s.editingReminderId
+                    ?: "rem_${draftStore.draft.value.customReminders.size}"
                 val newItem = CustomReminderDraft(
-                    id = "rem_${draftStore.draft.value.customReminders.size}",
+                    id = reminderId,
                     title = s.draftTitle.ifEmpty { "New Reminder" },
                     description = s.draftDescription,
                     recurrence = s.draftRecurrence.toReminderFrequency(),
@@ -61,18 +93,32 @@ class CustomReminderViewModel(
                 )
                 draftStore.update {
                     it.copy(
-                        customReminders = it.customReminders + newItem,
+                        customReminders = if (s.editingReminderId == null) {
+                            it.customReminders + newItem
+                        } else {
+                            it.customReminders.map { reminder ->
+                                if (reminder.id == s.editingReminderId) newItem else reminder
+                            }
+                        },
                         currentStep = OnboardingStep.CustomReminder,
                     )
                 }
+                val updatedReminders = if (s.editingReminderId == null) {
+                    s.reminders + newItem.toReminderItem()
+                } else {
+                    s.reminders.map { reminder ->
+                        if (reminder.id == s.editingReminderId) newItem.toReminderItem() else reminder
+                    }
+                }
                 _state.value = s.copy(
-                    reminders = s.reminders + newItem.toReminderItem(),
+                    reminders = updatedReminders,
                     isBottomSheetVisible = false,
                     draftTitle = "",
                     draftDescription = "",
                     draftRecurrence = "None",
                     draftDate = "Choose Date",
                     draftDateEpochMillis = null,
+                    editingReminderId = null,
                 )
             }
         }

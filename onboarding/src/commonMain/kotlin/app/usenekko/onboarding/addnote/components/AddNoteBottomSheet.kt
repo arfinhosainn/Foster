@@ -61,7 +61,7 @@ fun AddNoteBottomSheet(
         ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Add Note",
+                    text = if (state.editingNoteId == null) "Add Note" else "Edit Note",
                     style = NekkoTheme.typography.heading3Bold,
                     color = NekkoTheme.colors.text.primary,
                 )
@@ -155,7 +155,7 @@ fun AddNoteBottomSheet(
             Spacer(modifier = Modifier.height(10.dp))
 
             NekkoButton(
-                text = "Save",
+                text = if (state.editingNoteId == null) "Save" else "Update",
                 onClick = { onAction(AddNoteAction.SaveClicked) },
                 modifier = Modifier.fillMaxWidth().height(58.dp),
             )

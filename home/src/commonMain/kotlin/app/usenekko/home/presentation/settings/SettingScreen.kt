@@ -47,6 +47,7 @@ import app.usenekko.home.di.LocalDeleteAccountDataSource
 import app.usenekko.home.domain.DeleteAccountError
 import app.usenekko.home.presentation.settings.components.AppearanceBottomSheet
 import app.usenekko.home.presentation.settings.components.DeleteAccountBottomSheet
+import app.usenekko.home.presentation.settings.components.PremiumCard
 import app.usenekko.home.presentation.settings.components.SettingsGroup
 import app.usenekko.home.presentation.settings.components.SettingsRow
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
@@ -73,6 +74,7 @@ import org.jetbrains.compose.resources.vectorResource
 fun SettingScreen(
     onBack: () -> Unit,
     onAccountClick: () -> Unit = {},
+    onPremiumClick: () -> Unit = {},
     onAccountDeleted: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -113,13 +115,16 @@ fun SettingScreen(
                     deleteLoading = false
                     onAccountDeleted()
                 }
+
                 is Result.Error -> {
                     deleteLoading = false
                     deleteError = when (val err = result.error) {
                         is DeleteAccountError.Network ->
                             "Network error. Check your connection and try again."
+
                         is DeleteAccountError.NotAuthenticated ->
                             "Your session expired. Please sign in again."
+
                         is DeleteAccountError.Unknown ->
                             err.detail?.takeIf { it.isNotBlank() }
                                 ?: "Something went wrong. Your account was not deleted."
@@ -143,7 +148,8 @@ fun SettingScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        val backgroundModifier = if (showAccountSheet || showGroupSheet) Modifier.blur(5.dp) else Modifier
+        val backgroundModifier =
+            if (showAccountSheet || showGroupSheet) Modifier.blur(5.dp) else Modifier
 
         AmbientGlow(
             liquidState = liquidState,
@@ -169,7 +175,9 @@ fun SettingScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
 
-            Spacer(Modifier.height(4.dp)) // small breathing room below bar
+            Spacer(Modifier.height(12.dp)) // small breathing room below bar
+
+            PremiumCard(onClick = onPremiumClick)
 
             SettingsGroup(
                 liquidState = liquidState,

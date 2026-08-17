@@ -6,7 +6,10 @@ import app.usenekko.home.data.HomeRepository
 import app.usenekko.home.data.HomeGroupPickerState
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
+import app.usenekko.home.domain.ContactError
+import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.initialReminder
+import app.usenekko.home.domain.nextReminder
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.contacts.ImportedContact
 import app.usenekko.shared.subscription.GateResult
@@ -28,9 +31,10 @@ class AddContactViewModel(
     private val reminderScheduler: ReminderScheduler,
     private val subscriptionRepository: SubscriptionRepository,
     private val homeRepository: HomeRepository? = null,
+    editingContact: Contact? = null,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(AddContactState())
+    private val _state = MutableStateFlow(initialState(editingContact))
     val state: StateFlow<AddContactState> = _state.asStateFlow()
 
     private val _events = Channel<AddContactEvent>()
@@ -58,6 +62,15 @@ class AddContactViewModel(
                 groups = pickerState.groups,
                 contacts = pickerState.contacts,
                 memberships = pickerState.memberships,
+                selectedGroupId = state.selectedGroupId ?: state.editingContactId?.let { contactId ->
+                    pickerState.memberships.firstOrNull { it.contactId == contactId }?.groupId
+                },
+                initialGroupId = if (state.initialGroupResolved) {
+                    state.initialGroupId
+                } else {
+                    pickerState.memberships.firstOrNull { it.contactId == state.editingContactId }?.groupId
+                },
+                initialGroupResolved = state.initialGroupResolved || !pickerState.isLoading,
                 groupsLoading = pickerState.isLoading,
                 error = pickerState.error?.toString(),
             )
@@ -161,6 +174,19 @@ class AddContactViewModel(
                     groups = (groupsResult as? Result.Success)?.data ?: state.groups,
                     contacts = (contactsResult as? Result.Success)?.data ?: state.contacts,
                     memberships = (membershipsResult as? Result.Success)?.data ?: state.memberships,
+                    selectedGroupId = state.selectedGroupId ?: state.editingContactId?.let { contactId ->
+                        (membershipsResult as? Result.Success)?.data
+                            ?.firstOrNull { it.contactId == contactId }
+                            ?.groupId
+                    },
+                    initialGroupId = if (state.initialGroupResolved) {
+                        state.initialGroupId
+                    } else {
+                        (membershipsResult as? Result.Success)?.data
+                            ?.firstOrNull { it.contactId == state.editingContactId }
+                            ?.groupId
+                    },
+                    initialGroupResolved = state.initialGroupResolved || membershipsResult is Result.Success,
                     groupsLoading = false,
                 )
             }
@@ -177,7 +203,7 @@ class AddContactViewModel(
             // Gate 1 — Unlimited Contacts: free users capped at 10.
             // Block + show paywall (never silently fail) when the limit is hit.
             val isSubscribed = subscriptionRepository.isSubscribed.value
-            if (!isSubscribed) {
+            if (state.editingContactId == null && !isSubscribed) {
                 when (val contactsResult = contactDataSource.getContacts()) {
                     is Result.Success -> {
                         val gate = SubscriptionGates.contactGate(
@@ -199,26 +225,46 @@ class AddContactViewModel(
             val colorHex = colorHexes[state.selectedAvatarIndex ?: 0]
             val reminderTime = formatTime(state.selectedHour, state.selectedMinute, state.isAm)
 
-            when (
-                val result = contactDataSource.createContact(
+            val result = if (state.editingContactId == null) {
+                contactDataSource.createContact(
                     name = state.name.trim(),
                     avatarColor = colorHex,
                     checkInFrequency = state.selectedFrequency,
                     reminderTime = reminderTime,
                 )
-            ) {
+            } else {
+                contactDataSource.updateContact(
+                    contactId = state.editingContactId,
+                    name = state.name.trim(),
+                    avatarColor = colorHex,
+                    checkInFrequency = state.selectedFrequency,
+                    reminderTime = reminderTime,
+                )
+            }
+
+            when (result) {
                 is Result.Success -> {
-                    val created = result.data
-                    val groupId = _state.value.selectedGroupId
-                    if (groupId != null) {
-                        contactDataSource.assignContactToGroup(
-                            contactId = created.id,
-                            groupId = groupId,
-                        )
+                    val saved = result.data
+                    val groupResult = if (state.editingContactId == null) {
+                        state.selectedGroupId?.let { groupId ->
+                            contactDataSource.assignContactToGroup(saved.id, groupId)
+                        }
+                    } else {
+                        syncGroupMembership(saved.id, state.selectedGroupId, state.memberships)
                     }
+
+                    if (groupResult is Result.Error) {
+                        _state.update { it.copy(isSubmitting = false, error = groupResult.error.toString()) }
+                        return@launch
+                    }
+
                     homeRepository?.invalidate()
-                    // Schedule the first reminder locally — never server-sent.
-                    scheduleFirstReminder(created)
+                    if (state.editingContactId == null) {
+                        // Schedule the first reminder locally — never server-sent.
+                        scheduleFirstReminder(saved)
+                    } else {
+                        rescheduleReminder(saved)
+                    }
                     _state.update { it.copy(isSubmitting = false) }
                     _events.send(AddContactEvent.Saved)
                 }
@@ -260,6 +306,39 @@ class AddContactViewModel(
         }
     }
 
+    private suspend fun syncGroupMembership(
+        contactId: String,
+        selectedGroupId: String?,
+        memberships: List<GroupMembership>,
+    ): Result<Unit, ContactError>? {
+        val previousGroupId = memberships.firstOrNull { it.contactId == contactId }?.groupId
+        return when {
+            previousGroupId == selectedGroupId -> null
+            previousGroupId == null && selectedGroupId != null ->
+                contactDataSource.assignContactToGroup(contactId, selectedGroupId)
+            previousGroupId != null && selectedGroupId == null ->
+                contactDataSource.removeContactFromGroup(contactId, previousGroupId)
+            previousGroupId != null && selectedGroupId != null ->
+                contactDataSource.moveContactToGroup(contactId, previousGroupId, selectedGroupId)
+            else -> null
+        }
+    }
+
+    private fun rescheduleReminder(contact: Contact) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        viewModelScope.launch {
+            if (!reminderScheduler.isEnabled()) return@launch
+            reminderScheduler.cancel(contact.id)
+            (contact.nextReminder(now) ?: contact.initialReminder(now))?.let { reminder ->
+                reminderScheduler.schedule(
+                    reminder.contactId,
+                    reminder.contactName,
+                    reminder.fireAtEpochMillis,
+                )
+            }
+        }
+    }
+
     companion object {
         val colorHexes = listOf(
             "#FFCC33",
@@ -269,5 +348,40 @@ class AddContactViewModel(
             "#AF52DE",
             "#007AFF",
         )
+
+        private fun initialState(contact: Contact?): AddContactState {
+            if (contact == null) return AddContactState()
+            val time = parseTime(contact.reminderTime)
+            return AddContactState(
+                editingContactId = contact.id,
+                name = contact.name,
+                initialName = contact.name,
+                selectedAvatarIndex = colorHexes.indexOf(contact.avatarColor).takeIf { it >= 0 } ?: 0,
+                initialAvatarIndex = colorHexes.indexOf(contact.avatarColor).takeIf { it >= 0 } ?: 0,
+                selectedFrequency = contact.checkInFrequency,
+                initialFrequency = contact.checkInFrequency,
+                selectedHour = time.first,
+                selectedMinute = time.second,
+                isAm = time.third,
+                initialHour = time.first,
+                initialMinute = time.second,
+                initialIsAm = time.third,
+                initialGroupResolved = false,
+            )
+        }
+
+        private fun parseTime(value: String?): Triple<Int, Int, Boolean> {
+            val hour24 = value?.substringBefore(":")?.toIntOrNull()?.coerceIn(0, 23) ?: 22
+            val minute = value?.substringAfter(":")?.substringBefore(":")?.toIntOrNull()
+                ?.coerceIn(0, 59) ?: 30
+            return Triple(
+                when (hour24 % 12) {
+                    0 -> 12
+                    else -> hour24 % 12
+                },
+                minute,
+                hour24 < 12,
+            )
+        }
     }
 }

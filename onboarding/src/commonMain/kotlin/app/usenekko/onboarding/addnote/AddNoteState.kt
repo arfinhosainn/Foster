@@ -6,6 +6,7 @@ data class AddNoteState(
     val draftTitle: String = "",
     val draftDescription: String = "",
     val isSubmitting: Boolean = false,
+    val editingNoteId: String? = null,
 )
 
 data class NoteItem(

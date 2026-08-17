@@ -2,6 +2,7 @@ package app.usenekko.home
 
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.CheckIn
+import app.usenekko.home.domain.ContactError
 import app.usenekko.home.data.InMemoryAccountRepository
 import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.domain.forTodayCheckInList
@@ -70,6 +71,29 @@ class HomeViewModelCheckInTest {
             assertEquals(1, viewModel.state.value.checkIns.size)
             assertEquals("c1", viewModel.state.value.checkIns.first().contactId)
             assertEquals(null, viewModel.state.value.checkingInContactId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun failedCheckInClearsLoadingAndExposesRetryableError() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(contacts = listOf(contact("c1"))).apply {
+                logCheckInError = ContactError.Unknown("log_check_in is unavailable")
+            }
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+
+            assertEquals(null, viewModel.state.value.checkingInContactId)
+            assertEquals("Unknown(detail=log_check_in is unavailable)", viewModel.state.value.checkInError)
+            assertEquals(1, dataSource.logCheckInCalls.size)
+            assertEquals(1, viewModel.state.value.outstandingCount)
         } finally {
             Dispatchers.resetMain()
         }

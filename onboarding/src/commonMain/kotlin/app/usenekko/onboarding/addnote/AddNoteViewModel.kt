@@ -28,15 +28,47 @@ class AddNoteViewModel(
 
     init {
         draftStore.update { it.copy(currentStep = OnboardingStep.AddNote) }
+        viewModelScope.launch {
+            draftStore.draft.collect { draft ->
+                _state.update { it.copy(notes = draft.notes.map { note -> note.toNoteItem() }) }
+            }
+        }
     }
 
     fun onAction(action: AddNoteAction) {
         when (action) {
             is AddNoteAction.AddClicked -> {
-                _state.update { it.copy(isBottomSheetVisible = true) }
+                _state.update {
+                    it.copy(
+                        isBottomSheetVisible = true,
+                        draftTitle = "",
+                        draftDescription = "",
+                        editingNoteId = null,
+                    )
+                }
+            }
+            is AddNoteAction.EditClicked -> {
+                val note = draftStore.draft.value.notes
+                    .firstOrNull { it.id == action.noteId }
+                    ?: return
+                _state.update {
+                    it.copy(
+                        isBottomSheetVisible = true,
+                        draftTitle = note.title,
+                        draftDescription = note.body,
+                        editingNoteId = note.id,
+                    )
+                }
             }
             is AddNoteAction.BottomSheetDismissed -> {
-                _state.update { it.copy(isBottomSheetVisible = false) }
+                _state.update {
+                    it.copy(
+                        isBottomSheetVisible = false,
+                        draftTitle = "",
+                        draftDescription = "",
+                        editingNoteId = null,
+                    )
+                }
             }
             is AddNoteAction.DraftTitleChanged -> {
                 _state.update { it.copy(draftTitle = action.title) }
@@ -45,24 +77,31 @@ class AddNoteViewModel(
                 _state.update { it.copy(draftDescription = action.description) }
             }
             is AddNoteAction.SaveClicked -> {
+                val state = _state.value
                 val draft = draftStore.draft.value
                 val newNote = NoteDraft(
-                    id = "note_${draft.notes.size}",
-                    title = _state.value.draftTitle.ifEmpty { "Untitled" },
-                    body = _state.value.draftDescription,
+                    id = state.editingNoteId ?: "note_${draft.notes.size}",
+                    title = state.draftTitle.ifEmpty { "Untitled" },
+                    body = state.draftDescription,
                 )
                 draftStore.update {
                     it.copy(
-                        notes = it.notes + newNote,
+                        notes = if (state.editingNoteId == null) {
+                            it.notes + newNote
+                        } else {
+                            it.notes.map { note ->
+                                if (note.id == state.editingNoteId) newNote else note
+                            }
+                        },
                         currentStep = OnboardingStep.AddNote,
                     )
                 }
                 _state.update {
                     it.copy(
-                        notes = it.notes + newNote.toNoteItem(),
                         isBottomSheetVisible = false,
                         draftTitle = "",
                         draftDescription = "",
+                        editingNoteId = null,
                     )
                 }
             }

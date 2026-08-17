@@ -1,21 +1,20 @@
 package app.usenekko.home.presentation.contactprofile
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
@@ -46,21 +45,28 @@ fun ContactProfileTopBar(
         )
     },
     navigationIcon = {
-        FilledIconButton(
-            modifier = Modifier.size(58.dp),
+        IconButton(
             onClick = onBack,
-            colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary),
+            colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
         ) {
-            Image(imageVector = vectorResource(Res.drawable.ic_back), contentDescription = "Back")
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_back),
+                contentDescription = "Back",
+                tint = NekkoTheme.colors.gray.primary
+            )
         }
+
     },
     actions = {
-        FilledIconButton(
-            modifier = Modifier.size(58.dp),
+        IconButton(
             onClick = onEditClick,
-            colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary),
+            colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
         ) {
-            Image(imageVector = vectorResource(Res.drawable.ic_edit), contentDescription = "Edit")
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_edit),
+                contentDescription = "Edit",
+                tint = NekkoTheme.colors.gray.primary
+            )
         }
     },
 )

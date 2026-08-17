@@ -127,6 +127,7 @@ fun ChooseAvatarBottomSheet(
                         Box(
                             modifier = Modifier
                                 .size(88.dp)
+                                .clip(CircleShape)
                                 .then(
                                     if (isSelected) Modifier.border(
                                         width = 3.dp,

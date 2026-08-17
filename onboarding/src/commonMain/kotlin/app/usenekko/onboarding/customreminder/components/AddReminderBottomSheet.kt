@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +45,10 @@ fun AddReminderBottomSheet(
     val datePickerState = rememberDatePickerState()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val dismissKeyboard = {
+        keyboardController?.hide()
+        focusManager.clearFocus(force = true)
+    }
 
     if (datePickerVisible) {
         DatePickerDialog(
@@ -109,7 +114,7 @@ fun AddReminderBottomSheet(
             // Header
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Create Reminder",
+                    text = if (state.editingReminderId == null) "Create Reminder" else "Edit Reminder",
                     style = NekkoTheme.typography.heading3Bold,
                     color = NekkoTheme.colors.text.primary
                 )
@@ -166,11 +171,15 @@ fun AddReminderBottomSheet(
                             }
                             innerTextField()
                         },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = {
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                        })
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                dismissKeyboard()
+                            },
+                        )
                     )
                     
                     Spacer(modifier = Modifier.height(12.dp))
@@ -203,11 +212,15 @@ fun AddReminderBottomSheet(
                             }
                             innerTextField()
                         },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = {
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                        })
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                dismissKeyboard()
+                            },
+                        )
                     )
                 }
             }
@@ -281,7 +294,7 @@ fun AddReminderBottomSheet(
             Spacer(modifier = Modifier.height(32.dp))
             
             NekkoButton(
-                text = "Done",
+                text = if (state.editingReminderId == null) "Done" else "Update",
                 onClick = { onAction(CustomReminderAction.SaveReminderClicked) },
                 modifier = Modifier.fillMaxWidth()
             )

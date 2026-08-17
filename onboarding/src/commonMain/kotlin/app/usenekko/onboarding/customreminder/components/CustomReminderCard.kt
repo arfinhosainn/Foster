@@ -1,6 +1,7 @@
 package app.usenekko.onboarding.customreminder.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +25,7 @@ import org.jetbrains.compose.resources.vectorResource
 @Composable
 fun CustomReminderCard(
     reminder: ReminderItem,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -31,6 +33,7 @@ fun CustomReminderCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
             .background(NekkoTheme.colors.background.b1)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(20.dp)
     ) {
         Row(
