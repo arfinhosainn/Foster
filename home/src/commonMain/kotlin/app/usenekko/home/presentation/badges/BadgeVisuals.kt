@@ -49,6 +49,7 @@ import nekko.home.generated.resources.ic_greenflower
 import nekko.home.generated.resources.ic_lotus
 import nekko.home.generated.resources.ic_mushroom
 import nekko.home.generated.resources.ic_pinkflower
+import nekko.home.generated.resources.ic_soil
 import nekko.home.generated.resources.ic_sunflower
 import nekko.home.generated.resources.lotus_flower
 import nekko.home.generated.resources.mushroom_flower
@@ -61,6 +62,7 @@ import org.jetbrains.compose.resources.painterResource
 /** Maps a badge to the matching flower artwork from the resource catalog. */
 fun badgeIcon(badge: Badge): DrawableResource {
     return when (badgeFlowerAsset(badge)) {
+        "soil" -> Res.drawable.ic_soil
         "lotus" -> Res.drawable.ic_lotus
         "mushroom" -> Res.drawable.ic_mushroom
         "pinkflower" -> Res.drawable.ic_pinkflower
@@ -76,21 +78,23 @@ fun badgeFlowerAsset(badge: Badge): String {
     val name = badge.name.lowercase().filter(Char::isLetter)
 
     return when {
+        "soil" in name -> "soil"
+        "blue" in name -> "bluelotus"
         "lotus" in name -> "lotus"
         "mushroom" in name -> "mushroom"
-        "red" in name -> "pinkflower"
-        "yellow" in name || "yello" in name -> "brown"
-        "blue" in name -> "bluelotus"
+        "pink" in name || "red" in name -> "pinkflower"
+        "brown" in name || "yellow" in name || "yello" in name -> "brown"
         "sunflower" in name -> "sunflower"
         "green" in name -> "greenflower"
         else -> when (badge.threshold) {
-            1 -> "greenflower"
+            1 -> "soil"
             15 -> "lotus"
-            30 -> "mushroom"
-            50 -> "pinkflower"
-            75 -> "brown"
-            100 -> "bluelotus"
-            150 -> "sunflower"
+            30 -> "sunflower"
+            45 -> "brown"
+            60 -> "bluelotus"
+            75 -> "pinkflower"
+            90 -> "greenflower"
+            115 -> "mushroom"
             else -> "greenflower"
         }
     }
@@ -99,6 +103,7 @@ fun badgeFlowerAsset(badge: Badge): String {
 /** Maps a badge to the larger plant artwork used by the collect popup. */
 fun badgeCollectArtwork(badge: Badge): DrawableResource {
     return when (badgeFlowerAsset(badge)) {
+        "soil" -> Res.drawable.ic_soil
         "lotus" -> Res.drawable.lotus_flower
         "mushroom" -> Res.drawable.mushroom_flower
         "pinkflower" -> Res.drawable.pink_flower

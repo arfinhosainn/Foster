@@ -18,28 +18,58 @@ class BadgeRevealTest {
     @Test
     fun badgeIconUsesFlowerNameArtwork() {
         assertEquals(
+            "soil",
+            badgeFlowerAsset(Badge("soil", "Soil", "desc", 1)),
+        )
+        assertEquals(
             "lotus",
             badgeFlowerAsset(Badge("lotus", "Lotus Flower", "desc", 15)),
         )
         assertEquals(
+            "sunflower",
+            badgeFlowerAsset(Badge("sun", "Sunflower", "desc", 30)),
+        )
+        assertEquals(
+            "brown",
+            badgeFlowerAsset(Badge("brown", "Brown Flower", "desc", 45)),
+        )
+        assertEquals(
             "bluelotus",
-            badgeFlowerAsset(Badge("blue", "Blue Flower", "desc", 50)),
+            badgeFlowerAsset(Badge("blue", "Blue Flower", "desc", 60)),
         )
         assertEquals(
             "pinkflower",
-            badgeFlowerAsset(Badge("red", "Red Flower", "desc", 50)),
+            badgeFlowerAsset(Badge("pink", "Pink Flower", "desc", 75)),
         )
         assertEquals(
-            listOf("greenflower", "lotus", "mushroom", "pinkflower", "brown", "bluelotus", "sunflower"),
+            "greenflower",
+            badgeFlowerAsset(Badge("green", "Green Flower", "desc", 90)),
+        )
+        assertEquals(
+            "mushroom",
+            badgeFlowerAsset(Badge("mushrooms", "Mushrooms", "desc", 115)),
+        )
+        assertEquals(
+            listOf("soil", "lotus", "sunflower", "brown", "bluelotus", "pinkflower", "greenflower", "mushroom"),
             listOf(
-                Badge("green", "Green Flower", "desc", 1),
+                Badge("soil", "Soil", "desc", 1),
                 Badge("lotus", "Lotus Flower", "desc", 15),
-                Badge("mushroom", "Mushroom Flower", "desc", 30),
-                Badge("red", "Red Flower", "desc", 50),
-                Badge("yellow", "Yellow Flower", "desc", 75),
-                Badge("blue", "Blue Flower", "desc", 100),
-                Badge("sun", "Sunflower", "desc", 150),
+                Badge("sun", "Sunflower", "desc", 30),
+                Badge("brown", "Brown Flower", "desc", 45),
+                Badge("blue", "Blue Flower", "desc", 60),
+                Badge("pink", "Pink Flower", "desc", 75),
+                Badge("green", "Green Flower", "desc", 90),
+                Badge("mushrooms", "Mushrooms", "desc", 115),
             ).map(::badgeFlowerAsset),
+        )
+    }
+
+    @Test
+    fun badgeIconUsesRequestedThresholdSequenceWhenNameIsUnknown() {
+        assertEquals(
+            listOf("soil", "lotus", "sunflower", "brown", "bluelotus", "pinkflower", "greenflower", "mushroom"),
+            listOf(1, 15, 30, 45, 60, 75, 90, 115)
+                .map { threshold -> badgeFlowerAsset(Badge("unknown", "Unknown", "desc", threshold)) },
         )
     }
 
