@@ -3,7 +3,7 @@
 -- count (across ALL the user's contacts).
 --
 --   * adds `badges.description` (missing in migration_v2_erd.sql)
---   * seeds the 7-badge public catalog (thresholds 1 / 15 / 30 / 50 / 75 / 100 / 150)
+--   * seeds the 8-badge public catalog (thresholds 1 / 15 / 30 / 45 / 60 / 75 / 90 / 115)
 --   * auto-unlocks badges via a `check_ins` AFTER INSERT trigger
 --
 -- Idempotent / re-runnable: column adds are guarded, seeds only insert rows
@@ -26,56 +26,143 @@ end $$;
 -- 2. Seed catalog. Each insert is guarded so re-runs never duplicate and never
 --    clobber admin edits to the name/description of an existing badge.
 --
--- Rename the original four catalog rows in place so existing user_badges rows
--- keep pointing at the same records while the catalog adopts the seven flower
--- names. These updates are intentionally limited to the original seed names.
+-- Rename the existing catalog rows in place so existing user_badges rows keep
+-- pointing at the same records while the catalog adopts the new sequence.
+-- Use temporary names first. Existing badge names are unique, so prefixing the
+-- original name keeps every temporary value unique. PostgreSQL checks the
+-- unique name constraint during an UPDATE, so directly changing Yellow Flower
+-- to Blue Flower would collide with the existing Blue Flower row before that
+-- row can be renamed to Pink Flower.
 update public.badges
-set name = 'Green Flower',
-    description = 'Your very first check-in. A green flower begins to grow.'
-where name = 'Seedling';
+set name = '__nekko_badge_migration__' || name
+where name in (
+  'Seedling', 'Soil', 'Green Flower', 'Wild Flower', 'Lotus Flower',
+  'Mushroom Flower', 'Sunflower', 'Grove Keeper', 'Red Flower',
+  'Yellow Flower', 'Blue Flower', 'Brown Flower', 'Pink Flower',
+  'Towering Oak', 'Mushrooms'
+);
 
 update public.badges
-set name = 'Lotus Flower',
-    description = 'Reach 15 check-ins and your lotus flower begins to bloom.'
-where name = 'Wild Flower';
-
-update public.badges
-set name = 'Red Flower',
-    description = 'Reach 50 check-ins and your red flower begins to bloom.'
-where name = 'Grove Keeper';
-
-update public.badges
-set name = 'Sunflower',
-    description = 'Reach 150 check-ins and grow a sunflower.'
-where name = 'Towering Oak';
+set name = case
+      when name = '__nekko_badge_migration__Seedling'
+        or name = '__nekko_badge_migration__Soil'
+        or (name = '__nekko_badge_migration__Green Flower' and threshold = 1)
+        then 'Soil'
+      when name = '__nekko_badge_migration__Wild Flower'
+        or name = '__nekko_badge_migration__Lotus Flower'
+        then 'Lotus Flower'
+      when name = '__nekko_badge_migration__Mushroom Flower'
+        or (name = '__nekko_badge_migration__Sunflower' and threshold = 30)
+        then 'Sunflower'
+      when name = '__nekko_badge_migration__Grove Keeper'
+        or name = '__nekko_badge_migration__Red Flower'
+        or name = '__nekko_badge_migration__Brown Flower'
+        then 'Brown Flower'
+      when name = '__nekko_badge_migration__Yellow Flower'
+        or (name = '__nekko_badge_migration__Blue Flower' and threshold = 60)
+        then 'Blue Flower'
+      when name = '__nekko_badge_migration__Blue Flower' and threshold = 100
+        or name = '__nekko_badge_migration__Pink Flower'
+        then 'Pink Flower'
+      when name = '__nekko_badge_migration__Towering Oak'
+        or name = '__nekko_badge_migration__Green Flower'
+        or (name = '__nekko_badge_migration__Sunflower' and threshold = 150)
+        then 'Green Flower'
+      when name = '__nekko_badge_migration__Mushrooms'
+        then 'Mushrooms'
+      else name
+    end,
+    description = case
+      when name = '__nekko_badge_migration__Seedling'
+        or name = '__nekko_badge_migration__Soil'
+        or (name = '__nekko_badge_migration__Green Flower' and threshold = 1)
+        then 'Your very first check-in starts the soil.'
+      when name = '__nekko_badge_migration__Wild Flower'
+        or name = '__nekko_badge_migration__Lotus Flower'
+        then 'Reach 15 check-ins and your lotus flower begins to bloom.'
+      when name = '__nekko_badge_migration__Mushroom Flower'
+        or (name = '__nekko_badge_migration__Sunflower' and threshold = 30)
+        then 'Reach 30 check-ins and grow a sunflower.'
+      when name = '__nekko_badge_migration__Grove Keeper'
+        or name = '__nekko_badge_migration__Red Flower'
+        or name = '__nekko_badge_migration__Brown Flower'
+        then 'Reach 45 check-ins and grow a brown flower.'
+      when name = '__nekko_badge_migration__Yellow Flower'
+        or (name = '__nekko_badge_migration__Blue Flower' and threshold = 60)
+        then 'Reach 60 check-ins and grow a blue lotus.'
+      when name = '__nekko_badge_migration__Blue Flower' and threshold = 100
+        or name = '__nekko_badge_migration__Pink Flower'
+        then 'Reach 75 check-ins and grow a pink flower.'
+      when name = '__nekko_badge_migration__Towering Oak'
+        or name = '__nekko_badge_migration__Green Flower'
+        or (name = '__nekko_badge_migration__Sunflower' and threshold = 150)
+        then 'Reach 90 check-ins and grow a green flower.'
+      when name = '__nekko_badge_migration__Mushrooms'
+        then 'Reach 115 check-ins and discover the mushrooms.'
+      else description
+    end,
+    threshold = case
+      when name = '__nekko_badge_migration__Seedling'
+        or name = '__nekko_badge_migration__Soil'
+        or (name = '__nekko_badge_migration__Green Flower' and threshold = 1)
+        then 1
+      when name = '__nekko_badge_migration__Wild Flower'
+        or name = '__nekko_badge_migration__Lotus Flower'
+        then 15
+      when name = '__nekko_badge_migration__Mushroom Flower'
+        or (name = '__nekko_badge_migration__Sunflower' and threshold = 30)
+        then 30
+      when name = '__nekko_badge_migration__Grove Keeper'
+        or name = '__nekko_badge_migration__Red Flower'
+        or name = '__nekko_badge_migration__Brown Flower'
+        then 45
+      when name = '__nekko_badge_migration__Yellow Flower'
+        or (name = '__nekko_badge_migration__Blue Flower' and threshold = 60)
+        then 60
+      when name = '__nekko_badge_migration__Blue Flower' and threshold = 100
+        or name = '__nekko_badge_migration__Pink Flower'
+        then 75
+      when name = '__nekko_badge_migration__Towering Oak'
+        or name = '__nekko_badge_migration__Green Flower'
+        or (name = '__nekko_badge_migration__Sunflower' and threshold = 150)
+        then 90
+      when name = '__nekko_badge_migration__Mushrooms'
+        then 115
+      else threshold
+    end
+where name like '__nekko_badge_migration__%';
 
 insert into public.badges (name, description, threshold)
-select 'Green Flower', 'Your very first check-in. A green flower begins to grow.', 1
-where not exists (select 1 from public.badges where name = 'Green Flower');
+select 'Soil', 'Your very first check-in starts the soil.', 1
+where not exists (select 1 from public.badges where name = 'Soil');
 
 insert into public.badges (name, description, threshold)
 select 'Lotus Flower', 'Reach 15 check-ins and your lotus flower begins to bloom.', 15
 where not exists (select 1 from public.badges where name = 'Lotus Flower');
 
 insert into public.badges (name, description, threshold)
-select 'Mushroom Flower', 'Reach 30 check-ins and discover a mushroom flower.', 30
-where not exists (select 1 from public.badges where name = 'Mushroom Flower');
+select 'Sunflower', 'Reach 30 check-ins and grow a sunflower.', 30
+where not exists (select 1 from public.badges where name = 'Sunflower');
 
 insert into public.badges (name, description, threshold)
-select 'Red Flower', 'Reach 50 check-ins and your red flower begins to bloom.', 50
-where not exists (select 1 from public.badges where name = 'Red Flower');
+select 'Brown Flower', 'Reach 45 check-ins and grow a brown flower.', 45
+where not exists (select 1 from public.badges where name = 'Brown Flower');
 
 insert into public.badges (name, description, threshold)
-select 'Yellow Flower', 'Reach 75 check-ins and grow a bright yellow flower.', 75
-where not exists (select 1 from public.badges where name = 'Yellow Flower');
-
-insert into public.badges (name, description, threshold)
-select 'Blue Flower', 'Reach 100 check-ins and grow a calm blue flower.', 100
+select 'Blue Flower', 'Reach 60 check-ins and grow a blue lotus.', 60
 where not exists (select 1 from public.badges where name = 'Blue Flower');
 
 insert into public.badges (name, description, threshold)
-select 'Sunflower', 'Reach 150 check-ins and grow a sunflower.', 150
-where not exists (select 1 from public.badges where name = 'Sunflower');
+select 'Pink Flower', 'Reach 75 check-ins and grow a pink flower.', 75
+where not exists (select 1 from public.badges where name = 'Pink Flower');
+
+insert into public.badges (name, description, threshold)
+select 'Green Flower', 'Reach 90 check-ins and grow a green flower.', 90
+where not exists (select 1 from public.badges where name = 'Green Flower');
+
+insert into public.badges (name, description, threshold)
+select 'Mushrooms', 'Reach 115 check-ins and discover the mushrooms.', 115
+where not exists (select 1 from public.badges where name = 'Mushrooms');
 
 -- 3. Auto-unlock trigger. On every new check-in, unlock any badge whose
 --    threshold the user's all-time check-in count has reached. The count is
