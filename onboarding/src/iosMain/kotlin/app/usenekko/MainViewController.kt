@@ -11,6 +11,6 @@ private val appSupabaseClient by lazy { createAppSupabaseClient() }
 
 fun MainViewController() = ComposeUIViewController {
     initRevenueCat()
-    val navigator = rememberNavigator(startDestination = Screen.Welcome)
+    val navigator = rememberNavigator(startDestination = Screen.Splash)
     OnboardingApp(navigator, appSupabaseClient)
 }

@@ -9,18 +9,18 @@ import kotlin.test.assertEquals
 class AuthSessionStartupTest {
 
     @Test
-    fun refreshFailureRequestsOneRecoveryAttemptWhileWelcomeIsVisible() {
+    fun refreshFailureRequestsOneRecoveryAttemptWhileSplashIsVisible() {
         assertEquals(
             AuthSessionAction.Recover,
             authSessionAction(
                 SessionStatus.RefreshFailure(RefreshFailureCause.NetworkError(IllegalStateException())),
-                isWelcome = true,
+                isSplash = true,
             ),
         )
     }
 
     @Test
-    fun authenticatedSessionRoutesFromWelcome() {
+    fun authenticatedSessionRoutesFromSplash() {
         assertEquals(
             AuthSessionAction.Route,
             authSessionAction(
@@ -32,16 +32,24 @@ class AuthSessionStartupTest {
                         tokenType = "bearer",
                     ),
                 ),
-                isWelcome = true,
+                isSplash = true,
             ),
         )
     }
 
     @Test
-    fun sessionEventsAreIgnoredAfterLeavingWelcome() {
+    fun unauthenticatedSessionShowsWelcomeAfterSplash() {
+        assertEquals(
+            AuthSessionAction.ShowWelcome,
+            authSessionAction(SessionStatus.NotAuthenticated(), isSplash = true),
+        )
+    }
+
+    @Test
+    fun sessionEventsAreIgnoredAfterLeavingSplash() {
         assertEquals(
             AuthSessionAction.Ignore,
-            authSessionAction(SessionStatus.Initializing, isWelcome = false),
+            authSessionAction(SessionStatus.Initializing, isSplash = false),
         )
     }
 }
