@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         initRevenueCat()
 
         setContent {
-            val navigator = rememberNavigator(startDestination = Screen.Welcome)
+            val navigator = rememberNavigator(startDestination = Screen.Splash)
             BackHandler(enabled = navigator.canGoBack) {
                 navigator.goBack()
             }

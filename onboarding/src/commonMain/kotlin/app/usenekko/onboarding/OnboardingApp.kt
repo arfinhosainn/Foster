@@ -21,6 +21,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
+import app.usenekko.onboarding.splash.SplashScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
@@ -60,7 +61,7 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                 subscriptionRepository.refresh()
             }
             supabaseClient.auth.sessionStatus.collect { status ->
-                when (authSessionAction(status, navigator.currentScreen is Screen.Welcome)) {
+                when (authSessionAction(status, navigator.currentScreen is Screen.Splash)) {
                     AuthSessionAction.Route -> {
                         recoveryAttempted = false
                         val session = supabaseClient.auth.currentSessionOrNull()
@@ -76,6 +77,7 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                                 }
                         }
                     }
+                    AuthSessionAction.ShowWelcome -> navigator.replaceAll(Screen.Welcome)
                     AuthSessionAction.Ignore -> Unit
                 }
             }
@@ -86,15 +88,19 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
         Box(modifier = Modifier.fillMaxSize()) {
             App(navigator) { screen ->
                 when (screen) {
+                is Screen.Splash -> SplashScreen()
+
                 is Screen.Welcome -> WelcomeScreen(
                     supabaseClient = supabaseClient,
                     onGoogleSignInSuccess = {
                         val session = supabaseClient.auth.currentSessionOrNull()
                         logAccount(session?.user?.email, session?.user?.id, "Google sign-in")
+                        scope.launch { routeAfterAuth(profileDataSource, navigator) }
                     },
                     onAppleSignInSuccess = {
                         val session = supabaseClient.auth.currentSessionOrNull()
                         logAccount(session?.user?.email, session?.user?.id, "Apple sign-in")
+                        scope.launch { routeAfterAuth(profileDataSource, navigator) }
                     },
                 )
 
@@ -223,16 +229,17 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
 internal enum class AuthSessionAction {
     Route,
     Recover,
+    ShowWelcome,
     Ignore,
 }
 
-internal fun authSessionAction(status: SessionStatus, isWelcome: Boolean): AuthSessionAction {
-    if (!isWelcome) return AuthSessionAction.Ignore
+internal fun authSessionAction(status: SessionStatus, isSplash: Boolean): AuthSessionAction {
+    if (!isSplash) return AuthSessionAction.Ignore
     return when (status) {
         is SessionStatus.Authenticated -> AuthSessionAction.Route
         is SessionStatus.RefreshFailure -> AuthSessionAction.Recover
+        is SessionStatus.NotAuthenticated -> AuthSessionAction.ShowWelcome
         SessionStatus.Initializing,
-        is SessionStatus.NotAuthenticated,
         -> AuthSessionAction.Ignore
     }
 }

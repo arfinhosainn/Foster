@@ -42,6 +42,7 @@ fun transitionStyle(
 
 private fun screenTransitionStyle(screen: Screen): ScreenTransitionStyle {
     return when (screen) {
+        Screen.Splash -> ScreenTransitionStyle.None
         Screen.Welcome,
         Screen.Name,
         Screen.Contact,
