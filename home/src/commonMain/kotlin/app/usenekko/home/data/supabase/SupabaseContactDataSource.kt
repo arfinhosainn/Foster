@@ -7,6 +7,7 @@ import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.MissedCheckIn
 import app.usenekko.home.domain.Note
 import app.usenekko.home.domain.Reminder
 import app.usenekko.home.domain.UserBadge
@@ -22,6 +23,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.datetime.LocalDate
 
 @Serializable
 private data class ContactDto(
@@ -77,6 +79,19 @@ private data class CheckInDto(
         contactId = contactId,
         checkedInAt = checkedInAt,
         note = note,
+    )
+}
+
+@Serializable
+private data class MissedCheckInDto(
+    val id: String,
+    @SerialName("contact_id") val contactId: String,
+    @SerialName("scheduled_date") val scheduledDate: String,
+) {
+    fun toDomain() = MissedCheckIn(
+        id = id,
+        contactId = contactId,
+        scheduledDate = LocalDate.parse(scheduledDate),
     )
 }
 
@@ -458,11 +473,41 @@ class SupabaseContactDataSource(
         }
     }
 
+    override suspend fun getMissedCheckIns(
+        from: String,
+        to: String,
+    ): Result<List<MissedCheckIn>, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+
+            client.postgrest.rpc(
+                "sync_missed_check_ins",
+                buildJsonObject { put("p_as_of_date", to) },
+            )
+
+            val missedCheckIns = client.postgrest
+                .from("missed_check_ins")
+                .select(Columns.list("id", "contact_id", "scheduled_date")) {
+                    filter { gte("scheduled_date", from) }
+                    filter { lte("scheduled_date", to) }
+                    order("scheduled_date", Order.DESCENDING)
+                }
+                .decodeList<MissedCheckInDto>()
+                .map { it.toDomain() }
+
+            Result.Success(missedCheckIns)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
     override suspend fun logCheckIn(
         contactId: String,
         lastCheckInDate: String,
         nextCheckInDate: String?,
         streakCount: Int,
+        checkedInAt: String,
     ): Result<Contact, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()
@@ -473,6 +518,7 @@ class SupabaseContactDataSource(
                 put("p_last_check_in_date", lastCheckInDate)
                 put("p_next_check_in_date", nextCheckInDate?.let(::JsonPrimitive) ?: JsonNull)
                 put("p_streak_count", streakCount)
+                put("p_checked_in_at", checkedInAt)
             }
             val updated = client.postgrest
                 .rpc("log_check_in", rpcParams)

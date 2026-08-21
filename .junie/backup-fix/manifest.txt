@@ -1,0 +1,16 @@
+androidApp/src/test/kotlin/app/usenekko/home/FakeContactDataSource.kt
+androidApp/src/test/kotlin/app/usenekko/home/HomeRepositoryTest.kt
+androidApp/src/test/kotlin/app/usenekko/home/HomeViewModelCheckInTest.kt
+androidApp/src/test/kotlin/app/usenekko/home/TimelineEventsTest.kt
+home/src/commonMain/kotlin/app/usenekko/home/HomeScreen.kt
+home/src/commonMain/kotlin/app/usenekko/home/data/HomeRepository.kt
+home/src/commonMain/kotlin/app/usenekko/home/data/supabase/SupabaseContactDataSource.kt
+home/src/commonMain/kotlin/app/usenekko/home/domain/CheckIn.kt
+home/src/commonMain/kotlin/app/usenekko/home/domain/ContactDataSource.kt
+home/src/commonMain/kotlin/app/usenekko/home/presentation/HomeState.kt
+home/src/commonMain/kotlin/app/usenekko/home/presentation/HomeViewModel.kt
+home/src/commonMain/kotlin/app/usenekko/home/presentation/components/CheckinGrid.kt
+home/src/commonMain/kotlin/app/usenekko/home/presentation/components/TimelineEvents.kt
+home/src/commonMain/kotlin/app/usenekko/home/presentation/contactprofile/ContactProfileViewModel.kt
+onboarding/sql/migration_check_in_idempotency.sql
+onboarding/sql/migration_v2_erd.sql

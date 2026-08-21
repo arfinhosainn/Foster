@@ -7,6 +7,7 @@ import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.MissedCheckIn
 import app.usenekko.home.domain.Note
 import app.usenekko.home.domain.Reminder
 import app.usenekko.home.domain.UserBadge
@@ -18,6 +19,8 @@ class FakeContactDataSource(
     groups: List<Group> = emptyList(),
     memberships: List<GroupMembership> = emptyList(),
     checkIns: List<CheckIn> = emptyList(),
+    missedCheckIns: List<MissedCheckIn> = emptyList(),
+    recentCheckIns: List<CheckIn>? = null,
     notes: List<Note> = emptyList(),
     reminders: List<Reminder> = emptyList(),
     badges: List<Badge> = emptyList(),
@@ -32,6 +35,9 @@ class FakeContactDataSource(
         private set
     var checkIns: List<CheckIn> = checkIns
         private set
+    var missedCheckIns: List<MissedCheckIn> = missedCheckIns
+        private set
+    private val recentCheckInsOverride: List<CheckIn>? = recentCheckIns
     var notes: List<Note> = notes
         private set
     var reminders: List<Reminder> = reminders
@@ -96,6 +102,9 @@ class FakeContactDataSource(
     /** When set, [logCheckIn] returns this backend failure. */
     var logCheckInError: ContactError? = null
 
+    /** Models a check-in RPC response that omits or changes contact fields. */
+    var logCheckInResponseTransform: ((Contact) -> Contact)? = null
+
     /** When set, [getContacts] suspends until the gate completes. */
     var getContactsGate: CompletableDeferred<Unit>? = null
 
@@ -104,6 +113,7 @@ class FakeContactDataSource(
         val lastCheckInDate: String,
         val nextCheckInDate: String?,
         val streakCount: Int,
+        val checkedInAt: String? = null,
     )
 
     data class CreateNoteCall(
@@ -258,9 +268,17 @@ class FakeContactDataSource(
         to: String,
     ): Result<List<CheckIn>, ContactError> {
         getCheckInsCalls++
-        val filtered = if (contactId == null) checkIns else checkIns.filter { it.contactId == contactId }
+        val source = if (from == "1970-01-01") checkIns else recentCheckInsOverride ?: checkIns
+        val filtered = if (contactId == null) source else source.filter { it.contactId == contactId }
         return Result.Success(filtered)
     }
+
+    override suspend fun getMissedCheckIns(
+        from: String,
+        to: String,
+    ): Result<List<MissedCheckIn>, ContactError> = Result.Success(
+        missedCheckIns.filter { it.scheduledDate.toString() in from..to },
+    )
 
     override suspend fun getBadges(): Result<List<Badge>, ContactError> {
         getBadgesCalls++
@@ -277,8 +295,15 @@ class FakeContactDataSource(
         lastCheckInDate: String,
         nextCheckInDate: String?,
         streakCount: Int,
+        checkedInAt: String,
     ): Result<Contact, ContactError> {
-        logCheckInCalls += LogCheckInCall(contactId, lastCheckInDate, nextCheckInDate, streakCount)
+        logCheckInCalls += LogCheckInCall(
+            contactId = contactId,
+            lastCheckInDate = lastCheckInDate,
+            nextCheckInDate = nextCheckInDate,
+            streakCount = streakCount,
+            checkedInAt = checkedInAt,
+        )
         checkInGate?.await()
         logCheckInError?.let { return Result.Error(it) }
         val index = contacts.indexOfFirst { it.id == contactId }
@@ -288,11 +313,12 @@ class FakeContactDataSource(
             nextCheckInDate = nextCheckInDate,
             streakCount = streakCount,
         )
-        contacts = contacts.toMutableList().also { it[index] = updated }
+        val responseContact = logCheckInResponseTransform?.invoke(updated) ?: updated
+        contacts = contacts.toMutableList().also { it[index] = responseContact }
         val newCheckIn = CheckIn(
             id = "ci${checkIns.size + 1}",
             contactId = contactId,
-            checkedInAt = "${lastCheckInDate}T12:00:00Z",
+            checkedInAt = checkedInAt,
         )
         checkIns = checkIns + newCheckIn
         // Mimic the DB trigger: unlock every badge whose threshold the all-time
@@ -305,7 +331,7 @@ class FakeContactDataSource(
                 UserBadge(it.id, "${lastCheckInDate}T12:00:00Z")
             }
         }
-        return Result.Success(updated)
+        return Result.Success(responseContact)
     }
 
     override suspend fun getNotes(contactId: String): Result<List<Note>, ContactError> {

@@ -5,9 +5,11 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
+import app.usenekko.home.domain.MissedCheckIn
 import app.usenekko.home.presentation.components.CHECK_IN_BUBBLE_DURATION_MILLIS
 import app.usenekko.home.presentation.components.CHECK_IN_BUBBLE_MIN_SIZE
 import app.usenekko.home.presentation.components.CHECK_IN_BUBBLE_SIZE
+import app.usenekko.home.presentation.components.TIMELINE_SLOT_COUNT
 import app.usenekko.home.presentation.components.avatarCellBackground
 import app.usenekko.home.presentation.components.avatarStackYOffset
 import app.usenekko.home.presentation.components.buildCheckInTimelineEvents
@@ -28,8 +30,15 @@ import app.usenekko.home.presentation.components.timelineRowSpacing
 import app.usenekko.home.presentation.components.timelineRowSlotIndices
 import app.usenekko.home.presentation.components.timelineStackedAvatarIndicatorOffset
 import app.usenekko.home.presentation.components.timelineAvatarOverflowCount
+import app.usenekko.home.presentation.components.timelineStartForToday
+import app.usenekko.home.presentation.components.shouldRenderTimelineAvatars
+import app.usenekko.home.presentation.components.updateTimelineDate
+import app.usenekko.home.presentation.components.resolveInitialCountdownStartDate
 import app.usenekko.home.presentation.homeLoadingTimelineRowSlotCounts
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -41,19 +50,98 @@ class TimelineEventsTest {
     fun checkedInEventsCarryContactAvatarsAndKeepTheFullCount() {
         val events = buildCheckInTimelineEvents(
             checkIns = listOf(
-                checkIn("c1", "2026-08-07T12:00:00Z"),
-                checkIn("c2", "2026-08-07T13:00:00Z"),
+                checkIn("c1", "2026-08-08T12:00:00Z"),
+                checkIn("c2", "2026-08-08T13:00:00Z"),
             ),
             contacts = listOf(
-                contact("c1", "#007AFF"),
-                contact("c2", "#123456"),
+                contact("c1", "#007AFF", frequency = "daily", nextCheckInDate = today.toString()),
+                contact("c2", "#123456", frequency = "daily", nextCheckInDate = today.toString()),
             ),
             today = today,
         )
 
-        val checkedIn = events.single { it.date == LocalDate(2026, 8, 7) }
-        assertTrue(checkedIn.checkedIn)
-        assertEquals(2, checkedIn.avatarCount)
+        val checkedIn = events.filter { it.date == today }
+        assertEquals(2, checkedIn.size)
+        assertTrue(checkedIn.all { it.checkedIn })
+        assertEquals(2, checkedIn.sumOf { it.avatarCount })
+    }
+
+    @Test
+    fun sameContactIsNotStackedTwiceWhenBackendRowsShareCalendarDate() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = listOf(
+                checkIn("c1", "2026-08-26T12:00:00Z"),
+                checkIn("c1", "2026-08-26T13:00:00Z"),
+            ),
+            contacts = listOf(contact("c1", "#007AFF", nextCheckInDate = "2026-08-26")),
+            today = LocalDate(2026, 8, 26),
+        )
+
+        val event = events.single { it.date == LocalDate(2026, 8, 26) }
+
+        assertEquals(1, event.avatarCount)
+    }
+
+    @Test
+    fun repeatedDailyCheckInsKeepEachHistoricalDateIndependent() {
+        val firstDate = LocalDate(2026, 8, 19)
+        val secondDate = LocalDate(2026, 8, 20)
+        val currentDate = LocalDate(2026, 8, 21)
+        val events = buildCheckInTimelineEvents(
+            checkIns = listOf(
+                checkIn("first", "${firstDate}T12:00:00Z"),
+                checkIn("first", "${secondDate}T12:00:00Z"),
+                checkIn("first", "${currentDate}T12:00:00Z"),
+                checkIn("second", "${currentDate}T13:00:00Z"),
+            ),
+            contacts = listOf(
+                contact(
+                    id = "first",
+                    avatarColor = "#007AFF",
+                    frequency = "daily",
+                    nextCheckInDate = "2026-08-22",
+                ).copy(lastCheckInDate = currentDate.toString()),
+                contact(
+                    id = "second",
+                    avatarColor = "#FF3B30",
+                    frequency = "daily",
+                    nextCheckInDate = "2026-08-22",
+                ).copy(lastCheckInDate = currentDate.toString()),
+            ),
+            today = currentDate,
+        )
+
+        val eventsByDate = events.groupBy { it.date }
+
+        assertEquals(1, eventsByDate[firstDate]?.size)
+        assertEquals(1, eventsByDate[secondDate]?.size)
+        assertEquals(2, eventsByDate[currentDate]?.size)
+        assertTrue(eventsByDate.values.flatten().all { it.checkedIn })
+    }
+
+    @Test
+    fun missedOccurrenceSurvivesAfterTheContactAdvancesToTheNextCheckIn() {
+        val missedDate = today.minus(DatePeriod(days = 1))
+        val beforeCheckIn = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("c1", "#007AFF", frequency = "daily", nextCheckInDate = missedDate.toString()),
+            ),
+            today = today,
+        )
+        val afterCheckIn = buildCheckInTimelineEvents(
+            checkIns = listOf(checkIn("c1", "${today}T12:00:00Z")),
+            contacts = listOf(
+                contact("c1", "#007AFF", frequency = "daily", nextCheckInDate = today.plus(DatePeriod(days = 1)).toString()),
+            ),
+            today = today,
+            missedCheckIns = listOf(
+                MissedCheckIn("missed-c1-$missedDate", "c1", missedDate),
+            ),
+        )
+
+        assertTrue(beforeCheckIn.any { it.date == missedDate && !it.checkedIn })
+        assertTrue(afterCheckIn.any { it.date == missedDate && !it.checkedIn })
     }
 
     @Test
@@ -86,10 +174,503 @@ class TimelineEventsTest {
             today = today,
         )
 
-        val pending = events.single()
-        assertEquals(today, pending.date)
-        assertEquals(2, pending.avatarCount)
-        assertTrue(!pending.checkedIn)
+        val pending = events.filter { it.date == today }
+        assertEquals(2, pending.size)
+        assertTrue(pending.all { it.date == today && !it.checkedIn })
+        assertEquals(2, pending.sumOf { it.avatarCount })
+        assertTrue(events.none { it.date == LocalDate(2026, 8, 9) })
+    }
+
+    @Test
+    fun firstContactDueTodayOccupiesTheFirstTimelineCell() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("first", "#007AFF", frequency = "daily", nextCheckInDate = today.toString()),
+            ),
+            today = today,
+        )
+
+        val startDate = timelineStartForToday(today, initialCountdownStartDate = today)
+        val slots = buildTimelineSlots(
+            startDate = startDate,
+            today = today,
+            events = events,
+        )
+
+        assertEquals(today, startDate)
+        assertEquals(today, slots.first().date)
+        assertEquals(1, slots.first().avatarCount)
+        assertTrue(slots.first().isCurrent)
+    }
+
+    @Test
+    fun initialCountdownKeepsCompletedFirstOccurrenceAtTheStartAsTheDateAdvances() {
+        val nextDay = today.plus(DatePeriod(days = 1))
+        val events = buildCheckInTimelineEvents(
+            checkIns = listOf(checkIn("first", "${today}T12:00:00Z")),
+            contacts = listOf(
+                contact("first", "#007AFF", frequency = "daily", nextCheckInDate = nextDay.toString()),
+            ),
+            today = nextDay,
+        )
+
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(nextDay, initialCountdownStartDate = today),
+            today = nextDay,
+            events = events,
+        )
+
+        assertEquals(today, slots.first().date)
+        assertTrue(slots.first().isCheckedIn)
+        assertEquals(nextDay, slots[1].date)
+        assertEquals(1, slots[1].avatarCount)
+        assertTrue(slots[1].hasPendingCheckIn)
+    }
+
+    @Test
+    fun initialCountdownAnchorSurvivesTheFirstCheckInRefresh() {
+        val nextDay = today.plus(DatePeriod(days = 1))
+        val firstContact = contact(
+            id = "first",
+            avatarColor = "#007AFF",
+            frequency = "daily",
+            nextCheckInDate = today.toString(),
+        )
+        val anchorBeforeCheckIn = resolveInitialCountdownStartDate(
+            existingStartDate = null,
+            checkIns = emptyList(),
+            contacts = listOf(firstContact),
+            today = today,
+        )
+
+        val anchorAfterCheckIn = resolveInitialCountdownStartDate(
+            existingStartDate = anchorBeforeCheckIn,
+            checkIns = listOf(checkIn("first", "${today}T12:00:00Z")),
+            contacts = listOf(
+                firstContact.copy(
+                    nextCheckInDate = nextDay.toString(),
+                    lastCheckInDate = today.toString(),
+                    streakCount = 1,
+                ),
+            ),
+            today = nextDay,
+        )
+
+        assertEquals(today, anchorBeforeCheckIn)
+        assertEquals(today, anchorAfterCheckIn)
+        assertEquals(today, timelineStartForToday(nextDay, anchorAfterCheckIn))
+    }
+
+    @Test
+    fun timelineRestoresTheFirstCheckInAsItsCycleAnchorAfterRestart() {
+        val firstCheckInDate = LocalDate(2026, 8, 1)
+        val currentDate = firstCheckInDate.plus(DatePeriod(days = 13))
+        val restoredAnchor = resolveInitialCountdownStartDate(
+            existingStartDate = null,
+            checkIns = listOf(checkIn("first", "${firstCheckInDate}T12:00:00Z")),
+            contacts = listOf(
+                contact("first", "#007AFF", nextCheckInDate = currentDate.plus(DatePeriod(days = 1)).toString()),
+            ),
+            today = currentDate,
+        )
+
+        assertEquals(firstCheckInDate, restoredAnchor)
+        assertEquals(firstCheckInDate, timelineStartForToday(currentDate, restoredAnchor))
+    }
+
+    @Test
+    fun timelineRestoresAnAnchorFromMissedOccurrencesBeforeTheFirstCheckIn() {
+        val firstMissedDate = LocalDate(2026, 8, 1)
+        val currentDate = firstMissedDate.plus(DatePeriod(days = 5))
+        val restoredAnchor = resolveInitialCountdownStartDate(
+            existingStartDate = null,
+            checkIns = listOf(checkIn("first", "${currentDate}T12:00:00Z")),
+            contacts = listOf(
+                contact("first", "#007AFF", nextCheckInDate = currentDate.plus(DatePeriod(days = 1)).toString()),
+            ),
+            today = currentDate,
+            missedCheckIns = listOf(
+                MissedCheckIn("missed-first-$firstMissedDate", "first", firstMissedDate),
+            ),
+        )
+
+        assertEquals(firstMissedDate, restoredAnchor)
+        assertEquals(firstMissedDate, timelineStartForToday(currentDate, restoredAnchor))
+    }
+
+    @Test
+    fun firstContactWhoseDueDateAlreadyPassedKeepsTheAnchorAfterRestart() {
+        val dueDate = today.minus(DatePeriod(days = 3))
+        val notStartedContact = contact("first", "#007AFF", frequency = "daily", nextCheckInDate = dueDate.toString())
+
+        val restoredAnchor = resolveInitialCountdownStartDate(
+            existingStartDate = null,
+            checkIns = emptyList(),
+            contacts = listOf(notStartedContact),
+            today = today,
+        )
+
+        // The anchor is the durable next-check-in date, not today's ephemeral "due today".
+        assertEquals(dueDate, restoredAnchor)
+        assertEquals(dueDate, timelineStartForToday(today, restoredAnchor))
+
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(today, restoredAnchor),
+            today = today,
+            events = buildCheckInTimelineEvents(
+                checkIns = emptyList(),
+                contacts = listOf(notStartedContact),
+                today = today,
+                missedCheckIns = emptyList(),
+                initialCountdownStartDate = restoredAnchor,
+            ),
+        )
+        // The overdue date sits in the first cell — not the centered rolling position.
+        assertEquals(dueDate, slots.first().date)
+        assertTrue(slots.first().hasMissedCheckIn)
+        assertTrue(!slots.first().isCheckedIn)
+        assertTrue(timelineStartForToday(today, restoredAnchor) != timelineStartForToday(today))
+    }
+
+    @Test
+    fun notStartedContactWithoutAScheduledDateDefaultsTheAnchorToToday() {
+        val anchor = resolveInitialCountdownStartDate(
+            existingStartDate = null,
+            checkIns = emptyList(),
+            contacts = listOf(contact("first", "#007AFF", nextCheckInDate = null)),
+            today = today,
+        )
+
+        assertEquals(today, anchor)
+    }
+
+    @Test
+    fun timelineStartsOverAtTheBottomLeftAfterTwentySixChronologicalPositions() {
+        val firstCheckInDate = LocalDate(2026, 8, 1)
+        val cycleEndDate = firstCheckInDate.plus(DatePeriod(days = TIMELINE_SLOT_COUNT))
+
+        assertEquals(
+            cycleEndDate,
+            timelineStartForToday(cycleEndDate, firstCheckInDate),
+        )
+    }
+
+    @Test
+    fun futureFirstContactKeepsTodayAsTheFirstTimelineCell() {
+        val firstDueDate = today.plus(DatePeriod(days = 7))
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("future", "#007AFF", frequency = "weekly", nextCheckInDate = firstDueDate.toString()),
+            ),
+            today = today,
+        )
+
+        assertEquals(timelineStartForToday(today), timelineStartForToday(today))
+    }
+
+    @Test
+    fun dailyContactShowsHistoryAndCurrentCheckpointWithoutProjectingFutureCells() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = listOf(checkIn("daily", "2026-08-14T12:00:00Z")),
+            contacts = listOf(
+                contact(
+                    id = "daily",
+                    avatarColor = "#007AFF",
+                    frequency = "daily",
+                    nextCheckInDate = "2026-08-15",
+                ),
+            ),
+            today = LocalDate(2026, 8, 15),
+        )
+
+        val currentDate = LocalDate(2026, 8, 15)
+        val yesterday = currentDate.minus(DatePeriod(days = 1))
+        assertEquals(2, events.size)
+        assertTrue(events.any { it.date == yesterday && it.checkedIn })
+        assertTrue(events.any { it.date == currentDate })
+        assertTrue(events.none { it.date == currentDate.plus(DatePeriod(days = 1)) })
+    }
+
+    @Test
+    fun dailyContactMissedYesterdayRemainsIncompleteInYesterdayCell() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("daily", "#007AFF", frequency = "daily", nextCheckInDate = "2026-08-07"),
+            ),
+            today = today,
+        )
+
+        val yesterday = today.minus(DatePeriod(days = 1))
+        val missed = events.single { it.date == yesterday }
+        assertEquals(1, missed.avatarCount)
+        assertTrue(!missed.checkedIn)
+
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(today),
+            today = today,
+            events = events,
+        )
+        val missedSlot = slots.single { it.date == yesterday }
+        assertEquals(0, missedSlot.avatarCount)
+        assertTrue(!shouldRenderTimelineAvatars(missedSlot))
+        assertTrue(missedSlot.hasMissedCheckIn)
+        assertTrue(!missedSlot.isCheckedIn)
+        assertEquals(1, slots.single { it.date == today }.avatarCount)
+    }
+
+    @Test
+    fun missedOccurrenceDoesNotRemoveCompletedAvatarFromTheSameDate() {
+        val yesterday = today.minus(DatePeriod(days = 1))
+        val events = buildCheckInTimelineEvents(
+            checkIns = listOf(checkIn("completed", "${yesterday}T12:00:00Z")),
+            contacts = listOf(
+                contact("missed", "#007AFF", frequency = "daily", nextCheckInDate = yesterday.toString()),
+                contact("completed", "#FF3B30", frequency = "daily", nextCheckInDate = today.toString()),
+            ),
+            today = today,
+        )
+
+        val missedDateSlot = buildTimelineSlots(
+            startDate = timelineStartForToday(today),
+            today = today,
+            events = events,
+        ).single { it.date == yesterday }
+
+        assertEquals(1, missedDateSlot.avatarCount)
+        assertTrue(missedDateSlot.hasMissedCheckIn)
+        assertTrue(!missedDateSlot.isCheckedIn)
+    }
+
+    @Test
+    fun weeklyContactAppearsEverySevenDaysAndNotOnTheDaysBetween() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("weekly", "#007AFF", frequency = "weekly", nextCheckInDate = "2026-08-08"),
+            ),
+            today = today,
+        )
+
+        assertTrue(events.any { it.date == LocalDate(2026, 8, 8) })
+        assertTrue(events.none { it.date == LocalDate(2026, 8, 15) })
+        assertTrue(events.none { it.date == LocalDate(2026, 8, 9) })
+    }
+
+    @Test
+    fun biweeklyContactAppearsEveryFourteenDays() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("biweekly", "#007AFF", frequency = "biweekly", nextCheckInDate = "2026-08-01"),
+            ),
+            today = today,
+        )
+
+        assertTrue(events.any { it.date == LocalDate(2026, 8, 1) })
+        assertTrue(events.none { it.date == LocalDate(2026, 8, 15) })
+        assertTrue(events.none { it.date == LocalDate(2026, 8, 14) })
+    }
+
+    @Test
+    fun monthlyContactKeepsItsScheduledDayAcrossMonthBoundary() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("monthly", "#007AFF", frequency = "monthly", nextCheckInDate = "2026-08-08"),
+            ),
+            today = today,
+        )
+
+        assertTrue(events.any { it.date == LocalDate(2026, 8, 8) })
+        assertTrue(events.none { it.date == LocalDate(2026, 8, 9) })
+
+        val nextMonthEvents = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("monthly", "#007AFF", frequency = "monthly", nextCheckInDate = "2026-08-08"),
+            ),
+            today = LocalDate(2026, 9, 8),
+        )
+        assertTrue(nextMonthEvents.any { it.date == LocalDate(2026, 9, 8) })
+
+        val monthEndEvents = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("monthly", "#007AFF", frequency = "monthly", nextCheckInDate = "2026-08-31"),
+            ),
+            today = LocalDate(2026, 9, 30),
+        )
+
+        assertTrue(monthEndEvents.any { it.date == LocalDate(2026, 9, 30) })
+    }
+
+    @Test
+    fun futureScheduledCheckInDoesNotFillItsCellBeforeItsDate() {
+        val futureDate = today.plus(DatePeriod(days = 3))
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("future", "#007AFF", frequency = "weekly", nextCheckInDate = futureDate.toString()),
+            ),
+            today = today,
+        )
+
+        assertTrue(events.none { it.date == futureDate })
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(today),
+            today = today,
+            events = events,
+        )
+        assertEquals(0, slots.single { it.date == futureDate }.avatarCount)
+        assertTrue(slots.single { it.date == futureDate }.isFuture)
+    }
+
+    @Test
+    fun firstScheduledOccurrenceStaysA_dotUntilItsDateArrives() {
+        val firstDueDate = today.plus(DatePeriod(days = 7))
+        val contacts = listOf(
+            contact(
+                "future",
+                "#007AFF",
+                frequency = "weekly",
+                nextCheckInDate = firstDueDate.toString(),
+            ),
+        )
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = contacts,
+            today = today,
+        )
+
+        assertTrue(events.isEmpty())
+        val futureSlots = buildTimelineSlots(
+            startDate = timelineStartForToday(today),
+            today = today,
+            events = events,
+        )
+        val futureSlot = futureSlots.single { it.date == firstDueDate }
+        assertEquals(0, futureSlot.avatarCount)
+        assertTrue(futureSlot.isFuture)
+        assertTrue(!shouldRenderTimelineAvatars(futureSlot))
+
+        val arrivedEvents = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = contacts,
+            today = firstDueDate,
+        )
+        val arrivedSlots = buildTimelineSlots(
+            startDate = timelineStartForToday(firstDueDate),
+            today = firstDueDate,
+            events = arrivedEvents,
+        )
+        assertEquals(1, arrivedSlots.single { it.date == firstDueDate }.avatarCount)
+    }
+
+    @Test
+    fun completingTodayDoesNotBackfillEarlierCellsOrShowTheNextOccurrence() {
+        val completedDate = today
+        val contactBeforeCheckIn = contact(
+            "daily",
+            "#007AFF",
+            frequency = "daily",
+            nextCheckInDate = completedDate.toString(),
+        )
+        val before = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(contactBeforeCheckIn),
+            today = today,
+        )
+        assertEquals(today.minus(DatePeriod(days = 12)), timelineStartForToday(today))
+
+        val contactAfterCheckIn = contactBeforeCheckIn.copy(
+            nextCheckInDate = completedDate.plus(DatePeriod(days = 1)).toString(),
+            lastCheckInDate = completedDate.toString(),
+        )
+        val after = buildCheckInTimelineEvents(
+            checkIns = listOf(checkIn("daily", "2026-08-08T12:00:00Z")),
+            contacts = listOf(contactAfterCheckIn),
+            today = completedDate,
+        )
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(today),
+            today = today,
+            events = after,
+        )
+
+        val completedSlot = slots.single { it.date == today }
+        assertEquals(1, completedSlot.avatarCount)
+        assertTrue(completedSlot.isCheckedIn)
+        assertTrue(after.none { it.date < today })
+        assertEquals(0, slots.single { it.date == today.plus(DatePeriod(days = 1)) }.avatarCount)
+    }
+
+    @Test
+    fun completedOccurrenceRemainsVisibleAfterNextCheckInDateAdvances() {
+        val completedDate = today
+        val nextDate = completedDate.plus(DatePeriod(days = 7))
+        val events = buildCheckInTimelineEvents(
+            checkIns = listOf(checkIn("weekly", "2026-08-08T12:00:00Z")),
+            contacts = listOf(
+                contact(
+                    "weekly",
+                    "#007AFF",
+                    frequency = "weekly",
+                    nextCheckInDate = nextDate.toString(),
+                ).copy(lastCheckInDate = completedDate.toString()),
+            ),
+            today = completedDate,
+        )
+
+        val completed = events.single { it.date == completedDate }
+        assertTrue(completed.checkedIn)
+        assertEquals(1, completed.avatarCount)
+    }
+
+    @Test
+    fun multipleContactsDueOnTheSameDayShareOneCheckpoint() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = listOf(checkIn("first", "2026-08-08T12:00:00Z")),
+            contacts = listOf(
+                contact("first", "#007AFF", frequency = "daily", nextCheckInDate = "2026-08-08"),
+                contact("second", "#FF3B30", frequency = "weekly", nextCheckInDate = "2026-08-08"),
+            ),
+            today = today,
+        )
+
+        val checkpoints = events.filter { it.date == today }
+        assertEquals(2, checkpoints.size)
+        assertEquals(1, checkpoints.count { it.checkedIn })
+        assertEquals(1, checkpoints.count { !it.checkedIn })
+    }
+
+    @Test
+    fun scheduledContactDoesNotAppearOnInterveningDays() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("future", "#007AFF", frequency = "weekly", nextCheckInDate = today.toString()),
+            ),
+            today = today,
+        )
+
+        assertTrue(events.none { it.date == LocalDate(2026, 8, 9) })
+    }
+
+    @Test
+    fun contactIsDueAgainAfterAnIncompletePreviousCheckpoint() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("daily", "#007AFF", frequency = "daily", nextCheckInDate = "2026-08-07"),
+            ),
+            today = today,
+        )
+
+        assertEquals(1, events.single { it.date == today }.avatarCount)
+        assertTrue(events.none { it.date == today.plus(DatePeriod(days = 1)) })
     }
 
     @Test
@@ -199,6 +780,62 @@ class TimelineEventsTest {
     }
 
     @Test
+    fun timelineStartsTwelveDaysBeforeToday() {
+        assertEquals(LocalDate(2026, 8, 19), timelineStartForToday(LocalDate(2026, 8, 31)))
+        assertEquals(LocalDate(2026, 8, 20), timelineStartForToday(LocalDate(2026, 9, 1)))
+    }
+
+
+    @Test
+    fun timelineCrossesMonthBoundaryWithoutResettingSlots() {
+        val slots = buildTimelineSlots(
+            startDate = LocalDate(2026, 8, 27),
+            today = LocalDate(2026, 8, 31),
+            events = listOf(
+                TimelineEvent(LocalDate(2026, 8, 31), checkedIn = true, avatarCount = 1),
+                TimelineEvent(LocalDate(2026, 9, 1), checkedIn = true, avatarCount = 1),
+            ),
+        )
+
+        assertEquals(LocalDate(2026, 8, 31), slots[4].date)
+        assertEquals(LocalDate(2026, 9, 1), slots[5].date)
+        assertEquals(1, slots[4].avatarCount)
+        assertEquals(1, slots[5].avatarCount)
+    }
+
+    @Test
+    fun checkInPositionStaysOnItsDaySlotAsTodayChanges() {
+        val events = listOf(
+            TimelineEvent(LocalDate(2026, 8, 10), checkedIn = true, avatarCount = 1),
+            TimelineEvent(LocalDate(2026, 8, 30), checkedIn = true, avatarCount = 1),
+        )
+
+        val earlyMonthSlots = buildTimelineSlots(
+            startDate = LocalDate(2026, 8, 8),
+            today = LocalDate(2026, 8, 8),
+            events = events,
+        )
+        val lateMonthSlots = buildTimelineSlots(
+            startDate = LocalDate(2026, 8, 26),
+            today = LocalDate(2026, 8, 26),
+            events = events,
+        )
+
+        assertEquals(1, earlyMonthSlots[2].avatarCount)
+        assertEquals(0, lateMonthSlots[2].avatarCount)
+        assertEquals(1, earlyMonthSlots[22].avatarCount)
+        assertEquals(1, lateMonthSlots[4].avatarCount)
+    }
+
+    @Test
+    fun timelineDateAdvancesWhenTheClockMovesToTheNextDay() {
+        val nextDay = today.plus(DatePeriod(days = 1))
+
+        assertEquals(today, updateTimelineDate(today, today))
+        assertEquals(nextDay, updateTimelineDate(today, nextDay))
+    }
+
+    @Test
     fun calendarIncompleteRowsKeepTheirOriginalAlignment() {
         assertEquals(3, timelineRowLeadingEmptyColumns(visualRow = 4))
         assertEquals(0, timelineRowLeadingEmptyColumns(visualRow = 0))
@@ -299,12 +936,13 @@ class TimelineEventsTest {
     private fun contact(
         id: String,
         avatarColor: String?,
+        frequency: String = "weekly",
         nextCheckInDate: String? = "2026-08-09",
     ) = Contact(
         id = id,
         name = id,
         avatarColor = avatarColor,
-        checkInFrequency = "weekly",
+        checkInFrequency = frequency,
         reminderTime = null,
         nextCheckInDate = nextCheckInDate,
         lastCheckInDate = null,

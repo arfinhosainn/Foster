@@ -2,11 +2,14 @@
 -- Apply after migration_v2_erd.sql. The function advances the contact and inserts
 -- the event in one transaction, and refuses a contact whose next check-in is not due.
 
+drop function if exists public.log_check_in(uuid, date, date, integer);
+
 create or replace function public.log_check_in(
   p_contact_id uuid,
   p_last_check_in_date date,
   p_next_check_in_date date,
-  p_streak_count integer
+  p_streak_count integer,
+  p_checked_in_at timestamptz
 )
 returns public.contacts
 language plpgsql
@@ -16,6 +19,8 @@ as $$
 declare
   updated_contact public.contacts;
 begin
+  perform public.sync_missed_check_ins(p_last_check_in_date);
+
   update public.contacts
   set
     last_check_in_date = p_last_check_in_date,
@@ -39,12 +44,12 @@ begin
     raise exception 'CONTACT_NOT_DUE';
   end if;
 
-  insert into public.check_ins (contact_id)
-  values (p_contact_id);
+  insert into public.check_ins (contact_id, checked_in_at)
+  values (p_contact_id, p_checked_in_at);
 
   return updated_contact;
 end;
 $$;
 
-grant execute on function public.log_check_in(uuid, date, date, integer)
+grant execute on function public.log_check_in(uuid, date, date, integer, timestamptz)
   to authenticated;

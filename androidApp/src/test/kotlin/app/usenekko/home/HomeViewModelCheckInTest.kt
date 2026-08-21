@@ -3,10 +3,15 @@ package app.usenekko.home
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.ContactError
+import app.usenekko.home.domain.localDate
 import app.usenekko.home.data.InMemoryAccountRepository
 import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.domain.forTodayCheckInList
 import app.usenekko.home.presentation.HomeViewModel
+import app.usenekko.home.presentation.components.buildCheckInTimelineEvents
+import app.usenekko.home.presentation.components.buildTimelineSlots
+import app.usenekko.home.presentation.components.timelineRenderedAvatarCount
+import app.usenekko.home.presentation.components.timelineStartForToday
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +28,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -77,6 +83,148 @@ class HomeViewModelCheckInTest {
     }
 
     @Test
+    fun successfulCheckInPassesDeviceTimestampToHistoryWriter() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(contacts = listOf(contact("c1")))
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+
+            val checkedInAt = dataSource.logCheckInCalls.single().checkedInAt
+            assertTrue(checkedInAt != null)
+            assertEquals(today, CheckIn("ci", "c1", checkedInAt!!).localDate())
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun successfulCheckInReloadKeepsFullHistoryAndProjectsNextDayOccurrence() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val previousDate = today.minus(DatePeriod(days = 1))
+            val previousCheckIn = CheckIn("ci-previous", "c1", "${previousDate}T12:00:00Z")
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("c1")),
+                checkIns = listOf(previousCheckIn),
+                recentCheckIns = emptyList(),
+            )
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+
+            val updatedContact = viewModel.state.value.contacts.single { it.id == "c1" }
+            assertEquals(today.toString(), updatedContact.lastCheckInDate)
+            assertEquals(today.plus(DatePeriod(days = 1)).toString(), updatedContact.nextCheckInDate)
+            assertTrue(viewModel.state.value.checkIns.any { it.id == previousCheckIn.id })
+            assertTrue(viewModel.state.value.checkIns.any { it.contactId == "c1" && it.checkedInAt.startsWith(today.toString()) })
+
+            val nextDayEvents = buildCheckInTimelineEvents(
+                checkIns = viewModel.state.value.checkIns,
+                contacts = viewModel.state.value.contacts,
+                today = today.plus(DatePeriod(days = 1)),
+            )
+            assertTrue(nextDayEvents.any { it.date == previousDate && it.checkedIn })
+            assertTrue(nextDayEvents.any { it.date == today && it.checkedIn })
+            assertTrue(nextDayEvents.any { it.date == today.plus(DatePeriod(days = 1)) && !it.checkedIn })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun refreshedHistoryKeepsEarlierAvatarWhenCheckInResponseOmitsAvatarColor() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val previousDate = today.minus(DatePeriod(days = 1))
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(
+                    contact("first", next = today.toString()),
+                    contact("second", next = today.toString()).copy(avatarColor = "#FF3B30"),
+                ),
+                checkIns = listOf(
+                    CheckIn("ci-previous", "first", "${previousDate}T12:00:00Z"),
+                ),
+                recentCheckIns = emptyList(),
+            ).apply {
+                logCheckInResponseTransform = { updated ->
+                    if (updated.id == "first") updated.copy(avatarColor = null) else updated
+                }
+            }
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.checkIn("first")
+            advanceUntilIdle()
+            viewModel.checkIn("second")
+            advanceUntilIdle()
+
+            val slots = buildTimelineSlots(
+                startDate = timelineStartForToday(today),
+                today = today,
+                events = buildCheckInTimelineEvents(
+                    checkIns = viewModel.state.value.checkIns,
+                    contacts = viewModel.state.value.contacts,
+                    today = today,
+                ),
+            )
+            val previousSlot = slots.single { it.date == previousDate }
+
+            assertEquals(1, previousSlot.avatarCount)
+            assertEquals(1, timelineRenderedAvatarCount(previousSlot))
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun initialCountdownAnchorRemainsInHomeStateAfterSuccessfulCheckInReload() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("first", next = today.toString())),
+            )
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            assertEquals(today, viewModel.state.value.initialCountdownStartDate)
+
+            viewModel.checkIn("first")
+            advanceUntilIdle()
+
+            val nextDay = today.plus(DatePeriod(days = 1))
+            val slots = buildTimelineSlots(
+                startDate = timelineStartForToday(
+                    today = nextDay,
+                    initialCountdownStartDate = viewModel.state.value.initialCountdownStartDate,
+                ),
+                today = nextDay,
+                events = buildCheckInTimelineEvents(
+                    checkIns = viewModel.state.value.checkIns,
+                    contacts = viewModel.state.value.contacts,
+                    today = nextDay,
+                ),
+            )
+
+            assertEquals(today, slots.first().date)
+            assertTrue(slots.first().isCheckedIn)
+            assertEquals(nextDay, slots[1].date)
+            assertTrue(slots[1].hasPendingCheckIn)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun failedCheckInClearsLoadingAndExposesRetryableError() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
@@ -113,6 +261,37 @@ class HomeViewModelCheckInTest {
 
             assertEquals(0, viewModel.state.value.outstandingCount)
             assertEquals(1, viewModel.state.value.upToDateCount)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun timelineKeepsAnEarlierCompletedCheckpointAfterALaterCheckIn() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val previousDate = today.minus(DatePeriod(days = 1))
+            val contact = contact("c1", next = today.plus(DatePeriod(days = 1)).toString())
+                .copy(lastCheckInDate = today.toString())
+            val previousCheckIn = CheckIn("ci-previous", "c1", "${previousDate}T12:00:00Z")
+            val currentCheckIn = CheckIn("ci-current", "c1", "${today}T12:00:00Z")
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact),
+                checkIns = listOf(previousCheckIn, currentCheckIn),
+                recentCheckIns = listOf(currentCheckIn),
+            )
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            val events = buildCheckInTimelineEvents(
+                checkIns = viewModel.state.value.checkIns,
+                contacts = viewModel.state.value.contacts,
+                today = today,
+            )
+
+            assertTrue(events.any { it.date == previousDate && it.checkedIn })
+            assertTrue(events.any { it.date == today && it.checkedIn })
         } finally {
             Dispatchers.resetMain()
         }

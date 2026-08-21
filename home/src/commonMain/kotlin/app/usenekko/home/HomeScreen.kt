@@ -89,14 +89,17 @@ import app.usenekko.home.presentation.components.isCheckInBubbleAnimationEnabled
 import app.usenekko.home.presentation.components.rememberTimelineSlots
 import app.usenekko.home.presentation.components.shouldStartCheckInBubbleWindow
 import app.usenekko.home.presentation.components.timelineMaxCellSizeForWidth
+import app.usenekko.home.presentation.components.updateTimelineDate
 import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
 import app.usenekko.home.presentation.HomeLoadingSkeleton
+import app.usenekko.home.domain.MissedCheckIn
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
 import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.delay
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_acquaintance
@@ -141,6 +144,12 @@ fun HomeScreen(
 
     LaunchedEffect(accountRepository) {
         accountRepository.load()
+    }
+
+    LaunchedEffect(accountState.snapshot?.accountKey) {
+        if (accountState.snapshot != null) {
+            viewModel.loadContacts(forceRefresh = true)
+        }
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -326,7 +335,28 @@ fun HomeScreen(
 
                     Spacer(Modifier.height(32.dp))
 
-                    if (state.totalContactCount == 0) {
+                    if (state.totalContactCount == 0 && state.error != null) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                "Couldn't load your contacts",
+                                color = NekkoTheme.colors.text.primary,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                state.error!!,
+                                color = NekkoTheme.colors.text.tertiary,
+                                fontSize = 14.sp,
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Button(onClick = { viewModel.loadContacts(forceRefresh = true) }) {
+                                Text("Try again")
+                            }
+                        }
+                    } else if (state.totalContactCount == 0) {
                         Column(
                             modifier = Modifier.clickable(role = Role.Button) { showAddContact = true },
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -366,6 +396,7 @@ fun HomeScreen(
                         Spacer(Modifier.height(32.dp))
                         CheckInSection(
                             checkIns = state.checkIns,
+                            missedCheckIns = state.missedCheckIns,
                             checkInCounts = state.checkInCounts,
                             contacts = state.contacts,
                             outstandingCount = state.outstandingCount,
@@ -379,6 +410,7 @@ fun HomeScreen(
                                 }
                             },
                             timelineMaxCellSize = timelineMaxCellSize,
+                            initialCountdownStartDate = state.initialCountdownStartDate,
                         )
                     }
                 }
@@ -464,6 +496,7 @@ private fun ContactPaneEmptyState(
 @Composable
 private fun CheckInSection(
     checkIns: List<CheckIn>,
+    missedCheckIns: List<MissedCheckIn>,
     checkInCounts: Map<String, Int>,
     contacts: List<Contact>,
     outstandingCount: Int,
@@ -471,12 +504,18 @@ private fun CheckInSection(
     onCheckIn: (String) -> Unit,
     onContactClick: (Contact) -> Unit,
     timelineMaxCellSize: Dp,
+    initialCountdownStartDate: LocalDate?,
 ) {
-    val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
+    var today by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault())) }
     var nowEpochMillis by remember { mutableStateOf(Clock.System.now().toEpochMilliseconds()) }
     LaunchedEffect(Unit) {
         while (true) {
-            nowEpochMillis = Clock.System.now().toEpochMilliseconds()
+            val now = Clock.System.now()
+            nowEpochMillis = now.toEpochMilliseconds()
+            today = updateTimelineDate(
+                previousDate = today,
+                currentDate = now.toLocalDateTime(TimeZone.currentSystemDefault()).date,
+            )
             delay(1_000L.milliseconds)
         }
     }
@@ -502,10 +541,20 @@ private fun CheckInSection(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    val events = remember(checkIns, contacts, today) {
-        buildCheckInTimelineEvents(checkIns, contacts, today)
+    val events = remember(checkIns, missedCheckIns, contacts, today, initialCountdownStartDate) {
+        buildCheckInTimelineEvents(
+            checkIns,
+            contacts,
+            today,
+            missedCheckIns,
+            initialCountdownStartDate,
+        )
     }
-    val slots = rememberTimelineSlots(today = today, events = events)
+    val slots = rememberTimelineSlots(
+        today = today,
+        events = events,
+        initialCountdownStartDate = initialCountdownStartDate,
+    )
     val hasPendingToday = slots.any { it.isCurrent && it.hasPendingCheckIn }
     LaunchedEffect(appInForeground, hasPendingToday) {
         bubbleWindowActive = shouldStartCheckInBubbleWindow(appInForeground, hasPendingToday)

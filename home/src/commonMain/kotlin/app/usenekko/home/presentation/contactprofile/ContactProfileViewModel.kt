@@ -254,6 +254,7 @@ class ContactProfileViewModel(
                 lastCheckInDate = update.lastCheckInDate,
                 nextCheckInDate = update.nextCheckInDate,
                 streakCount = update.streakCount,
+                checkedInAt = Clock.System.now().toString(),
             )
 
             when (result) {
