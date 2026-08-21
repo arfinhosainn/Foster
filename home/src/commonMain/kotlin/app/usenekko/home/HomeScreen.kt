@@ -1,5 +1,11 @@
 package app.usenekko.home
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
@@ -401,7 +407,7 @@ fun HomeScreen(
                             contacts = state.contacts,
                             timelineContacts = state.allContacts,
                             outstandingCount = state.outstandingCount,
-                            checkingInContactId = state.checkingInContactId,
+                            checkingInContactIds = state.checkingInContactIds,
                             onCheckIn = viewModel::checkIn,
                             onContactClick = { contact ->
                                 if (useSupportingPane) {
@@ -502,7 +508,7 @@ private fun CheckInSection(
     contacts: List<Contact>,
     timelineContacts: List<Contact>,
     outstandingCount: Int,
-    checkingInContactId: String?,
+    checkingInContactIds: Set<String>,
     onCheckIn: (String) -> Unit,
     onContactClick: (Contact) -> Unit,
     timelineMaxCellSize: Dp,
@@ -623,7 +629,7 @@ private fun CheckInSection(
                             contact = contact,
                             checkInCount = checkInCounts[contact.id] ?: 0,
                             today = today,
-                            checkingInContactId = checkingInContactId,
+                            checkingInContactIds = checkingInContactIds,
                             onCheckIn = onCheckIn,
                             onContactClick = onContactClick,
                             showDivider = index < todayContacts.lastIndex,
@@ -635,17 +641,20 @@ private fun CheckInSection(
     }
 }
 
+private enum class CheckInRowTrailing { Button, Checked }
+
 @Composable
 private fun ContactCheckInRow(
     contact: Contact,
     checkInCount: Int,
     today: LocalDate,
-    checkingInContactId: String?,
+    checkingInContactIds: Set<String>,
     onCheckIn: (String) -> Unit,
     onContactClick: (Contact) -> Unit,
     showDivider: Boolean,
 ) {
     val checkedInToday = contact.isCheckedInToday(today)
+    val inFlight = checkedInToday && contact.id in checkingInContactIds
     Column {
         Row(
             modifier = Modifier
@@ -677,36 +686,48 @@ private fun ContactCheckInRow(
                 )
             }
             Spacer(Modifier.width(12.dp))
-            if (!checkedInToday) {
-                Button(
-                    onClick = { onCheckIn(contact.id) },
-                    enabled = checkingInContactId == null,
-                    modifier = Modifier.height(40.dp),
-                    shape = RoundedCornerShape(50),
-                    contentPadding = PaddingValues(horizontal = 18.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = NekkoTheme.colors.text.primary,
-                        disabledContainerColor = Color.White,
-                        disabledContentColor = Color.Black,
-                    ),
-                ) {
-                    Text(
-                        if (checkingInContactId == contact.id) "Checking..." else "Check in",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color.Black
-                    )
+            AnimatedContent(
+                targetState = if (checkedInToday) CheckInRowTrailing.Checked else CheckInRowTrailing.Button,
+                transitionSpec = {
+                    (scaleIn() + fadeIn()) togetherWith (scaleOut() + fadeOut())
+                },
+                label = "checkInState",
+            ) { state ->
+                when (state) {
+                    CheckInRowTrailing.Button -> Button(
+                        onClick = { onCheckIn(contact.id) },
+                        modifier = Modifier.height(40.dp),
+                        shape = RoundedCornerShape(50),
+                        contentPadding = PaddingValues(horizontal = 18.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = NekkoTheme.colors.text.primary,
+                        ),
+                    ) {
+                        Text(
+                            "Check in",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = Color.Black,
+                        )
+                    }
+                    else -> Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                        if (inFlight) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = NekkoTheme.colors.text.primary,
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
+                                contentDescription = "Checked in",
+                                modifier = Modifier.size(24.dp),
+                                tint = NekkoTheme.colors.gray.secondary,
+                            )
+                        }
+                    }
                 }
-            } else {
-
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
-                    contentDescription = "Checked in",
-                    modifier = Modifier.size(24.dp),
-                    tint = NekkoTheme.colors.gray.secondary,
-                )
-
             }
         }
         if (showDivider) DashedContactDivider()

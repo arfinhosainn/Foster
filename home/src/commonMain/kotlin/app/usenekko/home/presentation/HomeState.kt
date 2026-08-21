@@ -20,7 +20,7 @@ data class HomeState(
     val missedCheckIns: List<MissedCheckIn> = emptyList(),
     val checkInCounts: Map<String, Int> = emptyMap(),
     val initialCountdownStartDate: LocalDate? = null,
-    val checkingInContactId: String? = null,
+    val checkingInContactIds: Set<String> = emptySet(),
     val checkInError: String? = null,
     val error: String? = null,
 )
