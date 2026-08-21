@@ -15,6 +15,7 @@ fun buildCheckInTimelineEvents(
     contacts: List<Contact>,
     today: LocalDate,
     missedCheckIns: List<MissedCheckIn> = emptyList(),
+    initialCountdownStartDate: LocalDate? = null,
 ): List<TimelineEvent> {
     val contactsById = contacts.associateBy(Contact::id)
     val checkedInByDate = mutableMapOf<LocalDate, MutableSet<String>>()
@@ -38,7 +39,7 @@ fun buildCheckInTimelineEvents(
                 .add(missedCheckIn.contactId)
         }
     }
-    val timelineStart = timelineStartForToday(today)
+    val timelineStart = timelineStartForToday(today, initialCountdownStartDate)
 
     return List(TIMELINE_SLOT_COUNT) { index ->
         timelineStart.plus(DatePeriod(days = index))
@@ -75,11 +76,20 @@ fun resolveInitialCountdownStartDate(
         missedCheckIns.map { it.scheduledDate }).minOrNull()
     if (historicalStartDate != null) return historicalStartDate
 
+    // Before the first check-in, anchor the timeline's first (bottom-left) cell to the
+    // earliest scheduled date among contacts that have not started receiving check-ins yet.
+    // This keeps a fresh timeline starting from that first cell across app restarts, instead
+    // of collapsing to today's centered rolling window once the first due date is no longer
+    // exactly today. The next check-in date is durable server data, so it survives relaunch.
+    val firstScheduledDate = contacts
+        .filter { it.lastCheckInDate == null }
+        .mapNotNull { it.nextCheckInDateLocal() }
+        .minOrNull()
+    if (firstScheduledDate != null) return firstScheduledDate
+
+    // No explicit schedule yet — a not-yet-started contact defaults to today's first cell.
     return today.takeIf {
-        contacts.any { contact ->
-            contact.lastCheckInDate == null &&
-                (contact.nextCheckInDateLocal()?.let { it == today } ?: true)
-        }
+        contacts.any { it.lastCheckInDate == null && it.nextCheckInDateLocal() == null }
     }
 }
 

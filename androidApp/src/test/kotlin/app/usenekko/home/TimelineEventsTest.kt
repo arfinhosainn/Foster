@@ -300,6 +300,52 @@ class TimelineEventsTest {
     }
 
     @Test
+    fun firstContactWhoseDueDateAlreadyPassedKeepsTheAnchorAfterRestart() {
+        val dueDate = today.minus(DatePeriod(days = 3))
+        val notStartedContact = contact("first", "#007AFF", frequency = "daily", nextCheckInDate = dueDate.toString())
+
+        val restoredAnchor = resolveInitialCountdownStartDate(
+            existingStartDate = null,
+            checkIns = emptyList(),
+            contacts = listOf(notStartedContact),
+            today = today,
+        )
+
+        // The anchor is the durable next-check-in date, not today's ephemeral "due today".
+        assertEquals(dueDate, restoredAnchor)
+        assertEquals(dueDate, timelineStartForToday(today, restoredAnchor))
+
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(today, restoredAnchor),
+            today = today,
+            events = buildCheckInTimelineEvents(
+                checkIns = emptyList(),
+                contacts = listOf(notStartedContact),
+                today = today,
+                missedCheckIns = emptyList(),
+                initialCountdownStartDate = restoredAnchor,
+            ),
+        )
+        // The overdue date sits in the first cell — not the centered rolling position.
+        assertEquals(dueDate, slots.first().date)
+        assertTrue(slots.first().hasMissedCheckIn)
+        assertTrue(!slots.first().isCheckedIn)
+        assertTrue(timelineStartForToday(today, restoredAnchor) != timelineStartForToday(today))
+    }
+
+    @Test
+    fun notStartedContactWithoutAScheduledDateDefaultsTheAnchorToToday() {
+        val anchor = resolveInitialCountdownStartDate(
+            existingStartDate = null,
+            checkIns = emptyList(),
+            contacts = listOf(contact("first", "#007AFF", nextCheckInDate = null)),
+            today = today,
+        )
+
+        assertEquals(today, anchor)
+    }
+
+    @Test
     fun timelineStartsOverAtTheBottomLeftAfterTwentySixChronologicalPositions() {
         val firstCheckInDate = LocalDate(2026, 8, 1)
         val cycleEndDate = firstCheckInDate.plus(DatePeriod(days = TIMELINE_SLOT_COUNT))

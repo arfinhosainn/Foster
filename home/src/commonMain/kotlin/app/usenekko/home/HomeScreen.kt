@@ -541,8 +541,14 @@ private fun CheckInSection(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    val events = remember(checkIns, missedCheckIns, contacts, today) {
-        buildCheckInTimelineEvents(checkIns, contacts, today, missedCheckIns)
+    val events = remember(checkIns, missedCheckIns, contacts, today, initialCountdownStartDate) {
+        buildCheckInTimelineEvents(
+            checkIns,
+            contacts,
+            today,
+            missedCheckIns,
+            initialCountdownStartDate,
+        )
     }
     val slots = rememberTimelineSlots(
         today = today,
