@@ -76,7 +76,7 @@ class HomeViewModelCheckInTest {
             assertEquals(1, viewModel.state.value.upToDateCount)
             assertEquals(1, viewModel.state.value.checkIns.size)
             assertEquals("c1", viewModel.state.value.checkIns.first().contactId)
-            assertEquals(null, viewModel.state.value.checkingInContactId)
+            assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
         } finally {
             Dispatchers.resetMain()
         }
@@ -238,7 +238,7 @@ class HomeViewModelCheckInTest {
             viewModel.checkIn("c1")
             advanceUntilIdle()
 
-            assertEquals(null, viewModel.state.value.checkingInContactId)
+            assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
             assertEquals("Unknown(detail=log_check_in is unavailable)", viewModel.state.value.checkInError)
             assertEquals(1, dataSource.logCheckInCalls.size)
             assertEquals(1, viewModel.state.value.outstandingCount)
@@ -375,7 +375,7 @@ class HomeViewModelCheckInTest {
     }
 
     @Test
-    fun concurrentCheckInsAreBlocked() = runTest {
+    fun overlappingCheckInsForDifferentContactsAreAllowed() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
@@ -390,7 +390,36 @@ class HomeViewModelCheckInTest {
             advanceUntilIdle()
             assertEquals(1, dataSource.logCheckInCalls.size)
 
+            // A different contact must be allowed to check in while c1 is pending.
             viewModel.checkIn("c2")
+            advanceUntilIdle()
+            assertEquals(2, dataSource.logCheckInCalls.size)
+
+            dataSource.checkInGate?.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(2, dataSource.logCheckInCalls.size)
+            assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun duplicateTapOfSameContactIsBlockedWhilePending() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(contacts = listOf(contact("c1")))
+            dataSource.checkInGate = CompletableDeferred()
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+            assertEquals(1, dataSource.logCheckInCalls.size)
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
             assertEquals(1, dataSource.logCheckInCalls.size)
 
             dataSource.checkInGate?.complete(Unit)
@@ -436,6 +465,98 @@ class HomeViewModelCheckInTest {
             advanceUntilIdle()
 
             assertEquals(badgeReadsBeforeAccountRefresh + 1, dataSource.getBadgesCalls)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun optimisticStateAppliedBeforeNetworkCompletes() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(contacts = listOf(contact("c1")))
+            dataSource.checkInGate = CompletableDeferred()
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+
+            // While the network is still gated, the contact is already reflected as
+            // checked-in (optimistic) and marked in-flight.
+            assertTrue(viewModel.state.value.checkingInContactIds.contains("c1"))
+            assertEquals(0, viewModel.state.value.outstandingCount)
+            assertEquals(1, viewModel.state.value.upToDateCount)
+            assertEquals(today.toString(), viewModel.state.value.contacts.single { it.id == "c1" }.lastCheckInDate)
+            assertEquals(1, viewModel.state.value.checkIns.size)
+            assertTrue(viewModel.state.value.checkIns.single().id.startsWith("temp-"))
+
+            dataSource.checkInGate?.complete(Unit)
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun failedCheckInRollsBackExactly() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("c1"), contact("c2", next = today.minus(DatePeriod(days = 2)).toString())),
+                checkIns = emptyList(),
+            )
+            dataSource.logCheckInError = ContactError.Unknown("boom")
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            val beforeCounts = viewModel.state.value.outstandingCount
+            val beforeCheckIns = viewModel.state.value.checkIns
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+
+            // Exact pre-tap state must be restored: no residue from the optimistic patch.
+            assertEquals(beforeCounts, viewModel.state.value.outstandingCount)
+            assertEquals(beforeCheckIns, viewModel.state.value.checkIns)
+            assertEquals(null, viewModel.state.value.contacts.single { it.id == "c1" }.lastCheckInDate)
+            assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
+            assertTrue(viewModel.state.value.checkInError != null)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun reconciliationReplacesTempCheckInWithoutDuplicating() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = FakeContactDataSource(contacts = listOf(contact("c1")))
+            val homeRepository = InMemoryHomeRepository(
+                contactDataSource = dataSource,
+                accountKeyProvider = { "account-a" },
+                scope = this,
+            )
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler(), homeRepository)
+            advanceUntilIdle()
+
+            viewModel.checkIn("c1")
+            advanceUntilIdle()
+            assertEquals(1, viewModel.state.value.checkIns.size)
+            assertTrue(viewModel.state.value.checkIns.single().id.startsWith("temp-"))
+
+            // A background reconciliation reload now swaps the temp entry for the
+            // server row — never leaving both in the list.
+            viewModel.loadContacts(forceRefresh = true)
+            advanceUntilIdle()
+
+            val reloaded = viewModel.state.value.checkIns
+            assertEquals(1, reloaded.size)
+            assertTrue(reloaded.none { it.id.startsWith("temp-") })
         } finally {
             Dispatchers.resetMain()
         }

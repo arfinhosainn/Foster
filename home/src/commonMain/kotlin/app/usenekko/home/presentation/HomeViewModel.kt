@@ -7,6 +7,7 @@ import app.usenekko.home.data.HomeSnapshot
 import app.usenekko.home.data.InMemoryHomeRepository
 import app.usenekko.home.domain.contactIdsCheckedInOn
 import app.usenekko.home.domain.computeCheckInUpdate
+import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.data.AccountRepository
@@ -140,26 +141,68 @@ class HomeViewModel(
     }
 
     fun checkIn(contactId: String) {
-        if (_state.value.checkingInContactId != null) return
+        if (_state.value.checkingInContactIds.contains(contactId)) return
         val today = today()
         val contact = allContacts.firstOrNull { it.id == contactId }
         if (contact == null || !contact.isOutstanding(today) || contact.isCheckedInToday(today)) return
 
         viewModelScope.launch {
-            _state.value = _state.value.copy(checkingInContactId = contactId, checkInError = null)
+            // Re-check under the lock once the coroutine starts: another tap of the
+            // same contact may have already begun since the guard above ran.
+            if (_state.value.checkingInContactIds.contains(contactId)) return@launch
+
+            val update = computeCheckInUpdate(contact, today)
+            val now = Clock.System.now()
+            val nowIso = now.toString()
+            // logCheckIn returns only the updated contact, not the created check-in
+            // row, so we optimistically append a temporary local entry. Reconciliation
+            // later swaps its id for the server row without duplicating (see below).
+            val tempCheckIn = CheckIn(
+                id = "temp-$contactId-${now.toEpochMilliseconds()}",
+                contactId = contactId,
+                checkedInAt = nowIso,
+            )
+
+            // Capture the exact pre-tap snapshot so failure can roll back cleanly
+            // instead of recomputing (which could drift from the real pre-state).
+            val preState = _state.value
+            val preAllContacts = allContacts
+
+            // Optimistic apply: mark in-flight and reflect the checked-in state now.
+            _state.value = preState.copy(
+                checkingInContactIds = preState.checkingInContactIds + contactId,
+                checkInError = null,
+                checkIns = preState.checkIns + tempCheckIn,
+            )
+            allContacts = allContacts.map { existing ->
+                if (existing.id == contactId) {
+                    existing.copy(
+                        lastCheckInDate = update.lastCheckInDate,
+                        nextCheckInDate = update.nextCheckInDate,
+                        streakCount = update.streakCount,
+                    )
+                } else {
+                    existing
+                }
+            }
+            recomputeCounts(
+                contacts = allContacts,
+                groupId = _state.value.selectedGroupId,
+                memberships = memberships,
+                checkedInTodayContactIds = _state.value.checkIns.contactIdsCheckedInOn(today) +
+                    allContacts.filter { it.isCheckedInToday(today) }.map { it.id },
+            )
 
             val previousBadges = contactDataSource.unlockedBadgeIdsOrNull()
 
-            val update = computeCheckInUpdate(contact, today)
             val result = contactDataSource.logCheckIn(
                 contactId = contact.id,
                 lastCheckInDate = update.lastCheckInDate,
                 nextCheckInDate = update.nextCheckInDate,
                 streakCount = update.streakCount,
-                checkedInAt = Clock.System.now().toString(),
+                checkedInAt = nowIso,
             )
 
-            _state.value = _state.value.copy(checkingInContactId = null)
             when (result) {
                 is Result.Success -> {
                     allContacts = allContacts.map { existing ->
@@ -169,23 +212,40 @@ class HomeViewModel(
                             existing
                         }
                     }
-                    val checkedInTodayContactIds = _state.value.checkIns.contactIdsCheckedInOn(today) +
-                        allContacts.filter { it.isCheckedInToday(today) }.map { it.id }
                     recomputeCounts(
                         contacts = allContacts,
                         groupId = _state.value.selectedGroupId,
                         memberships = memberships,
-                        checkedInTodayContactIds = checkedInTodayContactIds,
+                        checkedInTodayContactIds = _state.value.checkIns.contactIdsCheckedInOn(today) +
+                            allContacts.filter { it.isCheckedInToday(today) }.map { it.id },
+                    )
+                    _state.value = _state.value.copy(
+                        checkingInContactIds = _state.value.checkingInContactIds - contactId,
                     )
                     if (previousBadges != null) {
                         contactDataSource.detectAndTriggerBadgeReveal(previousBadges)
                     }
+                    // Do NOT force a full home reload here: we already have the
+                    // authoritative contact from logCheckIn. Invalidate instead so the
+                    // next staleness-triggered load reconciles silently in the
+                    // background, without the "whole screen refresh" flash.
                     homeRepository.invalidate()
                     accountRepository?.invalidate()
-                    loadContacts(forceRefresh = true)
                 }
                 is Result.Error -> {
-                    _state.value = _state.value.copy(checkInError = result.error.toString())
+                    // Exact rollback from the captured pre-tap snapshot.
+                    allContacts = preAllContacts
+                    _state.value = preState.copy(
+                        checkingInContactIds = preState.checkingInContactIds - contactId,
+                        checkInError = result.error.toString(),
+                    )
+                    recomputeCounts(
+                        contacts = preAllContacts,
+                        groupId = preState.selectedGroupId,
+                        memberships = memberships,
+                        checkedInTodayContactIds = preState.checkIns.contactIdsCheckedInOn(today) +
+                            preAllContacts.filter { it.isCheckedInToday(today) }.map { it.id },
+                    )
                 }
             }
         }
