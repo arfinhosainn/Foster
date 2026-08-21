@@ -58,6 +58,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_circlecheckmark
+import nekko.home.generated.resources.ic_sprout
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
@@ -175,6 +176,9 @@ fun timelineAvatarIndicatorAnchor(visibleCount: Int): TimelineAvatarIndicatorAnc
         TimelineAvatarIndicatorAnchor.SingleAvatar
     }
 
+fun shouldRenderTimelineAvatars(slot: TimelineSlot): Boolean =
+    !slot.isFuture && slot.avatarCount > 0
+
 @Immutable
 data class TimelineSlot(
     val date: LocalDate,
@@ -183,6 +187,7 @@ data class TimelineSlot(
     val isFuture: Boolean,
     val isCheckedIn: Boolean = false,
     val hasPendingCheckIn: Boolean = false,
+    val hasMissedCheckIn: Boolean = false,
     val avatars: List<DrawableResource> = emptyList(),
     val avatarCount: Int = avatars.size,
     val plant: DrawableResource? = null,
@@ -193,6 +198,7 @@ data class TimelineSlot(
 data class TimelineEvent(
     val date: LocalDate,
     val checkedIn: Boolean = false,
+    val missed: Boolean = false,
     val avatars: List<DrawableResource> = emptyList(),
     val avatarCount: Int = avatars.size,
     val plant: DrawableResource? = null,
@@ -205,35 +211,59 @@ fun buildTimelineSlots(
     selectedDate: LocalDate? = null,
 ): List<TimelineSlot> {
     val eventByDate = events.groupBy { it.date }
+
     return List(TIMELINE_SLOT_COUNT) { index ->
         val date = startDate.plus(DatePeriod(days = index))
         val dayEvents = eventByDate[date].orEmpty()
-        val avatars = dayEvents.flatMap { it.avatars }
+        val missedEvents = dayEvents.filter { it.missed || (date < today && !it.checkedIn) }
+        val visibleEvents = dayEvents - missedEvents.toSet()
+        val avatars = visibleEvents.flatMap { it.avatars }
         TimelineSlot(
             date = date,
             isElapsed = date < today,
             isCurrent = date == today,
             isFuture = date > today,
             isCheckedIn = dayEvents.isNotEmpty() && dayEvents.all { it.checkedIn },
-            hasPendingCheckIn = dayEvents.any { !it.checkedIn },
+            hasPendingCheckIn = dayEvents.any { date >= today && !it.checkedIn },
+            hasMissedCheckIn = missedEvents.isNotEmpty(),
             avatars = avatars,
-            avatarCount = dayEvents.sumOf { maxOf(it.avatarCount, it.avatars.size) },
-            plant = dayEvents.firstNotNullOfOrNull { it.plant },
+            avatarCount = visibleEvents.sumOf { maxOf(it.avatarCount, it.avatars.size) },
+            plant = if (missedEvents.isNotEmpty()) {
+                Res.drawable.ic_sprout
+            } else {
+                dayEvents.firstNotNullOfOrNull { it.plant }
+            },
             isSelected = date == selectedDate,
         )
     }
 }
 
-fun timelineStartForToday(today: LocalDate): LocalDate =
-    today.minus(DatePeriod(days = TIMELINE_CURRENT_SLOT_INDEX))
+fun timelineStartForToday(
+    today: LocalDate,
+    initialCountdownStartDate: LocalDate? = null,
+): LocalDate {
+    val rollingStart = today.minus(DatePeriod(days = TIMELINE_CURRENT_SLOT_INDEX))
+    val activityStart = initialCountdownStartDate?.takeIf { it <= today } ?: return rollingStart
+    val cycleOffset = (today.toEpochDays() - activityStart.toEpochDays()) % TIMELINE_SLOT_COUNT
+    return today.minus(DatePeriod(days = cycleOffset.toInt()))
+}
+
+fun updateTimelineDate(previousDate: LocalDate, currentDate: LocalDate): LocalDate =
+    if (previousDate == currentDate) previousDate else currentDate
 
 @Composable
 fun rememberTimelineSlots(
     today: LocalDate,
     events: List<TimelineEvent>,
     selectedDate: LocalDate? = null,
-): List<TimelineSlot> = remember(today, events, selectedDate) {
-    buildTimelineSlots(timelineStartForToday(today), today, events, selectedDate)
+    initialCountdownStartDate: LocalDate? = null,
+): List<TimelineSlot> = remember(today, events, selectedDate, initialCountdownStartDate) {
+    buildTimelineSlots(
+        startDate = timelineStartForToday(today, initialCountdownStartDate),
+        today = today,
+        events = events,
+        selectedDate = selectedDate,
+    )
 }
 
 @Immutable
@@ -351,6 +381,7 @@ private fun TimelineCell(
     val stateDescription = when {
         slot.isCurrent && slot.hasPendingCheckIn -> "Today, check-in pending"
         slot.isCurrent -> "Today"
+        slot.hasMissedCheckIn -> "Missed check-in on ${slot.date}"
         slot.isCheckedIn -> "Checked in on ${slot.date}"
         slot.isFuture -> "Upcoming date ${slot.date}"
         else -> "No check-in on ${slot.date}"
@@ -369,17 +400,26 @@ private fun TimelineCell(
     Box(contentAlignment = Alignment.Center) {
         Box(modifier = hitTarget, contentAlignment = Alignment.Center) {
             when {
-                slot.avatarCount > 0 -> AvatarCell(
+                slot.isFuture -> FutureDot(slot, colors, cellSize)
+                shouldRenderTimelineAvatars(slot) -> AvatarCell(
                     slot = slot,
                     colors = colors,
                     cellSize = cellSize,
                     showBubble = slot.isCurrent && slot.hasPendingCheckIn && animateBubble,
                     animateBubble = animateBubble,
                 )
-
-                slot.isFuture -> FutureDot(slot, colors, cellSize)
                 else -> EmptyOrCheckedCell(slot, colors, cellSize)
             }
+        }
+        if (slot.hasMissedCheckIn && slot.avatarCount > 0) {
+            Image(
+                painter = painterResource(Res.drawable.ic_sprout),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(cellSize * 0.32f),
+                contentScale = ContentScale.Fit,
+            )
         }
     }
 }
@@ -428,7 +468,11 @@ private fun EmptyOrCheckedCell(slot: TimelineSlot, colors: TimelineGridColors, c
         when {
             slot.plant != null -> Image(
                 painter = painterResource(slot.plant),
-                contentDescription = "Plant grown on ${slot.date}",
+                contentDescription = if (slot.hasMissedCheckIn) {
+                    "Missed check-in on ${slot.date}"
+                } else {
+                    "Plant grown on ${slot.date}"
+                },
                 modifier = Modifier.size(cellSize * 0.42f),
                 contentScale = ContentScale.Fit,
             )
@@ -579,6 +623,8 @@ private fun AvatarCell(
 
 fun timelineAvatarOverflowCount(slot: TimelineSlot, visibleCount: Int): Int =
     if (slot.isCheckedIn) 0 else (slot.avatarCount - visibleCount).coerceAtLeast(0)
+
+fun timelineRenderedAvatarCount(slot: TimelineSlot): Int = slot.avatars.size
 
 fun shouldShowAvatarBubble(index: Int, visibleCount: Int, showBubble: Boolean): Boolean =
     showBubble && visibleCount > 0 && index == visibleCount - 1

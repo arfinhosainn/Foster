@@ -14,6 +14,12 @@ data class CheckIn(
     val note: String? = null,
 )
 
+data class MissedCheckIn(
+    val id: String,
+    val contactId: String,
+    val scheduledDate: LocalDate,
+)
+
 fun CheckIn.localDate(timeZone: TimeZone = TimeZone.currentSystemDefault()): LocalDate? =
     runCatching { Instant.parse(checkedInAt).toLocalDateTime(timeZone).date }.getOrNull()
 

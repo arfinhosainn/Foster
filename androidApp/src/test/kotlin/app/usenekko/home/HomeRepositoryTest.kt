@@ -7,6 +7,7 @@ import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.MissedCheckIn
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -48,9 +49,22 @@ class HomeRepositoryTest {
         val result = repository.load()
 
         assertEquals(Result.Success(contact), result.mapSnapshot { it.contacts.single() })
-        assertEquals(5, dataSource.totalHomeReads)
+        assertEquals(6, dataSource.totalHomeReads)
         assertEquals(contact, repository.state.value.snapshot?.contacts?.single())
         assertFalse(repository.state.value.isRefreshing)
+    }
+
+    @Test
+    fun coldLoadIncludesServerMissedOccurrencesInTheSnapshot() = runTest {
+        val missed = MissedCheckIn("m1", "c1", LocalDate(2026, 8, 7))
+        val dataSource = CountingDataSource().apply {
+            missedCheckInsResult = Result.Success(listOf(missed))
+        }
+        val repository = repository(dataSource, this)
+
+        val snapshot = (repository.load() as Result.Success).data
+
+        assertEquals(listOf(missed), snapshot.missedCheckIns)
     }
 
     @Test
@@ -83,7 +97,7 @@ class HomeRepositoryTest {
         advanceUntilIdle()
 
         assertEquals("Updated", repository.state.value.snapshot?.contacts?.single()?.name)
-        assertEquals(5, dataSource.totalHomeReads)
+        assertEquals(6, dataSource.totalHomeReads)
         assertFalse(repository.state.value.isRefreshing)
     }
 
@@ -101,7 +115,7 @@ class HomeRepositoryTest {
 
         assertTrue(first.await() is Result.Success)
         assertTrue(second.await() is Result.Success)
-        assertEquals(5, dataSource.totalHomeReads)
+        assertEquals(6, dataSource.totalHomeReads)
     }
 
     @Test
@@ -116,7 +130,7 @@ class HomeRepositoryTest {
         val result = repository.load(forceRefresh = true)
 
         assertEquals("Updated", (result as Result.Success).data.contacts.single().name)
-        assertEquals(5, dataSource.totalHomeReads)
+        assertEquals(6, dataSource.totalHomeReads)
         assertFalse(repository.state.value.isRefreshing)
     }
 
@@ -165,7 +179,7 @@ class HomeRepositoryTest {
         repository.load()
         advanceUntilIdle()
 
-        assertEquals(5, dataSource.totalHomeReads)
+        assertEquals(6, dataSource.totalHomeReads)
     }
 
     private fun repository(
@@ -215,14 +229,16 @@ private class CountingDataSource : ContactDataSource by FakeContactDataSource(
     var groupsResult: Result<List<Group>, ContactError> = Result.Success(initialGroups)
     var membershipsResult: Result<List<GroupMembership>, ContactError> = Result.Success(initialMemberships)
     var checkInsResult: Result<List<CheckIn>, ContactError> = Result.Success(initialCheckIns)
+    var missedCheckInsResult: Result<List<MissedCheckIn>, ContactError> = Result.Success(emptyList())
 
     var contactsReads = 0
     var groupsReads = 0
     var membershipsReads = 0
     var checkInsReads = 0
+    var missedCheckInsReads = 0
 
     val totalHomeReads: Int
-        get() = contactsReads + groupsReads + membershipsReads + checkInsReads
+        get() = contactsReads + groupsReads + membershipsReads + checkInsReads + missedCheckInsReads
 
     override suspend fun getContacts(): Result<List<Contact>, ContactError> {
         contactsReads++
@@ -248,11 +264,20 @@ private class CountingDataSource : ContactDataSource by FakeContactDataSource(
         return checkInsResult
     }
 
+    override suspend fun getMissedCheckIns(
+        from: String,
+        to: String,
+    ): Result<List<app.usenekko.home.domain.MissedCheckIn>, ContactError> {
+        missedCheckInsReads++
+        return missedCheckInsResult
+    }
+
     fun resetCounts() {
         contactsReads = 0
         groupsReads = 0
         membershipsReads = 0
         checkInsReads = 0
+        missedCheckInsReads = 0
     }
 }
 

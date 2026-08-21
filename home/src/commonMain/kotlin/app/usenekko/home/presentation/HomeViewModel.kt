@@ -16,6 +16,7 @@ import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.isCheckedInToday
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
 import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
+import app.usenekko.home.presentation.components.resolveInitialCountdownStartDate
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
@@ -88,14 +89,28 @@ class HomeViewModel(
     }
 
     private fun applySnapshot(snapshot: HomeSnapshot) {
-        allContacts = snapshot.contacts
+        val previousContactsById = allContacts.associateBy(Contact::id)
+        allContacts = snapshot.contacts.map { incoming ->
+            incoming.copy(
+                avatarColor = incoming.avatarColor
+                    ?: previousContactsById[incoming.id]?.avatarColor,
+            )
+        }
         memberships = snapshot.memberships
 
-        val checkedInTodayContactIds = snapshot.recentCheckIns.contactIdsCheckedInOn(today()) +
-            allContacts.filter { it.isCheckedInToday(today()) }.map { it.id }
+        val localToday = today()
+        val checkedInTodayContactIds = snapshot.recentCheckIns.contactIdsCheckedInOn(localToday) +
+            allContacts.filter { it.isCheckedInToday(localToday) }.map { it.id }
         val checkInCounts = snapshot.checkInHistory
             .groupingBy { it.contactId }
             .eachCount()
+        val initialCountdownStartDate = resolveInitialCountdownStartDate(
+            existingStartDate = _state.value.initialCountdownStartDate,
+            checkIns = snapshot.checkInHistory,
+            contacts = snapshot.contacts,
+            today = localToday,
+            missedCheckIns = snapshot.missedCheckIns,
+        )
         val effectiveGroupId = _state.value.selectedGroupId
             ?.takeIf { selected -> snapshot.groups.any { it.id == selected } }
 
@@ -103,8 +118,10 @@ class HomeViewModel(
             isLoading = false,
             groups = snapshot.groups,
             selectedGroupId = effectiveGroupId,
-            checkIns = snapshot.recentCheckIns,
+            checkIns = snapshot.checkInHistory,
+            missedCheckIns = snapshot.missedCheckIns,
             checkInCounts = checkInCounts,
+            initialCountdownStartDate = initialCountdownStartDate,
             error = null,
         )
         recomputeCounts(allContacts, effectiveGroupId, memberships, checkedInTodayContactIds)
@@ -139,13 +156,18 @@ class HomeViewModel(
                 lastCheckInDate = update.lastCheckInDate,
                 nextCheckInDate = update.nextCheckInDate,
                 streakCount = update.streakCount,
+                checkedInAt = Clock.System.now().toString(),
             )
 
             _state.value = _state.value.copy(checkingInContactId = null)
             when (result) {
                 is Result.Success -> {
                     allContacts = allContacts.map { existing ->
-                        if (existing.id == result.data.id) result.data else existing
+                        if (existing.id == result.data.id) {
+                            result.data.copy(avatarColor = result.data.avatarColor ?: existing.avatarColor)
+                        } else {
+                            existing
+                        }
                     }
                     val checkedInTodayContactIds = _state.value.checkIns.contactIdsCheckedInOn(today) +
                         allContacts.filter { it.isCheckedInToday(today) }.map { it.id }

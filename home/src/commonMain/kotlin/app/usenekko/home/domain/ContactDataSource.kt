@@ -47,11 +47,16 @@ interface ContactDataSource {
         from: String,
         to: String,
     ): Result<List<CheckIn>, ContactError>
+    suspend fun getMissedCheckIns(
+        from: String,
+        to: String,
+    ): Result<List<MissedCheckIn>, ContactError>
     suspend fun logCheckIn(
         contactId: String,
         lastCheckInDate: String,
         nextCheckInDate: String?,
         streakCount: Int,
+        checkedInAt: String,
     ): Result<Contact, ContactError>
     suspend fun getNotes(contactId: String): Result<List<Note>, ContactError>
     suspend fun createNote(
