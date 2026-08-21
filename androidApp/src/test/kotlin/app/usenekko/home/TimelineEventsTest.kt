@@ -32,6 +32,7 @@ import app.usenekko.home.presentation.components.timelineStackedAvatarIndicatorO
 import app.usenekko.home.presentation.components.timelineAvatarOverflowCount
 import app.usenekko.home.presentation.components.timelineStartForToday
 import app.usenekko.home.presentation.components.shouldRenderTimelineAvatars
+import app.usenekko.home.presentation.components.shouldRenderInactiveDayDot
 import app.usenekko.home.presentation.components.updateTimelineDate
 import app.usenekko.home.presentation.components.resolveInitialCountdownStartDate
 import app.usenekko.home.presentation.homeLoadingTimelineRowSlotCounts
@@ -40,6 +41,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -481,6 +483,35 @@ class TimelineEventsTest {
         val missedSlot = slots.single { it.date == today.minus(DatePeriod(days = 1)) }
         assertTrue(missedSlot.hasMissedCheckIn)
         assertEquals(0, missedSlot.avatarCount)
+    }
+
+    @Test
+    fun inactiveEmptyDaysUseTheSmallDotWhileMissedDaysStayFullSize() {
+        val events = listOf(
+            TimelineEvent(today.minus(DatePeriod(days = 3)), missed = false),
+            TimelineEvent(today.minus(DatePeriod(days = 1)), missed = true),
+        )
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(today),
+            today = today,
+            events = events,
+        ).associateBy { it.date }
+
+        // A past day with genuinely no check-in activity is an inactive dot.
+        val emptyPast = slots.getValue(today.minus(DatePeriod(days = 2)))
+        assertTrue(shouldRenderInactiveDayDot(emptyPast))
+        assertEquals(0, emptyPast.avatarCount)
+
+        // Future days stay inactive dots (as before).
+        assertTrue(shouldRenderInactiveDayDot(slots.getValue(today.plus(DatePeriod(days = 1)))))
+
+        // A real missed day is NOT a dot — it keeps its full-size empty cell.
+        val missed = slots.getValue(today.minus(DatePeriod(days = 1)))
+        assertTrue(missed.hasMissedCheckIn)
+        assertFalse(shouldRenderInactiveDayDot(missed))
+
+        // Today is never drawn as a plain dot.
+        assertFalse(shouldRenderInactiveDayDot(slots.getValue(today)))
     }
 
     @Test

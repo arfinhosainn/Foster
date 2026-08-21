@@ -178,6 +178,19 @@ fun timelineAvatarIndicatorAnchor(visibleCount: Int): TimelineAvatarIndicatorAnc
 fun shouldRenderTimelineAvatars(slot: TimelineSlot): Boolean =
     !slot.isFuture && slot.avatarCount > 0
 
+/**
+ * Days with no real calendar content (nothing checked-in, missed, pending, or
+ * carrying an avatar/plant) render as a small inactive dot — like future days.
+ * Missed days keep their full-size empty cell so they stay visible as gaps.
+ */
+fun shouldRenderInactiveDayDot(slot: TimelineSlot): Boolean =
+    !slot.isCurrent &&
+        !slot.isCheckedIn &&
+        !slot.hasMissedCheckIn &&
+        !slot.hasPendingCheckIn &&
+        slot.avatarCount == 0 &&
+        slot.plant == null
+
 @Immutable
 data class TimelineSlot(
     val date: LocalDate,
@@ -397,7 +410,6 @@ private fun TimelineCell(
     Box(contentAlignment = Alignment.Center) {
         Box(modifier = hitTarget, contentAlignment = Alignment.Center) {
             when {
-                slot.isFuture -> FutureDot(slot, colors, cellSize)
                 shouldRenderTimelineAvatars(slot) -> AvatarCell(
                     slot = slot,
                     colors = colors,
@@ -405,6 +417,7 @@ private fun TimelineCell(
                     showBubble = slot.isCurrent && slot.hasPendingCheckIn && animateBubble,
                     animateBubble = animateBubble,
                 )
+                shouldRenderInactiveDayDot(slot) -> InactiveDot(slot, colors, cellSize)
                 else -> EmptyOrCheckedCell(slot, colors, cellSize)
             }
         }
@@ -475,7 +488,7 @@ private fun EmptyOrCheckedCell(slot: TimelineSlot, colors: TimelineGridColors, c
 }
 
 @Composable
-private fun FutureDot(slot: TimelineSlot, colors: TimelineGridColors, cellSize: Dp) {
+private fun InactiveDot(slot: TimelineSlot, colors: TimelineGridColors, cellSize: Dp) {
     Box(
         Modifier
             .size(cellSize * 0.36f)
