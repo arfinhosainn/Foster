@@ -5,6 +5,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.MissedCheckIn
 import app.usenekko.home.domain.localDate
 import app.usenekko.home.domain.nextCheckInDateLocal
+import app.usenekko.home.domain.isOutstanding
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
@@ -49,7 +50,20 @@ fun buildCheckInTimelineEvents(
         val scheduledContactIds = contacts
             .filter { it.isScheduledOn(date = date, initialDate = today) }
             .mapTo(mutableSetOf(), Contact::id)
-        (scheduledContactIds + completedContactIds + missedContactIds).mapNotNull { contactId ->
+        // Today's cell must always surface every contact that is due for a check-in
+        // right now, even when the recurrence anchor (isScheduledOn) places that
+        // contact strictly in the past (overdue / frequency "none" / post-anchor).
+        // Otherwise the current-day slot renders as an empty tile despite contacts
+        // waiting. Missed-day cells are unaffected: this only runs for date == today.
+        val pendingDueTodayIds = if (date == today) {
+            contacts
+                .filter { it.isOutstanding(today) && it.id !in completedContactIds }
+                .mapTo(mutableSetOf(), Contact::id)
+        } else {
+            emptySet()
+        }
+        (scheduledContactIds + completedContactIds + missedContactIds + pendingDueTodayIds)
+            .mapNotNull { contactId ->
             contactsById[contactId]?.let { contact ->
                 TimelineEvent(
                     date = date,

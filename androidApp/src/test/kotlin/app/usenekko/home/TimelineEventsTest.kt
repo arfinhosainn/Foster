@@ -422,6 +422,68 @@ class TimelineEventsTest {
     }
 
     @Test
+    fun outstandingContactsAppearAsPendingAvatarsTodayRegardlessOfAnchor() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("overdue-none", "#FF3B30", frequency = "none", nextCheckInDate = today.minus(DatePeriod(days = 3)).toString()),
+                contact("overdue-daily", "#007AFF", frequency = "daily", nextCheckInDate = today.minus(DatePeriod(days = 1)).toString()),
+                contact("due-today", "#34C759", frequency = "weekly", nextCheckInDate = today.toString()),
+                contact("future", "#FF9500", frequency = "daily", nextCheckInDate = today.plus(DatePeriod(days = 1)).toString()),
+            ),
+            today = today,
+        )
+
+        val todayPending = events.filter { it.date == today }
+        assertEquals(3, todayPending.size)
+        assertTrue(todayPending.all { !it.checkedIn })
+        assertEquals(3, todayPending.sumOf { it.avatarCount })
+    }
+
+    @Test
+    fun currentDaySlotRendersAvatarStackOfAllOutstandingContacts() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("a", "#FF3B30", frequency = "none", nextCheckInDate = today.minus(DatePeriod(days = 2)).toString()),
+                contact("b", "#007AFF", frequency = "daily", nextCheckInDate = today.minus(DatePeriod(days = 1)).toString()),
+            ),
+            today = today,
+        )
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(today),
+            today = today,
+            events = events,
+        )
+
+        val todaySlot = slots.single { it.date == today }
+        assertTrue(todaySlot.isCurrent)
+        assertTrue(todaySlot.hasPendingCheckIn)
+        assertEquals(2, todaySlot.avatarCount)
+        assertTrue(shouldRenderTimelineAvatars(todaySlot))
+    }
+
+    @Test
+    fun missedDayStaysEmptyWithoutPlantOrAvatar() {
+        val events = buildCheckInTimelineEvents(
+            checkIns = emptyList(),
+            contacts = listOf(
+                contact("overdue", "#007AFF", frequency = "daily", nextCheckInDate = today.minus(DatePeriod(days = 1)).toString()),
+            ),
+            today = today,
+        )
+        val slots = buildTimelineSlots(
+            startDate = timelineStartForToday(today),
+            today = today,
+            events = events,
+        )
+
+        val missedSlot = slots.single { it.date == today.minus(DatePeriod(days = 1)) }
+        assertTrue(missedSlot.hasMissedCheckIn)
+        assertEquals(0, missedSlot.avatarCount)
+    }
+
+    @Test
     fun missedOccurrenceDoesNotRemoveCompletedAvatarFromTheSameDate() {
         val yesterday = today.minus(DatePeriod(days = 1))
         val events = buildCheckInTimelineEvents(

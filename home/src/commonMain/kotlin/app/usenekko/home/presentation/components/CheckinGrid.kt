@@ -58,7 +58,6 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_circlecheckmark
-import nekko.home.generated.resources.ic_sprout
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
@@ -228,11 +227,9 @@ fun buildTimelineSlots(
             hasMissedCheckIn = missedEvents.isNotEmpty(),
             avatars = avatars,
             avatarCount = visibleEvents.sumOf { maxOf(it.avatarCount, it.avatars.size) },
-            plant = if (missedEvents.isNotEmpty()) {
-                Res.drawable.ic_sprout
-            } else {
-                dayEvents.firstNotNullOfOrNull { it.plant }
-            },
+            // Missed days render as empty cells (per product decision): we deliberately do
+            // NOT assign ic_sprout here so a missed occurrence shows as a blank tile.
+            plant = dayEvents.firstNotNullOfOrNull { it.plant },
             isSelected = date == selectedDate,
         )
     }
@@ -410,16 +407,6 @@ private fun TimelineCell(
                 )
                 else -> EmptyOrCheckedCell(slot, colors, cellSize)
             }
-        }
-        if (slot.hasMissedCheckIn && slot.avatarCount > 0) {
-            Image(
-                painter = painterResource(Res.drawable.ic_sprout),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(cellSize * 0.32f),
-                contentScale = ContentScale.Fit,
-            )
         }
     }
 }
