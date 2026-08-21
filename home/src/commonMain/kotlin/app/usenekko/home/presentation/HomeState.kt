@@ -12,6 +12,7 @@ data class HomeState(
     val groups: List<Group> = emptyList(),
     val selectedGroupId: String? = null,
     val totalContactCount: Int = 0,
+    val allContacts: List<Contact> = emptyList(),
     val outstandingCount: Int = 0,
     val upToDateCount: Int = 0,
     val contacts: List<Contact> = emptyList(),

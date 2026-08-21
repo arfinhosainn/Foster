@@ -399,6 +399,7 @@ fun HomeScreen(
                             missedCheckIns = state.missedCheckIns,
                             checkInCounts = state.checkInCounts,
                             contacts = state.contacts,
+                            timelineContacts = state.allContacts,
                             outstandingCount = state.outstandingCount,
                             checkingInContactId = state.checkingInContactId,
                             onCheckIn = viewModel::checkIn,
@@ -499,6 +500,7 @@ private fun CheckInSection(
     missedCheckIns: List<MissedCheckIn>,
     checkInCounts: Map<String, Int>,
     contacts: List<Contact>,
+    timelineContacts: List<Contact>,
     outstandingCount: Int,
     checkingInContactId: String?,
     onCheckIn: (String) -> Unit,
@@ -541,10 +543,10 @@ private fun CheckInSection(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    val events = remember(checkIns, missedCheckIns, contacts, today, initialCountdownStartDate) {
+    val events = remember(checkIns, missedCheckIns, timelineContacts, today, initialCountdownStartDate) {
         buildCheckInTimelineEvents(
             checkIns,
-            contacts,
+            timelineContacts,
             today,
             missedCheckIns,
             initialCountdownStartDate,

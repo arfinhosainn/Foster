@@ -207,6 +207,7 @@ class HomeViewModel(
             contacts.filter { it.id in contactIds }
         }
         _state.value = _state.value.copy(
+            allContacts = contacts,
             totalContactCount = contacts.size,
             outstandingCount = filtered.count {
                 it.isOutstanding(today) && it.id !in checkedInTodayContactIds
