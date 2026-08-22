@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -190,6 +191,40 @@ class AddContactViewModelTest {
             assertEquals("Alice Cooper", dataSource.contacts.single().name)
             assertEquals(listOf(GroupMembership("c1", "g2")), dataSource.memberships)
             assertFalse(viewModel.state.value.isSubmitting)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun resetDraftClearsEnteredDataAndReturnsToFirstStep() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val dataSource = dataSource()
+            val repository = repository(dataSource, this)
+            val viewModel = viewModel(dataSource, repository)
+            advanceUntilIdle()
+
+            viewModel.onNameChanged("Bob")
+            viewModel.onAvatarSelected(3)
+            viewModel.onGroupSelected("g2")
+            viewModel.onFrequencySelected("monthly")
+            viewModel.onTimeSelected(8, 15, true)
+            repeat(3) { viewModel.onNextStep() }
+            assertEquals(3, viewModel.state.value.currentStep)
+
+            viewModel.resetDraft()
+
+            assertEquals(0, viewModel.state.value.currentStep)
+            assertEquals("", viewModel.state.value.name)
+            assertNull(viewModel.state.value.selectedAvatarIndex)
+            assertNull(viewModel.state.value.selectedGroupId)
+            assertEquals("weekly", viewModel.state.value.selectedFrequency)
+            assertFalse(viewModel.state.value.isEditing)
+            assertFalse(viewModel.state.value.isSubmitting)
+            // Group catalog survives so step 1 stays populated on the next run.
+            assertEquals(listOf("Family", "Friends"), viewModel.state.value.groups.map { it.name })
         } finally {
             Dispatchers.resetMain()
         }

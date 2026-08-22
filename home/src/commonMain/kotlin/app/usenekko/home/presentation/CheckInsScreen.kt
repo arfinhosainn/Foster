@@ -187,6 +187,7 @@ fun CheckInsScreen(
             onDismiss = { showAddContact = false },
             onSaved = {
                 showAddContact = false
+                addContactViewModel.resetDraft()
                 viewModel.load(forceRefresh = true)
             },
             onShowPaywall = {

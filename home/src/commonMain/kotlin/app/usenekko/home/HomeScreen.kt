@@ -460,6 +460,7 @@ fun HomeScreen(
             onDismiss = { showAddContact = false },
             onSaved = {
                 showAddContact = false
+                addContactViewModel.resetDraft()
                 viewModel.loadContacts(forceRefresh = true)
             },
             onShowPaywall = {
