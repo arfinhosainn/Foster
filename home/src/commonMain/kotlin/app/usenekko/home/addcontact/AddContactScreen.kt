@@ -39,6 +39,7 @@ import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -179,6 +180,10 @@ fun AddContactScreen(
                 onNextStep = viewModel::onNextStep,
                 onSubmit = viewModel::submit,
                 onImportContact = launchContactPicker,
+                onCloseClick = {
+                    viewModel.resetDraft()
+                    onDismiss()
+                },
             )
         }
     }
@@ -207,6 +212,7 @@ private fun AddContactSheetContent(
     onNextStep: () -> Unit,
     onSubmit: () -> Unit,
     onImportContact: () -> Unit,
+    onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val stepMeta = steps[state.currentStep].let {
@@ -224,15 +230,28 @@ private fun AddContactSheetContent(
             .verticalScroll(rememberScrollState()),
     ) {
 
-        Text(
-            text = stepMeta.title,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.SemiBold,
-            lineHeight = 36.sp,
-            textAlign = TextAlign.Center,
-            color = NekkoTheme.colors.text.primary,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = stepMeta.title,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 36.sp,
+                textAlign = TextAlign.Center,
+                color = NekkoTheme.colors.text.primary,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            IconButton(
+                onClick = onCloseClick,
+                modifier = Modifier.align(Alignment.CenterEnd),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Close",
+                    tint = NekkoTheme.colors.text.primary,
+                )
+            }
+        }
 
         Spacer(Modifier.height(10.dp))
 

@@ -121,6 +121,19 @@ class AddContactViewModel(
         }
     }
 
+    fun resetDraft() {
+        _state.update { current ->
+            // Keep the group catalog so step 1 stays populated on the next run;
+            // applyHomeGroups keeps it in sync with future repository emissions.
+            AddContactState().copy(
+                groups = current.groups,
+                contacts = current.contacts,
+                memberships = current.memberships,
+                initialGroupResolved = current.initialGroupResolved,
+            )
+        }
+    }
+
     fun onCreateGroupClicked() {
         _state.update { it.copy(showCreateGroupSheet = true) }
     }
