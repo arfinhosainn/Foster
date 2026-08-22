@@ -26,7 +26,19 @@ class ReminderViewModel(
     val events = _events.receiveAsFlow()
 
     init {
-        draftStore.update { it.copy(currentStep = OnboardingStep.DayReminder) }
+        draftStore.update {
+            it.copy(
+                currentStep = OnboardingStep.DayReminder,
+                // The screen has no "None" option and defaults its selection to
+                // Daily, but the draft may still be null/None (e.g. user opened the
+                // screen and hit Next without tapping an option, or resumed a stale
+                // draft). Ensure a real frequency is persisted so the RPC never
+                // receives null and the contact is not seeded as "none".
+                reminderFrequency = it.reminderFrequency?.takeIf { frequency ->
+                    frequency != ReminderFrequency.None
+                } ?: ReminderFrequency.Daily,
+            )
+        }
     }
 
     fun onAction(action: ReminderAction) {
@@ -44,7 +56,16 @@ class ReminderViewModel(
     }
 
     fun onNextClicked() {
-        draftStore.update { it.copy(currentStep = OnboardingStep.TimeReminder) }
+        draftStore.update {
+            it.copy(
+                currentStep = OnboardingStep.TimeReminder,
+                // Persist whatever is currently selected. The UI defaults to Daily
+                // even when the draft has no frequency yet, so tapping Next must
+                // write a real cadence instead of null (which the RPC would turn
+                // into check_in_frequency = 'none').
+                reminderFrequency = _state.value.selectedOption.toReminderFrequency(),
+            )
+        }
         sendEvent(ReminderEvent.NavigateToNext)
     }
 
