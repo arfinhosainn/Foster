@@ -157,6 +157,19 @@ begin
       returning id into v_contact_id;
     end if;
 
+    -- Always sync the onboarding contact's day-reminder cadence from the payload,
+    -- even when the contact pre-existed (a resumed draft). Previously this only ran
+    -- on insert, so a contact seeded earlier kept check_in_frequency = 'none' and
+    -- silently ignored the Daily / Weekly / ... pick.
+    if v_contact_id is not null then
+      update public.contacts
+         set check_in_frequency = coalesce(nullif(lower(payload->>'reminderFrequency'), ''), 'none'),
+             reminder_time      = v_time,
+             updated_at         = now()
+       where id = v_contact_id
+         and owner_id = v_user_id;
+    end if;
+
     if v_contact_id is not null and nullif(payload->>'selectedGroupName', '') is not null then
       select id into v_selected_group_id
         from public.groups

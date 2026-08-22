@@ -865,6 +865,21 @@ begin
       returning id into v_contact_id;
     end if;
 
+    -- The onboarding contact's day-reminder cadence must always match what the
+    -- user selected, even when the contact was created earlier (e.g. a resumed
+    -- draft whose first completion only stored the name/avatar). WITHOUT this,
+    -- check_in_frequency stays 'none' on a rerun, silently dropping the Daily /
+    -- Weekly / ... pick. Owner-scoped and idempotent: it only runs for the user's
+    -- own onboarding contact and never touches already-complete accounts.
+    if v_contact_id is not null then
+      update public.contacts
+         set check_in_frequency = coalesce(nullif(lower(payload->>'reminderFrequency'), ''), 'none'),
+             reminder_time      = v_time,
+             updated_at         = now()
+       where id = v_contact_id
+         and owner_id = v_user_id;
+    end if;
+
     if v_contact_id is not null and nullif(payload->>'selectedGroupName', '') is not null then
       select id into v_selected_group_id
         from public.groups
