@@ -15,26 +15,30 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class PaywallViewModel(
+class DiscountPaywallViewModel(
     private val subscriptionRepository: SubscriptionRepository,
     private val paywallGateManager: PaywallGateManager? = null,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(PaywallState())
-    val state: StateFlow<PaywallState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(DiscountPaywallState())
+    val state: StateFlow<DiscountPaywallState> = _state.asStateFlow()
 
-    private val _events = Channel<PaywallEvent>(Channel.BUFFERED)
+    private val _events = Channel<DiscountPaywallEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
+
+    /** Real countdown deadline from the gate engine — survives remounts. */
+    val offerExpiresAtMillis: StateFlow<Long?> =
+        paywallGateManager?.offerExpiresAtMillis
+            ?: MutableStateFlow(null)
 
     init {
         loadOffering()
     }
 
-    fun onAction(action: PaywallAction) {
+    fun onAction(action: DiscountPaywallAction) {
         when (action) {
-            is PaywallAction.SelectPeriod -> _state.update { it.copy(selectedPeriod = action.period) }
-            PaywallAction.Purchase -> purchase()
-            PaywallAction.Restore -> restore()
+            DiscountPaywallAction.Purchase -> purchase()
+            DiscountPaywallAction.Restore -> restore()
         }
     }
 
@@ -42,39 +46,31 @@ class PaywallViewModel(
         viewModelScope.launch {
             when (val result = subscriptionRepository.loadPaywallOffering()) {
                 is Result.Success -> _state.update {
-                    it.copy(isLoading = false, offering = result.data)
+                    it.copy(isLoading = false, annual = result.data?.annual)
                 }
-                is Result.Error -> {
-                    _state.update {
-                        it.copy(isLoading = false)
-                    }
-                    _events.send(PaywallEvent.ShowError("Couldn't load plans. Please try again."))
-                }
+                is Result.Error -> _state.update { it.copy(isLoading = false) }
             }
         }
     }
 
     private fun purchase() {
-        val pkg = _state.value.selectedPackage ?: return
+        val pkg = _state.value.annual ?: return
         if (_state.value.isPurchasing) return
         viewModelScope.launch {
             _state.update { it.copy(isPurchasing = true) }
             when (val outcome = subscriptionRepository.purchase(pkg)) {
                 PurchaseOutcome.Success -> {
                     _state.update { it.copy(isPurchasing = false) }
-                    _events.send(PaywallEvent.Subscribed)
+                    _events.send(DiscountPaywallEvent.Subscribed)
                 }
+                // Backed out of the native sheet mid-offer — strong intent signal.
                 PurchaseOutcome.Cancelled -> {
                     _state.update { it.copy(isPurchasing = false) }
-                    // Backed out of checkout — report it so the gate engine can
-                    // decide whether this moment earns the discount impression.
-                    paywallGateManager?.let { manager ->
-                        viewModelScope.launch { manager.reportTrigger(PaywallTrigger.ABANDONED_CHECKOUT) }
-                    }
+                    reportAbandonedCheckout()
                 }
                 is PurchaseOutcome.Error -> {
                     _state.update { it.copy(isPurchasing = false) }
-                    _events.send(PaywallEvent.ShowError(outcome.message ?: "Purchase failed."))
+                    _events.send(DiscountPaywallEvent.ShowError(outcome.message ?: "Purchase failed."))
                 }
             }
         }
@@ -88,16 +84,28 @@ class PaywallViewModel(
                 is Result.Success -> {
                     _state.update { it.copy(isRestoring = false) }
                     if (result.data) {
-                        _events.send(PaywallEvent.Subscribed)
+                        _events.send(DiscountPaywallEvent.Subscribed)
                     } else {
-                        _events.send(PaywallEvent.ShowError("No active subscription found to restore."))
+                        _events.send(DiscountPaywallEvent.ShowError("No active subscription found to restore."))
                     }
                 }
                 is Result.Error -> {
                     _state.update { it.copy(isRestoring = false) }
-                    _events.send(PaywallEvent.ShowError("Restore failed. Try again."))
+                    _events.send(DiscountPaywallEvent.ShowError("Restore failed. Try again."))
                 }
             }
         }
+    }
+
+    private fun reportAbandonedCheckout() {
+        val manager = paywallGateManager ?: return
+        viewModelScope.launch {
+            manager.reportTrigger(PaywallTrigger.ABANDONED_CHECKOUT)
+        }
+    }
+
+    override fun onCleared() {
+        paywallGateManager?.consumeShow()
+        super.onCleared()
     }
 }

@@ -60,6 +60,7 @@ private fun screenTransitionStyle(screen: Screen): ScreenTransitionStyle {
         Screen.Home -> ScreenTransitionStyle.Reset
         is Screen.Brainstorm,
         Screen.Paywall,
+        Screen.DiscountPaywall,
         Screen.Account,
         Screen.GroupSettings -> ScreenTransitionStyle.Vertical
     }

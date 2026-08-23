@@ -20,6 +20,7 @@ import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.home.presentation.components.resolveInitialCountdownStartDate
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.notifications.ReminderScheduler
+import app.usenekko.shared.paywall.PaywallGateManager
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +35,7 @@ class HomeViewModel(
     private val reminderScheduler: ReminderScheduler,
     homeRepository: HomeRepository? = null,
     private val accountRepository: AccountRepository? = null,
+    private val paywallGateManager: PaywallGateManager? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -231,6 +233,12 @@ class HomeViewModel(
                     // background, without the "whole screen refresh" flash.
                     homeRepository.invalidate()
                     accountRepository?.invalidate()
+                    // AHA_MOMENT: a completed check-in is core value — let the
+                    // gate engine decide whether this moment earns the 60%-off
+                    // impression (silently ignored when gates fail).
+                    paywallGateManager?.let { manager ->
+                        launch { manager.onCoreValueActionCompleted() }
+                    }
                 }
                 is Result.Error -> {
                     // Exact rollback from the captured pre-tap snapshot.

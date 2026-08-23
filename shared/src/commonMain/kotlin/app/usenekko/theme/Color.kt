@@ -20,7 +20,7 @@ val GreenFill = Color(0xFFF0FDF4)
 val Yellow = Color(0xFFEAB308)
 val YellowHover = Color(0xFFFACC15)
 val YellowActive = Color(0xFFCA8A04)
-val YellowStroke = Color(0xFFFEF08A)
+val YellowStroke = Color(0xFFF713F12)
 val YellowFill = Color(0xFFFEFCE8)
 
 // ---- Orange -------------------------------------------------------------

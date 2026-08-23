@@ -19,6 +19,8 @@ import app.usenekko.home.presentation.settings.GroupDetailViewModel
 import app.usenekko.home.presentation.settings.GroupSettingsViewModel
 import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.shared.notifications.ReminderScheduler
+import app.usenekko.shared.paywall.LocalPaywallGateManager
+import app.usenekko.shared.paywall.PaywallGateManager
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
 import app.usenekko.shared.subscription.SubscriptionRepository
 
@@ -48,11 +50,18 @@ fun rememberHomeViewModel(): HomeViewModel {
     val homeRepository = LocalHomeRepository.current
     val accountRepository = LocalAccountRepository.current
     val reminderScheduler = remember { ReminderScheduler() }
+    val paywallGateManager = LocalPaywallGateManager.current
     return viewModel(
         key = "home",
         factory = viewModelFactory {
             initializer {
-                HomeViewModel(contactDataSource, reminderScheduler, homeRepository, accountRepository)
+                HomeViewModel(
+                    contactDataSource,
+                    reminderScheduler,
+                    homeRepository,
+                    accountRepository,
+                    paywallGateManager,
+                )
             }
         },
     )
@@ -64,6 +73,7 @@ fun rememberAddContactViewModel(): AddContactViewModel {
     val homeRepository = LocalHomeRepository.current
     val reminderScheduler = remember { ReminderScheduler() }
     val subscriptionRepository = LocalSubscriptionRepository.current
+    val paywallGateManager = LocalPaywallGateManager.current
     return viewModel(
         key = "add-contact",
         factory = addContactViewModelFactory(
@@ -71,6 +81,7 @@ fun rememberAddContactViewModel(): AddContactViewModel {
             reminderScheduler = reminderScheduler,
             subscriptionRepository = subscriptionRepository,
             homeRepository = homeRepository,
+            paywallGateManager = paywallGateManager,
         ),
     )
 }
@@ -80,6 +91,7 @@ fun addContactViewModelFactory(
     reminderScheduler: ReminderScheduler,
     subscriptionRepository: SubscriptionRepository,
     homeRepository: HomeRepository? = null,
+    paywallGateManager: PaywallGateManager? = null,
     editingContact: Contact? = null,
 ) = viewModelFactory {
     initializer {
@@ -88,6 +100,7 @@ fun addContactViewModelFactory(
             reminderScheduler = reminderScheduler,
             subscriptionRepository = subscriptionRepository,
             homeRepository = homeRepository,
+            paywallGateManager = paywallGateManager,
             editingContact = editingContact,
         )
     }

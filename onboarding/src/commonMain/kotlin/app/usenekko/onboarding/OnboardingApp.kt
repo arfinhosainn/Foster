@@ -2,6 +2,8 @@ package app.usenekko.onboarding
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import app.usenekko.App
 import app.usenekko.navigation.Navigator
@@ -24,8 +26,6 @@ import app.usenekko.onboarding.welcome.WelcomeScreen
 import app.usenekko.onboarding.splash.SplashScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import app.usenekko.home.HomeScreen
 import app.usenekko.home.presentation.CheckInsScreen
@@ -33,6 +33,7 @@ import app.usenekko.home.presentation.badges.BadgeRevealStore
 import app.usenekko.home.presentation.badges.PlantRewardOverlay
 import app.usenekko.home.presentation.brainstorm.BrainstormScreen
 import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
+import app.usenekko.home.presentation.paywall.DiscountPaywallScreen
 import app.usenekko.home.presentation.paywall.PaywallScreen
 import app.usenekko.home.presentation.settings.AccountScreen
 import app.usenekko.home.presentation.settings.GroupDetailScreen
@@ -41,6 +42,9 @@ import app.usenekko.home.presentation.settings.SettingScreen
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.paywall.LocalPaywallGateManager
+import app.usenekko.shared.paywall.PaywallGateManagerProvider
+import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
 import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.launch
@@ -49,45 +53,84 @@ import io.github.jan.supabase.SupabaseClient
 @Composable
 fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) {
     OnboardingDraftStoreProvider(supabaseClient) {
-        val profileDataSource = LocalOnboardingProfileDataSource.current
-        val supabaseClient = LocalSupabaseClient.current
-        val scope = rememberCoroutineScope()
+        // Sits below OnboardingDraftStoreProvider (needs LocalSubscriptionRepository).
+        PaywallGateManagerProvider {
+            OnboardingAppContent(navigator, supabaseClient)
+        }
+    }
+}
 
-        val subscriptionRepository = LocalSubscriptionRepository.current
+@Composable
+private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseClient?) {
+    val profileDataSource = LocalOnboardingProfileDataSource.current
+    val supabaseClient = LocalSupabaseClient.current
+    val scope = rememberCoroutineScope()
 
-        LaunchedEffect(Unit) {
-            var recoveryAttempted = false
-            launch {
-                subscriptionRepository.refresh()
-            }
-            supabaseClient.auth.sessionStatus.collect { status ->
-                when (authSessionAction(status, navigator.currentScreen is Screen.Splash)) {
-                    AuthSessionAction.Route -> {
-                        recoveryAttempted = false
-                        val session = supabaseClient.auth.currentSessionOrNull()
-                        logAccount(session?.user?.email, session?.user?.id, "authenticated session")
-                        routeAfterAuth(profileDataSource, navigator)
-                    }
-                    AuthSessionAction.Recover -> {
-                        if (!recoveryAttempted) {
-                            recoveryAttempted = true
-                            runCatching { supabaseClient.auth.refreshCurrentSession() }
-                                .onFailure { error ->
-                                    println("NekkoAuth[session refresh failed]: ${error.message}")
-                                }
-                        }
-                    }
-                    AuthSessionAction.ShowWelcome -> navigator.replaceAll(Screen.Welcome)
-                    AuthSessionAction.Ignore -> Unit
+    val subscriptionRepository = LocalSubscriptionRepository.current
+    val paywallGateManager = LocalPaywallGateManager.current
+
+    LaunchedEffect(Unit) {
+        var recoveryAttempted = false
+        launch {
+            subscriptionRepository.refresh()
+        }
+        supabaseClient.auth.sessionStatus.collect { status ->
+            when (authSessionAction(status, navigator.currentScreen is Screen.Splash)) {
+                AuthSessionAction.Route -> {
+                    recoveryAttempted = false
+                    val session = supabaseClient.auth.currentSessionOrNull()
+                    logAccount(session?.user?.email, session?.user?.id, "authenticated session")
+                    routeAfterAuth(profileDataSource, navigator)
                 }
+                AuthSessionAction.Recover -> {
+                    if (!recoveryAttempted) {
+                        recoveryAttempted = true
+                        runCatching { supabaseClient.auth.refreshCurrentSession() }
+                            .onFailure { error ->
+                                println("NekkoAuth[session refresh failed]: ${error.message}")
+                            }
+                    }
+                }
+                AuthSessionAction.ShowWelcome -> navigator.replaceAll(Screen.Welcome)
+                AuthSessionAction.Ignore -> Unit
             }
         }
+    }
 
-        val pendingBadge by BadgeRevealStore.pending.collectAsState()
+    // Single delivery point for every gate-approved impression (exit-intent,
+    // abandoned checkout, limit hit, aha moment, win-back): whenever the engine
+    // approves an offer, route to the discount paywall once. Deliberately waits
+    // until the initial auth routing has settled (Splash -> real screen):
+    // navigating earlier would get wiped out by routeAfterAuth's replaceAll.
+    val shouldShowDiscountPaywall by paywallGateManager.shouldShowDiscountPaywall.collectAsState()
+    val currentScreen = navigator.currentScreen
+    LaunchedEffect(shouldShowDiscountPaywall, currentScreen) {
+        if (!shouldShowDiscountPaywall) return@LaunchedEffect
+        if (currentScreen is Screen.Splash || currentScreen is Screen.DiscountPaywall) return@LaunchedEffect
+        paywallGateManager.consumeShow()
+        navigator.navigate(Screen.DiscountPaywall)
+    }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            App(navigator) { screen ->
-                when (screen) {
+    // Explicit premium entry points (home crown button, settings upgrade card,
+    // limit-hit fallback, ...): while the discounted offer's countdown is still
+    // running, EVERY premium surface leads to the discount paywall; once it has
+    // expired (or never started), fall back to the regular paywall.
+    val showPremiumPaywall: () -> Unit = {
+        scope.launch {
+            if (paywallGateManager.isDiscountOfferLive()) {
+                paywallGateManager.onDiscountPaywallShown()
+                navigator.navigate(Screen.DiscountPaywall)
+            } else {
+                navigator.navigate(Screen.Paywall)
+            }
+        }
+    }
+
+    val pendingBadge by BadgeRevealStore.pending.collectAsState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        App(navigator) { screen ->
+            when (screen) {
                 is Screen.Splash -> SplashScreen()
 
                 is Screen.Welcome -> WelcomeScreen(
@@ -145,7 +188,15 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                 )
 
                 is Screen.Notification -> NotificationScreen(
-                    onNavigateToMainApp = { navigator.replaceAll(Screen.Home) },
+                    onNavigateToMainApp = {
+                        // Land on Home, then show the paywall on top of it:
+                        // closing the paywall (or subscribing) returns the
+                        // user to the home screen.
+                        navigator.replaceAll(Screen.Home)
+                        if (!subscriptionRepository.isSubscribed.value) {
+                            navigator.navigate(Screen.Paywall)
+                        }
+                    },
                     onBack = { navigator.goBack() },
                 )
 
@@ -154,13 +205,15 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                     onBrainstormClick = { contactId -> navigator.navigate(Screen.Brainstorm(contactId)) },
                     onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
                     onSettingsClick = { navigator.navigate(Screen.Settings) },
-                    onShowPaywall = { navigator.navigate(Screen.Paywall) },
+                    onShowPaywall = showPremiumPaywall,
+                    onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
                 )
 
                 is Screen.CheckIns -> CheckInsScreen(
                     onHomeClick = { navigator.replaceAll(Screen.Home) },
                     onSettingsClick = { navigator.navigate(Screen.Settings) },
-                    onShowPaywall = { navigator.navigate(Screen.Paywall) },
+                    onShowPaywall = showPremiumPaywall,
+                    onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
                 )
 
                 is Screen.ContactProfile -> ContactProfileScreen(
@@ -177,7 +230,7 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                 is Screen.Settings -> SettingScreen(
                     onBack = { navigator.goBack() },
                     onAccountClick = {},
-                    onPremiumClick = { navigator.navigate(Screen.Paywall) },
+                    onPremiumClick = showPremiumPaywall,
                     onAccountDeleted = {
                         scope.launch {
                             // The server row is already gone (the Edge Function
@@ -204,23 +257,36 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
                 )
 
                 is Screen.Paywall -> PaywallScreen(
-                    onBack = { navigator.goBack() },
+                    onBack = {
+                        // Closing the regular paywall arms exit-intent and
+                        // offers the 60% deal IMMEDIATELY in this session;
+                        // if the gates block it here, the armed dismissal
+                        // still fires on the next cold start as a fallback.
+                        paywallGateManager.onRegularPaywallDismissed()
+                        navigator.goBack()
+                        scope.launch {
+                            paywallGateManager.reportTrigger(PaywallTrigger.EXIT_INTENT)
+                        }
+                    },
+                    onSubscribed = { navigator.goBack() },
+                )
+
+                is Screen.DiscountPaywall -> DiscountPaywallScreen(
                     onSubscribed = { navigator.goBack() },
                 )
             }
-            }
+        }
 
-            pendingBadge?.let { badge ->
-                NekkoTheme {
-                    PlantRewardOverlay(
-                        badge = badge,
-                        onCollect = {
-                            BadgeRevealStore.consume()
-                            navigator.navigate(Screen.Account)
-                        },
-                        onDismiss = { BadgeRevealStore.consume() },
-                    )
-                }
+        pendingBadge?.let { badge ->
+            NekkoTheme {
+                PlantRewardOverlay(
+                    badge = badge,
+                    onCollect = {
+                        BadgeRevealStore.consume()
+                        navigator.navigate(Screen.Account)
+                    },
+                    onDismiss = { BadgeRevealStore.consume() },
+                )
             }
         }
     }
@@ -278,5 +344,3 @@ private fun OnboardingStep?.toScreen(): Screen {
 private fun logAccount(email: String?, userId: String?, source: String) {
     kotlin.io.println("NekkoAuth[$source]: email=${email ?: "null"} userId=${userId ?: "null"}")
 }
-
-

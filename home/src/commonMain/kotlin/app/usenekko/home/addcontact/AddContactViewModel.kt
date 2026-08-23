@@ -12,6 +12,8 @@ import app.usenekko.home.domain.initialReminder
 import app.usenekko.home.domain.nextReminder
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.contacts.ImportedContact
+import app.usenekko.shared.paywall.PaywallGateManager
+import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.GateResult
 import app.usenekko.shared.subscription.SubscriptionGates
 import app.usenekko.shared.subscription.SubscriptionRepository
@@ -31,6 +33,7 @@ class AddContactViewModel(
     private val reminderScheduler: ReminderScheduler,
     private val subscriptionRepository: SubscriptionRepository,
     private val homeRepository: HomeRepository? = null,
+    private val paywallGateManager: PaywallGateManager? = null,
     editingContact: Contact? = null,
 ) : ViewModel() {
 
@@ -225,7 +228,11 @@ class AddContactViewModel(
                         )
                         if (gate is GateResult.Blocked) {
                             _state.update { it.copy(isSubmitting = false) }
-                            _events.send(AddContactEvent.ShowPaywall(gate.reason))
+
+                            // LIMIT_HIT trigger: let the discount-gate engine decide
+                            // whether this moment earns the 60%-off impression.
+                            val showDiscount = paywallGateManager?.reportTrigger(PaywallTrigger.LIMIT_HIT) == true
+                            _events.send(AddContactEvent.ShowPaywall(gate.reason, showDiscount))
                             return@launch
                         }
                     }
