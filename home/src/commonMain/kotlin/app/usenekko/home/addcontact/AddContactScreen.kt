@@ -138,6 +138,7 @@ fun AddContactScreen(
     onDismiss: () -> Unit,
     onSaved: () -> Unit,
     onShowPaywall: () -> Unit = {},
+    onShowDiscountPaywall: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -152,7 +153,11 @@ fun AddContactScreen(
                 AddContactEvent.Saved -> onSaved()
                 is AddContactEvent.ShowPaywall -> {
                     onDismiss()
-                    onShowPaywall()
+                    if (event.showDiscount) {
+                        onShowDiscountPaywall()
+                    } else {
+                        onShowPaywall()
+                    }
                 }
             }
         }

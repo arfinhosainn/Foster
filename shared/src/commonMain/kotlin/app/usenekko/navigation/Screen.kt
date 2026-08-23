@@ -60,4 +60,7 @@ sealed class Screen {
 
     @Serializable
     data object Paywall : Screen()
+
+    @Serializable
+    data object DiscountPaywall : Screen()
 }

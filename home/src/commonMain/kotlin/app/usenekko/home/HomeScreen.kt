@@ -138,6 +138,7 @@ fun HomeScreen(
     onCheckInsClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onShowPaywall: () -> Unit = {},
+    onShowDiscountPaywall: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
 
@@ -466,6 +467,10 @@ fun HomeScreen(
             onShowPaywall = {
                 showAddContact = false
                 onShowPaywall()
+            },
+            onShowDiscountPaywall = {
+                showAddContact = false
+                onShowDiscountPaywall()
             },
         )
     }

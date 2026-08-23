@@ -118,12 +118,12 @@ fun PaywallScreen(
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
                         contentDescription = "Close",
-                        tint = PaywallBackground,
+                        tint = NekkoTheme.colors.gray.secondary,
                         modifier = Modifier.size(24.dp),
                     )
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
 
             if (state.isLoading) {
                 Box(Modifier.fillMaxWidth().height(480.dp), contentAlignment = Alignment.Center) {
@@ -385,10 +385,10 @@ private fun PlanCard(
                         Spacer(Modifier.width(8.dp))
                         Text(
                             it,
-                            color = NekkoTheme.colors.yellow.default,
+                            color = NekkoTheme.colors.yellow.stroke,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.clip(RoundedCornerShape(50))
+                            modifier = Modifier.clip(RoundedCornerShape(40))
                                 .background(PaywallYellow)
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                         )

@@ -75,6 +75,7 @@ fun CheckInsScreen(
     onHomeClick: () -> Unit,
     onSettingsClick: () -> Unit = {},
     onShowPaywall: () -> Unit = {},
+    onShowDiscountPaywall: () -> Unit = {},
     onAddClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -193,6 +194,10 @@ fun CheckInsScreen(
             onShowPaywall = {
                 showAddContact = false
                 onShowPaywall()
+            },
+            onShowDiscountPaywall = {
+                showAddContact = false
+                onShowDiscountPaywall()
             },
         )
     }
