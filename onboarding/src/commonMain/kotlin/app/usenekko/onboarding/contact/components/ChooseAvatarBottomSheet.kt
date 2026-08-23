@@ -33,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
@@ -43,6 +45,7 @@ import nekko.onboarding.generated.resources.avatar_maroon
 import nekko.onboarding.generated.resources.avatar_orange
 import nekko.onboarding.generated.resources.avatar_red
 import nekko.onboarding.generated.resources.avatar_yellow
+import nekko.onboarding.generated.resources.ic_close
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.math.min
@@ -80,7 +83,29 @@ fun ChooseAvatarBottomSheet(
         sheetState = sheetState,
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top  = 10.dp)
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable { onDismiss() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.gray.secondary,
+                    )
+                }
+            }
+        },
     ) {
         Column(
             modifier = Modifier
@@ -91,25 +116,10 @@ fun ChooseAvatarBottomSheet(
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Choose Avatar",
-                    style = NekkoTheme.typography.heading1Bold,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = NekkoTheme.colors.text.primary
                 )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(NekkoTheme.colors.text.tertiary.copy(alpha = 0.2f))
-                        .clickable { onDismiss() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = NekkoTheme.colors.text.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -150,7 +160,6 @@ fun ChooseAvatarBottomSheet(
                                 Image(
                                     imageVector = vectorResource(avatarResources[j]),
                                     contentDescription = "Avatar ${j + 1}",
-                                    modifier = Modifier.size(64.dp)
                                 )
                             }
                         }

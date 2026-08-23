@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -67,7 +67,7 @@ fun NoteCard(
             Box(modifier = Modifier.height(60.dp)) {
                 Text(
                     text = note.description,
-                    maxLines = 4,
+                    maxLines = 5,
                     overflow = TextOverflow.Ellipsis,
                     style = NekkoTheme.typography.heading4,
                     color = NekkoTheme.colors.text.tertiary,
@@ -107,8 +107,10 @@ fun NoteCard(
                         contentDescription = "Menu",
                         tint = NekkoTheme.colors.text.tertiary,
                         modifier = Modifier
-                            .size(20.dp)
-                            .padding(0.dp),
+                            .clip(CircleShape)
+                            .clickable { menuExpanded = true }
+                            .padding(4.dp)
+                            .size(20.dp),
                     )
                     DropdownMenu(
                         expanded = menuExpanded,

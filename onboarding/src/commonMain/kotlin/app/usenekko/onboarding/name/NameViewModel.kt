@@ -31,6 +31,10 @@ class NameViewModel(
     }
 
     fun onContinueClicked() {
+        if (_name.value.isBlank()) {
+            sendEvent(NameEvent.NameRequired)
+            return
+        }
         draftStore.update { it.copy(currentStep = OnboardingStep.Contact) }
         sendEvent(NameEvent.NavigateToNext)
     }

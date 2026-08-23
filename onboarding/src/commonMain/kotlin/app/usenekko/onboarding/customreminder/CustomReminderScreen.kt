@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,6 +77,11 @@ private fun CustomReminderScreenContent(
     val liquidState = rememberLiquidState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
+    // First-time affordance: the first reminder card nudges left once so the
+    // user discovers the swipe-to-delete gesture. Survives recomposition but
+    // resets per app session.
+    var swipeHintPending by rememberSaveable { mutableStateOf(true) }
+
     Box(modifier = modifier.fillMaxSize()) {
 
         Box(
@@ -99,8 +105,8 @@ private fun CustomReminderScreenContent(
                     ),
                     title = {
                         StepIndicator(
-                            totalSteps = 8,
-                            currentStep = 5,
+                            totalSteps = 7,
+                            currentStep = 4,
                         )
                     },
                     navigationIcon = { },
@@ -214,11 +220,17 @@ private fun CustomReminderScreenContent(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         items(state.reminders) { reminder ->
+                            val isFirstCard = state.reminders.firstOrNull()?.id == reminder.id
                             CustomReminderCard(
                                 reminder = reminder,
                                 onClick = {
                                     onAction(CustomReminderAction.EditClicked(reminder.id))
                                 },
+                                onDelete = {
+                                    onAction(CustomReminderAction.DeleteReminderClicked(reminder.id))
+                                },
+                                showSwipeHint = swipeHintPending && isFirstCard,
+                                onSwipeHintShown = { swipeHintPending = false },
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             val dividerColor = NekkoTheme.colors.gray.quaternary

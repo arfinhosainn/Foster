@@ -46,8 +46,9 @@ fun StepIndicator(
         modifier = modifier
             .clip(RoundedCornerShape(50))
             .background(NekkoTheme.colors.background.b1)
-            .padding(horizontal = 20.dp, vertical = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .height(40.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         repeat(totalSteps) { index ->
@@ -65,7 +66,7 @@ private fun StepPill(isCurrent: Boolean) {
     }
 
     val width by animateDpAsState(
-        targetValue = if (isCurrent) 18.dp else 5.dp,
+        targetValue = if (isCurrent) 12.dp else 4.dp,
         animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
         label = "step_width",
     )

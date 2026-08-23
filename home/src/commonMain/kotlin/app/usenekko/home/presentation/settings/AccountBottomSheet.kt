@@ -80,7 +80,18 @@ fun AccountBottomSheet(
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = {
-            BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                CloseButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 12.dp, top = 5.dp),
+                )
+            }
         },
     ) {
         AdaptiveSurface {
@@ -100,10 +111,6 @@ fun AccountBottomSheet(
                     style = NekkoTheme.typography.heading3,
                     fontWeight = FontWeight.SemiBold,
                     color = NekkoTheme.colors.text.primary,
-                )
-                CloseButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.TopEnd),
                 )
             }
 

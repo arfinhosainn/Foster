@@ -54,6 +54,18 @@ class CustomReminderViewModel(
                     editingReminderId = reminder.id,
                 )
             }
+            is CustomReminderAction.DeleteReminderClicked -> {
+                draftStore.update {
+                    it.copy(
+                        customReminders = it.customReminders.filter { reminder ->
+                            reminder.id != action.reminderId
+                        },
+                    )
+                }
+                _state.value = _state.value.copy(
+                    reminders = _state.value.reminders.filter { it.id != action.reminderId },
+                )
+            }
             is CustomReminderAction.BottomSheetDismissed -> {
                 _state.value = _state.value.copy(
                     isBottomSheetVisible = false,

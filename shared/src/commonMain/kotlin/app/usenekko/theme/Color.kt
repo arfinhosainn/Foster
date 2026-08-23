@@ -32,10 +32,10 @@ val OrangeFill = Color(0xFFFFF7ED)
 
 // ---- Red ------------------------------------------------------------------
 val Red = Color(0xFFDC2626)
-val RedHover = Color(0xFFEF4444)
-val RedActive = Color(0xFFB91C1C)
+val RedHover = Color(0xFFFEF4444)
+val RedActive = Color(0xFFFB91C1C)
 val RedStroke = Color(0xFFFECACA)
-val RedFill = Color(0xFFFEF2F2)
+val RedFill = Color(0xFFFFEF2F2)
 
 // ---- Violet ---------------------------------------------------------------
 val Violet = Color(0xFF7C3AED)

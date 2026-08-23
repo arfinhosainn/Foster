@@ -134,6 +134,7 @@ fun EditContactSheet(
                     memberships = state.memberships,
                     groupsLoading = state.groupsLoading,
                     selectedGroupId = state.selectedGroupId,
+                    pendingAvatarColor = AddContactViewModel.colorHexes[state.selectedAvatarIndex ?: 0],
                     onGroupSelected = viewModel::onGroupSelected,
                     onCreateGroupClicked = viewModel::onCreateGroupClicked,
                 )

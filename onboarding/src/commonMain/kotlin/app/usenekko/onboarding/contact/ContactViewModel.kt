@@ -74,8 +74,12 @@ class ContactViewModel(
                 }
             }
             is ContactAction.NextClicked -> {
-                draftStore.update { it.copy(currentStep = OnboardingStep.Group) }
-                sendEvent(ContactEvent.NavigateToNext)
+                if (_state.value.contactName.isBlank()) {
+                    sendEvent(ContactEvent.NameRequired)
+                } else {
+                    draftStore.update { it.copy(currentStep = OnboardingStep.Group) }
+                    sendEvent(ContactEvent.NavigateToNext)
+                }
             }
             is ContactAction.BackClicked -> sendEvent(ContactEvent.NavigateBack)
             is ContactAction.SkipClicked -> {

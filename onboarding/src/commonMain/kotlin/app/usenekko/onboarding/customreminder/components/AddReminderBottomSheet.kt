@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -31,6 +32,9 @@ import app.usenekko.onboarding.customreminder.CustomReminderAction
 import app.usenekko.onboarding.customreminder.CustomReminderState
 import app.usenekko.onboarding.customreminder.toReminderDate
 import app.usenekko.theme.NekkoTheme
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.ic_close
+import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,12 +71,14 @@ fun AddReminderBottomSheet(
                         datePickerVisible = false
                     }
                 ) {
-                    Text(text = "Done")
+                    Text(text = "Done",
+                        color = NekkoTheme.colors.text.primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { datePickerVisible = false }) {
-                    Text(text = "Cancel")
+                    Text(text = "Cancel",
+                        color = NekkoTheme.colors.text.primary)
                 }
             },
             colors = DatePickerDefaults.colors(
@@ -88,12 +94,20 @@ fun AddReminderBottomSheet(
                 selectedYearContainerColor = NekkoTheme.colors.text.primary,
                 dayContentColor = NekkoTheme.colors.text.primary,
                 selectedDayContentColor = NekkoTheme.colors.background.b1,
-                selectedDayContainerColor = NekkoTheme.colors.text.primary,
+                selectedDayContainerColor = NekkoTheme.colors.text.quaternary,
                 todayContentColor = NekkoTheme.colors.text.primary,
                 todayDateBorderColor = NekkoTheme.colors.text.primary
             )
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = NekkoTheme.colors.fill.tertiary,
+                    selectedDayContainerColor = Color(0xFF16A34A),
+                    todayContentColor = Color(0xFF16A34A),
+                    todayDateBorderColor = Color(0xFF16A34A),
+                )
+            )
         }
     }
 
@@ -102,7 +116,29 @@ fun AddReminderBottomSheet(
         sheetState = sheetState,
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp)
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable { onAction(CustomReminderAction.BottomSheetDismissed) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.gray.secondary,
+                    )
+                }
+            }
+        },
         modifier = modifier
     ) {
         Column(
@@ -118,27 +154,10 @@ fun AddReminderBottomSheet(
                     style = NekkoTheme.typography.heading3Bold,
                     color = NekkoTheme.colors.text.primary
                 )
-                
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(NekkoTheme.colors.text.tertiary.copy(alpha = 0.2f))
-                        .clickable { onAction(CustomReminderAction.BottomSheetDismissed) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = NekkoTheme.colors.text.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Input Card
             Box(
                 modifier = Modifier
@@ -181,7 +200,7 @@ fun AddReminderBottomSheet(
                             },
                         )
                     )
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
                     Box(
                         modifier = Modifier
@@ -190,7 +209,7 @@ fun AddReminderBottomSheet(
                             .background(NekkoTheme.colors.gray.quaternary)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     BasicTextField(
                         value = state.draftDescription,
                         onValueChange = { onAction(CustomReminderAction.DraftDescriptionChanged(it)) },
@@ -224,9 +243,9 @@ fun AddReminderBottomSheet(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Recurrence Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -238,7 +257,7 @@ fun AddReminderBottomSheet(
                     fontSize = 18.sp,
                     color = NekkoTheme.colors.text.secondary
                 )
-                
+
                 Box {
                     ReminderPickerPill(
                         text = state.draftRecurrence,
@@ -270,9 +289,9 @@ fun AddReminderBottomSheet(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Date Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -290,9 +309,9 @@ fun AddReminderBottomSheet(
                     onClick = { datePickerVisible = true }
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             NekkoButton(
                 text = if (state.editingReminderId == null) "Done" else "Update",
                 onClick = { onAction(CustomReminderAction.SaveReminderClicked) },
