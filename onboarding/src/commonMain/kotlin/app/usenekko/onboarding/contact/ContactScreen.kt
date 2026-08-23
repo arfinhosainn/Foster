@@ -26,6 +26,8 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -37,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.TextStyle
@@ -73,6 +76,7 @@ fun ContactScreen(
     val viewModel = rememberContactViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     var isPreviewVisible by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val launchContactPicker = rememberContactPicker(
         onContactSelected = { contact ->
@@ -87,11 +91,18 @@ fun ContactScreen(
                 ContactEvent.NavigateToNext -> onNavigateToNext()
                 ContactEvent.NavigateBack -> onBack()
                 ContactEvent.NavigateSkip -> onSkip()
+                ContactEvent.NameRequired -> snackbarHostState.showSnackbar(
+                    message = "Please enter a contact name to continue",
+                )
             }
         }
     }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
+    // Same treatment as CustomReminderScreen: blur the screen content while
+    // the avatar picker bottom sheet is visible.
+    val blurModifier = if (state.showAvatarPicker) Modifier.blur(20.dp) else Modifier
 
     Column(
         modifier = modifier
@@ -101,7 +112,10 @@ fun ContactScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Scaffold(
-            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            modifier = Modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .then(blurModifier),
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -110,8 +124,8 @@ fun ContactScreen(
                     ),
                     title = {
                         StepIndicator(
-                            totalSteps = 8,
-                            currentStep = 1,
+                            totalSteps = 7,
+                            currentStep = 0,
                         )
                     },
                     navigationIcon = { },
@@ -224,9 +238,7 @@ fun ContactScreen(
                             ),
                             keyboardActions = KeyboardActions(
                                 onDone = {
-                                    if (state.contactName.isNotBlank()) {
-                                        viewModel.onAction(ContactAction.NextClicked)
-                                    }
+                                    viewModel.onAction(ContactAction.NextClicked)
                                 },
                             ),
                         )

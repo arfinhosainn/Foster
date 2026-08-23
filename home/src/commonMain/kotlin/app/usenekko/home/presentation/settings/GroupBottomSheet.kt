@@ -29,6 +29,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -81,6 +83,7 @@ import nekko.home.generated.resources.ic_trashbin
 import kotlinx.coroutines.launch
 import androidx.compose.animation.core.Animatable
 import app.usenekko.home.presentation.contactprofile.DashedDivider
+import nekko.home.generated.resources.ic_close
 import nekko.home.generated.resources.ic_move
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
@@ -108,7 +111,32 @@ fun GroupBottomSheet(
         sheetState = sheetState,
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp )
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable {
+                            viewModel.onAction(GroupSettingsAction.CancelEditing)
+                            onDismiss()
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.gray.secondary,
+                    )
+                }
+            }
+        },
     ) {
         AdaptiveSurface {
             selectedGroupId?.let { groupId ->

@@ -128,7 +128,7 @@ fun GroupScreen(
                         containerColor = NekkoTheme.colors.background.b0,
                         scrolledContainerColor = NekkoTheme.colors.background.b0,
                     ),
-                    title = { StepIndicator(totalSteps = 8, currentStep = 2) },
+                    title = { StepIndicator(totalSteps = 7, currentStep = 1) },
                     navigationIcon = { },
                     scrollBehavior = scrollBehavior,
                 )

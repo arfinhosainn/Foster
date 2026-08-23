@@ -125,8 +125,8 @@ private fun AddNoteScreenContent(
                     ),
                     title = {
                         StepIndicator(
-                            totalSteps = 8,
-                            currentStep = 6,
+                            totalSteps = 7,
+                            currentStep = 5,
                         )
                     },
                     navigationIcon = { },
@@ -197,6 +197,7 @@ private fun AddNoteScreenContent(
                         text = "Capture thoughts & memories\nabout your conversation",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
+                        lineHeight = 28.sp,
                         color = NekkoTheme.colors.text.secondary,
                         textAlign = TextAlign.Center,
                     )

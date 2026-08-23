@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BottomSheetDefaults
@@ -40,6 +43,9 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.ic_close
+import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,12 +64,38 @@ fun DeleteAccountBottomSheet(
         sheetState = sheetState,
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp)
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable(enabled = !isLoading) { onDismiss() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.gray.secondary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        },
     ) {
         AdaptiveSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
                     .padding(bottom = 32.dp)
             ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -72,22 +104,6 @@ fun DeleteAccountBottomSheet(
                     style = NekkoTheme.typography.heading1Bold,
                     color = NekkoTheme.colors.red.default,
                 )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(NekkoTheme.colors.text.tertiary.copy(alpha = 0.2f))
-                        .clickable(enabled = !isLoading) { onDismiss() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = NekkoTheme.colors.text.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
             }
 
             Spacer(Modifier.height(20.dp))

@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +40,7 @@ fun AmPmToggle(
 
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(100))
             .background(NekkoTheme.colors.fill.tertiary)
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -56,7 +57,7 @@ fun AmPmToggle(
 
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(50))
+                .clip(RoundedCornerShape(100))
                 .background(amBgColor)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },

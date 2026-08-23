@@ -9,12 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -22,9 +19,14 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +36,9 @@ import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.addnote.AddNoteAction
 import app.usenekko.onboarding.addnote.AddNoteState
 import app.usenekko.theme.NekkoTheme
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.ic_close
+import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,13 +48,42 @@ fun AddNoteBottomSheet(
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val titleFocusRequester = remember { FocusRequester() }
+
+    // Open the keyboard as soon as the sheet appears, matching the behavior
+    // of the create-group bottom sheet.
+    LaunchedEffect(Unit) {
+        titleFocusRequester.requestFocus()
+    }
 
     ModalBottomSheet(
         onDismissRequest = { onAction(AddNoteAction.BottomSheetDismissed) },
         sheetState = sheetState,
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp)
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable { onAction(AddNoteAction.BottomSheetDismissed) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.gray.secondary,
+                    )
+                }
+            }
+        },
         modifier = modifier,
     ) {
         Column(
@@ -65,22 +99,6 @@ fun AddNoteBottomSheet(
                     style = NekkoTheme.typography.heading3Bold,
                     color = NekkoTheme.colors.text.primary,
                 )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(NekkoTheme.colors.text.tertiary.copy(alpha = 0.2f))
-                        .clickable { onAction(AddNoteAction.BottomSheetDismissed) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = NekkoTheme.colors.text.primary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -103,7 +121,9 @@ fun AddNoteBottomSheet(
                             fontFamily = NekkoTheme.typography.heading3.fontFamily,
                         ),
                         cursorBrush = SolidColor(NekkoTheme.colors.text.primary),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(titleFocusRequester),
                         decorationBox = { innerTextField ->
                             if (state.draftTitle.isEmpty()) {
                                 Text(

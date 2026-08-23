@@ -97,8 +97,8 @@ private fun TimeReminderScreenContent(
                 ),
                 title = {
                     StepIndicator(
-                        totalSteps = 8,
-                        currentStep = 4,
+                        totalSteps = 7,
+                        currentStep = 3,
                     )
                 },
                 actions = {

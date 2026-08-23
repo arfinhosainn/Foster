@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key.Companion.N
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -47,6 +48,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.theme.NekkoTheme
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.ic_close
+import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +68,29 @@ fun CreateGroupBottomSheet(
         sheetState = sheetState,
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp)
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable { onDismiss() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.gray.secondary,
+                    )
+                }
+            }
+        },
     ) {
         Column(
             modifier = Modifier
@@ -81,22 +107,6 @@ fun CreateGroupBottomSheet(
                     fontWeight = FontWeight.SemiBold,
                     color = NekkoTheme.colors.text.primary
                 )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(NekkoTheme.colors.text.tertiary.copy(alpha = 0.2f))
-                        .clickable { onDismiss() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = NekkoTheme.colors.text.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))

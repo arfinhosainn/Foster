@@ -117,27 +117,27 @@ private fun NotificationScreenContent(
                 ),
                 title = {
                     StepIndicator(
-                        totalSteps = 8,
-                        currentStep = 7,
+                        totalSteps = 7,
+                        currentStep = 6,
                     )
                 },
                 navigationIcon = { },
                 actions = {
-                    if (!state.isSubmitting) {
-                        Button(
-                            onClick = { onAction(NotificationAction.SkipClicked) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = NekkoTheme.colors.background.b0
-                            )
-                        ) {
-                            Text(
-                                text = "Skip",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = NekkoTheme.colors.text.secondary,
-                            )
-                        }
-                    }
+//                    if (!state.isSubmitting) {
+//                        Button(
+//                            onClick = { onAction(NotificationAction.SkipClicked) },
+//                            colors = ButtonDefaults.buttonColors(
+//                                containerColor = NekkoTheme.colors.background.b0
+//                            )
+//                        ) {
+//                            Text(
+//                                text = "Skip",
+//                                fontSize = 17.sp,
+//                                fontWeight = FontWeight.SemiBold,
+//                                color = NekkoTheme.colors.text.secondary,
+//                            )
+//                        }
+//                    }
                 },
                 scrollBehavior = scrollBehavior,
             )

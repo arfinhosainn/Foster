@@ -90,8 +90,8 @@ private fun ReminderScreenContent(
                 ),
                 title = {
                     StepIndicator(
-                        totalSteps = 8,
-                        currentStep = 3,
+                        totalSteps = 7,
+                        currentStep = 2,
                     )
                 },
                 navigationIcon = { },

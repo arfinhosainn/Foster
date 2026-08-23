@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,7 +40,6 @@ import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -93,6 +93,7 @@ import nekko.home.generated.resources.avatar_yellow
 import nekko.home.generated.resources.ic_add
 import nekko.home.generated.resources.ic_back
 import nekko.home.generated.resources.ic_circlecheck
+import nekko.home.generated.resources.ic_close
 import nekko.home.generated.resources.ic_forward
 import nekko.home.generated.resources.ic_import
 import nekko.home.generated.resources.ic_pencil
@@ -162,7 +163,34 @@ fun AddContactScreen(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = NekkoTheme.colors.background.b0,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp)
+                        .wrapContentSize()
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable {
+                            viewModel.resetDraft()
+                            onDismiss()
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.text.primary,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+        },
         modifier = modifier,
     ) {
         AdaptiveSurface {
@@ -180,10 +208,6 @@ fun AddContactScreen(
                 onNextStep = viewModel::onNextStep,
                 onSubmit = viewModel::submit,
                 onImportContact = launchContactPicker,
-                onCloseClick = {
-                    viewModel.resetDraft()
-                    onDismiss()
-                },
             )
         }
     }
@@ -212,7 +236,6 @@ private fun AddContactSheetContent(
     onNextStep: () -> Unit,
     onSubmit: () -> Unit,
     onImportContact: () -> Unit,
-    onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val stepMeta = steps[state.currentStep].let {
@@ -230,30 +253,17 @@ private fun AddContactSheetContent(
             .verticalScroll(rememberScrollState()),
     ) {
 
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = stepMeta.title,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.SemiBold,
-                lineHeight = 36.sp,
-                textAlign = TextAlign.Center,
-                color = NekkoTheme.colors.text.primary,
-                modifier = Modifier.fillMaxWidth(),
-            )
+        Text(
+            text = stepMeta.title,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.SemiBold,
+            lineHeight = 36.sp,
+            textAlign = TextAlign.Center,
+            color = NekkoTheme.colors.text.primary,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
-            IconButton(
-                onClick = onCloseClick,
-                modifier = Modifier.align(Alignment.CenterEnd),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = "Close",
-                    tint = NekkoTheme.colors.text.primary,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(12.dp))
 
         Text(
             text = stepMeta.subtitle,
@@ -280,6 +290,7 @@ private fun AddContactSheetContent(
                 memberships = state.memberships,
                 groupsLoading = state.groupsLoading,
                 selectedGroupId = state.selectedGroupId,
+                pendingAvatarColor = AddContactViewModel.colorHexes[state.selectedAvatarIndex ?: 0],
                 onGroupSelected = onGroupSelected,
                 onCreateGroupClicked = onCreateGroupClicked,
             )
@@ -307,7 +318,7 @@ private fun AddContactSheetContent(
             )
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(48.dp))
 
         FooterRow(
             currentStep = state.currentStep,
@@ -323,30 +334,6 @@ private fun AddContactSheetContent(
     }
 }
 
-@Composable
-private fun StepProgress(
-    currentStep: Int,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        repeat(steps.size) { index ->
-            val isFilled = index <= currentStep
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(
-                        if (isFilled) NekkoTheme.colors.green.active
-                        else NekkoTheme.colors.fill.tertiary
-                    ),
-            )
-        }
-    }
-}
 
 @Composable
 private fun FooterRow(
@@ -385,14 +372,14 @@ private fun FooterRow(
             NekkoButton(
                 text = "Next",
                 onClick = onNextStep,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).height(58.dp),
                 enabled = canAdvance,
             )
         } else {
             NekkoButton(
                 text = "Save Contact",
                 onClick = onSubmit,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).height(58.dp),
                 enabled = canSubmit,
                 loading = isSubmitting,
             )
@@ -420,7 +407,7 @@ internal fun NameAndAvatarStep(
             onEditClick = { showAvatarPicker = true },
         )
 
-        Spacer(Modifier.height(50.dp))
+        Spacer(Modifier.height(40.dp))
 
         StepFieldContainer {
             Box(modifier = Modifier.weight(1f)) {
@@ -452,13 +439,13 @@ internal fun NameAndAvatarStep(
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(32.dp))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onImportContact)
-                .padding(vertical = 8.dp),
+                .padding(vertical = 0.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
@@ -466,7 +453,7 @@ internal fun NameAndAvatarStep(
                 imageVector = vectorResource(Res.drawable.ic_import),
                 contentDescription = null,
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(13.dp))
             Text(
                 text = "Import contact",
                 fontSize = 17.sp,
@@ -589,7 +576,29 @@ private fun ChooseAvatarBottomSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp )
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.gray.secondary,
+                    )
+                }
+            }
+        },
     ) {
         Column(
             modifier = Modifier
@@ -603,22 +612,6 @@ private fun ChooseAvatarBottomSheet(
                     style = NekkoTheme.typography.heading1Bold,
                     color = NekkoTheme.colors.text.primary,
                 )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(NekkoTheme.colors.text.tertiary.copy(alpha = 0.2f))
-                        .clickable(onClick = onDismiss),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = NekkoTheme.colors.text.primary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
             }
 
             Spacer(Modifier.height(40.dp))
@@ -691,6 +684,7 @@ internal fun GroupStep(
     memberships: List<GroupMembership>,
     groupsLoading: Boolean,
     selectedGroupId: String?,
+    pendingAvatarColor: String,
     onGroupSelected: (String) -> Unit,
     onCreateGroupClicked: () -> Unit,
     modifier: Modifier = Modifier,
@@ -722,6 +716,7 @@ internal fun GroupStep(
                 contacts = contacts,
                 memberships = memberships,
                 selectedGroupId = selectedGroupId,
+                pendingAvatarColor = pendingAvatarColor,
                 onGroupClick = onGroupSelected,
             )
         }
@@ -839,6 +834,7 @@ private fun GroupGrid(
     contacts: List<Contact>,
     memberships: List<GroupMembership>,
     selectedGroupId: String?,
+    pendingAvatarColor: String,
     onGroupClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) = Column(
@@ -860,6 +856,7 @@ private fun GroupGrid(
                     members = contactsForGroup(group.id, contacts, memberships),
                     memberCount = groupMemberCount(group.id, memberships),
                     isSelected = group.id == selectedGroupId,
+                    pendingAvatarColor = pendingAvatarColor,
                     onClick = { onGroupClick(group.id) },
                     modifier = Modifier.weight(1f),
                 )
@@ -876,6 +873,7 @@ private fun GroupCell(
     members: List<Contact>,
     memberCount: Int,
     isSelected: Boolean,
+    pendingAvatarColor: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) = Column(
@@ -886,6 +884,7 @@ private fun GroupCell(
         group = group,
         members = members,
         isSelected = isSelected,
+        pendingAvatarColor = pendingAvatarColor,
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().aspectRatio(1f),
     )
@@ -914,24 +913,18 @@ private fun GroupCard(
     group: Group,
     members: List<Contact>,
     isSelected: Boolean,
+    pendingAvatarColor: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val groupColor = rememberColorFromHex(group.color ?: "#9E9E9E")
+    val avatarRingBrush = Brush.sweepGradient(
+        listOf(Color(0xFFFFCC33), Color(0xFF34C759), Color(0xFFFFCC33)),
+    )
     Box(
         modifier = modifier
-            .then(
-                if (isSelected) {
-                    Modifier.border(3.dp, NekkoTheme.colors.green.active, SawToothCircleShape())
-                } else {
-                    Modifier
-                }
-            )
             .clip(SawToothCircleShape())
-            .background(
-                if (isSelected) NekkoTheme.colors.fill.primary
-                else NekkoTheme.colors.fill.secondary
-            )
+            .background(NekkoTheme.colors.fill.secondary)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -939,7 +932,22 @@ private fun GroupCard(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        if (members.isEmpty() && group.color == null) {
+        if (isSelected) {
+            // Selected: the contact being added appears in the middle, like the onboarding group screen.
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .clip(CircleShape)
+                    .background(NekkoTheme.colors.background.b2)
+                    .border(2.dp, avatarRingBrush, CircleShape)
+                    .padding(3.dp),
+            ) {
+                ContactAvatar(
+                    avatarColor = pendingAvatarColor,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        } else if (members.isEmpty() && group.color == null) {
             Icon(
                 imageVector = Icons.Filled.Add,
                 contentDescription = "Add members",

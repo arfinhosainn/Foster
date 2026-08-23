@@ -2,6 +2,7 @@ package app.usenekko.onboarding.name
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,10 +19,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -30,6 +32,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,11 +47,11 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
-import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.presentation.rememberNameViewModel
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
-import nekko.onboarding.generated.resources.ic_back
+import nekko.onboarding.generated.resources.ic_logo
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 
 @Composable
@@ -60,6 +63,7 @@ fun NameScreen(
 ) {
     val viewModel = rememberNameViewModel()
     val name by viewModel.name.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -67,6 +71,9 @@ fun NameScreen(
                 NameEvent.NavigateToNext -> onNavigateToNext()
                 NameEvent.NavigateBack -> onBack()
                 NameEvent.NavigateSkip -> onSkip()
+                NameEvent.NameRequired -> snackbarHostState.showSnackbar(
+                    message = "Please enter your name to continue",
+                )
             }
         }
     }
@@ -81,6 +88,7 @@ fun NameScreen(
 
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -88,10 +96,6 @@ fun NameScreen(
                         titleContentColor = MaterialTheme.colorScheme.primary,
                     ),
                     title = {
-                        StepIndicator(
-                            totalSteps = 8,
-                            currentStep = 0,
-                        )
                     },
                     navigationIcon = { },
                     actions = {
@@ -108,21 +112,10 @@ fun NameScreen(
                         .padding(bottom = 24.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    FilledIconButton(
-                        modifier = modifier.weight(0.23f).size(58.dp),
-                        onClick = { viewModel.onBackClicked() },
-                        colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
-                    ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = "BACK"
-                        )
-                    }
-                    Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = "Next",
                         onClick = { viewModel.onContinueClicked() },
-                        modifier = Modifier.weight(0.8f),
+                        modifier = Modifier.weight(1f),
                     )
                 }
             },
@@ -132,9 +125,15 @@ fun NameScreen(
                 modifier = Modifier
                     .weight(1f)
                     .padding(innerPadding)
-                    .padding(horizontal = 30.dp)
+                    .padding(horizontal = 30.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(Modifier.height(40.dp))
+
+                Image(
+                    painter = painterResource(Res.drawable.ic_logo),
+                    contentDescription = "Logo",
+                )
+                Spacer(Modifier.height(0.dp))
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -155,11 +154,7 @@ fun NameScreen(
                 NameField(
                     value = name,
                     onValueChange = { viewModel.onNameChanged(it) },
-                    onDone = {
-                        if (name.isNotBlank()) {
-                            viewModel.onContinueClicked()
-                        }
-                    },
+                    onDone = { viewModel.onContinueClicked() },
                 )
 
                 Spacer(Modifier.weight(1f))

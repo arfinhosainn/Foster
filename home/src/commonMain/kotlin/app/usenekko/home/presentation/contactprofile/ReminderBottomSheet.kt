@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -47,6 +48,7 @@ import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.launch
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_add
+import nekko.home.generated.resources.ic_close
 import nekko.home.generated.resources.ic_edit
 import nekko.home.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.DrawableResource
@@ -69,7 +71,29 @@ fun ReminderBottomSheet(
         sheetState = sheetState,
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = NekkoTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp)
+                        .clip(CircleShape)
+                        .background(Color.Unspecified)
+                        .clickable(onClick = onDismiss),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = "Close",
+                        tint = NekkoTheme.colors.gray.secondary,
+                    )
+                }
+            }
+        },
         modifier = modifier,
     ) {
         AdaptiveSurface {
