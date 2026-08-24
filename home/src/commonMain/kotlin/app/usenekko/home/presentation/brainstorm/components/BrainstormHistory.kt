@@ -35,6 +35,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
 import kotlinx.datetime.toLocalDateTime
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.brainstorm_history_empty
+import nekko.home.generated.resources.brainstorm_history_item
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun HistoryContent(
@@ -53,7 +57,7 @@ fun HistoryContent(
             isLoading -> HistoryLoadingSkeleton()
             error != null -> ErrorBanner(text = error, modifier = Modifier.padding(top = 16.dp))
             sessions.isEmpty() -> Text(
-                text = "No past brainstorms yet. Generate your first batch of ideas in the Current Output tab.",
+                text = stringResource(Res.string.brainstorm_history_empty),
                 style = NekkoTheme.typography.bodyMedium,
                 color = NekkoTheme.colors.text.secondary,
                 textAlign = TextAlign.Center,
@@ -73,7 +77,7 @@ fun HistoryContent(
                     groupSessions.forEach { session ->
                         if (session.topics.isEmpty()) {
                             Text(
-                                text = "A brainstorm session from earlier",
+                                text = stringResource(Res.string.brainstorm_history_item),
                                 style = NekkoTheme.typography.bodyMedium,
                                 color = NekkoTheme.colors.text.tertiary,
                             )

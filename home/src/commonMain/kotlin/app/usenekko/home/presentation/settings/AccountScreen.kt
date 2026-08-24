@@ -41,6 +41,12 @@ import app.usenekko.home.presentation.components.avatarIndexForId
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.settings_account
+import nekko.home.generated.resources.settings_check_ins_stat
+import nekko.home.generated.resources.settings_contacts
+import nekko.home.generated.resources.settings_joined
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AccountScreen(
@@ -105,7 +111,7 @@ fun AccountScreen(
             Spacer(Modifier.height(6.dp))
 
             Text(
-                text = state.createdAt?.let { "Joined ${formatJoinedDate(it)}" } ?: "",
+                text = state.createdAt?.let { stringResource(Res.string.settings_joined, formatJoinedDate(it)) } ?: "",
                 color = NekkoTheme.colors.text.tertiary,
                 fontSize = 14.sp,
             )
@@ -117,12 +123,12 @@ fun AccountScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 StatCard(
-                    label = "Contacts",
+                    label = stringResource(Res.string.settings_contacts),
                     value = state.totalContacts.toString(),
                     modifier = Modifier.weight(1f),
                 )
                 StatCard(
-                    label = "Check-ins",
+                    label = stringResource(Res.string.settings_check_ins_stat),
                     value = state.totalCheckIns.toString(),
                     modifier = Modifier.weight(1f),
                 )
@@ -144,7 +150,7 @@ fun AccountScreen(
         }
 
         Box(modifier = Modifier.align(Alignment.TopCenter)) {
-            SettingsTopBar(onBack = onBack, title = "Account")
+            SettingsTopBar(onBack = onBack, title = stringResource(Res.string.settings_account))
         }
     }
 

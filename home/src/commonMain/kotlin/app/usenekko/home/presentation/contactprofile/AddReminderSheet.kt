@@ -54,6 +54,16 @@ import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_close
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_cancel
+import nekko.home.generated.resources.action_done
+import nekko.home.generated.resources.action_save
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.reminder_create
+import nekko.home.generated.resources.reminder_date_label
+import nekko.home.generated.resources.reminder_description_label
+import nekko.home.generated.resources.reminder_occasions_hint
+import nekko.home.generated.resources.reminder_recurrence_cd
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,12 +96,12 @@ fun AddReminderSheet(
                         datePickerVisible = false
                     }
                 ) {
-                    Text(text = "Done")
+                    Text(text = stringResource(Res.string.action_done))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { datePickerVisible = false }) {
-                    Text(text = "Cancel")
+                    Text(text = stringResource(Res.string.action_cancel))
                 }
             },
             colors = DatePickerDefaults.colors(
@@ -138,7 +148,7 @@ fun AddReminderSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -155,7 +165,7 @@ fun AddReminderSheet(
             ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Create Reminder",
+                    text = stringResource(Res.string.reminder_create),
                     style = NekkoTheme.typography.heading3Bold,
                     color = NekkoTheme.colors.text.primary,
                 )
@@ -185,7 +195,7 @@ fun AddReminderSheet(
                         decorationBox = { innerTextField ->
                             if (draftTitle.isEmpty()) {
                                 Text(
-                                    text = "Birthday, Anniversaries, etc",
+                                    text = stringResource(Res.string.reminder_occasions_hint),
                                     fontSize = 20.sp,
                                     color = NekkoTheme.colors.text.tertiary,
                                     fontWeight = FontWeight.Medium,
@@ -219,7 +229,7 @@ fun AddReminderSheet(
                         decorationBox = { innerTextField ->
                             if (draftDescription.isEmpty()) {
                                 Text(
-                                    text = "Description",
+                                    text = stringResource(Res.string.reminder_description_label),
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = NekkoTheme.colors.text.quaternary,
@@ -239,7 +249,7 @@ fun AddReminderSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Recurrence",
+                    text = stringResource(Res.string.reminder_recurrence_cd),
                     fontSize = 18.sp,
                     color = NekkoTheme.colors.text.secondary,
                 )
@@ -257,17 +267,17 @@ fun AddReminderSheet(
                         shadowElevation = 10.dp,
                         shape = RoundedCornerShape(18.dp),
                     ) {
-                        reminderRecurrenceOptions.forEach { option ->
+                        reminderRecurrenceOptions.forEach { (value, labelRes) ->
                             DropdownMenuItem(
                                 text = {
                                     Text(
-                                        text = option,
+                                        text = stringResource(labelRes),
                                         color = NekkoTheme.colors.text.primary,
                                         fontWeight = FontWeight.Medium,
                                     )
                                 },
                                 onClick = {
-                                    onRecurrenceChanged(option)
+                                    onRecurrenceChanged(value)
                                     recurrenceMenuExpanded = false
                                 },
                             )
@@ -284,7 +294,7 @@ fun AddReminderSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Date",
+                    text = stringResource(Res.string.reminder_date_label),
                     fontSize = 18.sp,
                     color = NekkoTheme.colors.text.secondary,
                 )
@@ -306,7 +316,7 @@ fun AddReminderSheet(
             Spacer(modifier = Modifier.height(24.dp))
 
             NekkoButton(
-                text = "Save",
+                text = stringResource(Res.string.action_save),
                 onClick = onSave,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = draftTitle.isNotBlank() && !isSaving,

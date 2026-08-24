@@ -70,6 +70,14 @@ import nekko.home.generated.resources.paywall_gradient
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.cd_selected
+import nekko.home.generated.resources.paywall_annual_plan
+import nekko.home.generated.resources.paywall_billing_note
+import nekko.home.generated.resources.paywall_monthly_plan
+import nekko.home.generated.resources.paywall_restore_cta
+import nekko.home.generated.resources.paywall_restoring
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PaywallScreen(
@@ -117,7 +125,7 @@ fun PaywallScreen(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                         modifier = Modifier.size(24.dp),
                     )
@@ -165,7 +173,7 @@ fun PaywallScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        if (state.isRestoring) "Restoring…" else "Restore purchase",
+                        if (state.isRestoring) stringResource(Res.string.paywall_restoring) else stringResource(Res.string.paywall_restore_cta),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = PaywallWhite,
@@ -173,7 +181,7 @@ fun PaywallScreen(
                 }
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    "Flexible billing. Simple pricing.\nCancel anytime",
+                    stringResource(Res.string.paywall_billing_note),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     fontSize = 14.sp,
@@ -324,7 +332,7 @@ private fun PlanList(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PlanCard(
-            title = "Annual plan",
+            title = stringResource(Res.string.paywall_annual_plan),
             price = annualPrice ?: "—",
             periodLabel = "year",
             originalPrice = "\$99.99",
@@ -333,7 +341,7 @@ private fun PlanList(
             onClick = { onSelect(BillingPeriod.ANNUAL) },
         )
         PlanCard(
-            title = "Monthly plan",
+            title = stringResource(Res.string.paywall_monthly_plan),
             price = monthlyPrice ?: "—",
             periodLabel = "month",
             isSelected = selectedPeriod == BillingPeriod.MONTHLY,
@@ -423,7 +431,7 @@ private fun PlanCard(
             if (isSelected) {
                 Icon(
                     imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(Res.string.cd_selected),
                     tint = NekkoTheme.colors.gray.primary,
                     modifier = Modifier.size(20.dp),
                 )

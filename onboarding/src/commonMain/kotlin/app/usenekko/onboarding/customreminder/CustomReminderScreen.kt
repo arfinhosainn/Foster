@@ -34,6 +34,14 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_add
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_next
+import nekko.onboarding.generated.resources.action_skip
+import nekko.onboarding.generated.resources.cd_back_upper
+import nekko.onboarding.generated.resources.custom_add_more_title
+import nekko.onboarding.generated.resources.custom_like_birthdays
+import nekko.onboarding.generated.resources.reminders_add
+import nekko.onboarding.generated.resources.reminders_tap_plus
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CustomReminderScreen(
@@ -116,7 +124,7 @@ private fun CustomReminderScreenContent(
                             colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
                         ) {
                             Text(
-                                text = "Skip",
+                                text = stringResource(Res.string.action_skip),
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = NekkoTheme.colors.text.secondary,
@@ -141,12 +149,12 @@ private fun CustomReminderScreenContent(
                     ) {
                         Image(
                             imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = "BACK"
+                            contentDescription = stringResource(Res.string.cd_back_upper)
                         )
                     }
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
-                        text = "Next",
+                        text = stringResource(Res.string.action_next),
                         onClick = onNavigateToNext,
                         modifier = Modifier.weight(0.8f),
                     )
@@ -166,7 +174,7 @@ private fun CustomReminderScreenContent(
                     Spacer(Modifier.height(40.dp))
 
                     Text(
-                        text = "Add more reminder",
+                        text = stringResource(Res.string.custom_add_more_title),
                         style = NekkoTheme.typography.heading1Bold,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
@@ -176,7 +184,7 @@ private fun CustomReminderScreenContent(
                     Spacer(Modifier.height(12.dp))
 
                     Text(
-                        text = "Like birthdays, anniversaries, etc",
+                        text = stringResource(Res.string.custom_like_birthdays),
                         style = NekkoTheme.typography.heading3,
                         fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.secondary,
@@ -198,14 +206,14 @@ private fun CustomReminderScreenContent(
                                 onClick = { onAction(CustomReminderAction.AddClicked) })
                             Spacer(modifier = Modifier.height(24.dp))
                             Text(
-                                text = "Add reminder",
+                                text = stringResource(Res.string.reminders_add),
                                 fontSize = 20.sp,
                                 color = NekkoTheme.colors.text.secondary,
                                 fontWeight = FontWeight.Medium
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Tap on the plus button",
+                                text = stringResource(Res.string.reminders_tap_plus),
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = NekkoTheme.colors.text.tertiary

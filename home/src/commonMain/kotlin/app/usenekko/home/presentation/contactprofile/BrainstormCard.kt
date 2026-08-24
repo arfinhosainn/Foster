@@ -32,6 +32,10 @@ import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_brainstrom
 import nekko.home.generated.resources.img_gradientss
 import org.jetbrains.compose.resources.painterResource
+import nekko.home.generated.resources.brainstorm_action
+import nekko.home.generated.resources.brainstorm_ai_hint
+import nekko.home.generated.resources.brainstorm_topics
+import org.jetbrains.compose.resources.stringResource
 
 private val BRAINSTORM_CARD_HEIGHT = 133.dp
 private val BRAINSTORM_CARD_SHAPE = RoundedCornerShape(24.dp)
@@ -67,14 +71,14 @@ fun BrainstormCard(
         ) {
             Column {
                 Text(
-                    text = "Conversation Topics",
+                    text = stringResource(Res.string.brainstorm_topics),
                     color = NekkoTheme.colors.text.primary,
                     fontSize = 17.sp,
                     lineHeight = 22.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "AI-powered topic suggestions",
+                    text = stringResource(Res.string.brainstorm_ai_hint),
                     color = NekkoTheme.colors.text.tertiary,
                     fontSize = 15.sp,
                     lineHeight = 20.sp,
@@ -96,7 +100,7 @@ fun BrainstormCard(
                     modifier = Modifier.size(32.dp),
                 )
                 Text(
-                    text = "Brainstorm",
+                    text = stringResource(Res.string.brainstorm_action),
                     color = NekkoTheme.colors.text.primary,
                     fontSize = 16.sp,
                     lineHeight = 20.sp,

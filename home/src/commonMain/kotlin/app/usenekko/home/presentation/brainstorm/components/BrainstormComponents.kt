@@ -41,6 +41,8 @@ import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.cd_back
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BrainstormTopBar(
@@ -65,7 +67,7 @@ fun BrainstormTopBar(
             onClick = onBack,
             colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary),
         ) {
-            Image(imageVector = vectorResource(Res.drawable.ic_back), contentDescription = "Back")
+            Image(imageVector = vectorResource(Res.drawable.ic_back), contentDescription = stringResource(Res.string.cd_back))
         }
     },
 )

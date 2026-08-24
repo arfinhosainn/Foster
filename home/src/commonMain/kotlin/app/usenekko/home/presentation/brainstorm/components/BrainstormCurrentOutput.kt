@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import app.usenekko.home.domain.BrainstormTopic
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.brainstorm_empty_current
+import nekko.home.generated.resources.brainstorm_empty_no_ideas
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CurrentOutputContent(
@@ -52,7 +55,7 @@ fun CurrentOutputContent(
             }
         } else if (topics == null) {
             Text(
-                text = "Personalized conversation ideas for this contact will appear here. Generated from your notes and relationship info.",
+                text = stringResource(Res.string.brainstorm_empty_current),
                 style = NekkoTheme.typography.bodyMedium,
                 color = NekkoTheme.colors.text.secondary,
                 textAlign = TextAlign.Center,
@@ -62,7 +65,7 @@ fun CurrentOutputContent(
             )
         } else if (topics.isEmpty()) {
             Text(
-                text = "No ideas are available yet. Check back tomorrow for fresh suggestions.",
+                text = stringResource(Res.string.brainstorm_empty_no_ideas),
                 style = NekkoTheme.typography.bodyMedium,
                 color = NekkoTheme.colors.text.secondary,
                 modifier = Modifier.fillMaxWidth(),

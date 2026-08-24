@@ -37,6 +37,10 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_calender
 import nekko.onboarding.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_remove
+import nekko.onboarding.generated.resources.reminder_recurrence_cd
+import nekko.onboarding.generated.resources.reminder_recurrence_label
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CustomReminderCard(
@@ -90,12 +94,12 @@ fun CustomReminderCard(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_trashbin),
-                        contentDescription = "Remove",
+                        contentDescription = stringResource(Res.string.action_remove),
                         tint = NekkoTheme.colors.red.active,
                         modifier = Modifier.size(20.dp),
                     )
                     Text(
-                        text = "Remove",
+                        text = stringResource(Res.string.action_remove),
                         color = NekkoTheme.colors.red.hover,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -159,13 +163,13 @@ fun CustomReminderCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = vectorResource(Res.drawable.ic_calender),
-                            contentDescription = "Recurrence",
+                            contentDescription = stringResource(Res.string.reminder_recurrence_cd),
                             tint = NekkoTheme.colors.text.tertiary,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Recurrence: ",
+                            text = stringResource(Res.string.reminder_recurrence_label),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
                             color = NekkoTheme.colors.text.tertiary

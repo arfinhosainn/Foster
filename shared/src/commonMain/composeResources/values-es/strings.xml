@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Español (neutro LATAM) — mismo orden de claves que values/strings.xml.
+
+  Convenciones:
+   - Prefijos por función: cd_* (descripción de contenido), paywall_*,
+     onboarding_*, home_*, settings_*, notification_*, ...
+   - Placeholders posicionales (%1$s, %1$d) para permitir reordenar.
+-->
+<resources>
+    <!-- Accesibilidad -->
+    <string name="cd_premium">Premium</string>
+    <string name="cd_invite_someone">Invitar a alguien</string>
+
+    <!-- Navegación inferior -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_grow">Crecer</string>
+</resources>

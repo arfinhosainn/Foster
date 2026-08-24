@@ -305,7 +305,7 @@ class ContactProfileViewModel(
                 contactId = contactId,
                 title = title,
                 description = _state.value.reminderDraftDescription.trim(),
-                recurrence = recurrenceToDbValue(_state.value.reminderDraftRecurrence),
+                recurrence = _state.value.reminderDraftRecurrence,
                 date = _state.value.reminderDraftDateEpochMillis,
             )
 
@@ -317,7 +317,7 @@ class ContactProfileViewModel(
                         isReminderListSheetOpen = true,
                         reminderDraftTitle = "",
                         reminderDraftDescription = "",
-                        reminderDraftRecurrence = "None",
+                        reminderDraftRecurrence = "none",
                         reminderDraftDateEpochMillis = null,
                     )
                     refreshProfileAfterMutation()
@@ -338,7 +338,7 @@ class ContactProfileViewModel(
         _state.value = _state.value.copy(
             reminderDraftTitle = reminder.title,
             reminderDraftDescription = reminder.description,
-            reminderDraftRecurrence = recurrenceToUiLabel(reminder.recurrence),
+            reminderDraftRecurrence = reminder.recurrence,
             reminderDraftDateEpochMillis = reminder.dateEpochMillis,
             isReminderListSheetOpen = false,
             isAddReminderSheetOpen = true,

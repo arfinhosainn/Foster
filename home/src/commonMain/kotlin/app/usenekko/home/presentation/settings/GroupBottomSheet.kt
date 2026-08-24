@@ -87,6 +87,20 @@ import nekko.home.generated.resources.ic_close
 import nekko.home.generated.resources.ic_move
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_cancel
+import nekko.home.generated.resources.action_done
+import nekko.home.generated.resources.add_no_groups_yet
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.cd_delete_group_named
+import nekko.home.generated.resources.group_people_many
+import nekko.home.generated.resources.group_people_one
+import nekko.home.generated.resources.settings_groups
+import org.jetbrains.compose.resources.stringResource
+import nekko.home.generated.resources.action_remove
+import nekko.home.generated.resources.cd_group_members
+import nekko.home.generated.resources.group_move
+import nekko.home.generated.resources.group_move_dialog_title
+import nekko.home.generated.resources.group_no_members
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,7 +145,7 @@ fun GroupBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -152,7 +166,7 @@ fun GroupBottomSheet(
                         .padding(bottom = 24.dp),
                 ) {
                 Text(
-                    text = "Groups",
+                    text = stringResource(Res.string.settings_groups),
                     color = NekkoTheme.colors.text.primary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -166,7 +180,7 @@ fun GroupBottomSheet(
                     state.isLoading -> GroupGridLoadingSkeleton()
 
                     state.groups.isEmpty() -> Text(
-                        text = "No groups yet",
+                        text = stringResource(Res.string.add_no_groups_yet),
                         color = NekkoTheme.colors.text.tertiary,
                         fontSize = 16.sp,
                         textAlign = TextAlign.Center,
@@ -257,7 +271,7 @@ private fun GroupMembersContent(
         Spacer(Modifier.height(16.dp))
         Image(
             painter = painterResource(Res.drawable.group_card),
-            contentDescription = "Group members",
+            contentDescription = stringResource(Res.string.cd_group_members),
             modifier = Modifier
                 .fillMaxWidth()
         )
@@ -297,7 +311,7 @@ private fun GroupMembersContent(
             }
 
             state.members.isEmpty() -> Text(
-                text = "No members in this group",
+                text = stringResource(Res.string.group_no_members),
                 color = NekkoTheme.colors.text.tertiary,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,
@@ -336,7 +350,7 @@ private fun GroupMembersContent(
 
         Spacer(Modifier.height(24.dp))
         NekkoButton(
-            text = "Done",
+            text = stringResource(Res.string.action_done),
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -387,7 +401,7 @@ private fun SwipeableMemberRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             MemberActionButton(
-                text = "Move",
+                text = stringResource(Res.string.group_move),
                 icon = Res.drawable.ic_move,
                 tint = NekkoTheme.colors.gray.tertiary,
                 onClick = {
@@ -398,7 +412,7 @@ private fun SwipeableMemberRow(
                 modifier = Modifier.weight(1f),
             )
             MemberActionButton(
-                text = "Remove",
+                text = stringResource(Res.string.action_remove),
                 icon = Res.drawable.ic_trashbin,
                 tint = NekkoTheme.colors.red.hover,
                 onClick = {
@@ -508,7 +522,7 @@ private fun MoveMemberDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Move ${contact?.name ?: ""} to…") },
+        title = { Text(stringResource(Res.string.group_move_dialog_title, contact?.name ?: "")) },
         text = {
             if (otherGroups.isEmpty()) {
                 Text(
@@ -551,7 +565,7 @@ private fun MoveMemberDialog(
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
         },
     )
 }
@@ -712,7 +726,7 @@ private fun GroupItem(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_minus),
-                        contentDescription = "Delete ${group.name}",
+                        contentDescription = stringResource(Res.string.cd_delete_group_named, group.name),
                         modifier = Modifier.size(24.dp),
                     )
                 }
@@ -744,7 +758,7 @@ private fun GroupItem(
 
         Spacer(Modifier.height(2.dp))
         Text(
-            text = "$memberCount ${if (memberCount == 1) "person" else "people"}",
+            text = if (memberCount == 1) stringResource(Res.string.group_people_one, memberCount) else stringResource(Res.string.group_people_many, memberCount),
             style = NekkoTheme.typography.footnote,
             color = NekkoTheme.colors.text.tertiary,
             textAlign = TextAlign.Center,

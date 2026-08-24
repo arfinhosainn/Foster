@@ -26,6 +26,8 @@ import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_back
 import nekko.home.generated.resources.ic_edit
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.cd_back
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingsTopBar(
@@ -60,7 +62,7 @@ fun SettingsTopBar(
             ),
         ) {
             Icon(
-                imageVector = vectorResource(Res.drawable.ic_back), contentDescription = "Back",
+                imageVector = vectorResource(Res.drawable.ic_back), contentDescription = stringResource(Res.string.cd_back),
                 modifier = modifier.size(20.dp)
 
             )

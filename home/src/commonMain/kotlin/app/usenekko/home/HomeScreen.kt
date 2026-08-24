@@ -122,6 +122,19 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.launch
+import nekko.home.generated.resources.action_try_again
+import nekko.home.generated.resources.audience_everyone
+import nekko.home.generated.resources.cd_checked_in
+import nekko.home.generated.resources.home_checkin_error
+import nekko.home.generated.resources.home_contacts_waiting_many
+import nekko.home.generated.resources.home_contacts_waiting_one
+import nekko.home.generated.resources.home_next_checkin_in
+import nekko.home.generated.resources.home_no_checkin_today
+import nekko.home.generated.resources.home_no_upcoming_checkins
+import nekko.home.generated.resources.home_select_contact
+import nekko.home.generated.resources.home_select_contact_hint
+import nekko.home.generated.resources.home_updating
+import org.jetbrains.compose.resources.stringResource
 
 private fun audienceIcon(name: String): DrawableResource = when (name.lowercase()) {
     "family" -> Res.drawable.ic_family
@@ -172,9 +185,10 @@ fun HomeScreen(
 
     var showAddContact by rememberSaveable { mutableStateOf(false) }
 
-    val options = remember(state.groups) {
+    val everyoneOption = stringResource(Res.string.audience_everyone)
+    val options = remember(state.groups, everyoneOption) {
         buildList {
-            add(AudienceOption("Everyone", Res.drawable.ic_group))
+            add(AudienceOption(everyoneOption, Res.drawable.ic_group))
             state.groups.forEach { group ->
                 add(AudienceOption(group.name, audienceIcon(group.name)))
             }
@@ -308,7 +322,7 @@ fun HomeScreen(
 
                     state.checkInError?.let {
                         Text(
-                            text = "Couldn't check in. Please try again.",
+                            text = stringResource(Res.string.home_checkin_error),
                             color = NekkoTheme.colors.text.tertiary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
@@ -333,7 +347,7 @@ fun HomeScreen(
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                text = "Updating",
+                                text = stringResource(Res.string.home_updating),
                                 color = NekkoTheme.colors.text.tertiary,
                                 fontSize = 12.sp,
                             )
@@ -360,7 +374,7 @@ fun HomeScreen(
                             )
                             Spacer(Modifier.height(16.dp))
                             Button(onClick = { viewModel.loadContacts(forceRefresh = true) }) {
-                                Text("Try again")
+                                Text(stringResource(Res.string.action_try_again))
                             }
                         }
                     } else if (state.totalContactCount == 0) {
@@ -490,14 +504,14 @@ private fun ContactPaneEmptyState(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Select a contact",
+                text = stringResource(Res.string.home_select_contact),
                 color = NekkoTheme.colors.text.primary,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Choose someone from your timeline to view their profile here.",
+                text = stringResource(Res.string.home_select_contact_hint),
                 color = NekkoTheme.colors.text.tertiary,
                 fontSize = 14.sp,
             )
@@ -585,9 +599,9 @@ private fun CheckInSection(
         Spacer(Modifier.height(4.dp))
         Text(
             text = when (outstandingCount) {
-                0 -> "No check-in today"
-                1 -> "1 contact waiting for check in"
-                else -> "$outstandingCount contacts waiting for check in"
+                0 -> stringResource(Res.string.home_no_checkin_today)
+                1 -> stringResource(Res.string.home_contacts_waiting_one)
+                else -> stringResource(Res.string.home_contacts_waiting_many, outstandingCount)
             },
             color = NekkoTheme.colors.text.tertiary,
             fontSize = 16.sp,
@@ -727,7 +741,7 @@ private fun ContactCheckInRow(
                         } else {
                             Icon(
                                 imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
-                                contentDescription = "Checked in",
+                                contentDescription = stringResource(Res.string.cd_checked_in),
                                 modifier = Modifier.size(24.dp),
                                 tint = NekkoTheme.colors.gray.secondary,
                             )
@@ -756,7 +770,7 @@ private fun NextCheckInCard(
         contentAlignment = Alignment.CenterStart,
     ) {
         Text(
-            text = label?.let { "Next check-in in $it" } ?: "No upcoming check-ins",
+            text = label?.let { stringResource(Res.string.home_next_checkin_in, it) } ?: stringResource(Res.string.home_no_upcoming_checkins),
             color = NekkoTheme.colors.text.primary,
             fontSize = 17.sp,
             fontWeight = FontWeight.Medium,

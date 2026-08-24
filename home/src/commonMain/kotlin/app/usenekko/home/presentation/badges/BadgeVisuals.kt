@@ -58,6 +58,12 @@ import nekko.home.generated.resources.sun_flower
 import nekko.home.generated.resources.yellow_flower
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import nekko.home.generated.resources.action_skip
+import nekko.home.generated.resources.badges_collect_plant
+import nekko.home.generated.resources.badges_tap_reveal
+import nekko.home.generated.resources.badges_title
+import nekko.home.generated.resources.cd_close
+import org.jetbrains.compose.resources.stringResource
 
 /** Maps a badge to the matching flower artwork from the resource catalog. */
 fun badgeIcon(badge: Badge): DrawableResource {
@@ -123,7 +129,7 @@ fun BadgeRow(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "Badges",
+            text = stringResource(Res.string.badges_title),
             color = NekkoTheme.colors.text.secondary,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
@@ -224,7 +230,7 @@ fun PlantUnlockedBadgeOverlay(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = Color.Unspecified,
                         modifier = Modifier
                             .size(28.dp)
@@ -232,7 +238,7 @@ fun PlantUnlockedBadgeOverlay(
                     )
 
                     Text(
-                        text = "Skip",
+                        text = stringResource(Res.string.action_skip),
                         color = NekkoTheme.colors.text.secondary,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -292,7 +298,7 @@ fun PlantUnlockedBadgeOverlay(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = "Collect Plant",
+                            text = stringResource(Res.string.badges_collect_plant),
                             color = NekkoTheme.colors.background.b0,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -300,7 +306,7 @@ fun PlantUnlockedBadgeOverlay(
                     }
                 } else {
                     Text(
-                        text = "TAP TO REVEAL",
+                        text = stringResource(Res.string.badges_tap_reveal),
                         color = Color(0xFF718096),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,

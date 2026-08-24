@@ -47,6 +47,10 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_pencil
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.milliseconds
+import nekko.onboarding.generated.resources.cd_edit_profile_picture
+import nekko.onboarding.generated.resources.cd_selected_avatar
+import nekko.onboarding.generated.resources.cd_selected_photo
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ProfilePhotoPicker(
@@ -109,14 +113,14 @@ fun ProfilePhotoPicker(
             if (photoBitmap != null) {
                 Image(
                     bitmap = photoBitmap,
-                    contentDescription = "Selected Profile Photo",
+                    contentDescription = stringResource(Res.string.cd_selected_photo),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             } else if (selectedAvatarIndex != null && selectedAvatarIndex in avatarResources.indices) {
                 Image(
                     imageVector = vectorResource(avatarResources[selectedAvatarIndex]),
-                    contentDescription = "Selected Avatar",
+                    contentDescription = stringResource(Res.string.cd_selected_avatar),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -141,7 +145,7 @@ fun ProfilePhotoPicker(
         ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_pencil),
-                contentDescription = "Edit Profile Picture",
+                contentDescription = stringResource(Res.string.cd_edit_profile_picture),
                 tint = NekkoTheme.colors.text.primary,
                 modifier = Modifier.size(16.dp),
             )

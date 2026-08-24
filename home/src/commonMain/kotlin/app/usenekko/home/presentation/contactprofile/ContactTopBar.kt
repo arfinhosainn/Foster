@@ -21,6 +21,9 @@ import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_back
 import nekko.home.generated.resources.ic_edit
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_edit
+import nekko.home.generated.resources.cd_back
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ContactProfileTopBar(
@@ -51,7 +54,7 @@ fun ContactProfileTopBar(
         ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_back),
-                contentDescription = "Back",
+                contentDescription = stringResource(Res.string.cd_back),
                 tint = NekkoTheme.colors.gray.primary
             )
         }
@@ -64,7 +67,7 @@ fun ContactProfileTopBar(
         ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_edit),
-                contentDescription = "Edit",
+                contentDescription = stringResource(Res.string.action_edit),
                 tint = NekkoTheme.colors.gray.primary
             )
         }

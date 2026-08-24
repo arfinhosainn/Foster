@@ -48,6 +48,12 @@ import nekko.home.generated.resources.bg_collect
 import nekko.home.generated.resources.ic_close
 import nekko.home.generated.resources.ic_soil
 import org.jetbrains.compose.resources.painterResource
+import nekko.home.generated.resources.action_skip
+import nekko.home.generated.resources.badges_tap_reveal
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.cd_soil
+import nekko.home.generated.resources.plant_unlocked
+import org.jetbrains.compose.resources.stringResource
 
 enum class PlantRewardStage {
     Soil,
@@ -149,7 +155,7 @@ private fun SoilRewardCard(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_close),
-                    contentDescription = "Close",
+                    contentDescription = stringResource(Res.string.cd_close),
                     tint = Color.Unspecified,
                     modifier = Modifier
                         .size(28.dp)
@@ -157,7 +163,7 @@ private fun SoilRewardCard(
                 )
 
                 Text(
-                    text = "Skip",
+                    text = stringResource(Res.string.action_skip),
                     color = NekkoTheme.colors.text.secondary,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -167,7 +173,7 @@ private fun SoilRewardCard(
 
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "Plant unlocked",
+                text = stringResource(Res.string.plant_unlocked),
                 color = NekkoTheme.colors.text.primary,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -184,7 +190,7 @@ private fun SoilRewardCard(
             ) {
                 Image(
                     painter = painterResource(Res.drawable.ic_soil),
-                    contentDescription = "Soil",
+                    contentDescription = stringResource(Res.string.cd_soil),
                     modifier = Modifier.size(151.dp, 58.dp),
                 )
             }
@@ -199,7 +205,7 @@ private fun SoilRewardCard(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "TAP TO REVEAL",
+                    text = stringResource(Res.string.badges_tap_reveal),
                     color = NekkoTheme.colors.background.onBackground,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,

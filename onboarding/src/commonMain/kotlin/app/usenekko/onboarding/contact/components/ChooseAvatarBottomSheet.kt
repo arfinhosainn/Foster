@@ -49,6 +49,11 @@ import nekko.onboarding.generated.resources.ic_close
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.math.min
+import nekko.onboarding.generated.resources.add_choose_avatar
+import nekko.onboarding.generated.resources.add_select_avatar
+import nekko.onboarding.generated.resources.cd_avatar_number
+import nekko.onboarding.generated.resources.cd_close
+import org.jetbrains.compose.resources.stringResource
 
 // Reordered to match the design grid: Yellow, Green, Orange / Red, Purple, Blue.
 // NOTE: check that avatar_maroon is actually the purple asset in your drawables —
@@ -100,7 +105,7 @@ fun ChooseAvatarBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -115,7 +120,7 @@ fun ChooseAvatarBottomSheet(
         ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Choose Avatar",
+                    text = stringResource(Res.string.add_choose_avatar),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = NekkoTheme.colors.text.primary
@@ -159,7 +164,7 @@ fun ChooseAvatarBottomSheet(
                             ) {
                                 Image(
                                     imageVector = vectorResource(avatarResources[j]),
-                                    contentDescription = "Avatar ${j + 1}",
+                                    contentDescription = stringResource(Res.string.cd_avatar_number, j + 1),
                                 )
                             }
                         }
@@ -171,7 +176,7 @@ fun ChooseAvatarBottomSheet(
             Spacer(modifier = Modifier.height(32.dp))
 
             NekkoButton(
-                text = "Select Avatar",
+                text = stringResource(Res.string.add_select_avatar),
                 onClick = {
                     selectedIndex?.let { onAvatarSelected(it) }
                 },

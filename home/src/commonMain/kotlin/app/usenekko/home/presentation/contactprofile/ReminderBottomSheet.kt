@@ -53,6 +53,16 @@ import nekko.home.generated.resources.ic_edit
 import nekko.home.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_edit
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.reminder_recurrence_cd
+import nekko.home.generated.resources.reminder_recurrence_label
+import nekko.home.generated.resources.reminders_add
+import nekko.home.generated.resources.reminders_title
+import org.jetbrains.compose.resources.stringResource
+import nekko.home.generated.resources.action_remove
+import nekko.home.generated.resources.recurrence_none
+import nekko.home.generated.resources.reminders_tap_plus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +98,7 @@ fun ReminderBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -104,7 +114,7 @@ fun ReminderBottomSheet(
                     .padding(bottom = 32.dp),
             ) {
             Text(
-                text = "Reminders",
+                text = stringResource(Res.string.reminders_title),
                 style = NekkoTheme.typography.heading3Bold,
                 fontWeight = FontWeight.SemiBold,
                 color = NekkoTheme.colors.text.primary,
@@ -157,14 +167,14 @@ private fun EmptyRemindersContent(
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Add reminder",
+            text = stringResource(Res.string.reminders_add),
             fontSize = 20.sp,
             color = NekkoTheme.colors.text.secondary,
             fontWeight = FontWeight.Medium,
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "Tap on the plus button",
+            text = stringResource(Res.string.reminders_tap_plus),
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
             color = NekkoTheme.colors.text.tertiary,
@@ -199,7 +209,7 @@ private fun SwipeableReminderRow(
             horizontalArrangement = Arrangement.spacedBy(swipeGap),
         ) {
             ReminderActionButton(
-                text = "Edit",
+                text = stringResource(Res.string.action_edit),
                 icon = Res.drawable.ic_edit,
                 tint = NekkoTheme.colors.gray.tertiary,
                 backgroundColor = NekkoTheme.colors.fill.quaternary,
@@ -210,7 +220,7 @@ private fun SwipeableReminderRow(
                 modifier = Modifier.weight(1f),
             )
             ReminderActionButton(
-                text = "Remove",
+                text = stringResource(Res.string.action_remove),
                 icon = Res.drawable.ic_trashbin,
                 tint = NekkoTheme.colors.red.hover,
                 backgroundColor = NekkoTheme.colors.red.active,
@@ -283,19 +293,24 @@ private fun ReminderCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.CalendarToday,
-                        contentDescription = "Recurrence",
+                        contentDescription = stringResource(Res.string.reminder_recurrence_cd),
                         tint = NekkoTheme.colors.text.tertiary,
                         modifier = Modifier.size(16.dp),
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = "Recurrence: ",
+                        text = stringResource(Res.string.reminder_recurrence_label),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.tertiary,
                     )
                     Text(
-                        text = recurrenceToUiLabel(reminder.recurrence),
+                        text = stringResource(
+                            reminderRecurrenceOptions
+                                .firstOrNull { it.first == reminder.recurrence }
+                                ?.second
+                                ?: Res.string.recurrence_none,
+                        ),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF10B981),

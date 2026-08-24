@@ -48,6 +48,9 @@ import nekko.home.generated.resources.theme_system
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.settings_appearance
+import org.jetbrains.compose.resources.stringResource
 
 data class ThemeOption(
     val mode: AppThemeMode,
@@ -97,7 +100,7 @@ fun AppearanceBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -112,7 +115,7 @@ fun AppearanceBottomSheet(
                     .padding(bottom = 12.dp)
             ) {
                 Text(
-                    text = "Appearance",
+                    text = stringResource(Res.string.settings_appearance),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,

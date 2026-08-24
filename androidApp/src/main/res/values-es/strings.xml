@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Español (neutro LATAM) — mismo orden de claves que values/strings.xml. -->
+<resources>
+    <string name="app_name">Nekko</string>
+
+    <!-- Notificaciones de recordatorio de check-in (se resuelven al momento
+         de mostrarse, respetando el idioma del dispositivo o el idioma
+         por aplicación). -->
+    <string name="notif_checkin_title">Haz check-in con %1$s</string>
+    <string name="notif_checkin_body">Es hora de preguntar cómo está %1$s</string>
+    <string name="notif_contact_fallback">tu contacto</string>
+    <string name="notif_channel_name">Recordatorios de check-in</string>
+    <string name="notif_channel_description">Recordatorios para cuando sea momento de hacer check-in con un contacto</string>
+</resources>

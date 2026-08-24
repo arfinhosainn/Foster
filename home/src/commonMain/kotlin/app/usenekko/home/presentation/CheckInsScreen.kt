@@ -62,6 +62,12 @@ import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.add_no_groups_yet
+import nekko.home.generated.resources.cd_no_members
+import nekko.home.generated.resources.checkins_create_group_hint
+import nekko.home.generated.resources.settings_check_ins_stat
+import org.jetbrains.compose.resources.stringResource
 
 private const val PhoneGroupColumns = 2
 
@@ -121,7 +127,7 @@ fun CheckInsScreen(
                 .then(if (useNavigationRail) Modifier.padding(start = 88.dp) else Modifier),
             topBar = {
                 NekkoTopBar(
-                    title = "Check-ins",
+                    title = stringResource(Res.string.settings_check_ins_stat),
                     userName = accountState.snapshot?.profile?.resolvedName.orEmpty(),
                     avatarContent = {
                         ContactAvatar(
@@ -207,14 +213,14 @@ fun CheckInsScreen(
 private fun EmptyGroupsState() {
     Spacer(Modifier.height(32.dp))
     Text(
-        text = "No groups yet",
+        text = stringResource(Res.string.add_no_groups_yet),
         color = NekkoTheme.colors.text.primary,
         fontSize = 18.sp,
         fontWeight = FontWeight.SemiBold,
     )
     Spacer(Modifier.height(6.dp))
     Text(
-        text = "Create a group from Settings to organize your check-ins",
+        text = stringResource(Res.string.checkins_create_group_hint),
         color = NekkoTheme.colors.text.tertiary,
         fontSize = 14.sp,
         textAlign = TextAlign.Center,
@@ -328,7 +334,7 @@ private fun GroupCard(
         if (members.isEmpty()) {
             Icon(
                 imageVector = Icons.Filled.Add,
-                contentDescription = "No members",
+                contentDescription = stringResource(Res.string.cd_no_members),
                 tint = NekkoTheme.colors.text.quaternary,
                 modifier = Modifier.size(40.dp),
             )

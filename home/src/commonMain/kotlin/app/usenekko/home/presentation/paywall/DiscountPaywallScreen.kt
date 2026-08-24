@@ -65,6 +65,15 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import nekko.home.generated.resources.discount_billing_note
+import nekko.home.generated.resources.discount_claim_cta
+import nekko.home.generated.resources.discount_expires_in
+import nekko.home.generated.resources.discount_for_annual
+import nekko.home.generated.resources.discount_lowest_price
+import nekko.home.generated.resources.discount_one_time_offer
+import nekko.home.generated.resources.discount_processing
+import nekko.home.generated.resources.paywall_restore_cta
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Real pricing worked backward from the 60% discount:
@@ -190,7 +199,7 @@ fun DiscountPaywallScreen(
 
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = "One-time offer",
+                        text = stringResource(Res.string.discount_one_time_offer),
                         color = PaywallWhite,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -198,7 +207,7 @@ fun DiscountPaywallScreen(
 
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = "Expires in",
+                        text = stringResource(Res.string.discount_expires_in),
                         color = DiscountMuted,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
@@ -246,7 +255,7 @@ fun DiscountPaywallScreen(
 
                     Spacer(Modifier.height(11.dp))
                     Text(
-                        text = "Lowest price ever",
+                        text = stringResource(Res.string.discount_lowest_price),
                         color = PaywallGreen,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
@@ -279,7 +288,7 @@ fun DiscountPaywallScreen(
                     }
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "For annual plan",
+                        text = stringResource(Res.string.discount_for_annual),
                         color = DiscountMuted,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
@@ -302,7 +311,7 @@ fun DiscountPaywallScreen(
                 ),
             ) {
                 Text(
-                    text = if (state.isPurchasing) "Processing..." else "Claim limited offer!",
+                    text = if (state.isPurchasing) stringResource(Res.string.discount_processing) else stringResource(Res.string.discount_claim_cta),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -321,7 +330,7 @@ fun DiscountPaywallScreen(
                     )
                 } else {
                     Text(
-                        text = "Restore purchase",
+                        text = stringResource(Res.string.paywall_restore_cta),
                         color = PaywallWhite,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
@@ -332,7 +341,7 @@ fun DiscountPaywallScreen(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "Flexible billing. Cancel anytime",
+                text = stringResource(Res.string.discount_billing_note),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 color = PaywallMuted,

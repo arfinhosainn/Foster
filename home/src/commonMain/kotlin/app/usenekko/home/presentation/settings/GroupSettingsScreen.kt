@@ -58,6 +58,18 @@ import nekko.home.generated.resources.ic_add
 import nekko.home.generated.resources.ic_edit
 import nekko.home.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_cancel
+import nekko.home.generated.resources.action_create
+import nekko.home.generated.resources.action_done
+import nekko.home.generated.resources.add_new_group
+import nekko.home.generated.resources.cd_create_group
+import nekko.home.generated.resources.cd_edit_groups
+import nekko.home.generated.resources.cd_remove_group
+import nekko.home.generated.resources.group_members_many
+import nekko.home.generated.resources.group_members_one
+import nekko.home.generated.resources.group_name_label
+import nekko.home.generated.resources.settings_groups
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun GroupSettingsScreen(
@@ -144,18 +156,18 @@ fun GroupSettingsScreen(
         Box(modifier = Modifier.align(Alignment.TopCenter)) {
             SettingsTopBar(
                 onBack = onBack,
-                title = "Groups",
+                title = stringResource(Res.string.settings_groups),
                 actions = {
                     IconButton(onClick = { viewModel.onAction(GroupSettingsAction.OpenCreateDialog) }) {
                         Icon(
                             imageVector = vectorResource(Res.drawable.ic_add),
-                            contentDescription = "Create group",
+                            contentDescription = stringResource(Res.string.cd_create_group),
                         )
                     }
                     IconButton(onClick = { isEditOptions = !isEditOptions }) {
                         Icon(
                             imageVector = vectorResource(Res.drawable.ic_edit),
-                            contentDescription = if (isEditOptions) "Done" else "Edit groups",
+                            contentDescription = if (isEditOptions) stringResource(Res.string.action_done) else stringResource(Res.string.cd_edit_groups),
                         )
                     }
                 },
@@ -283,7 +295,7 @@ private fun GroupRow(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = "$memberCount member${if (memberCount == 1) "" else "s"}",
+                text = if (memberCount == 1) stringResource(Res.string.group_members_one, memberCount) else stringResource(Res.string.group_members_many, memberCount),
                 color = NekkoTheme.colors.text.tertiary,
                 fontSize = 13.sp,
             )
@@ -292,7 +304,7 @@ private fun GroupRow(
             IconButton(onClick = onRemove) {
                 Icon(
                     imageVector = vectorResource(Res.drawable.ic_trashbin),
-                    contentDescription = "Remove group",
+                    contentDescription = stringResource(Res.string.cd_remove_group),
                     tint = Color(0xFFFF4B4B),
                 )
             }
@@ -310,22 +322,22 @@ private fun CreateGroupDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New Group") },
+        title = { Text(stringResource(Res.string.add_new_group)) },
         text = {
             OutlinedTextField(
                 value = draftName,
                 onValueChange = onDraftNameChange,
-                label = { Text("Group name") },
+                label = { Text(stringResource(Res.string.group_name_label)) },
                 singleLine = true,
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm, enabled = draftName.isNotBlank() && !isSaving) {
-                Text("Create")
+                Text(stringResource(Res.string.action_create))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) { Text("Cancel") }
+            TextButton(onClick = onDismiss, enabled = !isSaving) { Text(stringResource(Res.string.action_cancel)) }
         },
     )
 }

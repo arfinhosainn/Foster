@@ -53,6 +53,11 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_logo
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_next
+import nekko.onboarding.generated.resources.cd_logo
+import nekko.onboarding.generated.resources.name_full_name
+import nekko.onboarding.generated.resources.name_what_call
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NameScreen(
@@ -113,7 +118,7 @@ fun NameScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     NekkoButton(
-                        text = "Next",
+                        text = stringResource(Res.string.action_next),
                         onClick = { viewModel.onContinueClicked() },
                         modifier = Modifier.weight(1f),
                     )
@@ -131,7 +136,7 @@ fun NameScreen(
 
                 Image(
                     painter = painterResource(Res.drawable.ic_logo),
-                    contentDescription = "Logo",
+                    contentDescription = stringResource(Res.string.cd_logo),
                 )
                 Spacer(Modifier.height(0.dp))
 
@@ -140,7 +145,7 @@ fun NameScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "What should we call you?",
+                        text = stringResource(Res.string.name_what_call),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
@@ -174,7 +179,7 @@ private fun NameField(
         onValueChange = onValueChange,
         placeholder = {
             Text(
-                text = "Full name",
+                text = stringResource(Res.string.name_full_name),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
                 color = NekkoTheme.colors.text.tertiary,

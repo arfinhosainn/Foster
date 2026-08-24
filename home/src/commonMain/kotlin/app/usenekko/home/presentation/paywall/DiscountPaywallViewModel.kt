@@ -14,6 +14,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.paywall_purchase_failed
+import nekko.home.generated.resources.paywall_restore_failed
+import nekko.home.generated.resources.paywall_restore_none
+import org.jetbrains.compose.resources.getString
 
 class DiscountPaywallViewModel(
     private val subscriptionRepository: SubscriptionRepository,
@@ -70,7 +75,7 @@ class DiscountPaywallViewModel(
                 }
                 is PurchaseOutcome.Error -> {
                     _state.update { it.copy(isPurchasing = false) }
-                    _events.send(DiscountPaywallEvent.ShowError(outcome.message ?: "Purchase failed."))
+                    _events.send(DiscountPaywallEvent.ShowError(outcome.message ?: getString(Res.string.paywall_purchase_failed)))
                 }
             }
         }
@@ -86,12 +91,12 @@ class DiscountPaywallViewModel(
                     if (result.data) {
                         _events.send(DiscountPaywallEvent.Subscribed)
                     } else {
-                        _events.send(DiscountPaywallEvent.ShowError("No active subscription found to restore."))
+                        _events.send(DiscountPaywallEvent.ShowError(getString(Res.string.paywall_restore_none)))
                     }
                 }
                 is Result.Error -> {
                     _state.update { it.copy(isRestoring = false) }
-                    _events.send(DiscountPaywallEvent.ShowError("Restore failed. Try again."))
+                    _events.send(DiscountPaywallEvent.ShowError(getString(Res.string.paywall_restore_failed)))
                 }
             }
         }

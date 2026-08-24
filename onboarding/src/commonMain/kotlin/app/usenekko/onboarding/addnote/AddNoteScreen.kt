@@ -57,6 +57,13 @@ import nekko.onboarding.generated.resources.ic_add
 import nekko.onboarding.generated.resources.ic_back
 import nekko.onboarding.generated.resources.ic_flower
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_next
+import nekko.onboarding.generated.resources.action_skip
+import nekko.onboarding.generated.resources.cd_back_upper
+import nekko.onboarding.generated.resources.notes_empty_hint
+import nekko.onboarding.generated.resources.onb_addnote_title
+import org.jetbrains.compose.resources.stringResource
+import nekko.onboarding.generated.resources.notes_add_note
 
 @Composable
 fun AddNoteScreen(
@@ -136,7 +143,7 @@ private fun AddNoteScreenContent(
                             colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
                         ) {
                             Text(
-                                text = "Skip",
+                                text = stringResource(Res.string.action_skip),
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = NekkoTheme.colors.text.secondary,
@@ -161,12 +168,12 @@ private fun AddNoteScreenContent(
                     ) {
                         Image(
                             imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = "BACK"
+                            contentDescription = stringResource(Res.string.cd_back_upper)
                         )
                     }
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
-                        text = "Next",
+                        text = stringResource(Res.string.action_next),
                         onClick = onNavigateToNext,
                         modifier = Modifier.weight(0.8f),
                         loading = state.isSubmitting,
@@ -186,7 +193,7 @@ private fun AddNoteScreenContent(
                 ) {
                     Spacer(Modifier.height(40.dp))
                     Text(
-                        text = "Add a Note",
+                        text = stringResource(Res.string.onb_addnote_title),
                         style = NekkoTheme.typography.heading1Bold,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
@@ -194,7 +201,7 @@ private fun AddNoteScreenContent(
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = "Capture thoughts & memories\nabout your conversation",
+                        text = stringResource(Res.string.notes_empty_hint),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
                         lineHeight = 28.sp,
@@ -221,7 +228,7 @@ private fun AddNoteScreenContent(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             Text(
-                                text = "Capture thoughts & memories\nabout your conversation",
+                                text = stringResource(Res.string.notes_empty_hint),
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = NekkoTheme.colors.text.tertiary,
@@ -230,7 +237,7 @@ private fun AddNoteScreenContent(
                             Spacer(modifier = Modifier.height(24.dp))
 
                             NekkoActionButton(
-                                text = "Add Note",
+                                text = stringResource(Res.string.notes_add_note),
                                 leadingIcon = vectorResource(Res.drawable.ic_add),
                                 onClick = { onAction(AddNoteAction.AddClicked) },
                             )
