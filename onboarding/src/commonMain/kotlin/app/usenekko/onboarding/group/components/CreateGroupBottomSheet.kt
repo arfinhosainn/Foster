@@ -51,6 +51,11 @@ import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_close
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_save
+import nekko.onboarding.generated.resources.add_create_group
+import nekko.onboarding.generated.resources.add_new_group
+import nekko.onboarding.generated.resources.cd_close
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +90,7 @@ fun CreateGroupBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -102,7 +107,7 @@ fun CreateGroupBottomSheet(
         ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Create Group",
+                    text = stringResource(Res.string.add_create_group),
                     style = NekkoTheme.typography.heading3,
                     fontWeight = FontWeight.SemiBold,
                     color = NekkoTheme.colors.text.primary
@@ -132,7 +137,7 @@ fun CreateGroupBottomSheet(
                     Box(contentAlignment = Alignment.Center) {
                         if (groupName.isEmpty()) {
                             Text(
-                                text = "New Group",
+                                text = stringResource(Res.string.add_new_group),
                                 fontSize = 20.sp,
                                 color = NekkoTheme.colors.text.tertiary,
                                 fontWeight = FontWeight.Medium,
@@ -148,7 +153,7 @@ fun CreateGroupBottomSheet(
 
             val isSaveEnabled = groupName.isNotBlank()
             Text(
-                text = "Save",
+                text = stringResource(Res.string.action_save),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = NekkoTheme.colors.text.primary,

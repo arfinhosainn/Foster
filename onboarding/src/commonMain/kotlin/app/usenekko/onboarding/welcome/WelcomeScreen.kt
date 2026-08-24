@@ -48,6 +48,13 @@ import nekko.onboarding.generated.resources.ic_google
 import nekko.onboarding.generated.resources.users
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.auth_continue_apple
+import nekko.onboarding.generated.resources.auth_continue_google
+import nekko.onboarding.generated.resources.cd_google
+import nekko.onboarding.generated.resources.welcome_placeholder
+import nekko.onboarding.generated.resources.welcome_subtitle
+import nekko.onboarding.generated.resources.welcome_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun WelcomeScreen(
@@ -136,7 +143,7 @@ fun WelcomeScreen(
             )
 
             Text(
-                text = "Welcome Screen",
+                text = stringResource(Res.string.welcome_placeholder),
                 modifier = Modifier.align(Alignment.Center)
             )
         }
@@ -152,7 +159,7 @@ fun WelcomeScreen(
                 modifier = modifier.padding(horizontal = 40.dp)
             ) {
                 Text(
-                    text = "Simplest way to\nkeep in touch",
+                    text = stringResource(Res.string.welcome_title),
                     fontSize = 34.sp,
                     color = NekkoTheme.colors.background.onBackground,
                     fontWeight = FontWeight.Bold,
@@ -162,7 +169,7 @@ fun WelcomeScreen(
 
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Stay connected with those\nwho matters.",
+                    text = stringResource(Res.string.welcome_subtitle),
                     fontSize = 20.sp,
                     color = NekkoTheme.colors.text.tertiary,
                     fontWeight = FontWeight.Medium,
@@ -172,7 +179,7 @@ fun WelcomeScreen(
                 Spacer(Modifier.height(50.dp))
 
                 NekkoButton(
-                    text = "Continue with Apple",
+                    text = stringResource(Res.string.auth_continue_apple),
                     onClick = {
                         try {
                             println("Starting Apple Sign-In flow...")
@@ -202,11 +209,11 @@ fun WelcomeScreen(
                     leadingIcon = {
                         Icon(
                             imageVector = vectorResource(Res.drawable.ic_google),
-                            contentDescription = "Google",
+                            contentDescription = stringResource(Res.string.cd_google),
                             tint = Color.Unspecified,
                         )
                     },
-                    text = "Continue with Google",
+                    text = stringResource(Res.string.auth_continue_google),
                     onClick = {
                         try {
                             println("Starting Google Sign-In flow...")

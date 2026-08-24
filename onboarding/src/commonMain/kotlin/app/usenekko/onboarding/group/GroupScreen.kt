@@ -63,6 +63,15 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_add
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_next
+import nekko.onboarding.generated.resources.add_step_group_title
+import nekko.onboarding.generated.resources.add_tap_plus_button
+import nekko.onboarding.generated.resources.add_wanna_create_group
+import nekko.onboarding.generated.resources.cd_add_members
+import nekko.onboarding.generated.resources.cd_back
+import nekko.onboarding.generated.resources.cd_group_member_avatar
+import nekko.onboarding.generated.resources.group_add_user_subtitle
+import org.jetbrains.compose.resources.stringResource
 
 private const val GroupColumns = 2
 private val StarterIds = setOf("family", "friends")
@@ -151,14 +160,14 @@ fun GroupScreen(
                     ) {
                         Image(
                             imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.cd_back),
                         )
                     }
 
                     Spacer(Modifier.width(12.dp))
 
                     NekkoButton(
-                        text = "Next",
+                        text = stringResource(Res.string.action_next),
                         onClick = { viewModel.onNextClicked() },
                         modifier = Modifier.weight(0.8f),
                     )
@@ -176,7 +185,7 @@ fun GroupScreen(
                 Spacer(Modifier.height(40.dp))
 
                 Text(
-                    text = "Add to a group",
+                    text = stringResource(Res.string.add_step_group_title),
                     textAlign = TextAlign.Center,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -186,7 +195,7 @@ fun GroupScreen(
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = "Add user to a group",
+                    text = stringResource(Res.string.group_add_user_subtitle),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.tertiary,
@@ -211,7 +220,7 @@ fun GroupScreen(
                 Spacer(Modifier.height(24.dp))
 
                 Text(
-                    text = "Wanna create a new group?",
+                    text = stringResource(Res.string.add_wanna_create_group),
                     color = NekkoTheme.colors.text.secondary,
                     textAlign = TextAlign.Center,
                     fontSize = 20.sp,
@@ -221,7 +230,7 @@ fun GroupScreen(
                 Spacer(Modifier.height(6.dp))
 
                 Text(
-                    text = "Tap the plus button",
+                    text = stringResource(Res.string.add_tap_plus_button),
                     color = NekkoTheme.colors.text.tertiary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
@@ -338,7 +347,7 @@ private fun GroupCard(
         if (memberAvatarIds.isEmpty()) {
             Icon(
                 imageVector = Icons.Filled.Add,
-                contentDescription = "Add members",
+                contentDescription = stringResource(Res.string.cd_add_members),
                 tint = NekkoTheme.colors.text.quaternary,
                 modifier = Modifier.size(40.dp),
             )
@@ -377,7 +386,7 @@ private fun MemberAvatars(
                     avatarResources.getOrNull(avatarId.toIntOrNull() ?: -1)?.let { resource ->
                         Image(
                             imageVector = vectorResource(resource),
-                            contentDescription = "Group member avatar",
+                            contentDescription = stringResource(Res.string.cd_group_member_avatar),
                             modifier = Modifier
                                 .size(avatarSize - 4.dp)
                                 .align(Alignment.Center)

@@ -20,6 +20,8 @@ import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_pencil
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.cd_edit_profile_picture
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AccountAvatar(
@@ -48,7 +50,7 @@ fun AccountAvatar(
         ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_pencil),
-                contentDescription = "Edit profile picture",
+                contentDescription = stringResource(Res.string.cd_edit_profile_picture),
                 tint = NekkoTheme.colors.background.onBackground,
                 modifier = Modifier.size(18.dp),
             )

@@ -39,6 +39,10 @@ import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_close
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.cd_close
+import nekko.onboarding.generated.resources.field_description
+import nekko.onboarding.generated.resources.field_title
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +82,7 @@ fun AddNoteBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -127,7 +131,7 @@ fun AddNoteBottomSheet(
                         decorationBox = { innerTextField ->
                             if (state.draftTitle.isEmpty()) {
                                 Text(
-                                    text = "Title",
+                                    text = stringResource(Res.string.field_title),
                                     fontSize = 20.sp,
                                     color = NekkoTheme.colors.text.tertiary,
                                     fontWeight = FontWeight.Medium,
@@ -161,7 +165,7 @@ fun AddNoteBottomSheet(
                         decorationBox = { innerTextField ->
                             if (state.draftDescription.isEmpty()) {
                                 Text(
-                                    text = "Description",
+                                    text = stringResource(Res.string.field_description),
                                     fontSize = 17.sp,
                                     color = NekkoTheme.colors.text.quaternary,
                                 )

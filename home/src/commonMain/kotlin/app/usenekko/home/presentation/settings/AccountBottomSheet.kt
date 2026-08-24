@@ -63,6 +63,14 @@ import nekko.home.generated.resources.ic_sprout
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.cd_locked
+import nekko.home.generated.resources.settings_account
+import nekko.home.generated.resources.settings_check_ins_stat
+import nekko.home.generated.resources.settings_contacts
+import nekko.home.generated.resources.settings_joined
+import nekko.home.generated.resources.settings_saving_avatar
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +115,7 @@ fun AccountBottomSheet(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Account",
+                    text = stringResource(Res.string.settings_account),
                     style = NekkoTheme.typography.heading3,
                     fontWeight = FontWeight.SemiBold,
                     color = NekkoTheme.colors.text.primary,
@@ -123,7 +131,7 @@ fun AccountBottomSheet(
             if (state.isUpdatingAvatar) {
                 Spacer(Modifier.height(20.dp))
                 Text(
-                    text = "Saving avatar…",
+                    text = stringResource(Res.string.settings_saving_avatar),
                     color = NekkoTheme.colors.text.tertiary,
                     fontSize = 13.sp,
                 )
@@ -139,7 +147,7 @@ fun AccountBottomSheet(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = state.createdAt?.let { "Joined ${formatJoinedDate(it)}" } ?: "",
+                text = state.createdAt?.let { stringResource(Res.string.settings_joined, formatJoinedDate(it)) } ?: "",
                 color = NekkoTheme.colors.text.tertiary,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium
@@ -156,7 +164,7 @@ fun AccountBottomSheet(
             ) {
                 AccountStat(
                     value = state.totalCheckIns.toString(),
-                    label = "Check-ins",
+                    label = stringResource(Res.string.settings_check_ins_stat),
                     icon = Res.drawable.ic_sprout,
                     iconTint = Color(0xFF22C55E),
                     modifier = Modifier.weight(1f),
@@ -169,7 +177,7 @@ fun AccountBottomSheet(
                 )
                 AccountStat(
                     value = state.totalContacts.toString(),
-                    label = "Contacts",
+                    label = stringResource(Res.string.settings_contacts),
                     icon = Res.drawable.ic_contacts,
                     iconTint = Color(0xFFFFCC33),
                     modifier = Modifier.weight(1f),
@@ -216,7 +224,7 @@ private fun CloseButton(
             contentColor = NekkoTheme.colors.gray.secondary,
         ),
     ) {
-        Icon(imageVector = vectorResource(Res.drawable.ic_close), contentDescription = "Close",
+        Icon(imageVector = vectorResource(Res.drawable.ic_close), contentDescription = stringResource(Res.string.cd_close),
             modifier = Modifier.size(24.dp))
     }
 }
@@ -317,7 +325,7 @@ private fun AccountBadgeItem(slot: BadgeSlot) {
             if (!slot.unlocked) {
                 Image(
                     painter = painterResource(Res.drawable.ic_lock),
-                    contentDescription = "Locked",
+                    contentDescription = stringResource(Res.string.cd_locked),
                     modifier = Modifier.size(24.dp),
                     colorFilter = ColorFilter.tint(Color.White.copy(alpha = 0.62f)),
                 )

@@ -35,6 +35,14 @@ import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_close
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_cancel
+import nekko.onboarding.generated.resources.action_done
+import nekko.onboarding.generated.resources.cd_close
+import nekko.onboarding.generated.resources.field_description
+import nekko.onboarding.generated.resources.reminder_date_label
+import nekko.onboarding.generated.resources.reminder_occasions_hint
+import nekko.onboarding.generated.resources.reminder_recurrence_cd
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,13 +79,13 @@ fun AddReminderBottomSheet(
                         datePickerVisible = false
                     }
                 ) {
-                    Text(text = "Done",
+                    Text(text = stringResource(Res.string.action_done),
                         color = NekkoTheme.colors.text.primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { datePickerVisible = false }) {
-                    Text(text = "Cancel",
+                    Text(text = stringResource(Res.string.action_cancel),
                         color = NekkoTheme.colors.text.primary)
                 }
             },
@@ -133,7 +141,7 @@ fun AddReminderBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -182,7 +190,7 @@ fun AddReminderBottomSheet(
                         decorationBox = { innerTextField ->
                             if (state.draftTitle.isEmpty()) {
                                 Text(
-                                    text = "Birthday, Anniversaries, etc",
+                                    text = stringResource(Res.string.reminder_occasions_hint),
                                     fontSize = 20.sp,
                                     color = NekkoTheme.colors.text.tertiary,
                                     fontWeight = FontWeight.Medium
@@ -223,7 +231,7 @@ fun AddReminderBottomSheet(
                         decorationBox = { innerTextField ->
                             if (state.draftDescription.isEmpty()) {
                                 Text(
-                                    text = "Description",
+                                    text = stringResource(Res.string.field_description),
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = NekkoTheme.colors.text.quaternary
@@ -253,7 +261,7 @@ fun AddReminderBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Recurrence",
+                    text = stringResource(Res.string.reminder_recurrence_cd),
                     fontSize = 18.sp,
                     color = NekkoTheme.colors.text.secondary
                 )
@@ -299,7 +307,7 @@ fun AddReminderBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Date",
+                    text = stringResource(Res.string.reminder_date_label),
                     fontSize = 18.sp,
                     color = NekkoTheme.colors.text.secondary
                 )

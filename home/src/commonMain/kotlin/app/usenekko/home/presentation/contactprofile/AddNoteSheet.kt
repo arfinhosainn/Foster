@@ -34,6 +34,12 @@ import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_close
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_save
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.notes_add_note
+import nekko.home.generated.resources.reminder_description_label
+import org.jetbrains.compose.resources.stringResource
+import nekko.home.generated.resources.field_title
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +77,7 @@ fun AddNoteSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -88,7 +94,7 @@ fun AddNoteSheet(
             ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Add Note",
+                    text = stringResource(Res.string.notes_add_note),
                     style = NekkoTheme.typography.heading3Bold,
                     color = NekkoTheme.colors.text.primary,
                 )
@@ -118,7 +124,7 @@ fun AddNoteSheet(
                         decorationBox = { innerTextField ->
                             if (draftTitle.isEmpty()) {
                                 Text(
-                                    text = "Title",
+                                    text = stringResource(Res.string.field_title),
                                     fontSize = 20.sp,
                                     color = NekkoTheme.colors.text.tertiary,
                                     fontWeight = FontWeight.Medium,
@@ -152,7 +158,7 @@ fun AddNoteSheet(
                         decorationBox = { innerTextField ->
                             if (draftDescription.isEmpty()) {
                                 Text(
-                                    text = "Description",
+                                    text = stringResource(Res.string.reminder_description_label),
                                     fontSize = 17.sp,
                                     color = NekkoTheme.colors.text.quaternary,
                                 )
@@ -166,7 +172,7 @@ fun AddNoteSheet(
             Spacer(modifier = Modifier.height(24.dp))
 
             NekkoButton(
-                text = "Save",
+                text = stringResource(Res.string.action_save),
                 onClick = onSave,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = draftTitle.isNotBlank() && !isSaving,

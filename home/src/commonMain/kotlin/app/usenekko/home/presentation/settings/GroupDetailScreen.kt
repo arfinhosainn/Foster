@@ -54,6 +54,14 @@ import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_edit
 import nekko.home.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_cancel
+import nekko.home.generated.resources.cd_move_to_group
+import nekko.home.generated.resources.cd_remove_from_group
+import nekko.home.generated.resources.group_default_name
+import nekko.home.generated.resources.group_detail_refreshing
+import nekko.home.generated.resources.group_detail_updating_members
+import nekko.home.generated.resources.group_move_dialog_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun GroupDetailScreen(
@@ -101,7 +109,7 @@ fun GroupDetailScreen(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = if (state.isMutating) "Updating members…" else "Refreshing…",
+                        text = if (state.isMutating) stringResource(Res.string.group_detail_updating_members) else stringResource(Res.string.group_detail_refreshing),
                         color = NekkoTheme.colors.text.tertiary,
                         fontSize = 12.sp,
                     )
@@ -144,7 +152,7 @@ fun GroupDetailScreen(
         }
 
         Box(modifier = Modifier.align(Alignment.TopCenter)) {
-            SettingsTopBar(onBack = onBack, title = state.groupName.ifEmpty { "Group" })
+            SettingsTopBar(onBack = onBack, title = state.groupName.ifEmpty { stringResource(Res.string.group_default_name) })
         }
     }
 
@@ -269,7 +277,7 @@ private fun MemberRow(
         ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_edit),
-                contentDescription = "Move to another group",
+                contentDescription = stringResource(Res.string.cd_move_to_group),
                 tint = NekkoTheme.colors.text.secondary,
             )
         }
@@ -279,7 +287,7 @@ private fun MemberRow(
         ) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_trashbin),
-                contentDescription = "Remove from group",
+                contentDescription = stringResource(Res.string.cd_remove_from_group),
                 tint = Color(0xFFFF4B4B),
             )
         }
@@ -295,7 +303,7 @@ private fun MoveMemberDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Move ${contact?.name ?: ""} to…") },
+        title = { Text(stringResource(Res.string.group_move_dialog_title, contact?.name ?: "")) },
         text = {
             if (otherGroups.isEmpty()) {
                 Text(
@@ -338,7 +346,7 @@ private fun MoveMemberDialog(
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
         },
     )
 }

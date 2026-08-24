@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.onboarding.utils.PhoneGroupingTransformation
 import app.usenekko.onboarding.utils.formatPhoneNumberDisplay
 import app.usenekko.theme.NekkoTheme
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.phone_enter_number
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PhoneNumberField(
@@ -57,7 +60,7 @@ fun PhoneNumberField(
                 Box(modifier = Modifier.padding(start = 10.dp).weight(1f)) {
                     if (phoneNumber.isEmpty()) {
                         Text(
-                            text = "Enter phone number",
+                            text = stringResource(Res.string.phone_enter_number),
                             fontSize = 16.sp,
                             color = NekkoTheme.colors.text.tertiary,
                         )

@@ -56,6 +56,13 @@ import nekko.home.generated.resources.ic_sprout
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.cd_checkin_growth
+import nekko.home.generated.resources.cd_relationship_growth
+import nekko.home.generated.resources.profile_next_checkin
+import nekko.home.generated.resources.profile_updated_now
+import nekko.home.generated.resources.settings_check_ins_stat
+import org.jetbrains.compose.resources.stringResource
+import nekko.home.generated.resources.cd_close_checkin_details
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +102,7 @@ fun RelationshipInfoSheet(
                         IconButton(onClick = {}) {
                             Icon(
                                 imageVector = vectorResource(Res.drawable.ic_forwardarrow),
-                                contentDescription = "Close check-in details",
+                                contentDescription = stringResource(Res.string.cd_close_checkin_details),
                             )
                         }
 
@@ -110,7 +117,7 @@ fun RelationshipInfoSheet(
 //                        ) {
 //                            Icon(
 //                                imageVector = vectorResource(Res.drawable.ic_forwardarrow),
-//                                contentDescription = "Close check-in details",
+//                                contentDescription = stringResource(Res.string.cd_close_checkin_details),
 //                                tint = NekkoTheme.colors.text.primary,
 //                                modifier = Modifier.size(24.dp),
 //                            )
@@ -127,7 +134,7 @@ fun RelationshipInfoSheet(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Next check-in: ${formatLongCheckInDate(nextCheckInDate)}",
+                        text = stringResource(Res.string.profile_next_checkin, formatLongCheckInDate(nextCheckInDate)),
                         style = NekkoTheme.typography.heading4,
                         fontWeight = FontWeight.SemiBold,
                         color = NekkoTheme.colors.text.tertiary,
@@ -145,7 +152,7 @@ fun RelationshipInfoSheet(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "Updated just now",
+                        text = stringResource(Res.string.profile_updated_now),
                         fontWeight = FontWeight.Medium,
                         fontSize = 14.sp,
                         color = NekkoTheme.colors.text.tertiary,
@@ -264,7 +271,7 @@ private fun CheckInCountSummary(
             ) {
                 Image(
                     painter = painterResource(Res.drawable.ic_sprout),
-                    contentDescription = "Check-in growth",
+                    contentDescription = stringResource(Res.string.cd_checkin_growth),
                     modifier = Modifier.size(16.dp),
                 )
             }
@@ -278,7 +285,7 @@ private fun CheckInCountSummary(
                 color = NekkoTheme.colors.text.primary,
             )
             Text(
-                text = "Check-ins",
+                text = stringResource(Res.string.settings_check_ins_stat),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = NekkoTheme.colors.text.tertiary,
@@ -320,7 +327,7 @@ private fun GrassProgress(
     ) {
         Image(
             painter = painterResource(grassResourceForCheckInCount(checkInCount)),
-            contentDescription = "Relationship growth",
+            contentDescription = stringResource(Res.string.cd_relationship_growth),
             contentScale = ContentScale.Crop,
             alignment = Alignment.BottomCenter,
             modifier = Modifier

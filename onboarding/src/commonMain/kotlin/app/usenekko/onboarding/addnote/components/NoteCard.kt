@@ -37,6 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.onboarding.addnote.NoteItem
 import app.usenekko.theme.NekkoTheme
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.action_delete
+import nekko.onboarding.generated.resources.cd_menu
+import nekko.onboarding.generated.resources.note_weekly_reflection
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NoteCard(
@@ -104,7 +109,7 @@ fun NoteCard(
                 Box {
                     Icon(
                         imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = "Menu",
+                        contentDescription = stringResource(Res.string.cd_menu),
                         tint = NekkoTheme.colors.text.tertiary,
                         modifier = Modifier
                             .clip(CircleShape)
@@ -120,7 +125,7 @@ fun NoteCard(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = "Delete",
+                                    text = stringResource(Res.string.action_delete),
                                     color = NekkoTheme.colors.text.primary,
                                 )
                             },
@@ -143,7 +148,7 @@ private fun NoteCardPreview() {
         Box(modifier = Modifier.padding(16.dp)) {
             NoteCard(
                 note = NoteItem(
-                    title = "Weekly Reflection",
+                    title = stringResource(Res.string.note_weekly_reflection),
                     description = "This week I focused on improving my coding skills and learning new technologies like Jetpack Compose. It was a productive week with many challenges overcome.",
                     date = "Oct 24, 2023",
                     id = "34"

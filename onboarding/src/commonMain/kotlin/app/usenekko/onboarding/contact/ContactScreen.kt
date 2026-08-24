@@ -64,6 +64,13 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
 import nekko.onboarding.generated.resources.ic_import
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_next
+import nekko.onboarding.generated.resources.add_contact_name_label
+import nekko.onboarding.generated.resources.add_import_contact
+import nekko.onboarding.generated.resources.add_step_new_contact_subtitle
+import nekko.onboarding.generated.resources.add_step_new_contact_title
+import nekko.onboarding.generated.resources.cd_back_upper
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,12 +155,12 @@ fun ContactScreen(
                     ) {
                         Image(
                             imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = "BACK"
+                            contentDescription = stringResource(Res.string.cd_back_upper)
                         )
                     }
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
-                        text = "Next",
+                        text = stringResource(Res.string.action_next),
                         onClick = { viewModel.onAction(ContactAction.NextClicked) },
                         modifier = Modifier.weight(0.8f),
                     )
@@ -175,7 +182,7 @@ fun ContactScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Add a new contact",
+                        text = stringResource(Res.string.add_step_new_contact_title),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
@@ -186,7 +193,7 @@ fun ContactScreen(
                     Spacer(Modifier.height(12.dp))
 
                     Text(
-                        text = "You can fill out or import from your contacts",
+                        text = stringResource(Res.string.add_step_new_contact_subtitle),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.secondary,
@@ -214,7 +221,7 @@ fun ContactScreen(
                     Box(modifier = Modifier.weight(1f)) {
                         if (state.contactName.isEmpty()) {
                             Text(
-                                text = "Contact name",
+                                text = stringResource(Res.string.add_contact_name_label),
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = NekkoTheme.colors.text.tertiary,
@@ -260,7 +267,7 @@ fun ContactScreen(
                     )
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        text = "Import contact",
+                        text = stringResource(Res.string.add_import_contact),
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
                         color = NekkoTheme.colors.text.secondary,

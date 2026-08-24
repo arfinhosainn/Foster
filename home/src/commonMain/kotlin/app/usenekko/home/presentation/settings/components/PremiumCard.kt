@@ -36,6 +36,11 @@ import nekko.home.generated.resources.gradients
 import nekko.home.generated.resources.ic_crown
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_upgrade
+import nekko.home.generated.resources.premium_add_unlimited
+import nekko.home.generated.resources.premium_foster
+import nekko.home.generated.resources.premium_unlimited
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PremiumCard(
@@ -81,7 +86,7 @@ fun PremiumCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Foster",
+                        text = stringResource(Res.string.premium_foster),
                         color = Color.White,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
@@ -91,7 +96,7 @@ fun PremiumCard(
                     Spacer(Modifier.width(6.dp))
 
                     Text(
-                        text = "UNLIMITED",
+                        text = stringResource(Res.string.premium_unlimited),
                         color = Color.White,
                         fontSize = 9.sp,
                         fontStyle = FontStyle.Italic,
@@ -107,7 +112,7 @@ fun PremiumCard(
                 }
 
                 Text(
-                    text = "Add unlimited contacts",
+                    text = stringResource(Res.string.premium_add_unlimited),
                     color = Color.White.copy(alpha = 0.52f),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
@@ -138,7 +143,7 @@ fun PremiumCard(
                 Spacer(Modifier.width(6.dp))
 
                 Text(
-                    text = "Upgrade",
+                    text = stringResource(Res.string.action_upgrade),
                     color = Color.Black,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,

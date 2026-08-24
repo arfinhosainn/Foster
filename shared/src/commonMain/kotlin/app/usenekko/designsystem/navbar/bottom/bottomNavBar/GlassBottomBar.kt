@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -47,10 +48,14 @@ import io.github.fletchmckee.liquid.liquefiable
 import io.github.fletchmckee.liquid.liquid
 import io.github.fletchmckee.liquid.rememberLiquidState
 import nekko.shared.generated.resources.Res
+import nekko.shared.generated.resources.cd_invite_someone
 import nekko.shared.generated.resources.ic_contact
 import nekko.shared.generated.resources.ic_home
 import nekko.shared.generated.resources.ic_leaf
+import nekko.shared.generated.resources.nav_grow
+import nekko.shared.generated.resources.nav_home
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.vectorResource
 
 private const val BarHeight = 68
@@ -58,11 +63,11 @@ private const val IndicatorSize = 54
 private const val CellWidth = 56
 private const val PillInnerPadding = 8 // NEW — start/end breathing room inside the pill
 
-data class NavDestination(val label: String, val icon: DrawableResource)
+data class NavDestination(val labelRes: StringResource, val icon: DrawableResource)
 
 private val Destinations = listOf(
-    NavDestination("Home", Res.drawable.ic_home),
-    NavDestination("Grow", Res.drawable.ic_leaf),
+    NavDestination(Res.string.nav_home, Res.drawable.ic_home),
+    NavDestination(Res.string.nav_grow, Res.drawable.ic_leaf),
 )
 
 @Composable
@@ -91,7 +96,7 @@ fun GlassBottomNavBar(
         )
         GlassIconButton(
             icon = Res.drawable.ic_contact,
-            contentDescription = "Invite someone",
+            contentDescription = stringResource(Res.string.cd_invite_someone),
             onClick = onAddClick,
             liquidState = liquidState,
             size = BarHeight.dp,
@@ -124,7 +129,7 @@ fun GlassNavigationRail(
         Spacer(Modifier.weight(1f))
         GlassIconButton(
             icon = Res.drawable.ic_contact,
-            contentDescription = "Invite someone",
+            contentDescription = stringResource(Res.string.cd_invite_someone),
             onClick = onAddClick,
             liquidState = liquidState,
             size = BarHeight.dp,
@@ -300,7 +305,7 @@ private fun NavCell(
     ) {
         Icon(
             imageVector = vectorResource(destination.icon),
-            contentDescription = destination.label,
+            contentDescription = stringResource(destination.labelRes),
             tint = iconTint,
             modifier = Modifier.size(25.dp).scale(squeeze),
         )

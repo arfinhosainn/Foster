@@ -19,6 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.theme.NekkoTheme
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.time_am
+import nekko.home.generated.resources.time_pm
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AmPmToggle(
@@ -59,7 +63,7 @@ fun AmPmToggle(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "AM",
+                text = stringResource(Res.string.time_am),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = amTextColor,
@@ -87,7 +91,7 @@ fun AmPmToggle(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "PM",
+                text = stringResource(Res.string.time_pm),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = pmTextColor,

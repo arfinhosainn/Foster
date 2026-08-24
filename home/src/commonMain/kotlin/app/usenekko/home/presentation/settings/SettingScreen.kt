@@ -69,6 +69,15 @@ import nekko.home.generated.resources.ic_support
 import nekko.home.generated.resources.ic_terms
 import nekko.home.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.settings_account
+import nekko.home.generated.resources.settings_appearance
+import nekko.home.generated.resources.settings_contacts
+import nekko.home.generated.resources.settings_danger_zone
+import nekko.home.generated.resources.settings_delete_account
+import nekko.home.generated.resources.settings_groups
+import nekko.home.generated.resources.settings_notification
+import nekko.home.generated.resources.settings_support
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingScreen(
@@ -182,18 +191,18 @@ fun SettingScreen(
             SettingsGroup(
                 liquidState = liquidState,
                 rows = listOf(
-                    SettingsRow.Item(icon = Res.drawable.ic_greenprofile, title = "Account") {
+                    SettingsRow.Item(icon = Res.drawable.ic_greenprofile, title = stringResource(Res.string.settings_account)) {
                         showAccountSheet = true
                         onAccountClick()
                     },
                     SettingsRow.Item(
                         icon = Res.drawable.ic_appearance,
-                        title = "Appearance",
+                        title = stringResource(Res.string.settings_appearance),
                         trailing = appearanceLabel,
                     ) { showAppearanceSheet = true },
                     SettingsRow.Item(
                         icon = Res.drawable.ic_notification,
-                        title = "Notification",
+                        title = stringResource(Res.string.settings_notification),
                         trailing = when (notificationEnabled) {
                             true -> "On"
                             false -> "Off"
@@ -206,17 +215,17 @@ fun SettingScreen(
                             reminderScheduler.openSettings()
                         }
                     },
-                    SettingsRow.Item(icon = Res.drawable.ic_contacts, title = "Contacts") {},
-                    SettingsRow.Item(icon = Res.drawable.ic_groups, title = "Groups") {
+                    SettingsRow.Item(icon = Res.drawable.ic_contacts, title = stringResource(Res.string.settings_contacts)) {},
+                    SettingsRow.Item(icon = Res.drawable.ic_groups, title = stringResource(Res.string.settings_groups)) {
                         showGroupSheet = true
                     },
-                    SettingsRow.Item(icon = Res.drawable.ic_support, title = "Support") {},
+                    SettingsRow.Item(icon = Res.drawable.ic_support, title = stringResource(Res.string.settings_support)) {},
                 ),
             )
 
             // "Danger Zone" label
             Text(
-                text = "Danger Zone",
+                text = stringResource(Res.string.settings_danger_zone),
                 style = NekkoTheme.typography.heading3,
                 fontWeight = FontWeight.SemiBold,
                 color = NekkoTheme.colors.text.primary,
@@ -228,7 +237,7 @@ fun SettingScreen(
                 rows = listOf(
                     SettingsRow.Destructive(
                         icon = Res.drawable.ic_trashbin,
-                        title = "Delete Account"
+                        title = stringResource(Res.string.settings_delete_account)
                     ) {
                         deleteError = null
                         showDeleteSheet = true

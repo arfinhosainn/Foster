@@ -42,6 +42,17 @@ import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_next
+import nekko.onboarding.generated.resources.add_step_frequency_subtitle
+import nekko.onboarding.generated.resources.add_step_frequency_title
+import nekko.onboarding.generated.resources.cd_back_upper
+import org.jetbrains.compose.resources.stringResource
+import nekko.onboarding.generated.resources.add_freq_annually
+import nekko.onboarding.generated.resources.add_freq_biweekly
+import nekko.onboarding.generated.resources.add_freq_daily
+import nekko.onboarding.generated.resources.add_freq_monthly
+import nekko.onboarding.generated.resources.add_freq_semiannually
+import nekko.onboarding.generated.resources.add_freq_weekly
 
 @Composable
 fun ReminderScreen(
@@ -113,12 +124,12 @@ private fun ReminderScreenContent(
                 ) {
                     Image(
                         imageVector = vectorResource(Res.drawable.ic_back),
-                        contentDescription = "BACK"
+                        contentDescription = stringResource(Res.string.cd_back_upper)
                     )
                 }
                 Spacer(Modifier.width(12.dp))
                 NekkoButton(
-                    text = "Next",
+                    text = stringResource(Res.string.action_next),
                     onClick = onNavigateToNext,
                     modifier = Modifier.weight(0.8f),
                 )
@@ -139,7 +150,7 @@ private fun ReminderScreenContent(
                 Spacer(Modifier.height(40.dp))
 
                 Text(
-                    text = "Every day is precious",
+                    text = stringResource(Res.string.add_step_frequency_title),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
@@ -150,7 +161,7 @@ private fun ReminderScreenContent(
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = "How often do you want to be\nreminded?",
+                    text = stringResource(Res.string.add_step_frequency_subtitle),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.secondary,
@@ -169,7 +180,7 @@ private fun ReminderScreenContent(
             ) {
                 items(ReminderOptions.all) { option ->
                     ReminderOptionCard(
-                        text = option,
+                        text = stringResource(optionLabels.getValue(option)),
                         isSelected = option == state.selectedOption,
                         onClick = { onAction(ReminderAction.SelectOption(option)) }
                     )
@@ -189,3 +200,13 @@ private fun ReminderScreenPreview() {
         )
     }
 }
+
+/** UI label resources for the canonical frequency option constants. */
+private val optionLabels = mapOf(
+    ReminderOptions.DAILY to Res.string.add_freq_daily,
+    ReminderOptions.WEEKLY to Res.string.add_freq_weekly,
+    ReminderOptions.BI_WEEKLY to Res.string.add_freq_biweekly,
+    ReminderOptions.MONTHLY to Res.string.add_freq_monthly,
+    ReminderOptions.SEMI_ANNUALLY to Res.string.add_freq_semiannually,
+    ReminderOptions.ANNUALLY to Res.string.add_freq_annually,
+)

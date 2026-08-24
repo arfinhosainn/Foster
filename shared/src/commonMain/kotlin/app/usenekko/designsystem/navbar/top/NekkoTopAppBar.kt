@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import app.usenekko.designsystem.buttons.AudienceOption
@@ -32,6 +33,7 @@ import app.usenekko.designsystem.buttons.NekkoDropDownButton
 import app.usenekko.designsystem.shapes.MonogramAvatar
 import app.usenekko.theme.NekkoTheme
 import nekko.shared.generated.resources.Res
+import nekko.shared.generated.resources.cd_premium
 import nekko.shared.generated.resources.ic_acquaintance
 import nekko.shared.generated.resources.ic_crown
 import nekko.shared.generated.resources.ic_dropdown
@@ -94,7 +96,7 @@ fun NekkoTopBar(
         IconButton(onClick = onPremiumClick) {
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_crown),
-                contentDescription = "Premium",
+                contentDescription = stringResource(Res.string.cd_premium),
                 tint = Color.Unspecified,
             )
         }

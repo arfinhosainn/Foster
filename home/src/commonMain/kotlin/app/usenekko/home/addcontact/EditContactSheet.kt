@@ -37,6 +37,16 @@ import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.shared.contacts.rememberContactPicker
 import app.usenekko.theme.NekkoTheme
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.edit_contact_title
+import nekko.home.generated.resources.edit_discard_body
+import nekko.home.generated.resources.edit_discard_title
+import nekko.home.generated.resources.edit_keep_editing
+import nekko.home.generated.resources.edit_save_changes
+import nekko.home.generated.resources.edit_subtitle
+import org.jetbrains.compose.resources.stringResource
+import nekko.home.generated.resources.edit_discard_confirm
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +100,7 @@ fun EditContactSheet(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = "Edit contact",
+                        text = stringResource(Res.string.edit_contact_title),
                         style = NekkoTheme.typography.heading2,
                         fontWeight = FontWeight.SemiBold,
                         color = NekkoTheme.colors.text.primary,
@@ -103,14 +113,14 @@ fun EditContactSheet(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Close,
-                            contentDescription = "Close",
+                            contentDescription = stringResource(Res.string.cd_close),
                             tint = NekkoTheme.colors.text.primary,
                         )
                     }
                 }
 
                 Text(
-                    text = "Update the details that keep your relationship on track.",
+                    text = stringResource(Res.string.edit_subtitle),
                     style = NekkoTheme.typography.bodyMedium,
                     color = NekkoTheme.colors.text.secondary,
                     textAlign = TextAlign.Center,
@@ -165,7 +175,7 @@ fun EditContactSheet(
 
                 Spacer(Modifier.height(28.dp))
                 NekkoButton(
-                    text = "Save changes",
+                    text = stringResource(Res.string.edit_save_changes),
                     onClick = viewModel::submit,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = state.canSaveChanges,
@@ -186,8 +196,8 @@ fun EditContactSheet(
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text("Discard changes?") },
-            text = { Text("Your unsaved contact changes will be lost.") },
+            title = { Text(stringResource(Res.string.edit_discard_title)) },
+            text = { Text(stringResource(Res.string.edit_discard_body)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -195,12 +205,12 @@ fun EditContactSheet(
                         onDismiss()
                     },
                 ) {
-                    Text("Discard", color = NekkoTheme.colors.red.default)
+                    Text(stringResource(Res.string.edit_discard_confirm), color = NekkoTheme.colors.red.default)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDiscardDialog = false }) {
-                    Text("Keep editing")
+                    Text(stringResource(Res.string.edit_keep_editing))
                 }
             },
         )

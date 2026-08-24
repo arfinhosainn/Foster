@@ -23,6 +23,8 @@ import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_circlecheck
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.cd_selected
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ReminderOptionCard(
@@ -47,7 +49,7 @@ fun ReminderOptionCard(
             if (isSelected) {
                 Icon(
                     imageVector = vectorResource(Res.drawable.ic_circlecheck),
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(Res.string.cd_selected),
                     modifier = Modifier.size(20.dp),
                     tint = Color.Unspecified
                 )

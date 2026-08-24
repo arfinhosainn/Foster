@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  English — source of truth for all Nekko strings.
+
+  Conventions:
+   - Feature prefixes: cd_* (content description), paywall_*, onboarding_*,
+     home_*, settings_*, notification_*, ...
+   - Positional placeholders (%1$s, %1$d) so translations can reorder.
+   - Keep key order in sync with values-es/strings.xml (eases diffs/review).
+-->
+<resources>
+    <!-- Accessibility -->
+    <string name="cd_premium">Premium</string>
+    <string name="cd_invite_someone">Invite someone</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_grow">Grow</string>
+</resources>

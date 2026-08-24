@@ -37,6 +37,9 @@ import nekko.home.generated.resources.ic_globe
 import nekko.home.generated.resources.img_gradientss
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import nekko.home.generated.resources.status_outstanding
+import nekko.home.generated.resources.status_up_to_date
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun StatusSummaryCard(
@@ -78,7 +81,7 @@ fun StatusSummaryCard(
             ) {
                 StatusItem(
                     count = outstandingCount,
-                    label = "Outstanding",
+                    label = stringResource(Res.string.status_outstanding),
                     bgResource = outstandingBgResource,
                     modifier = Modifier
                         .weight(1f)
@@ -101,7 +104,7 @@ fun StatusSummaryCard(
 
                 StatusItem(
                     count = upToDateCount,
-                    label = "Up to date",
+                    label = stringResource(Res.string.status_up_to_date),
                     bgResource = upToDateBgResource,
                     modifier = Modifier
                         .weight(1f)

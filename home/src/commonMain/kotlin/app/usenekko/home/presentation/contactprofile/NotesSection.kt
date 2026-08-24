@@ -49,6 +49,11 @@ import nekko.home.generated.resources.ic_flower_light
 import nekko.home.generated.resources.ic_flower_night
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_delete
+import nekko.home.generated.resources.notes_add_note
+import nekko.home.generated.resources.notes_empty_hint
+import nekko.home.generated.resources.notes_options_cd
+import org.jetbrains.compose.resources.stringResource
 
 private val NOTE_CARD_HEIGHT = 182.dp
 private val NOTE_MENU_WIDTH = 88.dp
@@ -195,7 +200,7 @@ private fun NoteCard(
                 Box {
                     Icon(
                         imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = "Note options",
+                        contentDescription = stringResource(Res.string.notes_options_cd),
                         tint = NekkoTheme.colors.text.tertiary,
                         modifier = Modifier
                             .size(20.dp)
@@ -214,7 +219,7 @@ private fun NoteCard(
                             modifier = Modifier.height(36.dp),
                             text = {
                                 Text(
-                                    text = "Delete",
+                                    text = stringResource(Res.string.action_delete),
                                     color = NekkoTheme.colors.text.primary,
                                 )
                             },
@@ -254,7 +259,7 @@ private fun NotesEmptyState(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Capture thoughts & memories\nabout your conversation",
+            text = stringResource(Res.string.notes_empty_hint),
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             color = NekkoTheme.colors.text.tertiary,
@@ -262,7 +267,7 @@ private fun NotesEmptyState(
         )
         Spacer(modifier = Modifier.height(24.dp))
         NekkoActionButton(
-            text = "Add Note",
+            text = stringResource(Res.string.notes_add_note),
             leadingIcon = vectorResource(Res.drawable.ic_add),
             onClick = onAddNote,
         )
@@ -291,7 +296,7 @@ private fun AddNoteCard(
         )
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "Add Note",
+            text = stringResource(Res.string.notes_add_note),
             color = NekkoTheme.colors.text.tertiary,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,

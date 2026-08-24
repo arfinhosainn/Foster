@@ -97,7 +97,7 @@ class ContactProfileRemindersViewModelTest {
             viewModel.onAction(ContactProfileAction.OpenAddReminder)
             viewModel.onAction(ContactProfileAction.ReminderDraftTitleChanged("Anniversary"))
             viewModel.onAction(ContactProfileAction.ReminderDraftDescriptionChanged("Our date"))
-            viewModel.onAction(ContactProfileAction.ReminderDraftRecurrenceChanged("Weekly"))
+            viewModel.onAction(ContactProfileAction.ReminderDraftRecurrenceChanged("weekly"))
             viewModel.onAction(ContactProfileAction.ReminderDraftDateChanged(123456789L))
             viewModel.onAction(ContactProfileAction.SaveReminder)
             advanceUntilIdle()
@@ -114,7 +114,7 @@ class ContactProfileRemindersViewModelTest {
             assertTrue(state.isReminderListSheetOpen)
             assertEquals("", state.reminderDraftTitle)
             assertEquals("", state.reminderDraftDescription)
-            assertEquals("None", state.reminderDraftRecurrence)
+            assertEquals("none", state.reminderDraftRecurrence)
             assertNull(state.reminderDraftDateEpochMillis)
             assertTrue(state.reminders.any { it.title == "Anniversary" })
         } finally {
@@ -183,7 +183,7 @@ class ContactProfileRemindersViewModelTest {
             assertTrue(state.isAddReminderSheetOpen)
             assertEquals("Birthday", state.reminderDraftTitle)
             assertEquals("Send a card", state.reminderDraftDescription)
-            assertEquals("Yearly", state.reminderDraftRecurrence)
+            assertEquals("annually", state.reminderDraftRecurrence)
             assertEquals(1000L, state.reminderDraftDateEpochMillis)
         } finally {
             Dispatchers.resetMain()

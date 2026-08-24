@@ -17,6 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.theme.NekkoTheme
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.action_ok
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun NoticeBanner(
@@ -40,7 +43,7 @@ internal fun NoticeBanner(
             modifier = Modifier.weight(1f),
         )
         Text(
-            text = "OK",
+            text = stringResource(Res.string.action_ok),
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = NekkoTheme.colors.green.active,

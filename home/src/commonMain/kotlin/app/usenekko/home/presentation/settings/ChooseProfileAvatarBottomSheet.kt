@@ -48,6 +48,11 @@ import nekko.home.generated.resources.avatar_yellow
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.math.min
+import nekko.home.generated.resources.add_choose_avatar
+import nekko.home.generated.resources.add_select_avatar
+import nekko.home.generated.resources.cd_avatar_number
+import nekko.home.generated.resources.cd_close
+import org.jetbrains.compose.resources.stringResource
 
 private val profileAvatarResources: List<DrawableResource> = listOf(
     Res.drawable.avatar_yellow,
@@ -85,7 +90,7 @@ fun ChooseProfileAvatarBottomSheet(
             ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Choose Avatar",
+                    text = stringResource(Res.string.add_choose_avatar),
                     style = NekkoTheme.typography.heading1Bold,
                     color = NekkoTheme.colors.text.primary,
                 )
@@ -100,7 +105,7 @@ fun ChooseProfileAvatarBottomSheet(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.text.primary,
                         modifier = Modifier.size(16.dp),
                     )
@@ -139,7 +144,7 @@ fun ChooseProfileAvatarBottomSheet(
                             ) {
                                 Image(
                                     imageVector = vectorResource(profileAvatarResources[j]),
-                                    contentDescription = "Avatar ${j + 1}",
+                                    contentDescription = stringResource(Res.string.cd_avatar_number, j + 1),
                                     modifier = Modifier.size(64.dp),
                                 )
                             }
@@ -152,7 +157,7 @@ fun ChooseProfileAvatarBottomSheet(
             Spacer(Modifier.height(32.dp))
 
             NekkoButton(
-                text = "Select Avatar",
+                text = stringResource(Res.string.add_select_avatar),
                 onClick = {
                     pendingAvatarIndex?.let {
                         onAvatarSelected(it)

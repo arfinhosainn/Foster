@@ -46,6 +46,13 @@ import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_close
 import org.jetbrains.compose.resources.vectorResource
+import nekko.home.generated.resources.action_cancel
+import nekko.home.generated.resources.action_delete
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.delete_type_confirm
+import nekko.home.generated.resources.settings_delete_account
+import org.jetbrains.compose.resources.stringResource
+import nekko.home.generated.resources.delete_warning_body
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +89,7 @@ fun DeleteAccountBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -100,7 +107,7 @@ fun DeleteAccountBottomSheet(
             ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Delete Account",
+                    text = stringResource(Res.string.settings_delete_account),
                     style = NekkoTheme.typography.heading1Bold,
                     color = NekkoTheme.colors.red.default,
                 )
@@ -109,9 +116,7 @@ fun DeleteAccountBottomSheet(
             Spacer(Modifier.height(20.dp))
 
             Text(
-                text = "This action is permanent and cannot be undone. Your " +
-                    "account and all of its data will be deleted from our servers, " +
-                    "including:",
+                text = stringResource(Res.string.delete_warning_body),
                 style = NekkoTheme.typography.bodyMedium,
                 color = NekkoTheme.colors.text.secondary,
             )
@@ -137,7 +142,7 @@ fun DeleteAccountBottomSheet(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "Type DELETE to confirm",
+                text = stringResource(Res.string.delete_type_confirm),
                 style = NekkoTheme.typography.heading4Semibold,
                 color = NekkoTheme.colors.text.primary,
             )
@@ -185,7 +190,7 @@ fun DeleteAccountBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 NekkoButton(
-                    text = "Cancel",
+                    text = stringResource(Res.string.action_cancel),
                     onClick = onDismiss,
                     enabled = !isLoading,
                     modifier = Modifier.weight(1f),
@@ -195,7 +200,7 @@ fun DeleteAccountBottomSheet(
                     ),
                 )
                 NekkoButton(
-                    text = "Delete",
+                    text = stringResource(Res.string.action_delete),
                     onClick = onConfirm,
                     enabled = confirmed,
                     loading = isLoading,

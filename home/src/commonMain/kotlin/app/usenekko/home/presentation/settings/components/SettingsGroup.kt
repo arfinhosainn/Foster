@@ -39,6 +39,14 @@ import nekko.home.generated.resources.ic_notification
 import nekko.home.generated.resources.ic_support
 import nekko.home.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.DrawableResource
+import nekko.home.generated.resources.settings_account
+import nekko.home.generated.resources.settings_appearance
+import nekko.home.generated.resources.settings_contacts
+import nekko.home.generated.resources.settings_delete_account
+import nekko.home.generated.resources.settings_groups
+import nekko.home.generated.resources.settings_notification
+import nekko.home.generated.resources.settings_support
+import org.jetbrains.compose.resources.stringResource
 
 sealed interface SettingsRow {
 
@@ -204,33 +212,33 @@ fun PreviewSettingsGroup() {
 
                 SettingsRow.Item(
                     icon = Res.drawable.ic_greenprofile,
-                    title = "Account"
+                    title = stringResource(Res.string.settings_account)
                 ) { },
 
                 SettingsRow.Item(
                     icon = Res.drawable.ic_appearance,
-                    title = "Appearance"
+                    title = stringResource(Res.string.settings_appearance)
                 ) { },
 
                 SettingsRow.Item(
                     icon = Res.drawable.ic_notification,
-                    title = "Notification",
+                    title = stringResource(Res.string.settings_notification),
                     trailing = "Off"
                 ) { },
 
                 SettingsRow.Item(
                     icon = Res.drawable.ic_contacts,
-                    title = "Contacts"
+                    title = stringResource(Res.string.settings_contacts)
                 ) { },
 
                 SettingsRow.Item(
                     icon = Res.drawable.ic_groups,
-                    title = "Groups"
+                    title = stringResource(Res.string.settings_groups)
                 ) { },
 
                 SettingsRow.Item(
                     icon = Res.drawable.ic_support,
-                    title = "Support"
+                    title = stringResource(Res.string.settings_support)
                 ) { }
             )
         )
@@ -242,7 +250,7 @@ fun PreviewSettingsGroup() {
             rows = listOf(
                 SettingsRow.Destructive(
                     icon = Res.drawable.ic_trashbin,
-                    title = "Delete Account"
+                    title = stringResource(Res.string.settings_delete_account)
                 ) { }
             )
         )

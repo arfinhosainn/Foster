@@ -98,16 +98,53 @@ import nekko.home.generated.resources.ic_forward
 import nekko.home.generated.resources.ic_import
 import nekko.home.generated.resources.ic_pencil
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.math.min
+import nekko.home.generated.resources.action_next
+import nekko.home.generated.resources.action_save
+import nekko.home.generated.resources.add_choose_avatar
+import nekko.home.generated.resources.add_contact_name_label
+import nekko.home.generated.resources.add_create_group
+import nekko.home.generated.resources.add_freq_annually
+import nekko.home.generated.resources.add_freq_biweekly
+import nekko.home.generated.resources.add_freq_daily
+import nekko.home.generated.resources.add_freq_monthly
+import nekko.home.generated.resources.add_freq_semiannually
+import nekko.home.generated.resources.add_freq_weekly
+import nekko.home.generated.resources.add_import_contact
+import nekko.home.generated.resources.add_new_group
+import nekko.home.generated.resources.add_no_groups_yet
+import nekko.home.generated.resources.add_save_contact
+import nekko.home.generated.resources.add_select_avatar
+import nekko.home.generated.resources.add_step_frequency_subtitle
+import nekko.home.generated.resources.add_step_frequency_title
+import nekko.home.generated.resources.add_step_group_subtitle
+import nekko.home.generated.resources.add_step_group_title
+import nekko.home.generated.resources.add_step_new_contact_subtitle
+import nekko.home.generated.resources.add_step_new_contact_title
+import nekko.home.generated.resources.add_step_time_subtitle
+import nekko.home.generated.resources.add_step_time_title
+import nekko.home.generated.resources.add_tap_plus_button
+import nekko.home.generated.resources.add_wanna_create_group
+import nekko.home.generated.resources.cd_add_members
+import nekko.home.generated.resources.cd_avatar_number
+import nekko.home.generated.resources.cd_back
+import nekko.home.generated.resources.cd_close
+import nekko.home.generated.resources.cd_edit_profile_picture
+import nekko.home.generated.resources.cd_imported_photo
+import nekko.home.generated.resources.cd_selected
+import nekko.home.generated.resources.edit_contact_subtitle
+import nekko.home.generated.resources.edit_contact_title
+import org.jetbrains.compose.resources.stringResource
 
 private val frequencies = listOf(
-    "daily" to "Daily",
-    "weekly" to "Weekly",
-    "biweekly" to "Bi-weekly",
-    "monthly" to "Monthly",
-    "semiannually" to "Semi-annually",
-    "annually" to "Annually"
+    "daily" to Res.string.add_freq_daily,
+    "weekly" to Res.string.add_freq_weekly,
+    "biweekly" to Res.string.add_freq_biweekly,
+    "monthly" to Res.string.add_freq_monthly,
+    "semiannually" to Res.string.add_freq_semiannually,
+    "annually" to Res.string.add_freq_annually
 )
 
 private val avatarResources: List<DrawableResource> = listOf(
@@ -120,15 +157,15 @@ private val avatarResources: List<DrawableResource> = listOf(
 )
 
 private data class StepMeta(
-    val title: String,
-    val subtitle: String,
+    val titleRes: StringResource,
+    val subtitleRes: StringResource,
 )
 
 private val steps = listOf(
-    StepMeta("Add a new contact", "You can fill out or import from your contacts"),
-    StepMeta("Add to a group", "Pick a group or create a new one"),
-    StepMeta("Every day is precious", "How often do you want to be\nreminded?"),
-    StepMeta("Choose reminder time", "How often do you want to be reminded?"),
+    StepMeta(Res.string.add_step_new_contact_title, Res.string.add_step_new_contact_subtitle),
+    StepMeta(Res.string.add_step_group_title, Res.string.add_step_group_subtitle),
+    StepMeta(Res.string.add_step_frequency_title, Res.string.add_step_frequency_subtitle),
+    StepMeta(Res.string.add_step_time_title, Res.string.add_step_time_subtitle),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -189,7 +226,7 @@ fun AddContactScreen(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.text.primary,
                         modifier = Modifier.size(24.dp),
                     )
@@ -245,7 +282,7 @@ private fun AddContactSheetContent(
 ) {
     val stepMeta = steps[state.currentStep].let {
         if (isEditing && state.currentStep == 0) {
-            StepMeta("Edit contact", "Update the contact details")
+            StepMeta(Res.string.edit_contact_title, Res.string.edit_contact_subtitle)
         } else {
             it
         }
@@ -259,7 +296,7 @@ private fun AddContactSheetContent(
     ) {
 
         Text(
-            text = stepMeta.title,
+            text = stringResource(stepMeta.titleRes),
             fontSize = 28.sp,
             fontWeight = FontWeight.SemiBold,
             lineHeight = 36.sp,
@@ -271,7 +308,7 @@ private fun AddContactSheetContent(
         Spacer(Modifier.height(12.dp))
 
         Text(
-            text = stepMeta.subtitle,
+            text = stringResource(stepMeta.subtitleRes),
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
             color = NekkoTheme.colors.text.secondary,
@@ -365,7 +402,7 @@ private fun FooterRow(
             ) {
                 Icon(
                     imageVector = vectorResource(Res.drawable.ic_back),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(Res.string.cd_back),
                     tint = NekkoTheme.colors.text.primary,
                 )
             }
@@ -375,14 +412,14 @@ private fun FooterRow(
 
         if (currentStep < steps.lastIndex) {
             NekkoButton(
-                text = "Next",
+                text = stringResource(Res.string.action_next),
                 onClick = onNextStep,
                 modifier = Modifier.weight(1f).height(58.dp),
                 enabled = canAdvance,
             )
         } else {
             NekkoButton(
-                text = "Save Contact",
+                text = stringResource(Res.string.add_save_contact),
                 onClick = onSubmit,
                 modifier = Modifier.weight(1f).height(58.dp),
                 enabled = canSubmit,
@@ -418,7 +455,7 @@ internal fun NameAndAvatarStep(
             Box(modifier = Modifier.weight(1f)) {
                 if (state.name.isEmpty()) {
                     Text(
-                        text = "Contact name",
+                        text = stringResource(Res.string.add_contact_name_label),
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = NekkoTheme.colors.text.tertiary,
@@ -460,7 +497,7 @@ internal fun NameAndAvatarStep(
             )
             Spacer(Modifier.width(13.dp))
             Text(
-                text = "Import contact",
+                text = stringResource(Res.string.add_import_contact),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
                 color = NekkoTheme.colors.text.secondary,
@@ -496,7 +533,7 @@ private fun AvatarPreview(
             if (photoBitmap != null) {
                 Image(
                     bitmap = photoBitmap,
-                    contentDescription = "Imported contact photo",
+                    contentDescription = stringResource(Res.string.cd_imported_photo),
                     modifier = Modifier.fillMaxSize(),
                 )
             } else if (avatarIndex != null) {
@@ -528,7 +565,7 @@ private fun AvatarPreview(
         ) {
             Image(
                 imageVector = vectorResource(Res.drawable.ic_pencil),
-                contentDescription = "Edit profile picture",
+                contentDescription = stringResource(Res.string.cd_edit_profile_picture),
                 modifier = Modifier.size(18.dp),
                 colorFilter = ColorFilter.tint(NekkoTheme.colors.background.onBackground),
             )
@@ -598,7 +635,7 @@ private fun ChooseAvatarBottomSheet(
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = "Close",
+                        contentDescription = stringResource(Res.string.cd_close),
                         tint = NekkoTheme.colors.gray.secondary,
                     )
                 }
@@ -613,7 +650,7 @@ private fun ChooseAvatarBottomSheet(
         ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Choose Avatar",
+                    text = stringResource(Res.string.add_choose_avatar),
                     style = NekkoTheme.typography.heading1Bold,
                     color = NekkoTheme.colors.text.primary,
                 )
@@ -655,7 +692,7 @@ private fun ChooseAvatarBottomSheet(
                             ) {
                                 Image(
                                     imageVector = vectorResource(avatarResources[j]),
-                                    contentDescription = "Avatar ${j + 1}",
+                                    contentDescription = stringResource(Res.string.cd_avatar_number, j + 1),
                                     modifier = Modifier.size(64.dp),
                                 )
                             }
@@ -668,7 +705,7 @@ private fun ChooseAvatarBottomSheet(
             Spacer(Modifier.height(32.dp))
 
             NekkoButton(
-                text = "Select Avatar",
+                text = stringResource(Res.string.add_select_avatar),
                 onClick = {
                     pendingAvatarIndex?.let { index ->
                         onAvatarSelected(index)
@@ -708,7 +745,7 @@ internal fun GroupStep(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "No groups yet",
+                    text = stringResource(Res.string.add_no_groups_yet),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.tertiary,
@@ -736,7 +773,7 @@ internal fun GroupStep(
         Spacer(Modifier.height(14.dp))
 
         Text(
-            text = "Wanna create a new group?",
+            text = stringResource(Res.string.add_wanna_create_group),
             color = NekkoTheme.colors.text.secondary,
             textAlign = TextAlign.Center,
             fontSize = 20.sp,
@@ -746,7 +783,7 @@ internal fun GroupStep(
         Spacer(Modifier.height(4.dp))
 
         Text(
-            text = "Tap the plus button",
+            text = stringResource(Res.string.add_tap_plus_button),
             color = NekkoTheme.colors.text.tertiary,
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
@@ -955,7 +992,7 @@ private fun GroupCard(
         } else if (members.isEmpty() && group.color == null) {
             Icon(
                 imageVector = Icons.Filled.Add,
-                contentDescription = "Add members",
+                contentDescription = stringResource(Res.string.cd_add_members),
                 tint = NekkoTheme.colors.text.quaternary,
                 modifier = Modifier.size(40.dp),
             )
@@ -1046,9 +1083,9 @@ internal fun FrequencyStep(
             .padding(horizontal = 6.dp),
         verticalArrangement = Arrangement.spacedBy(15.dp),
     ) {
-        frequencies.forEach { (value, label) ->
+        frequencies.forEach { (value, labelRes) ->
             ReminderOptionCard(
-                text = label,
+                text = stringResource(labelRes),
                 isSelected = state.selectedFrequency == value,
                 onClick = { onFrequencySelected(value) },
             )
@@ -1113,7 +1150,7 @@ internal fun CreateGroupSheet(
                     .imePadding(),
             ) {
             Text(
-                text = "Create Group",
+                text = stringResource(Res.string.add_create_group),
                 style = NekkoTheme.typography.heading3,
                 fontWeight = FontWeight.SemiBold,
                 color = NekkoTheme.colors.text.primary,
@@ -1127,7 +1164,7 @@ internal fun CreateGroupSheet(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {
                     Text(
-                        text = "New Group",
+                        text = stringResource(Res.string.add_new_group),
                         color = NekkoTheme.colors.text.tertiary,
                     )
                 },
@@ -1148,7 +1185,7 @@ internal fun CreateGroupSheet(
             Spacer(Modifier.height(24.dp))
 
             NekkoButton(
-                text = "Save",
+                text = stringResource(Res.string.action_save),
                 onClick = { onSave(groupName) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = groupName.isNotBlank() && !isSaving,
@@ -1187,7 +1224,7 @@ private fun ReminderOptionCard(
             if (isSelected) {
                 Icon(
                     imageVector = vectorResource(Res.drawable.ic_circlecheck),
-                    contentDescription = "Selected",
+                    contentDescription = stringResource(Res.string.cd_selected),
                     modifier = Modifier.size(20.dp),
                     tint = Color.Unspecified,
                 )

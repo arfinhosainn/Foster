@@ -42,6 +42,11 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.checkin_img
 import nekko.onboarding.generated.resources.checkin_imglight
 import org.jetbrains.compose.resources.painterResource
+import nekko.onboarding.generated.resources.action_skip
+import nekko.onboarding.generated.resources.cd_checkin_illustration
+import nekko.onboarding.generated.resources.notif_get_notified
+import nekko.onboarding.generated.resources.notif_subtitle
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NotificationScreen(
@@ -131,7 +136,7 @@ private fun NotificationScreenContent(
 //                            )
 //                        ) {
 //                            Text(
-//                                text = "Skip",
+//                                text = stringResource(Res.string.action_skip),
 //                                fontSize = 17.sp,
 //                                fontWeight = FontWeight.SemiBold,
 //                                color = NekkoTheme.colors.text.secondary,
@@ -174,7 +179,7 @@ private fun NotificationScreenContent(
             ) {
                 Spacer(Modifier.height(42.dp))
                 Text(
-                    text = "Get Notified",
+                    text = stringResource(Res.string.notif_get_notified),
                     style = NekkoTheme.typography.heading1Bold,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
@@ -182,7 +187,7 @@ private fun NotificationScreenContent(
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "Keep up with check-ins &\nbirthdays with friends",
+                    text = stringResource(Res.string.notif_subtitle),
                     style = NekkoTheme.typography.heading3Bold,
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.secondary,
@@ -199,7 +204,7 @@ private fun NotificationScreenContent(
             ) {
                 Image(
                     painter = painter,
-                    contentDescription = "Check-in illustration",
+                    contentDescription = stringResource(Res.string.cd_checkin_illustration),
                     contentScale = ContentScale.Fit
                 )
             }

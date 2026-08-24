@@ -45,6 +45,12 @@ import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
+import nekko.onboarding.generated.resources.action_next
+import nekko.onboarding.generated.resources.action_skip
+import nekko.onboarding.generated.resources.add_step_time_subtitle
+import nekko.onboarding.generated.resources.add_step_time_title
+import nekko.onboarding.generated.resources.cd_back_upper
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TimeReminderScreen(
@@ -107,7 +113,7 @@ private fun TimeReminderScreenContent(
                         colors = ButtonDefaults.buttonColors(containerColor = NekkoTheme.colors.background.b0)
                     ) {
                         Text(
-                            text = "Skip",
+                            text = stringResource(Res.string.action_skip),
                             fontSize = 17.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = NekkoTheme.colors.text.secondary,
@@ -137,12 +143,12 @@ private fun TimeReminderScreenContent(
                 ){
                     Image(
                         imageVector = vectorResource(Res.drawable.ic_back),
-                        contentDescription = "BACK"
+                        contentDescription = stringResource(Res.string.cd_back_upper)
                     )
                 }
                 Spacer(Modifier.width(12.dp))
                 NekkoButton(
-                    text = "Next",
+                    text = stringResource(Res.string.action_next),
                     onClick = onNavigateToNext,
                     modifier = Modifier.weight(0.8f),
                 )
@@ -162,7 +168,7 @@ private fun TimeReminderScreenContent(
                 Spacer(Modifier.height(40.dp))
 
                 Text(
-                    text = "Choose reminder time",
+                    text = stringResource(Res.string.add_step_time_title),
                     style = NekkoTheme.typography.heading1Bold,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
@@ -172,7 +178,7 @@ private fun TimeReminderScreenContent(
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = "How often do you want to be reminded?",
+                    text = stringResource(Res.string.add_step_time_subtitle),
                     style = NekkoTheme.typography.heading3,
                     fontWeight = FontWeight.Medium,
                     color = NekkoTheme.colors.text.secondary,
