@@ -48,11 +48,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.home.di.rememberGroupSettingsViewModel
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
 import app.usenekko.theme.NekkoTheme
-import io.github.fletchmckee.liquid.rememberLiquidState
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_add
 import nekko.home.generated.resources.ic_edit
@@ -79,7 +77,6 @@ fun GroupSettingsScreen(
     val viewModel = rememberGroupSettingsViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
-    val liquidState = rememberLiquidState()
     var isEditOptions by rememberSaveable { mutableStateOf(false) }
     var selectedGroupId by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -94,7 +91,7 @@ fun GroupSettingsScreen(
     Box(
         modifier = modifier.fillMaxSize(),
     ) {
-        AmbientGlow(liquidState, Modifier.matchParentSize())
+        Box(Modifier.matchParentSize().background(NekkoTheme.colors.background.b0))
 
         Column(
             modifier = Modifier

@@ -42,7 +42,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.home.di.LocalDeleteAccountDataSource
 import app.usenekko.home.domain.DeleteAccountError
 import app.usenekko.home.presentation.settings.components.AppearanceBottomSheet
@@ -160,11 +159,11 @@ fun SettingScreen(
         val backgroundModifier =
             if (showAccountSheet || showGroupSheet) Modifier.blur(5.dp) else Modifier
 
-        AmbientGlow(
-            liquidState = liquidState,
-            modifier = Modifier
+        Box(
+            Modifier
                 .matchParentSize()
-                .then(backgroundModifier),
+                .then(backgroundModifier)
+                .background(NekkoTheme.colors.background.b0)
         )
 
         // Scrollable content — padded so initial position clears the top bar

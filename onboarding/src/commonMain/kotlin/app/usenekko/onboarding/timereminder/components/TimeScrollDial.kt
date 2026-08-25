@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.sideShine
 import app.usenekko.theme.NekkoTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -146,7 +147,8 @@ fun TimeScrollDial(
     val tickColor = NekkoTheme.colors.text.quaternary
     val labelColor = NekkoTheme.colors.text.tertiary
     val selectedColor = NekkoTheme.colors.text.primary
-    val surfaceColor = NekkoTheme.colors.fill.secondary
+    val surfaceColor = NekkoTheme.colors.fill.tertiary
+    val dialShape = RoundedCornerShape(40.dp)
     val indicatorBowPx = with(LocalDensity.current) {
         -(DIAL_HEIGHT * CURVE_BOW_FRACTION * 0.5f).toPx()
     }
@@ -159,11 +161,12 @@ fun TimeScrollDial(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 30.dp)
-                .clip(RoundedCornerShape(40.dp))
+                .clip(dialShape)
                 .drawWithContent {
                     drawRect(surfaceColor)
                     drawContent()
-                },
+                }
+                .sideShine(dialShape),
             contentAlignment = Alignment.Center,
         ) {
             Column(

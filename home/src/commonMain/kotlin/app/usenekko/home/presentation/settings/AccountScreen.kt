@@ -34,13 +34,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.home.di.rememberAccountViewModel
 import app.usenekko.home.presentation.badges.BadgeRow
 import app.usenekko.home.presentation.components.avatarIndexForId
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
 import app.usenekko.theme.NekkoTheme
-import io.github.fletchmckee.liquid.rememberLiquidState
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.settings_account
 import nekko.home.generated.resources.settings_check_ins_stat
@@ -56,7 +54,6 @@ fun AccountScreen(
     val viewModel = rememberAccountViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
-    val liquidState = rememberLiquidState()
     var showAvatarPicker by rememberSaveable { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner, viewModel) {
@@ -68,7 +65,7 @@ fun AccountScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        AmbientGlow(liquidState, Modifier.matchParentSize())
+        Box(Modifier.matchParentSize().background(NekkoTheme.colors.background.b0))
 
         Column(
             modifier = Modifier

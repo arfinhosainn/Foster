@@ -23,12 +23,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.usenekko.designsystem.buttons.GlassIconButton
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
+import app.usenekko.designsystem.GlassIconButton
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.LiquidState
 import io.github.fletchmckee.liquid.liquefiable
-import io.github.fletchmckee.liquid.liquid
 import io.github.fletchmckee.liquid.rememberLiquidState
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_appearance
@@ -133,7 +131,7 @@ private fun SettingsItem(
             icon = item.icon,
             contentDescription = item.title,
             onClick = item.onClick,
-            liquidState = liquidState
+            liquidState = liquidState,   // ← replace both TODO()s
         )
 
         Spacer(Modifier.width(18.dp))
@@ -183,7 +181,7 @@ private fun SettingsDeleteItem(
             icon = item.icon,
             contentDescription = item.title,
             onClick = item.onClick,
-            liquidState = liquidState
+            liquidState = liquidState,   // ← was missing
         )
 
         Spacer(Modifier.width(18.dp))
@@ -203,8 +201,6 @@ fun PreviewSettingsGroup() {
     NekkoTheme {
 
         val liquidState = rememberLiquidState()
-
-        AmbientGlow(liquidState)
 
         SettingsGroup(
             liquidState = liquidState,

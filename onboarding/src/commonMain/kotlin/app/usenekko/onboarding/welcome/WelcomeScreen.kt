@@ -10,16 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,19 +38,19 @@ import io.github.jan.supabase.compose.auth.composable.rememberSignInWithApple
 import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
 import io.github.jan.supabase.compose.auth.composeAuth
 import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.auth_continue_apple
+import nekko.onboarding.generated.resources.auth_continue_google
+import nekko.onboarding.generated.resources.cd_google
 import nekko.onboarding.generated.resources.gradients
 import nekko.onboarding.generated.resources.ic_apple
 import nekko.onboarding.generated.resources.ic_google
 import nekko.onboarding.generated.resources.users
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.vectorResource
-import nekko.onboarding.generated.resources.auth_continue_apple
-import nekko.onboarding.generated.resources.auth_continue_google
-import nekko.onboarding.generated.resources.cd_google
 import nekko.onboarding.generated.resources.welcome_placeholder
 import nekko.onboarding.generated.resources.welcome_subtitle
 import nekko.onboarding.generated.resources.welcome_title
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun WelcomeScreen(
@@ -167,13 +163,13 @@ fun WelcomeScreen(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 Text(
                     text = stringResource(Res.string.welcome_subtitle),
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     color = NekkoTheme.colors.text.tertiary,
                     fontWeight = FontWeight.Medium,
-                    lineHeight = 28.sp,
+                    lineHeight = 25.sp,
                     textAlign = TextAlign.Center
                 )
                 Spacer(Modifier.height(50.dp))
@@ -199,11 +195,11 @@ fun WelcomeScreen(
                     },
                     loading = false
                 )
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(13.dp))
 
                 NekkoButton(
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = NekkoTheme.colors.background.b1,
+                        containerColor = NekkoTheme.colors.fill.tertiary,
                         contentColor = NekkoTheme.colors.background.onBackground
                     ),
                     leadingIcon = {
@@ -237,7 +233,7 @@ fun WelcomeScreen(
                     Spacer(Modifier.height(12.dp))
                 }
 
-                Spacer(Modifier.height(25.dp))
+                Spacer(Modifier.height(24.dp))
 
                 TermsAndPrivacyNotice(
                     onTermsClick = { /* navigate to Terms screen or open URL */ },

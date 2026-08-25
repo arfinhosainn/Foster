@@ -1,6 +1,8 @@
 package app.usenekko.designsystem.buttons
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -21,6 +23,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
@@ -33,6 +37,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import app.usenekko.theme.NekkoTheme
 import nekko.shared.generated.resources.Res
 import nekko.shared.generated.resources.ic_acquaintance
@@ -44,7 +49,7 @@ import nekko.shared.generated.resources.ic_person
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
 
-private const val MenuWidth = 240
+private const val MenuWidth = 200
 private const val RowHeight = 56
 private const val MenuCorner = 24
 private const val TriggerCorner = 28
@@ -63,6 +68,18 @@ fun NekkoDropDownButton(
     chevron: DrawableResource,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var menuMounted by remember { mutableStateOf(false) }
+    val menuProgress = remember { Animatable(0f) }
+
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            menuMounted = true
+            menuProgress.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = 350f))
+        } else {
+            menuProgress.animateTo(0f, tween(durationMillis = 150, easing = FastOutSlowInEasing))
+            menuMounted = false
+        }
+    }
 
     Box(modifier) {
         AudienceTrigger(
@@ -72,10 +89,11 @@ fun NekkoDropDownButton(
             onClick = { expanded = !expanded },
         )
 
-        if (expanded) {
+        if (menuMounted) {
             Popup(
                 popupPositionProvider = BelowAnchorProvider(gapPx = 12),
                 onDismissRequest = { expanded = false },
+                properties = PopupProperties(focusable = true),
             ) {
                 AudienceMenu(
                     options = options,
@@ -83,6 +101,15 @@ fun NekkoDropDownButton(
                     onSelect = {
                         onSelect(it)
                         expanded = false
+                    },
+                    modifier = Modifier.graphicsLayer {
+                        val progress = menuProgress.value
+                        alpha = progress
+                        val scale = 0.9f + 0.1f * progress
+                        scaleX = scale
+                        scaleY = scale
+                        transformOrigin = TransformOrigin(0.5f, 0f)
+                        translationY = (1f - progress) * -10.dp.toPx()
                     },
                 )
             }
@@ -115,7 +142,7 @@ private fun AudienceTrigger(
     Row(
         Modifier
             .scale(squeeze)
-            .shadow(10.dp, CircleShape, ambientColor = NekkoTheme.colors.fill.tertiary)
+            .shadow(2.dp, CircleShape, ambientColor = NekkoTheme.colors.fill.tertiary)
             .background(NekkoTheme.colors.background.b1, CircleShape)
             .clip(CircleShape)
             .clickable(
@@ -150,13 +177,14 @@ private fun AudienceMenu(
     options: List<AudienceOption>,
     selected: AudienceOption,
     onSelect: (AudienceOption) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(MenuCorner.dp)
 
     Column(
-        Modifier
+        modifier
             .width(MenuWidth.dp)
-            .shadow(20.dp, shape)
+            .shadow(2.dp, shape)
             .background(NekkoTheme.colors.background.b1, shape)
             .clip(shape),
     ) {

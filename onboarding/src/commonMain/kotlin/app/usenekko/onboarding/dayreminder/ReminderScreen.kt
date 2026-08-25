@@ -1,6 +1,5 @@
 package app.usenekko.onboarding.dayreminder
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,13 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.dayreminder.components.ReminderOptionCard
@@ -45,7 +42,6 @@ import org.jetbrains.compose.resources.vectorResource
 import nekko.onboarding.generated.resources.action_next
 import nekko.onboarding.generated.resources.add_step_frequency_subtitle
 import nekko.onboarding.generated.resources.add_step_frequency_title
-import nekko.onboarding.generated.resources.cd_back_upper
 import org.jetbrains.compose.resources.stringResource
 import nekko.onboarding.generated.resources.add_freq_annually
 import nekko.onboarding.generated.resources.add_freq_biweekly
@@ -117,16 +113,11 @@ private fun ReminderScreenContent(
                     .padding(bottom = 24.dp, top = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                FilledIconButton(
-                    modifier = modifier.weight(0.23f).size(58.dp),
+                NekkoActionButton(
                     onClick = onBack,
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
-                ) {
-                    Image(
-                        imageVector = vectorResource(Res.drawable.ic_back),
-                        contentDescription = stringResource(Res.string.cd_back_upper)
-                    )
-                }
+                    leadingIcon = vectorResource(Res.drawable.ic_back),
+                    modifier = modifier.weight(0.19f),
+                )
                 Spacer(Modifier.width(12.dp))
                 NekkoButton(
                     text = stringResource(Res.string.action_next),

@@ -36,7 +36,6 @@ import nekko.onboarding.generated.resources.ic_back
 import org.jetbrains.compose.resources.vectorResource
 import nekko.onboarding.generated.resources.action_next
 import nekko.onboarding.generated.resources.action_skip
-import nekko.onboarding.generated.resources.cd_back_upper
 import nekko.onboarding.generated.resources.custom_add_more_title
 import nekko.onboarding.generated.resources.custom_like_birthdays
 import nekko.onboarding.generated.resources.reminders_add
@@ -142,16 +141,11 @@ private fun CustomReminderScreenContent(
                         .padding(bottom = 24.dp, top = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    FilledIconButton(
-                        modifier = modifier.weight(0.23f).size(58.dp),
+                    NekkoActionButton(
                         onClick = onBack,
-                        colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
-                    ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = stringResource(Res.string.cd_back_upper)
-                        )
-                    }
+                        leadingIcon = vectorResource(Res.drawable.ic_back),
+                        modifier = modifier.weight(0.19f),
+                    )
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = stringResource(Res.string.action_next),

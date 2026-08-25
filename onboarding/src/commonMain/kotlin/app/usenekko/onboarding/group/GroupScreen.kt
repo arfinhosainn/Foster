@@ -25,9 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -68,7 +66,6 @@ import nekko.onboarding.generated.resources.add_step_group_title
 import nekko.onboarding.generated.resources.add_tap_plus_button
 import nekko.onboarding.generated.resources.add_wanna_create_group
 import nekko.onboarding.generated.resources.cd_add_members
-import nekko.onboarding.generated.resources.cd_back
 import nekko.onboarding.generated.resources.cd_group_member_avatar
 import nekko.onboarding.generated.resources.group_add_user_subtitle
 import org.jetbrains.compose.resources.stringResource
@@ -151,18 +148,11 @@ fun GroupScreen(
                         .padding(bottom = 24.dp, top = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    FilledIconButton(
-                        modifier = Modifier.weight(0.23f).size(58.dp),
+                    NekkoActionButton(
                         onClick = { viewModel.onBackClicked() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = NekkoTheme.colors.fill.tertiary,
-                        ),
-                    ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = stringResource(Res.string.cd_back),
-                        )
-                    }
+                        leadingIcon = vectorResource(Res.drawable.ic_back),
+                        modifier = Modifier.weight(0.19f),
+                    )
 
                     Spacer(Modifier.width(12.dp))
 

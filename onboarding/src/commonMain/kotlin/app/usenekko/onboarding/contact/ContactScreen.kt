@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
@@ -22,8 +21,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -51,6 +48,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.home.presentation.components.ProfilePhotoPreview
 import app.usenekko.shared.contacts.rememberContactPicker
@@ -69,7 +67,6 @@ import nekko.onboarding.generated.resources.add_contact_name_label
 import nekko.onboarding.generated.resources.add_import_contact
 import nekko.onboarding.generated.resources.add_step_new_contact_subtitle
 import nekko.onboarding.generated.resources.add_step_new_contact_title
-import nekko.onboarding.generated.resources.cd_back_upper
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -148,16 +145,11 @@ fun ContactScreen(
                         .padding(bottom = 24.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    FilledIconButton(
-                        modifier = Modifier.weight(0.23f).size(58.dp),
+                    NekkoActionButton(
                         onClick = { viewModel.onAction(ContactAction.BackClicked) },
-                        colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
-                    ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = stringResource(Res.string.cd_back_upper)
-                        )
-                    }
+                        leadingIcon = vectorResource(Res.drawable.ic_back),
+                        modifier = Modifier.weight(0.19f),
+                    )
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = stringResource(Res.string.action_next),

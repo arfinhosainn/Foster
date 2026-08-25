@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.leftEdgeShine
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_brainstrom
@@ -52,6 +53,7 @@ fun BrainstormCard(
             .clip(BRAINSTORM_CARD_SHAPE)
 
             .background(NekkoTheme.colors.fill.quaternary)
+            .leftEdgeShine(BRAINSTORM_CARD_SHAPE) // ← edge-lit shine, left side only
             .clickable(onClick = onClick),
     ) {
         Image(
