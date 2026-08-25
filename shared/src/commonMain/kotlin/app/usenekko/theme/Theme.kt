@@ -141,6 +141,13 @@ val LocalExtendedColors = staticCompositionLocalOf<ExtendedColors> {
     error("No ExtendedColors provided. Wrap your content in NekkoTheme { ... }.")
 }
 
+/**
+ * The RESOLVED dark-mode flag for the current NekkoTheme — honors the in-app
+ * Appearance setting first, falling back to the system theme. Read this instead
+ * of isSystemInDarkTheme() when styling custom surfaces (navbar, sheets, ...).
+ */
+val LocalNekkoIsDark = staticCompositionLocalOf { false }
+
 val MaterialTheme.extendedColors: ExtendedColors
     @Composable
     @ReadOnlyComposable
@@ -236,6 +243,7 @@ fun NekkoTheme(
 
     CompositionLocalProvider(
         LocalExtendedColors provides extended,
+        LocalNekkoIsDark provides isDark,
         LocalAppTypography provides appTypo,
     ) {
         MaterialTheme(

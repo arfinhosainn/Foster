@@ -59,7 +59,6 @@ import nekko.onboarding.generated.resources.ic_flower
 import org.jetbrains.compose.resources.vectorResource
 import nekko.onboarding.generated.resources.action_next
 import nekko.onboarding.generated.resources.action_skip
-import nekko.onboarding.generated.resources.cd_back_upper
 import nekko.onboarding.generated.resources.notes_empty_hint
 import nekko.onboarding.generated.resources.onb_addnote_title
 import org.jetbrains.compose.resources.stringResource
@@ -161,16 +160,11 @@ private fun AddNoteScreenContent(
                         .padding(bottom = 24.dp, top = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    FilledIconButton(
-                        modifier = modifier.weight(0.23f).size(58.dp),
+                    NekkoActionButton(
                         onClick = onBack,
-                        colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary)
-                    ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.ic_back),
-                            contentDescription = stringResource(Res.string.cd_back_upper)
-                        )
-                    }
+                        leadingIcon = vectorResource(Res.drawable.ic_back),
+                        modifier = modifier.weight(0.19f),
+                    )
                     Spacer(Modifier.width(12.dp))
                     NekkoButton(
                         text = stringResource(Res.string.action_next),
@@ -236,11 +230,29 @@ private fun AddNoteScreenContent(
                             )
                             Spacer(modifier = Modifier.height(24.dp))
 
-                            NekkoActionButton(
-                                text = stringResource(Res.string.notes_add_note),
-                                leadingIcon = vectorResource(Res.drawable.ic_add),
+                            FilledIconButton(
                                 onClick = { onAction(AddNoteAction.AddClicked) },
-                            )
+                                modifier = modifier.height(40.dp).width(123.dp)
+                                    ,
+                                colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.background.b1)
+                            ) {
+                                Row(modifier = modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                                    Icon(
+                                        vectorResource(Res.drawable.ic_add),
+                                        contentDescription = "Add Note",
+                                        tint = NekkoTheme.colors.text.primary
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        stringResource(Res.string.notes_add_note),
+                                        color = NekkoTheme.colors.text.primary,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+
+                                }
+
+                            }
                         }
                     }
                 } else {

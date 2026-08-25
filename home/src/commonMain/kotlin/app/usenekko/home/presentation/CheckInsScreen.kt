@@ -47,7 +47,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.adaptive.WindowWidthSizeClass
 import app.usenekko.adaptive.windowWidthSizeClass
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassNavigationRail
 import app.usenekko.designsystem.navbar.top.NekkoTopBar
@@ -61,7 +60,6 @@ import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.theme.NekkoTheme
-import io.github.fletchmckee.liquid.rememberLiquidState
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.add_no_groups_yet
 import nekko.home.generated.resources.cd_no_members
@@ -90,7 +88,6 @@ fun CheckInsScreen(
     val accountRepository = LocalAccountRepository.current
     val accountState by accountRepository.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
-    val liquidState = rememberLiquidState()
     var showAddContact by rememberSaveable { mutableStateOf(false) }
     val handleAddClick = resolveCheckInsAddClick(onAddClick) { showAddContact = true }
 
@@ -109,15 +106,14 @@ fun CheckInsScreen(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val useNavigationRail = windowWidthSizeClass(maxWidth) == WindowWidthSizeClass.Expanded
 
-        AmbientGlow(liquidState, Modifier.matchParentSize())
+        Box(Modifier.matchParentSize().background(NekkoTheme.colors.background.b0))
 
         if (useNavigationRail) {
             GlassNavigationRail(
                 selectedIndex = 1,
                 onItemSelected = { index -> if (index == 0) onHomeClick() },
                 onAddClick = handleAddClick,
-                liquidState = liquidState,
-                modifier = Modifier.align(Alignment.CenterStart),
+                    modifier = Modifier.align(Alignment.CenterStart),
             )
         }
 
@@ -146,8 +142,7 @@ fun CheckInsScreen(
                         selectedIndex = 1,
                         onItemSelected = { index -> if (index == 0) onHomeClick() },
                         onAddClick = handleAddClick,
-                        liquidState = liquidState,
-                    )
+                                )
                 }
             },
             containerColor = NekkoTheme.colors.background.b0,

@@ -66,7 +66,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.usenekko.designsystem.buttons.AudienceOption
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
 import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassNavigationRail
 import app.usenekko.designsystem.navbar.top.NekkoTopBar
@@ -76,6 +75,7 @@ import app.usenekko.adaptive.contactPresentation
 import app.usenekko.adaptive.retainPaneSelection
 import app.usenekko.adaptive.windowWidthSizeClass
 import app.usenekko.designsystem.shapes.SawToothCircleShape
+import app.usenekko.designsystem.sideShine
 import app.usenekko.home.addcontact.AddContactScreen
 import app.usenekko.home.di.rememberAddContactViewModel
 import app.usenekko.home.di.rememberHomeViewModel
@@ -100,7 +100,6 @@ import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
 import app.usenekko.home.presentation.HomeLoadingSkeleton
 import app.usenekko.home.domain.MissedCheckIn
 import app.usenekko.theme.NekkoTheme
-import io.github.fletchmckee.liquid.rememberLiquidState
 import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -202,7 +201,6 @@ fun HomeScreen(
             options.getOrElse(index + 1) { options.first() }
         }
     }
-    val liquidState = rememberLiquidState()
     val blurModifier = if (showAddContact) Modifier.blur(20.dp) else Modifier
 
 
@@ -228,17 +226,13 @@ fun HomeScreen(
         }
 
         // Background/source for the liquid effect
-        AmbientGlow(
-            liquidState = liquidState,
-            modifier = Modifier.matchParentSize()
-        )
+
 
         if (useNavigationRail) {
             GlassNavigationRail(
                 selectedIndex = 0,
                 onItemSelected = { index -> if (index == 1) onCheckInsClick() },
                 onAddClick = { showAddContact = true },
-                liquidState = liquidState,
                 modifier = Modifier.align(Alignment.CenterStart),
             )
         }
@@ -275,8 +269,7 @@ fun HomeScreen(
                         selectedIndex = 0,
                         onItemSelected = { index -> if (index == 1) onCheckInsClick() },
                         onAddClick = { showAddContact = true },
-                        liquidState = liquidState,
-                    )
+                            )
                 }
             },
             containerColor = NekkoTheme.colors.background.b0,
@@ -637,11 +630,13 @@ private fun CheckInSection(
                     nowEpochMillis = nowEpochMillis,
                 )
             } else {
+                val contactListShape = RoundedCornerShape(32.dp)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(32.dp))
+                        .clip(contactListShape)
                         .background(NekkoTheme.colors.fill.quaternary)
+                        .sideShine(contactListShape, intensity = 0.8f)
                         .padding(horizontal = 16.dp),
                 ) {
                     todayContacts.forEachIndexed { index, contact ->

@@ -11,6 +11,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
+import androidx.compose.ui.unit.sp
 import app.usenekko.theme.appTypography
 import app.usenekko.theme.extendedColors
 
@@ -38,7 +39,7 @@ fun TermsAndPrivacyNotice(
                 linkInteractionListener = { onTermsClick() },
             ),
         ) {
-            append("Terms & Conditions")
+            append("Terms &\n Conditions")
         }
         append(" and ")
         withLink(
@@ -62,3 +63,4 @@ fun TermsAndPrivacyNotice(
         modifier = modifier,
     )
 }
+

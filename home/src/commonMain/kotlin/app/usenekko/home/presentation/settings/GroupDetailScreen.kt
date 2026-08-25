@@ -43,13 +43,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.AmbientGlow
 import app.usenekko.home.di.rememberGroupDetailViewModel
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
 import app.usenekko.theme.NekkoTheme
-import io.github.fletchmckee.liquid.rememberLiquidState
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_edit
 import nekko.home.generated.resources.ic_trashbin
@@ -72,7 +70,6 @@ fun GroupDetailScreen(
     val viewModel = rememberGroupDetailViewModel(groupId)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
-    val liquidState = rememberLiquidState()
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -85,7 +82,7 @@ fun GroupDetailScreen(
     Box(
         modifier = modifier.fillMaxSize(),
     ) {
-        AmbientGlow(liquidState, Modifier.matchParentSize())
+        Box(Modifier.matchParentSize().background(NekkoTheme.colors.background.b0))
 
         Column(
             modifier = Modifier

@@ -130,150 +130,157 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
 
     Box(modifier = Modifier.fillMaxSize()) {
         App(navigator) { screen ->
-            when (screen) {
-                is Screen.Splash -> SplashScreen()
+            val screenContent: @Composable () -> Unit = {
+                when (screen) {
+                    is Screen.Splash -> SplashScreen()
 
-                is Screen.Welcome -> WelcomeScreen(
-                    supabaseClient = supabaseClient,
-                    onGoogleSignInSuccess = {
-                        val session = supabaseClient.auth.currentSessionOrNull()
-                        logAccount(session?.user?.email, session?.user?.id, "Google sign-in")
-                        scope.launch { routeAfterAuth(profileDataSource, navigator) }
-                    },
-                    onAppleSignInSuccess = {
-                        val session = supabaseClient.auth.currentSessionOrNull()
-                        logAccount(session?.user?.email, session?.user?.id, "Apple sign-in")
-                        scope.launch { routeAfterAuth(profileDataSource, navigator) }
-                    },
-                )
+                    is Screen.Welcome -> WelcomeScreen(
+                        supabaseClient = supabaseClient,
+                        onGoogleSignInSuccess = {
+                            val session = supabaseClient.auth.currentSessionOrNull()
+                            logAccount(session?.user?.email, session?.user?.id, "Google sign-in")
+                            scope.launch { routeAfterAuth(profileDataSource, navigator) }
+                        },
+                        onAppleSignInSuccess = {
+                            val session = supabaseClient.auth.currentSessionOrNull()
+                            logAccount(session?.user?.email, session?.user?.id, "Apple sign-in")
+                            scope.launch { routeAfterAuth(profileDataSource, navigator) }
+                        },
+                    )
 
-                is Screen.Name -> NameScreen(
-                    onNavigateToNext = { navigator.navigate(Screen.Contact) },
-                    onBack = { navigator.goBack() },
-                    onSkip = { navigator.navigate(Screen.Contact) },
-                )
+                    is Screen.Name -> NameScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.Contact) },
+                        onBack = { navigator.goBack() },
+                        onSkip = { navigator.navigate(Screen.Contact) },
+                    )
 
-                is Screen.Contact -> ContactScreen(
-                    onNavigateToNext = { navigator.navigate(Screen.Group) },
-                    onBack = { navigator.goBack() },
-                    onSkip = { navigator.navigate(Screen.Group) },
-                )
+                    is Screen.Contact -> ContactScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.Group) },
+                        onBack = { navigator.goBack() },
+                        onSkip = { navigator.navigate(Screen.Group) },
+                    )
 
-                is Screen.Group -> GroupScreen(
-                    onNavigateToNext = { navigator.navigate(Screen.Reminder) },
-                    onBack = { navigator.goBack() },
-                )
+                    is Screen.Group -> GroupScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.Reminder) },
+                        onBack = { navigator.goBack() },
+                    )
 
-                is Screen.Reminder -> ReminderScreen(
-                    onNavigateToNext = { navigator.navigate(Screen.TimeReminder) },
-                    onBack = { navigator.goBack() },
-                )
+                    is Screen.Reminder -> ReminderScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.TimeReminder) },
+                        onBack = { navigator.goBack() },
+                    )
 
-                is Screen.TimeReminder -> TimeReminderScreen(
-                    onNavigateToNext = { navigator.navigate(Screen.CustomReminder) },
-                    onBack = { navigator.goBack() },
-                    onSkip = { navigator.navigate(Screen.CustomReminder) },
-                )
+                    is Screen.TimeReminder -> TimeReminderScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.CustomReminder) },
+                        onBack = { navigator.goBack() },
+                        onSkip = { navigator.navigate(Screen.CustomReminder) },
+                    )
 
-                is Screen.CustomReminder -> CustomReminderScreen(
-                    onNavigateToNext = { navigator.navigate(Screen.AddNote) },
-                    onBack = { navigator.goBack() },
-                    onSkip = { navigator.navigate(Screen.AddNote) },
-                )
+                    is Screen.CustomReminder -> CustomReminderScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.AddNote) },
+                        onBack = { navigator.goBack() },
+                        onSkip = { navigator.navigate(Screen.AddNote) },
+                    )
 
-                is Screen.AddNote -> AddNoteScreen(
-                    onNavigateToNext = { navigator.navigate(Screen.Notification) },
-                    onBack = { navigator.goBack() },
-                    onSkip = { navigator.navigate(Screen.Notification) },
-                )
+                    is Screen.AddNote -> AddNoteScreen(
+                        onNavigateToNext = { navigator.navigate(Screen.Notification) },
+                        onBack = { navigator.goBack() },
+                        onSkip = { navigator.navigate(Screen.Notification) },
+                    )
 
-                is Screen.Notification -> NotificationScreen(
-                    onNavigateToMainApp = {
-                        // Land on Home, then show the paywall on top of it:
-                        // closing the paywall (or subscribing) returns the
-                        // user to the home screen.
-                        navigator.replaceAll(Screen.Home)
-                        if (!subscriptionRepository.isSubscribed.value) {
-                            navigator.navigate(Screen.Paywall)
-                        }
-                    },
-                    onBack = { navigator.goBack() },
-                )
+                    is Screen.Notification -> NotificationScreen(
+                        onNavigateToMainApp = {
+                            // Land on Home, then show the paywall on top of it:
+                            // closing the paywall (or subscribing) returns the
+                            // user to the home screen.
+                            navigator.replaceAll(Screen.Home)
+                            if (!subscriptionRepository.isSubscribed.value) {
+                                navigator.navigate(Screen.Paywall)
+                            }
+                        },
+                        onBack = { navigator.goBack() },
+                    )
 
-                is Screen.Home -> HomeScreen(
-                    onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
-                    onBrainstormClick = { contactId -> navigator.navigate(Screen.Brainstorm(contactId)) },
-                    onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
-                    onSettingsClick = { navigator.navigate(Screen.Settings) },
-                    onShowPaywall = showPremiumPaywall,
-                    onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
-                )
+                    is Screen.Home -> HomeScreen(
+                        onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
+                        onBrainstormClick = { contactId -> navigator.navigate(Screen.Brainstorm(contactId)) },
+                        onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
+                        onSettingsClick = { navigator.navigate(Screen.Settings) },
+                        onShowPaywall = showPremiumPaywall,
+                        onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
+                    )
 
-                is Screen.CheckIns -> CheckInsScreen(
-                    onHomeClick = { navigator.replaceAll(Screen.Home) },
-                    onSettingsClick = { navigator.navigate(Screen.Settings) },
-                    onShowPaywall = showPremiumPaywall,
-                    onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
-                )
+                    is Screen.CheckIns -> CheckInsScreen(
+                        onHomeClick = { navigator.replaceAll(Screen.Home) },
+                        onSettingsClick = { navigator.navigate(Screen.Settings) },
+                        onShowPaywall = showPremiumPaywall,
+                        onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
+                    )
 
-                is Screen.ContactProfile -> ContactProfileScreen(
-                    contactId = screen.contactId,
-                    onBack = { navigator.goBack() },
-                    onBrainstormClick = { navigator.navigate(Screen.Brainstorm(screen.contactId)) },
-                )
+                    is Screen.ContactProfile -> ContactProfileScreen(
+                        contactId = screen.contactId,
+                        onBack = { navigator.goBack() },
+                        onBrainstormClick = { navigator.navigate(Screen.Brainstorm(screen.contactId)) },
+                    )
 
-                is Screen.Brainstorm -> BrainstormScreen(
-                    contactId = screen.contactId,
-                    onBack = { navigator.goBack() },
-                )
+                    is Screen.Brainstorm -> BrainstormScreen(
+                        contactId = screen.contactId,
+                        onBack = { navigator.goBack() },
+                    )
 
-                is Screen.Settings -> SettingScreen(
-                    onBack = { navigator.goBack() },
-                    onAccountClick = {},
-                    onPremiumClick = showPremiumPaywall,
-                    onAccountDeleted = {
-                        scope.launch {
-                            // The server row is already gone (the Edge Function
-                            // returned success). Best-effort local sign-out so the
-                            // stale session doesn't leave the app half-authenticated,
-                            // then drop the whole stack back to Welcome (no account).
-                            runCatching { supabaseClient.auth.signOut() }
-                            navigator.replaceAll(Screen.Welcome)
-                        }
-                    },
-                )
+                    is Screen.Settings -> SettingScreen(
+                        onBack = { navigator.goBack() },
+                        onAccountClick = {},
+                        onPremiumClick = showPremiumPaywall,
+                        onAccountDeleted = {
+                            scope.launch {
+                                // The server row is already gone (the Edge Function
+                                // returned success). Best-effort local sign-out so the
+                                // stale session doesn't leave the app half-authenticated,
+                                // then drop the whole stack back to Welcome (no account).
+                                runCatching { supabaseClient.auth.signOut() }
+                                navigator.replaceAll(Screen.Welcome)
+                            }
+                        },
+                    )
 
-                is Screen.Account -> AccountScreen(
-                    onBack = { navigator.goBack() },
-                )
+                    is Screen.Account -> AccountScreen(
+                        onBack = { navigator.goBack() },
+                    )
 
-                is Screen.GroupSettings -> GroupSettingsScreen(
-                    onBack = { navigator.goBack() },
-                )
+                    is Screen.GroupSettings -> GroupSettingsScreen(
+                        onBack = { navigator.goBack() },
+                    )
 
-                is Screen.GroupDetail -> GroupDetailScreen(
-                    groupId = screen.groupId,
-                    onBack = { navigator.goBack() },
-                )
+                    is Screen.GroupDetail -> GroupDetailScreen(
+                        groupId = screen.groupId,
+                        onBack = { navigator.goBack() },
+                    )
 
-                is Screen.Paywall -> PaywallScreen(
-                    onBack = {
-                        // Closing the regular paywall arms exit-intent and
-                        // offers the 60% deal IMMEDIATELY in this session;
-                        // if the gates block it here, the armed dismissal
-                        // still fires on the next cold start as a fallback.
-                        paywallGateManager.onRegularPaywallDismissed()
-                        navigator.goBack()
-                        scope.launch {
-                            paywallGateManager.reportTrigger(PaywallTrigger.EXIT_INTENT)
-                        }
-                    },
-                    onSubscribed = { navigator.goBack() },
-                )
+                    is Screen.Paywall -> PaywallScreen(
+                        onBack = {
+                            // Closing the regular paywall arms exit-intent and
+                            // offers the 60% deal IMMEDIATELY in this session;
+                            // if the gates block it here, the armed dismissal
+                            // still fires on the next cold start as a fallback.
+                            paywallGateManager.onRegularPaywallDismissed()
+                            navigator.goBack()
+                            scope.launch {
+                                paywallGateManager.reportTrigger(PaywallTrigger.EXIT_INTENT)
+                            }
+                        },
+                        onSubscribed = { navigator.goBack() },
+                    )
 
-                is Screen.DiscountPaywall -> DiscountPaywallScreen(
-                    onSubscribed = { navigator.goBack() },
-                )
+                    is Screen.DiscountPaywall -> DiscountPaywallScreen(
+                        onSubscribed = { navigator.goBack() },
+                    )
+                }
+            }
+            if (screen.isFirstRunSurface) {
+                NekkoTheme(darkTheme = true) { screenContent() }
+            } else {
+                screenContent()
             }
         }
 
@@ -298,6 +305,23 @@ internal enum class AuthSessionAction {
     ShowWelcome,
     Ignore,
 }
+
+val Screen.isFirstRunSurface: Boolean
+    get() = when (this) {
+        Screen.Splash,
+        Screen.Welcome,
+        Screen.Name,
+        Screen.Contact,
+        Screen.Group,
+        Screen.Reminder,
+        Screen.TimeReminder,
+        Screen.CustomReminder,
+        Screen.AddNote,
+        Screen.Notification,
+        -> true
+
+        else -> false
+    }
 
 internal fun authSessionAction(status: SessionStatus, isSplash: Boolean): AuthSessionAction {
     if (!isSplash) return AuthSessionAction.Ignore

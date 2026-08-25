@@ -23,6 +23,7 @@ purchases-kmp = "3.4.0"
 
 
 
+
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -65,7 +66,7 @@ ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "kto
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 
 #Liquid-Glass
-liquid-glass = { module = "io.github.fletchmckee.liquid:liquid", version.ref = "liquid-glass"}
+liquid-glass = { module = "io.github.fletchmckee.liquid:liquid", version.ref = "liquid-glass" }
 
 # Revenuecat
 purchases-core = { module = "com.revenuecat.purchases:purchases-kmp-core", version.ref = "purchases-kmp" }

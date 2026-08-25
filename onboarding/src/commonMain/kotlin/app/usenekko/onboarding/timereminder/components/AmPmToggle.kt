@@ -6,8 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.buttons.nekkoActionShell
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.time_am
@@ -44,8 +46,10 @@ fun AmPmToggle(
 
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(100))
-            .background(NekkoTheme.colors.fill.tertiary)
+            .nekkoActionShell(
+                shape = RoundedCornerShape(100),
+                containerColor = NekkoTheme.colors.background.b1,
+            )
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -68,13 +72,13 @@ fun AmPmToggle(
                     indication = null,
                     onClick = { onToggle(true) },
                 )
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = stringResource(Res.string.time_am),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
                 color = amTextColor,
             )
         }
@@ -89,6 +93,8 @@ fun AmPmToggle(
             label = "pmText",
         )
 
+        Spacer(Modifier.width(4.dp))
+
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(50))
@@ -98,13 +104,13 @@ fun AmPmToggle(
                     indication = null,
                     onClick = { onToggle(false) },
                 )
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = stringResource(Res.string.time_pm),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
                 color = pmTextColor,
             )
         }

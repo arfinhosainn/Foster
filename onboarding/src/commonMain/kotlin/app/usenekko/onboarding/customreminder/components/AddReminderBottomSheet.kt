@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.customreminder.CustomReminderAction
 import app.usenekko.onboarding.customreminder.CustomReminderState
@@ -267,9 +268,16 @@ fun AddReminderBottomSheet(
                 )
 
                 Box {
-                    ReminderPickerPill(
+                    NekkoActionButton(
                         text = state.draftRecurrence,
-                        onClick = { recurrenceMenuExpanded = true }
+                        trailingIcon = Icons.Default.KeyboardArrowDown,
+                        onClick = { recurrenceMenuExpanded = true },
+                        containerColor = NekkoTheme.colors.background.b1,
+                        contentColor = NekkoTheme.colors.text.primary,
+                        iconTint = NekkoTheme.colors.text.primary,
+                        textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+                        modifier = modifier.height(44.dp).width(86.dp)
                     )
 
                     DropdownMenu(
@@ -312,9 +320,16 @@ fun AddReminderBottomSheet(
                     color = NekkoTheme.colors.text.secondary
                 )
 
-                ReminderPickerPill(
+                NekkoActionButton(
                     text = state.draftDate,
-                    onClick = { datePickerVisible = true }
+                    trailingIcon = Icons.Default.KeyboardArrowDown,
+                    onClick = { datePickerVisible = true },
+                    containerColor = NekkoTheme.colors.background.b1,
+                    contentColor = NekkoTheme.colors.text.primary,
+                    iconTint = NekkoTheme.colors.text.primary,
+                    textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+                    modifier = modifier.height(44.dp).width(140.dp)
                 )
             }
 
@@ -329,40 +344,3 @@ fun AddReminderBottomSheet(
     }
 }
 
-@Composable
-private fun ReminderPickerPill(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    leadingIcon: (@Composable () -> Unit)? = null
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .heightIn(min = 40.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(NekkoTheme.colors.background.b1)
-            .clickable(onClick = onClick)
-            .padding(start = if (leadingIcon == null) 14.dp else 12.dp, end = 10.dp)
-            .padding(vertical = 9.dp)
-    ) {
-        if (leadingIcon != null) {
-            leadingIcon()
-            Spacer(modifier = Modifier.width(6.dp))
-        }
-
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = NekkoTheme.colors.text.primary
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
-            tint = NekkoTheme.colors.text.primary,
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}

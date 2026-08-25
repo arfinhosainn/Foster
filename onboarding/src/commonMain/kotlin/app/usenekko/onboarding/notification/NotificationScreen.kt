@@ -73,7 +73,8 @@ fun NotificationScreen(
         viewModel.events.collect { event ->
             when (event) {
                 NotificationEvent.NavigateToMainApp -> onNavigateToMainApp()
-                is NotificationEvent.ShowError -> { /* snackbar or error UI */ }
+                is NotificationEvent.ShowError -> { /* snackbar or error UI */
+                }
             }
         }
     }
@@ -85,6 +86,7 @@ fun NotificationScreen(
                 NotificationAction.TurnOnClicked -> {
                     requestNotificationPermission()
                 }
+
                 is NotificationAction.PermissionStateChanged -> viewModel.onAction(action)
                 is NotificationAction.PermissionResult -> viewModel.onAction(action)
                 NotificationAction.SkipClicked -> {
@@ -104,11 +106,9 @@ private fun NotificationScreenContent(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val painter = if (isSystemInDarkTheme()) {
+    val painter =
         painterResource(Res.drawable.checkin_img)
-    } else {
-        painterResource(Res.drawable.checkin_imglight)
-    }
+
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
