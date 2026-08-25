@@ -653,6 +653,40 @@ class SupabaseContactDataSource(
         }
     }
 
+    override suspend fun updateReminder(
+        reminderId: String,
+        title: String,
+        description: String,
+        recurrence: String,
+        date: Long?,
+    ): Result<Reminder, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val body = buildJsonObject {
+                put("title", title)
+                put("description", description)
+                put("recurrence", recurrence)
+                put("date_epoch_millis", date?.let { JsonPrimitive(it) } ?: JsonNull)
+            }
+
+            val updated = client.postgrest
+                .from("custom_reminders")
+                .update(body) {
+                    filter { eq("id", reminderId) }
+                    filter { eq("owner_id", userId) }
+                    select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis"))
+                }
+                .decodeSingle<ReminderDto>()
+
+            Result.Success(updated.toDomain())
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
     override suspend fun deleteReminder(reminderId: String): Result<Unit, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()

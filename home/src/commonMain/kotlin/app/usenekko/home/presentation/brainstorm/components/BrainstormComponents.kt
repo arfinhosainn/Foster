@@ -6,7 +6,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,14 +17,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -38,39 +34,21 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.home.domain.BrainstormTopic
 import app.usenekko.home.presentation.brainstorm.BrainstormTab
 import app.usenekko.theme.NekkoTheme
-import nekko.home.generated.resources.Res
-import nekko.home.generated.resources.ic_back
-import org.jetbrains.compose.resources.vectorResource
-import nekko.home.generated.resources.cd_back
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BrainstormTopBar(
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
-) = CenterAlignedTopAppBar(
-    modifier = modifier,
-    colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-        scrolledContainerColor = androidx.compose.ui.graphics.Color.Transparent,
-    ),
-    title = {
-        Text(
-            "Brainstorm",
-            style = NekkoTheme.typography.heading1Bold,
-            color = NekkoTheme.colors.text.primary,
-        )
-    },
-    navigationIcon = {
-        FilledIconButton(
-            modifier = Modifier.size(58.dp),
-            onClick = onBack,
-            colors = IconButtonDefaults.iconButtonColors(containerColor = NekkoTheme.colors.fill.tertiary),
-        ) {
-            Image(imageVector = vectorResource(Res.drawable.ic_back), contentDescription = stringResource(Res.string.cd_back))
-        }
-    },
-)
+) {
+    Text(
+        "Brainstorm",
+        fontSize = 24.sp,
+        fontWeight = FontWeight.Medium,
+        color = NekkoTheme.colors.text.primary,
+        modifier = modifier
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 14.dp),
+    )
+}
 
 @Composable
 fun BrainstormTabs(

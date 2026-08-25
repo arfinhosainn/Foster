@@ -1,21 +1,18 @@
 package app.usenekko.home.presentation.contactprofile
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_back
@@ -26,28 +23,18 @@ import nekko.home.generated.resources.cd_back
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun ContactProfileTopBar(
-    daysUntilNextCheckIn: Int,
+fun ContactProfileActionBar(
     onBack: () -> Unit,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
-) = CenterAlignedTopAppBar(
-    modifier = modifier,
-    colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = NekkoTheme.colors.background.b0,
-        scrolledContainerColor = NekkoTheme.colors.background.b0,
-    ),
-    title = {
-        Text(
-            "$daysUntilNextCheckIn days to next\ncheck-in",
-            fontSize = 12.sp,
-            lineHeight = 14.sp,
-            fontWeight = FontWeight.Normal,
-            color = NekkoTheme.colors.text.secondary,
-            textAlign = TextAlign.Center,
-        )
-    },
-    navigationIcon = {
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 15.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         IconButton(
             onClick = onBack,
             colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
@@ -59,8 +46,6 @@ fun ContactProfileTopBar(
             )
         }
 
-    },
-    actions = {
         IconButton(
             onClick = onEditClick,
             colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent)
@@ -71,22 +56,14 @@ fun ContactProfileTopBar(
                 tint = NekkoTheme.colors.gray.primary
             )
         }
-    },
-)
+    }
+}
 
 @PreviewLightDark
 @Composable
-private fun PreviewContactProfileTopBar() = NekkoTheme {
-
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .background(NekkoTheme.colors.background.b0),
-    ) {
-        ContactProfileTopBar(
-            daysUntilNextCheckIn = 12,
-            onBack = {},
-            onEditClick = {},
-        )
-    }
+private fun PreviewContactProfileActionBar() {
+    ContactProfileActionBar(
+        onBack = {},
+        onEditClick = {},
+    )
 }

@@ -1,5 +1,6 @@
 package app.usenekko.home.presentation.contactprofile
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -30,7 +31,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.usenekko.home.di.rememberContactProfileViewModel
 import app.usenekko.home.di.rememberEditContactViewModel
 import app.usenekko.home.addcontact.EditContactSheet
+import app.usenekko.home.domain.checkInProgressFraction
 import app.usenekko.theme.NekkoTheme
+import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 
 @Composable
 fun ContactProfileScreen(
@@ -64,70 +69,78 @@ fun ContactProfileScreen(
         modifier = modifier.then(
             if (isSupportingPane) Modifier.padding(horizontal = 8.dp) else Modifier,
         ),
-        topBar = {
-            ContactProfileTopBar(
-                daysUntilNextCheckIn = state.daysUntilNextCheckIn,
-                onBack = onBack,
-                onEditClick = { showEditContact = true },
-                modifier = if (isSupportingPane) Modifier.padding(horizontal = 8.dp) else Modifier,
-            )
-        },
         containerColor = NekkoTheme.colors.background.b0,
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(horizontal = if (isSupportingPane) 16.dp else 24.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .fillMaxSize(),
         ) {
-            if (state.isRefreshing) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(14.dp),
-                        color = NekkoTheme.colors.text.tertiary,
-                        strokeWidth = 1.5.dp,
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = if (isSupportingPane) 16.dp else 24.dp),
+            ) {
+                if (state.isRefreshing) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 52.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            color = NekkoTheme.colors.text.tertiary,
+                            strokeWidth = 1.5.dp,
+                        )
+                    }
+                }
+                if (state.isLoading && state.contact == null) {
+                    ContactProfileLoadingSkeleton(
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                } else {
+                    state.contact?.let { c ->
+                        val today = remember(c.nextCheckInDate, c.checkInFrequency) {
+                            Clock.System.todayIn(TimeZone.currentSystemDefault())
+                        }
+                        ContactProfileHeader(
+                            name = c.name,
+                            avatarColor = c.avatarColor,
+                            frequencyLabel = formatContactFrequencyLabel(c.checkInFrequency),
+                            reminderTime = formatContactReminderTime(c.reminderTime),
+                            isExpanded = state.isRelationshipInfoOpen,
+                            daysUntilNextCheckIn = state.daysUntilNextCheckIn,
+                            ringProgress = c.checkInProgressFraction(today),
+                            onNameClick = {
+                                viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo)
+                            },
+                            onNotificationClick = {
+                                viewModel.onAction(ContactProfileAction.OpenReminderList)
+                            },
+                            onCheckInClick = { viewModel.onAction(ContactProfileAction.CheckIn) },
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    BrainstormCard(
+                        onClick = onBrainstormClick,
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    NotesSection(
+                        notes = state.notes,
+                        onAddNote = { viewModel.onAction(ContactProfileAction.OpenAddNote) },
+                        onDeleteNote = { viewModel.onAction(ContactProfileAction.DeleteNote(it)) },
                     )
                 }
             }
-            if (state.isLoading && state.contact == null) {
-                ContactProfileLoadingSkeleton(
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            } else {
-                state.contact?.let { c ->
-                    ContactProfileHeader(
-                        name = c.name,
-                        avatarColor = c.avatarColor,
-                        frequencyLabel = formatContactFrequencyLabel(c.checkInFrequency),
-                        reminderTime = formatContactReminderTime(c.reminderTime),
-                        isExpanded = state.isRelationshipInfoOpen,
-                        onNameClick = {
-                            viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo)
-                        },
-                        onNotificationClick = {
-                            viewModel.onAction(ContactProfileAction.OpenReminderList)
-                        },
-                        onCheckInClick = { viewModel.onAction(ContactProfileAction.CheckIn) },
-                    )
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                BrainstormCard(
-                    onClick = onBrainstormClick,
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                NotesSection(
-                    notes = state.notes,
-                    onAddNote = { viewModel.onAction(ContactProfileAction.OpenAddNote) },
-                    onDeleteNote = { viewModel.onAction(ContactProfileAction.DeleteNote(it)) },
-                )
-            }
+
+            ContactProfileActionBar(
+                onBack = onBack,
+                onEditClick = { showEditContact = true },
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
     }
 
@@ -153,12 +166,13 @@ fun ContactProfileScreen(
     }
 
     if (state.isAddReminderSheetOpen) {
-        AddReminderSheet(
-            draftTitle = state.reminderDraftTitle,
-            draftDescription = state.reminderDraftDescription,
-            draftRecurrence = state.reminderDraftRecurrence,
-            draftDateEpochMillis = state.reminderDraftDateEpochMillis,
-            isSaving = state.isSavingReminder,
+            AddReminderSheet(
+                draftTitle = state.reminderDraftTitle,
+                draftDescription = state.reminderDraftDescription,
+                draftRecurrence = state.reminderDraftRecurrence,
+                draftDateEpochMillis = state.reminderDraftDateEpochMillis,
+                isSaving = state.isSavingReminder,
+                isEditing = state.editingReminderId != null,
             onDismiss = { viewModel.onAction(ContactProfileAction.CloseAddReminder) },
             onTitleChanged = { viewModel.onAction(ContactProfileAction.ReminderDraftTitleChanged(it)) },
             onDescriptionChanged = {

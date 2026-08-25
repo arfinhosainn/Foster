@@ -41,7 +41,7 @@ fun AccountAvatar(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .offset(y = 16.dp)
-                .size(32.dp)
+                .size(height = 24.dp, width = 36.dp)
                 .clip(CircleShape)
                 .border(2.dp, NekkoTheme.colors.stroke.secondary, CircleShape)
                 .background(NekkoTheme.colors.background.b2)
@@ -52,7 +52,7 @@ fun AccountAvatar(
                 imageVector = vectorResource(Res.drawable.ic_pencil),
                 contentDescription = stringResource(Res.string.cd_edit_profile_picture),
                 tint = NekkoTheme.colors.background.onBackground,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(16.dp),
             )
         }
     }

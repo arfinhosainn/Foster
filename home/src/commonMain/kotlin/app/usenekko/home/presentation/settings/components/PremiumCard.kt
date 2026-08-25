@@ -37,6 +37,8 @@ import nekko.home.generated.resources.ic_crown
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import nekko.home.generated.resources.action_upgrade
+import nekko.home.generated.resources.discountgradient
+import nekko.home.generated.resources.gradientss
 import nekko.home.generated.resources.premium_add_unlimited
 import nekko.home.generated.resources.premium_foster
 import nekko.home.generated.resources.premium_unlimited
@@ -53,7 +55,6 @@ fun PremiumCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 74.dp)
             .clip(cardShape)
             .clickable(
                 role = Role.Button,
@@ -62,7 +63,7 @@ fun PremiumCard(
     ) {
 
         Image(
-            painter = painterResource(Res.drawable.gradients),
+            painter = painterResource(Res.drawable.discountgradient),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.matchParentSize(),
@@ -73,8 +74,8 @@ fun PremiumCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = 24.dp,
-                    vertical = 24.dp,
+                    horizontal = 20.dp,
+                    vertical = 16.dp,
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -87,7 +88,7 @@ fun PremiumCard(
                 ) {
                     Text(
                         text = stringResource(Res.string.premium_foster),
-                        color = Color.White,
+                        color = NekkoTheme.colors.text.primary,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
@@ -113,7 +114,7 @@ fun PremiumCard(
 
                 Text(
                     text = stringResource(Res.string.premium_add_unlimited),
-                    color = Color.White.copy(alpha = 0.52f),
+                    color = NekkoTheme.colors.gray.secondary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -121,7 +122,6 @@ fun PremiumCard(
                 )
             }
 
-            Spacer(Modifier.width(16.dp))
 
             Row(
                 modifier = Modifier

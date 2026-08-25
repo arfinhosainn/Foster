@@ -1,7 +1,7 @@
 package app.usenekko.home.presentation.contactprofile
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,13 +27,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.home.presentation.components.ContactAvatar
@@ -49,32 +58,75 @@ fun ContactProfileHeader(
     frequencyLabel: String,
     reminderTime: String,
     isExpanded: Boolean,
+    daysUntilNextCheckIn: Int,
+    ringProgress: Float,
     onNameClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onCheckInClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val selectionRingBrush = Brush.sweepGradient(
-        listOf(Color(0xFFFFCC33), Color(0xFF34C759), Color(0xFFFFCC33))
-    )
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .border(2.dp, selectionRingBrush, CircleShape)
-                .background(NekkoTheme.colors.fill.secondary),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .height(120.dp),
+            contentAlignment = Alignment.TopCenter,
         ) {
-            ContactAvatar(
-                avatarColor = avatarColor,
-                modifier = Modifier.size(80.dp),
+            CheckInDreamBubble(
+                days = daysUntilNextCheckIn,
+                modifier = Modifier.zIndex(1f), // keep the bubble drawn on top of the avatar
             )
+
+            Box(
+                modifier = Modifier
+                    .offset(y = 50.dp)
+                    .size(82.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                val trackColor = NekkoTheme.colors.fill.tertiary
+                val arcBrush = Brush.sweepGradient(
+                    0f to Color(0xFF34C759),
+                    0.55f to Color(0xFFFFCC33),
+                    1f to Color(0xFF34C759),
+                )
+                Canvas(Modifier.matchParentSize()) {
+                    val stroke = 2.dp.toPx()
+                    val radius = 40.dp.toPx() + stroke / 2f
+                    drawCircle(
+                        color = trackColor,
+                        radius = radius,
+                        style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    )
+                    val progress = ringProgress.coerceIn(0f, 1f)
+                    if (progress > 0f) {
+                        drawArc(
+                            brush = arcBrush,
+                            startAngle = -90f,
+                            sweepAngle = 360f * progress,
+                            useCenter = false,
+                            style = Stroke(width = stroke, cap = StrokeCap.Round),
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(NekkoTheme.colors.fill.secondary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    ContactAvatar(
+                        avatarColor = avatarColor,
+                        modifier = Modifier.size(80.dp),
+                    )
+                }
+            }
         }
-        Spacer(Modifier.width(16.dp))
+
+        Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier
                 .clickable(
@@ -95,7 +147,7 @@ fun ContactProfileHeader(
             Icon(
                 imageVector = vectorResource(Res.drawable.ic_dropdown),
                 contentDescription = if (isExpanded) "Collapse relationship info" else "Expand relationship info",
-                tint = Color(0xFFE24B4A),
+                tint = NekkoTheme.colors.gray.primary,
                 modifier = Modifier.padding(start = 2.dp),
             )
         }
@@ -127,6 +179,60 @@ fun ContactProfileHeader(
     }
 }
 
+@Composable
+private fun CheckInDreamBubble(
+    days: Int,
+    modifier: Modifier = Modifier,
+) {
+    val bubbleShape = RoundedCornerShape(22.dp)
+    val bubbleColor = NekkoTheme.colors.background.b0
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        // Main bubble
+        Box(
+            modifier = Modifier
+                .shadow(0.dp, bubbleShape)
+                .background(bubbleColor, bubbleShape)
+                .widthIn(max = 180.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "$days days to next\ncheck-in",
+                fontSize = 13.sp,
+                lineHeight = 17.sp,
+                fontWeight = FontWeight.Medium,
+                color = NekkoTheme.colors.text.secondary,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        // Two dream-bubble dots: larger near the bubble, smaller near the avatar
+        Box(
+            modifier = Modifier
+                .padding(top = 0.dp)
+                .size(width = 34.dp, height = 20.dp),
+        ) {
+            // Larger dot (attached under the bubble)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(x = (-4).dp, y = (-5).dp)
+                    .size(11.dp)
+                    .shadow(0.dp, CircleShape)
+                    .background(bubbleColor, CircleShape),
+            )
+            // Smaller dot (closer to the profile picture)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(x = (5).dp, y = (-10).dp)
+                    .size(7.dp)
+                    .shadow(0.dp, CircleShape)
+                    .background(bubbleColor, CircleShape),
+            )
+        }
+    }
+}
 
 @Composable
 fun ContactCadenceRow(
@@ -141,7 +247,7 @@ fun ContactCadenceRow(
         Icon(
             imageVector = vectorResource(Res.drawable.ic_reminder), // placeholder — swap for the real icon later
             contentDescription = null,
-            tint = NekkoTheme.colors.text.tertiary,
+            tint = NekkoTheme.colors.gray.primary,
             modifier = Modifier.size(16.dp),
         )
         Text(
@@ -166,6 +272,8 @@ fun PreviewContactProfileHeader() {
                 frequencyLabel = "Bi-weekly",
                 reminderTime = "7:30AM",
                 isExpanded = true,
+                daysUntilNextCheckIn = 12,
+                ringProgress = 0.6f,
                 onNameClick = {},
                 onNotificationClick = {},
                 onCheckInClick = {},

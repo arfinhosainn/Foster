@@ -41,6 +41,7 @@ import nekko.onboarding.generated.resources.action_remove
 import nekko.onboarding.generated.resources.reminder_recurrence_cd
 import nekko.onboarding.generated.resources.reminder_recurrence_label
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun CustomReminderCard(
@@ -62,9 +63,9 @@ fun CustomReminderCard(
     // users discover the hidden delete action, then spring back into place.
     LaunchedEffect(showSwipeHint) {
         if (showSwipeHint) {
-            delay(600)
+            delay(600.milliseconds)
             offset.animateTo(-swipeDistancePx * 0.18f, tween(durationMillis = 350))
-            delay(150)
+            delay(150.milliseconds)
             offset.animateTo(0f, spring(dampingRatio = 0.7f, stiffness = 300f))
             onSwipeHintShown()
         }
