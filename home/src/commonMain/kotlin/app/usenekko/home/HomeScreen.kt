@@ -51,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.semantics.Role
@@ -670,6 +671,11 @@ private fun ContactCheckInRow(
 ) {
     val checkedInToday = contact.isCheckedInToday(today)
     val inFlight = checkedInToday && contact.id in checkingInContactIds
+
+    val avatarRingBrush = Brush.sweepGradient(
+        listOf(Color(0xFFFFCC33), Color(0xFF34C759), Color(0xFFFFCC33)),
+    )
+
     Column {
         Row(
             modifier = Modifier
@@ -682,7 +688,7 @@ private fun ContactCheckInRow(
                 avatarColor = contact.avatarColor,
                 modifier = Modifier
                     .size(56.dp)
-                    .border(1.5.dp, NekkoTheme.colors.stroke.secondary, CircleShape),
+                    .border(1.5.dp, avatarRingBrush, CircleShape),
             )
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {

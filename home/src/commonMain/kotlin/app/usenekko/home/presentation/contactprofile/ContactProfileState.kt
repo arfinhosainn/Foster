@@ -49,6 +49,7 @@ data class ContactProfileState(
     val reminderDraftDescription: String = "",
     val reminderDraftRecurrence: String = "None",
     val reminderDraftDateEpochMillis: Long? = null,
+    val editingReminderId: String? = null,
     val isSavingReminder: Boolean = false,
     val remindersError: String? = null,
     val refreshError: String? = null,

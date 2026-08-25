@@ -30,8 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -249,13 +251,13 @@ private fun NotesEmptyState(
         Image(
             painter = painterResource(
                 if (isSystemInDarkTheme()) {
-                    Res.drawable.ic_flower_night
+                    Res.drawable.ic_flower_light
                 } else {
                     Res.drawable.ic_flower_light
                 },
             ),
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(74.dp),
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
@@ -282,7 +284,8 @@ private fun AddNoteCard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
-            .background(NekkoTheme.colors.fill.quaternary)
+            .background(NekkoTheme.colors.fill.quaternary).shadow(2.dp,
+                RoundedCornerShape(24.dp))
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

@@ -136,7 +136,7 @@ fun AccountBottomSheet(
                     fontSize = 13.sp,
                 )
             }
-            Spacer(Modifier.height(30.dp))
+            Spacer(Modifier.height(32.dp))
 
             Text(
                 text = state.fullName ?: "—",
@@ -145,7 +145,7 @@ fun AccountBottomSheet(
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = state.createdAt?.let { stringResource(Res.string.settings_joined, formatJoinedDate(it)) } ?: "",
                 color = NekkoTheme.colors.text.tertiary,
@@ -153,7 +153,7 @@ fun AccountBottomSheet(
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(Modifier.height(34.dp))
+            Spacer(Modifier.height(24.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -172,7 +172,7 @@ fun AccountBottomSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(1.dp)
+                        .width(0.5.dp)
                         .background(NekkoTheme.colors.stroke.primary),
                 )
                 AccountStat(
@@ -185,7 +185,7 @@ fun AccountBottomSheet(
             }
 
             if (state.badgeSlots.isNotEmpty()) {
-                Spacer(Modifier.height(38.dp))
+                Spacer(Modifier.height(40.dp))
                 AccountBadgeRow(state.badgeSlots)
             }
 

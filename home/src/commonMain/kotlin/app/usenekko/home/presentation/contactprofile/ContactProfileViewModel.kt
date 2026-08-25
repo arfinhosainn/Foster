@@ -179,10 +179,18 @@ class ContactProfileViewModel(
                 _state.value = _state.value.copy(
                     isReminderListSheetOpen = false,
                     isAddReminderSheetOpen = true,
+                    editingReminderId = null,
+                    reminderDraftTitle = "",
+                    reminderDraftDescription = "",
+                    reminderDraftRecurrence = "None",
+                    reminderDraftDateEpochMillis = null,
                 )
             }
             ContactProfileAction.CloseAddReminder -> {
-                _state.value = _state.value.copy(isAddReminderSheetOpen = false)
+                _state.value = _state.value.copy(
+                    isAddReminderSheetOpen = false,
+                    editingReminderId = null,
+                )
             }
             is ContactProfileAction.ReminderDraftTitleChanged -> {
                 _state.value = _state.value.copy(reminderDraftTitle = action.title)
@@ -301,13 +309,24 @@ class ContactProfileViewModel(
 
         viewModelScope.launch {
             _state.value = _state.value.copy(isSavingReminder = true, remindersError = null)
-            val result = contactDataSource.createReminder(
-                contactId = contactId,
-                title = title,
-                description = _state.value.reminderDraftDescription.trim(),
-                recurrence = _state.value.reminderDraftRecurrence,
-                date = _state.value.reminderDraftDateEpochMillis,
-            )
+            val editingId = _state.value.editingReminderId
+            val result = if (editingId != null) {
+                contactDataSource.updateReminder(
+                    reminderId = editingId,
+                    title = title,
+                    description = _state.value.reminderDraftDescription.trim(),
+                    recurrence = _state.value.reminderDraftRecurrence,
+                    date = _state.value.reminderDraftDateEpochMillis,
+                )
+            } else {
+                contactDataSource.createReminder(
+                    contactId = contactId,
+                    title = title,
+                    description = _state.value.reminderDraftDescription.trim(),
+                    recurrence = _state.value.reminderDraftRecurrence,
+                    date = _state.value.reminderDraftDateEpochMillis,
+                )
+            }
 
             when (result) {
                 is Result.Success -> {
@@ -315,6 +334,7 @@ class ContactProfileViewModel(
                         isSavingReminder = false,
                         isAddReminderSheetOpen = false,
                         isReminderListSheetOpen = true,
+                        editingReminderId = null,
                         reminderDraftTitle = "",
                         reminderDraftDescription = "",
                         reminderDraftRecurrence = "none",
@@ -340,6 +360,7 @@ class ContactProfileViewModel(
             reminderDraftDescription = reminder.description,
             reminderDraftRecurrence = reminder.recurrence,
             reminderDraftDateEpochMillis = reminder.dateEpochMillis,
+            editingReminderId = reminder.id,
             isReminderListSheetOpen = false,
             isAddReminderSheetOpen = true,
         )

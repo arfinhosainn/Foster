@@ -391,6 +391,25 @@ class FakeContactDataSource(
         return Result.Success(reminder)
     }
 
+    override suspend fun updateReminder(
+        reminderId: String,
+        title: String,
+        description: String,
+        recurrence: String,
+        date: Long?,
+    ): Result<Reminder, ContactError> {
+        val index = reminders.indexOfFirst { it.id == reminderId }
+        if (index == -1) return Result.Error(ContactError.Unknown("Reminder not found"))
+        val updated = reminders[index].copy(
+            title = title,
+            description = description,
+            recurrence = recurrence,
+            dateEpochMillis = date,
+        )
+        reminders = reminders.toMutableList().also { it[index] = updated }
+        return Result.Success(updated)
+    }
+
     override suspend fun deleteReminder(reminderId: String): Result<Unit, ContactError> {
         deletedReminderIds += reminderId
         deleteReminderError?.let { return Result.Error(it) }

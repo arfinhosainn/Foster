@@ -292,6 +292,8 @@ fun SettingScreen(
                         color = NekkoTheme.colors.text.secondary
                     )
 
+                    Spacer(Modifier.height(34.dp))
+
                 }
 
             }

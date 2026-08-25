@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.isSystemInDarkTheme
 import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.home.domain.Reminder
@@ -61,6 +62,7 @@ import nekko.home.generated.resources.reminders_add
 import nekko.home.generated.resources.reminders_title
 import org.jetbrains.compose.resources.stringResource
 import nekko.home.generated.resources.action_remove
+import nekko.home.generated.resources.ic_magicedit
 import nekko.home.generated.resources.recurrence_none
 import nekko.home.generated.resources.reminders_tap_plus
 
@@ -113,39 +115,39 @@ fun ReminderBottomSheet(
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = 32.dp),
             ) {
-            Text(
-                text = stringResource(Res.string.reminders_title),
-                style = NekkoTheme.typography.heading3Bold,
-                fontWeight = FontWeight.SemiBold,
-                color = NekkoTheme.colors.text.primary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            if (reminders.isEmpty()) {
-                EmptyRemindersContent(onAddReminder = onAddReminder)
-            } else {
-                Column(
+                Text(
+                    text = stringResource(Res.string.reminders_title),
+                    style = NekkoTheme.typography.heading3Bold,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NekkoTheme.colors.text.primary,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    reminders.forEach { reminder ->
-                        SwipeableReminderRow(
-                            reminder = reminder,
-                            onEdit = { onEditReminder(reminder.id) },
-                            onDelete = { onDeleteReminder(reminder.id) },
-                        )
-                    }
-                }
-                Spacer(Modifier.height(24.dp))
-                NekkoActionButton(
-                    leadingIcon = vectorResource(Res.drawable.ic_add),
-                    onClick = onAddReminder,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
-            }
+
+                Spacer(Modifier.height(24.dp))
+
+                if (reminders.isEmpty()) {
+                    EmptyRemindersContent(onAddReminder = onAddReminder)
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        reminders.forEach { reminder ->
+                            SwipeableReminderRow(
+                                reminder = reminder,
+                                onEdit = { onEditReminder(reminder.id) },
+                                onDelete = { onDeleteReminder(reminder.id) },
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(24.dp))
+                    NekkoActionButton(
+                        leadingIcon = vectorResource(Res.drawable.ic_add),
+                        onClick = onAddReminder,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                }
             }
         }
     }
@@ -210,7 +212,7 @@ private fun SwipeableReminderRow(
         ) {
             ReminderActionButton(
                 text = stringResource(Res.string.action_edit),
-                icon = Res.drawable.ic_edit,
+                icon = Res.drawable.ic_magicedit,
                 tint = NekkoTheme.colors.gray.tertiary,
                 backgroundColor = NekkoTheme.colors.fill.quaternary,
                 onClick = {
@@ -223,7 +225,7 @@ private fun SwipeableReminderRow(
                 text = stringResource(Res.string.action_remove),
                 icon = Res.drawable.ic_trashbin,
                 tint = NekkoTheme.colors.red.hover,
-                backgroundColor = NekkoTheme.colors.red.active,
+                backgroundColor = if (isSystemInDarkTheme()) Color(0xFF450A0A) else Color(0xFFFEF2F2),
                 onClick = {
                     scope.launch { offset.animateTo(0f) }
                     onDelete()

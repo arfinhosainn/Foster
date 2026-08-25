@@ -38,7 +38,6 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun BrainstormScreen(
     contactId: String,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberBrainstormViewModel(contactId)
@@ -69,7 +68,7 @@ fun BrainstormScreen(
         )
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            topBar = { BrainstormTopBar(onBack = onBack) },
+            topBar = { BrainstormTopBar() },
             containerColor = NekkoTheme.colors.background.b0.copy(alpha = 0f),
         ) { innerPadding ->
             Column(

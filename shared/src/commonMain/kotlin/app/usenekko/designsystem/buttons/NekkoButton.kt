@@ -28,7 +28,7 @@ fun NekkoButton(
         containerColor = NekkoTheme.colors.background.onBackground,
         contentColor = NekkoTheme.colors.background.b1,
         disabledContainerColor = NekkoTheme.colors.gray.quaternary,
-        disabledContentColor = NekkoTheme.colors.text.quaternary,
+        disabledContentColor = NekkoTheme.colors.background.b0,
     ),
     contentPadding: PaddingValues = PaddingValues(horizontal = 35.dp, vertical = 15.dp),
     textStyle: TextStyle = NekkoTheme.typography.heading3Bold,

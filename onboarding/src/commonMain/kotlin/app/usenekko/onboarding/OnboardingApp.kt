@@ -223,10 +223,9 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                         onBrainstormClick = { navigator.navigate(Screen.Brainstorm(screen.contactId)) },
                     )
 
-                    is Screen.Brainstorm -> BrainstormScreen(
-                        contactId = screen.contactId,
-                        onBack = { navigator.goBack() },
-                    )
+                is Screen.Brainstorm -> BrainstormScreen(
+                    contactId = screen.contactId,
+                )
 
                     is Screen.Settings -> SettingScreen(
                         onBack = { navigator.goBack() },

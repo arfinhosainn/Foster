@@ -5,11 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.DatePicker
@@ -48,6 +47,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
@@ -73,6 +73,7 @@ fun AddReminderSheet(
     draftRecurrence: String,
     draftDateEpochMillis: Long?,
     isSaving: Boolean,
+    isEditing: Boolean,
     onDismiss: () -> Unit,
     onTitleChanged: (String) -> Unit,
     onDescriptionChanged: (String) -> Unit,
@@ -96,12 +97,18 @@ fun AddReminderSheet(
                         datePickerVisible = false
                     }
                 ) {
-                    Text(text = stringResource(Res.string.action_done))
+                    Text(
+                        text = stringResource(Res.string.action_done),
+                        color = NekkoTheme.colors.text.primary,
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { datePickerVisible = false }) {
-                    Text(text = stringResource(Res.string.action_cancel))
+                    Text(
+                        text = stringResource(Res.string.action_cancel),
+                        color = NekkoTheme.colors.text.primary,
+                    )
                 }
             },
             colors = DatePickerDefaults.colors(
@@ -117,12 +124,20 @@ fun AddReminderSheet(
                 selectedYearContainerColor = NekkoTheme.colors.text.primary,
                 dayContentColor = NekkoTheme.colors.text.primary,
                 selectedDayContentColor = NekkoTheme.colors.background.b1,
-                selectedDayContainerColor = NekkoTheme.colors.text.primary,
+                selectedDayContainerColor = NekkoTheme.colors.text.quaternary,
                 todayContentColor = NekkoTheme.colors.text.primary,
                 todayDateBorderColor = NekkoTheme.colors.text.primary,
             ),
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = NekkoTheme.colors.fill.tertiary,
+                    selectedDayContainerColor = Color(0xFF16A34A),
+                    todayContentColor = Color(0xFF16A34A),
+                    todayDateBorderColor = Color(0xFF16A34A),
+                ),
+            )
         }
     }
 
@@ -255,9 +270,16 @@ fun AddReminderSheet(
                 )
 
                 Box {
-                    ReminderPickerPill(
+                    NekkoActionButton(
                         text = draftRecurrence,
+                        trailingIcon = Icons.Default.KeyboardArrowDown,
                         onClick = { recurrenceMenuExpanded = true },
+                        containerColor = NekkoTheme.colors.background.b1,
+                        contentColor = NekkoTheme.colors.text.primary,
+                        iconTint = NekkoTheme.colors.text.primary,
+                        textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+                        modifier = Modifier.height(44.dp).width(86.dp),
                     )
 
                     DropdownMenu(
@@ -299,24 +321,23 @@ fun AddReminderSheet(
                     color = NekkoTheme.colors.text.secondary,
                 )
 
-                ReminderPickerPill(
+                NekkoActionButton(
                     text = formatReminderDate(draftDateEpochMillis),
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            tint = NekkoTheme.colors.text.primary,
-                            modifier = Modifier.size(17.dp),
-                        )
-                    },
+                    trailingIcon = Icons.Default.KeyboardArrowDown,
                     onClick = { datePickerVisible = true },
+                    containerColor = NekkoTheme.colors.background.b1,
+                    contentColor = NekkoTheme.colors.text.primary,
+                    iconTint = NekkoTheme.colors.text.primary,
+                    textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+                    modifier = Modifier.height(44.dp).width(140.dp),
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             NekkoButton(
-                text = stringResource(Res.string.action_save),
+                text = if (isEditing) "Update" else stringResource(Res.string.action_save),
                 onClick = onSave,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = draftTitle.isNotBlank() && !isSaving,
@@ -324,43 +345,5 @@ fun AddReminderSheet(
             )
             }
         }
-    }
-}
-
-@Composable
-private fun ReminderPickerPill(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    leadingIcon: (@Composable () -> Unit)? = null,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .heightIn(min = 40.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(NekkoTheme.colors.fill.secondary)
-            .clickable(onClick = onClick)
-            .padding(start = if (leadingIcon == null) 14.dp else 12.dp, end = 10.dp)
-            .padding(vertical = 9.dp),
-    ) {
-        if (leadingIcon != null) {
-            leadingIcon()
-            Spacer(modifier = Modifier.width(6.dp))
-        }
-
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = NekkoTheme.colors.text.primary,
-        )
-        Spacer(modifier = Modifier.width(4.dp))
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
-            tint = NekkoTheme.colors.text.primary,
-            modifier = Modifier.size(20.dp),
-        )
     }
 }
