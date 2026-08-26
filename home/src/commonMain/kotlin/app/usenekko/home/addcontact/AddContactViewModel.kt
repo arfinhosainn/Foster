@@ -8,8 +8,6 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.GroupMembership
-import app.usenekko.home.domain.initialReminder
-import app.usenekko.home.domain.nextReminder
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.contacts.ImportedContact
 import app.usenekko.shared.paywall.PaywallGateManager
@@ -17,7 +15,6 @@ import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.GateResult
 import app.usenekko.shared.subscription.SubscriptionGates
 import app.usenekko.shared.subscription.SubscriptionRepository
-import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +27,6 @@ import kotlinx.coroutines.launch
 
 class AddContactViewModel(
     private val contactDataSource: ContactDataSource,
-    private val reminderScheduler: ReminderScheduler,
     private val subscriptionRepository: SubscriptionRepository,
     private val homeRepository: HomeRepository? = null,
     private val paywallGateManager: PaywallGateManager? = null,
@@ -279,12 +275,10 @@ class AddContactViewModel(
                     }
 
                     homeRepository?.invalidate()
-                    if (state.editingContactId == null) {
-                        // Schedule the first reminder locally — never server-sent.
-                        scheduleFirstReminder(saved)
-                    } else {
-                        rescheduleReminder(saved)
-                    }
+                    // Notification scheduling is owned by Home's reconciler: the
+                    // invalidate above triggers a repository emission whose
+                    // applySnapshot re-runs the day-digest reconcile with the
+                    // saved contact.
                     _state.update { it.copy(isSubmitting = false) }
                     _events.send(AddContactEvent.Saved)
                 }
@@ -307,25 +301,6 @@ class AddContactViewModel(
         return "$hh:$mm:00"
     }
 
-    private fun scheduleFirstReminder(contact: Contact) {
-        // Brand-new contact: the first reminder fires at the next occurrence of
-        // the picked reminder time (today if not yet passed, else tomorrow), so
-        // a "few minutes from now" test fires the same day. Follow-up reminders
-        // drive off next_check_in_date after the first real check-in.
-        val now = Clock.System.now().toEpochMilliseconds()
-        viewModelScope.launch {
-            if (!reminderScheduler.isEnabled()) return@launch
-            reminderScheduler.cancel(contact.id)
-            contact.initialReminder(now)?.let { reminder ->
-                reminderScheduler.schedule(
-                    reminder.contactId,
-                    reminder.contactName,
-                    reminder.fireAtEpochMillis,
-                )
-            }
-        }
-    }
-
     private suspend fun syncGroupMembership(
         contactId: String,
         selectedGroupId: String?,
@@ -341,21 +316,6 @@ class AddContactViewModel(
             previousGroupId != null && selectedGroupId != null ->
                 contactDataSource.moveContactToGroup(contactId, previousGroupId, selectedGroupId)
             else -> null
-        }
-    }
-
-    private fun rescheduleReminder(contact: Contact) {
-        val now = Clock.System.now().toEpochMilliseconds()
-        viewModelScope.launch {
-            if (!reminderScheduler.isEnabled()) return@launch
-            reminderScheduler.cancel(contact.id)
-            (contact.nextReminder(now) ?: contact.initialReminder(now))?.let { reminder ->
-                reminderScheduler.schedule(
-                    reminder.contactId,
-                    reminder.contactName,
-                    reminder.fireAtEpochMillis,
-                )
-            }
         }
     }
 

@@ -152,7 +152,6 @@ class AddContactViewModelTest {
 
             val viewModel = AddContactViewModel(
                 contactDataSource = dataSource,
-                reminderScheduler = ReminderScheduler(),
                 subscriptionRepository = FakeSubscriptionRepository(),
                 homeRepository = repository,
                 editingContact = existing,
@@ -235,7 +234,6 @@ class AddContactViewModelTest {
         repository: InMemoryHomeRepository,
     ) = AddContactViewModel(
         contactDataSource = dataSource,
-        reminderScheduler = ReminderScheduler(),
         subscriptionRepository = FakeSubscriptionRepository(),
         homeRepository = repository,
     )

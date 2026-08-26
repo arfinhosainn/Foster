@@ -13,10 +13,9 @@ kotlin {
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "Home"
-            isStatic = true
-        }
+        // No iOS framework here: the app links a SINGLE Kotlin framework
+        // (:onboarding) which exports this module. Multiple static Kotlin
+        // frameworks duplicate the Kotlin runtime and crash on launch.
     }
 
     android {

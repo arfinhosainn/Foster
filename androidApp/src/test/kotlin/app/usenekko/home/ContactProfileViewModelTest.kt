@@ -5,7 +5,6 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.presentation.contactprofile.ContactProfileAction
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
 import app.usenekko.shared.domain.AccountProfile
-import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,7 +55,7 @@ class ContactProfileViewModelTest {
             val dataSource = FakeContactDataSource(
                 contacts = listOf(contact(next = today.plus(DatePeriod(days = 5)).toString())),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             assertEquals(5, viewModel.state.value.daysUntilNextCheckIn)
@@ -72,7 +71,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             assertEquals(0, viewModel.state.value.daysUntilNextCheckIn)
@@ -99,7 +98,6 @@ class ContactProfileViewModelTest {
             val viewModel = ContactProfileViewModel(
                 "c1",
                 dataSource,
-                ReminderScheduler(),
                 profileDataSource,
             )
             advanceUntilIdle()
@@ -127,7 +125,6 @@ class ContactProfileViewModelTest {
             val viewModel = ContactProfileViewModel(
                 "c1",
                 dataSource,
-                ReminderScheduler(),
                 contactProfileRepository = repository,
             )
             advanceUntilIdle()
@@ -145,7 +142,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isRelationshipInfoOpen)
@@ -164,7 +161,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.CheckIn)
@@ -190,7 +187,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.CheckIn)
@@ -216,7 +213,7 @@ class ContactProfileViewModelTest {
             val dataSource = FakeContactDataSource(
                 contacts = listOf(contact(next = today.plus(DatePeriod(days = 7)).toString())),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.CheckIn)
@@ -235,7 +232,7 @@ class ContactProfileViewModelTest {
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
             dataSource.checkInGate = CompletableDeferred()
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.CheckIn)
@@ -259,7 +256,7 @@ class ContactProfileViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = emptyList())
-            val viewModel = ContactProfileViewModel("ghost", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("ghost", dataSource)
             advanceUntilIdle()
 
             assertEquals(false, viewModel.state.value.isLoading)

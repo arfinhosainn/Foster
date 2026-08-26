@@ -136,6 +136,7 @@ class FakeContactDataSource(
         val description: String,
         val recurrence: String,
         val date: Long?,
+        val timeOfDay: String? = null,
     )
 
     val logCheckInCalls = mutableListOf<LogCheckInCall>()
@@ -370,14 +371,20 @@ class FakeContactDataSource(
         return Result.Success(reminders.filter { it.contactId == contactId })
     }
 
+    override suspend fun getAllCustomReminders(): Result<List<Reminder>, ContactError> {
+        remindersError?.let { return Result.Error(it) }
+        return Result.Success(reminders)
+    }
+
     override suspend fun createReminder(
         contactId: String,
         title: String,
         description: String,
         recurrence: String,
         date: Long?,
+        timeOfDay: String?,
     ): Result<Reminder, ContactError> {
-        createReminderCalls += CreateReminderCall(contactId, title, description, recurrence, date)
+        createReminderCalls += CreateReminderCall(contactId, title, description, recurrence, date, timeOfDay)
         createReminderError?.let { return Result.Error(it) }
         val reminder = Reminder(
             id = "r${reminders.size + 1}",
@@ -386,6 +393,7 @@ class FakeContactDataSource(
             description = description,
             recurrence = recurrence,
             dateEpochMillis = date,
+            timeOfDay = timeOfDay,
         )
         reminders = reminders + reminder
         return Result.Success(reminder)
@@ -397,6 +405,7 @@ class FakeContactDataSource(
         description: String,
         recurrence: String,
         date: Long?,
+        timeOfDay: String?,
     ): Result<Reminder, ContactError> {
         val index = reminders.indexOfFirst { it.id == reminderId }
         if (index == -1) return Result.Error(ContactError.Unknown("Reminder not found"))
@@ -405,6 +414,7 @@ class FakeContactDataSource(
             description = description,
             recurrence = recurrence,
             dateEpochMillis = date,
+            timeOfDay = timeOfDay,
         )
         reminders = reminders.toMutableList().also { it[index] = updated }
         return Result.Success(updated)

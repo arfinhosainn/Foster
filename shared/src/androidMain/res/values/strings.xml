@@ -7,4 +7,21 @@
     <string name="notif_contact_fallback">your contact</string>
     <string name="notif_channel_name">Check-in reminders</string>
     <string name="notif_channel_description">Reminders when it\'s time to check in with a contact</string>
+
+    <!-- Grouped day digest (2+ items due the same day). -->
+    <plurals name="notif_digest_title">
+        <item quantity="one">%1$d person to check in with today</item>
+        <item quantity="other">%1$d people to check in with today</item>
+    </plurals>
+    <string name="notif_digest_body">Starting with %1$s, plus %2$d more</string>
+
+    <!-- Standalone custom reminder notifications. -->
+    <string name="notif_custom_reminder_title">%1$s</string>
+    <string name="notif_custom_reminder_body">Reminder from Nekko</string>
+
+    <!-- Per-category channels. -->
+    <string name="notif_channel_custom_reminders">Custom reminders</string>
+    <string name="notif_channel_custom_reminders_description">Your saved reminders for specific dates</string>
+    <string name="notif_channel_missed_check_ins">Missed check-ins</string>
+    <string name="notif_channel_missed_check_ins_description">Nudges about check-ins you missed</string>
 </resources>

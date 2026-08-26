@@ -5,7 +5,6 @@ import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Note
 import app.usenekko.home.presentation.contactprofile.ContactProfileAction
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
-import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -52,7 +51,7 @@ class ContactProfileNotesViewModelTest {
                 contacts = listOf(contact()),
                 notes = listOf(note("n1"), note("n2")),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             assertEquals(listOf("n1", "n2"), viewModel.state.value.notes.map { it.id })
@@ -71,7 +70,7 @@ class ContactProfileNotesViewModelTest {
                 contacts = listOf(contact()),
                 notes = listOf(note("n1", "c1"), note("n2", "other")),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             assertEquals(listOf("n1"), viewModel.state.value.notes.map { it.id })
@@ -86,7 +85,7 @@ class ContactProfileNotesViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.OpenAddNote)
@@ -119,7 +118,7 @@ class ContactProfileNotesViewModelTest {
                 contacts = listOf(contact()),
                 notes = listOf(note("n1"), note("n2")),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.DeleteNote("n1"))
@@ -142,7 +141,7 @@ class ContactProfileNotesViewModelTest {
                 notes = listOf(note("n1")),
             )
             dataSource.deleteNoteError = ContactError.Network
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.DeleteNote("n1"))
@@ -162,7 +161,7 @@ class ContactProfileNotesViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.OpenAddNote)
@@ -184,7 +183,7 @@ class ContactProfileNotesViewModelTest {
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
             dataSource.notesError = ContactError.Unknown("boom")
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             assertTrue(viewModel.state.value.notes.isEmpty())
@@ -201,7 +200,7 @@ class ContactProfileNotesViewModelTest {
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
             dataSource.createNoteError = ContactError.Network
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.OpenAddNote)
@@ -226,7 +225,7 @@ class ContactProfileNotesViewModelTest {
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
             dataSource.createNoteGate = CompletableDeferred()
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.OpenAddNote)

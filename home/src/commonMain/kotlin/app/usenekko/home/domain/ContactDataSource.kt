@@ -66,12 +66,14 @@ interface ContactDataSource {
     ): Result<Note, ContactError>
     suspend fun deleteNote(noteId: String): Result<Unit, ContactError>
     suspend fun getReminders(contactId: String): Result<List<Reminder>, ContactError>
+    suspend fun getAllCustomReminders(): Result<List<Reminder>, ContactError>
     suspend fun createReminder(
         contactId: String,
         title: String,
         description: String,
         recurrence: String,
         date: Long?,
+        timeOfDay: String? = null,
     ): Result<Reminder, ContactError>
     suspend fun updateReminder(
         reminderId: String,
@@ -79,6 +81,7 @@ interface ContactDataSource {
         description: String,
         recurrence: String,
         date: Long?,
+        timeOfDay: String? = null,
     ): Result<Reminder, ContactError>
     suspend fun deleteReminder(reminderId: String): Result<Unit, ContactError>
     suspend fun getBadges(): Result<List<Badge>, ContactError>

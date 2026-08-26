@@ -116,6 +116,7 @@
     <string name="reminder_occasions_hint">Cumpleaños, aniversarios, etc.</string>
     <string name="reminder_description_label">Descripción</string>
     <string name="reminder_date_label">Fecha</string>
+    <string name="reminder_time_label">Hora</string>
     <string name="profile_next_checkin">Próximo check-in: %1$s</string>
     <string name="profile_updated_now">Actualizado hace un momento</string>
     <string name="cd_checkin_growth">Crecimiento de check-ins</string>

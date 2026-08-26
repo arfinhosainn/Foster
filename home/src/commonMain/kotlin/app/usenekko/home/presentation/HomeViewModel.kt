@@ -12,13 +12,16 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.data.AccountRepository
 import app.usenekko.home.domain.GroupMembership
-import app.usenekko.home.domain.computeReminderPlans
+import app.usenekko.home.domain.NotificationReconciler
+import app.usenekko.home.domain.Reminder
+import app.usenekko.home.domain.buildDuePlan
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.isCheckedInToday
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
 import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.home.presentation.components.resolveInitialCountdownStartDate
 import app.usenekko.shared.domain.Result
+import app.usenekko.shared.notifications.ReconcileSource
 import app.usenekko.shared.notifications.ReminderScheduler
 import app.usenekko.shared.paywall.PaywallGateManager
 import kotlin.time.Clock
@@ -43,6 +46,8 @@ class HomeViewModel(
 
     private var allContacts: List<Contact> = emptyList()
     private var memberships: List<GroupMembership> = emptyList()
+    private var customReminders: List<Reminder> = emptyList()
+    private val notificationReconciler = NotificationReconciler(reminderScheduler)
     private val homeRepository: HomeRepository
     private var hasLoadedRepository = false
 
@@ -100,6 +105,7 @@ class HomeViewModel(
             )
         }
         memberships = snapshot.memberships
+        customReminders = snapshot.customReminders
 
         val localToday = today()
         val checkedInTodayContactIds = snapshot.recentCheckIns.contactIdsCheckedInOn(localToday) +
@@ -128,7 +134,7 @@ class HomeViewModel(
             error = null,
         )
         recomputeCounts(allContacts, effectiveGroupId, memberships, checkedInTodayContactIds)
-        reconcileReminders(allContacts)
+        reconcileReminders()
     }
 
     fun onGroupSelected(groupId: String?) {
@@ -290,27 +296,26 @@ class HomeViewModel(
     private fun today() = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
     /**
-     * App-launch / data-change reconciliation: cancel every contact's alarm, then
-     * re-schedule from the current DB state. This keeps things simple and idempotent —
-     * calling it again never duplicates notifications because we first cancel all.
-     *
-     * A brand-new contact has `next_check_in_date` still null (Home's "null =
-     * outstanding" split depends on that), so it falls back to its initial reminder
-     * (created + one cadence). Without this, reconciliation would cancel the
-     * creation-time alarm and never re-schedule it — a fresh contact's first
-     * reminder would never fire.
-     *
-     * iOS only allows 64 pending notifications; [takeSoonest] keeps the soonest
-     * [app.usenekko.shared.notifications.MaxPendingReminders] by fire time.
+     * App-launch / data-change reconciliation: rebuild the full due plan from
+     * current data and apply it through [NotificationReconciler], which owns
+     * the day-digest grouping, delivered-day idempotency, and cancel/schedule
+     * operations. Calling it repeatedly never duplicates notifications.
      */
-    private fun reconcileReminders(contacts: List<Contact>) {
+    private fun reconcileReminders() {
         viewModelScope.launch {
             if (!reminderScheduler.isEnabled()) return@launch
             val now = Clock.System.now().toEpochMilliseconds()
-            val plans = contacts.computeReminderPlans(now)
-            // Cancel all first (a contact leaving the planned set must drop its alarm).
-            contacts.forEach { reminderScheduler.cancel(it.id) }
-            plans.forEach { reminderScheduler.schedule(it.contactId, it.contactName, it.fireAtEpochMillis) }
+            val localToday = today()
+            val checkedInToday = _state.value.checkIns.contactIdsCheckedInOn(localToday) +
+                allContacts.filter { it.isCheckedInToday(localToday) }.map { it.id }
+            val duePlan = buildDuePlan(
+                contacts = allContacts,
+                customReminders = customReminders,
+                today = localToday,
+                nowEpochMillis = now,
+                checkedInTodayContactIds = checkedInToday,
+            )
+            notificationReconciler.reconcile(duePlan, now, ReconcileSource.FOREGROUND)
         }
     }
 }

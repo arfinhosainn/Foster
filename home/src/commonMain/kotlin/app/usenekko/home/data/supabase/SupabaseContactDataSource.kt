@@ -122,6 +122,7 @@ private data class ReminderDto(
     val description: String = "",
     val recurrence: String = "none",
     @SerialName("date_epoch_millis") val dateEpochMillis: Long? = null,
+    @SerialName("time_of_day") val timeOfDay: String? = null,
 ) {
     fun toDomain() = Reminder(
         id = id,
@@ -130,6 +131,7 @@ private data class ReminderDto(
         description = description,
         recurrence = recurrence,
         dateEpochMillis = dateEpochMillis,
+        timeOfDay = timeOfDay,
     )
 }
 
@@ -607,8 +609,29 @@ class SupabaseContactDataSource(
 
             val reminders = client.postgrest
                 .from("custom_reminders")
-                .select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis")) {
+                .select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis", "time_of_day")) {
                     filter { eq("contact_id", contactId) }
+                    filter { eq("owner_id", userId) }
+                    order("created_at", Order.DESCENDING)
+                }
+                .decodeList<ReminderDto>()
+                .map { it.toDomain() }
+
+            Result.Success(reminders)
+        } catch (e: Exception) {
+            Result.Error(mapError(e))
+        }
+    }
+
+    override suspend fun getAllCustomReminders(): Result<List<Reminder>, ContactError> {
+        return try {
+            val session = client.auth.currentSessionOrNull()
+                ?: return Result.Error(ContactError.NotAuthenticated)
+            val userId = session.user?.id ?: return Result.Error(ContactError.NotAuthenticated)
+
+            val reminders = client.postgrest
+                .from("custom_reminders")
+                .select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis", "time_of_day")) {
                     filter { eq("owner_id", userId) }
                     order("created_at", Order.DESCENDING)
                 }
@@ -627,6 +650,7 @@ class SupabaseContactDataSource(
         description: String,
         recurrence: String,
         date: Long?,
+        timeOfDay: String?,
     ): Result<Reminder, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()
@@ -640,11 +664,12 @@ class SupabaseContactDataSource(
                 put("description", description)
                 put("recurrence", recurrence)
                 put("date_epoch_millis", date?.let { JsonPrimitive(it) } ?: JsonNull)
+                put("time_of_day", timeOfDay)
             }
 
             val inserted = client.postgrest
                 .from("custom_reminders")
-                .insert(body) { select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis")) }
+                .insert(body) { select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis", "time_of_day")) }
                 .decodeSingle<ReminderDto>()
 
             Result.Success(inserted.toDomain())
@@ -659,6 +684,7 @@ class SupabaseContactDataSource(
         description: String,
         recurrence: String,
         date: Long?,
+        timeOfDay: String?,
     ): Result<Reminder, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()
@@ -670,6 +696,7 @@ class SupabaseContactDataSource(
                 put("description", description)
                 put("recurrence", recurrence)
                 put("date_epoch_millis", date?.let { JsonPrimitive(it) } ?: JsonNull)
+                put("time_of_day", timeOfDay)
             }
 
             val updated = client.postgrest
@@ -677,7 +704,7 @@ class SupabaseContactDataSource(
                 .update(body) {
                     filter { eq("id", reminderId) }
                     filter { eq("owner_id", userId) }
-                    select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis"))
+                    select(Columns.list("id", "contact_id", "owner_id", "title", "description", "recurrence", "date_epoch_millis", "time_of_day"))
                 }
                 .decodeSingle<ReminderDto>()
 

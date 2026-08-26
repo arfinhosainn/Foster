@@ -62,6 +62,7 @@ private fun screenTransitionStyle(screen: Screen): ScreenTransitionStyle {
         Screen.Paywall,
         Screen.DiscountPaywall,
         Screen.Account,
-        Screen.GroupSettings -> ScreenTransitionStyle.Vertical
+        Screen.GroupSettings,
+        is Screen.DayAgenda -> ScreenTransitionStyle.Vertical
     }
 }

@@ -171,6 +171,7 @@ fun ContactProfileScreen(
                 draftDescription = state.reminderDraftDescription,
                 draftRecurrence = state.reminderDraftRecurrence,
                 draftDateEpochMillis = state.reminderDraftDateEpochMillis,
+                draftTimeOfDay = state.reminderDraftTimeOfDay,
                 isSaving = state.isSavingReminder,
                 isEditing = state.editingReminderId != null,
             onDismiss = { viewModel.onAction(ContactProfileAction.CloseAddReminder) },
@@ -183,6 +184,9 @@ fun ContactProfileScreen(
             },
             onDateChanged = {
                 viewModel.onAction(ContactProfileAction.ReminderDraftDateChanged(it))
+            },
+            onTimeChanged = {
+                viewModel.onAction(ContactProfileAction.ReminderDraftTimeChanged(it))
             },
             onSave = { viewModel.onAction(ContactProfileAction.SaveReminder) },
         )

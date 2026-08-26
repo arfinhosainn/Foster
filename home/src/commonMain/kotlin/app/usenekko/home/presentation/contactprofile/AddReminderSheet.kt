@@ -19,7 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -50,6 +53,8 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.adaptive.AdaptiveSurface
+import app.usenekko.home.domain.CUSTOM_REMINDER_HOUR
+import app.usenekko.home.domain.parseTimeOfDay
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_close
@@ -63,6 +68,7 @@ import nekko.home.generated.resources.reminder_date_label
 import nekko.home.generated.resources.reminder_description_label
 import nekko.home.generated.resources.reminder_occasions_hint
 import nekko.home.generated.resources.reminder_recurrence_cd
+import nekko.home.generated.resources.reminder_time_label
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,6 +78,7 @@ fun AddReminderSheet(
     draftDescription: String,
     draftRecurrence: String,
     draftDateEpochMillis: Long?,
+    draftTimeOfDay: String? = null,
     isSaving: Boolean,
     isEditing: Boolean,
     onDismiss: () -> Unit,
@@ -79,13 +86,45 @@ fun AddReminderSheet(
     onDescriptionChanged: (String) -> Unit,
     onRecurrenceChanged: (String) -> Unit,
     onDateChanged: (Long?) -> Unit,
+    onTimeChanged: (String?) -> Unit = {},
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var recurrenceMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var datePickerVisible by rememberSaveable { mutableStateOf(false) }
+    var timePickerVisible by rememberSaveable { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = draftDateEpochMillis)
+
+    if (timePickerVisible) {
+        val initial = parseTimeOfDay(draftTimeOfDay)
+        val timeState = rememberTimePickerState(
+            initialHour = initial?.first ?: CUSTOM_REMINDER_HOUR,
+            initialMinute = initial?.second ?: 0,
+            is24Hour = true,
+        )
+        AlertDialog(
+            onDismissRequest = { timePickerVisible = false },
+            containerColor = NekkoTheme.colors.background.b1,
+            confirmButton = {
+                TextButton(onClick = {
+                    // CommonMain-safe zero-padded "HH:mm"
+                    val h = timeState.hour.toString().padStart(2, '0')
+                    val m = timeState.minute.toString().padStart(2, '0')
+                    onTimeChanged("$h:$m")
+                    timePickerVisible = false
+                }) {
+                    Text(text = stringResource(Res.string.action_done), color = NekkoTheme.colors.text.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { timePickerVisible = false }) {
+                    Text(text = stringResource(Res.string.action_cancel), color = NekkoTheme.colors.text.primary)
+                }
+            },
+            text = { TimePicker(state = timeState) },
+        )
+    }
 
     if (datePickerVisible) {
         DatePickerDialog(
@@ -334,6 +373,32 @@ fun AddReminderSheet(
                 )
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.reminder_time_label),
+                    fontSize = 18.sp,
+                    color = NekkoTheme.colors.text.secondary,
+                )
+
+                NekkoActionButton(
+                    text = formatReminderTime(draftTimeOfDay),
+                    trailingIcon = Icons.Default.KeyboardArrowDown,
+                    onClick = { timePickerVisible = true },
+                    containerColor = NekkoTheme.colors.background.b1,
+                    contentColor = NekkoTheme.colors.text.primary,
+                    iconTint = NekkoTheme.colors.text.primary,
+                    textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+                    modifier = Modifier.height(44.dp).width(140.dp),
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             NekkoButton(
@@ -346,4 +411,11 @@ fun AddReminderSheet(
             }
         }
     }
+}
+
+/** Shows the effective fire time: stored "HH:mm", or the fallback hour when null. */
+private fun formatReminderTime(timeOfDay: String?): String {
+    val (h, m) = parseTimeOfDay(timeOfDay)
+        ?: return CUSTOM_REMINDER_HOUR.toString().padStart(2, '0') + ":00"
+    return h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0')
 }
