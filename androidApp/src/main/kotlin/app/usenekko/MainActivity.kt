@@ -6,11 +6,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import app.usenekko.navigation.Screen
 import app.usenekko.navigation.rememberNavigator
 import app.usenekko.onboarding.OnboardingApp
 import app.usenekko.onboarding.data.supabase.createAppSupabaseClient
 import io.github.jan.supabase.auth.handleDeeplinks
+import app.usenekko.shared.notifications.NotificationTapExtras
+import app.usenekko.shared.notifications.NotificationTapRouter
+import app.usenekko.shared.notifications.NotificationTarget
 import app.usenekko.shared.notifications.ReminderScheduler
 import app.usenekko.shared.subscription.initRevenueCat
 
@@ -24,6 +30,7 @@ class MainActivity : ComponentActivity() {
 
         ReminderScheduler.init(applicationContext)
         initRevenueCat()
+        routeNotificationTap(intent)
 
         setContent {
             val navigator = rememberNavigator(startDestination = Screen.Splash)
@@ -31,6 +38,22 @@ class MainActivity : ComponentActivity() {
                 navigator.goBack()
             }
             OnboardingApp(navigator, supabaseClient)
+
+            // Notification tap routing — buffered so cold-start taps (extras
+            // arriving before the nav graph/auth routing is ready) replay once
+            // a real screen is up.
+            val pendingTap by NotificationTapRouter.pending.collectAsState()
+            LaunchedEffect(pendingTap, navigator.currentScreen) {
+                val target = pendingTap ?: return@LaunchedEffect
+                if (navigator.currentScreen is Screen.Splash) return@LaunchedEffect
+                NotificationTapRouter.consume()
+                val dayKey = target.dayKey
+                val contactId = target.contactId
+                when {
+                    dayKey != null -> navigator.navigate(Screen.DayAgenda(dayKey))
+                    contactId != null -> navigator.navigate(Screen.ContactProfile(contactId))
+                }
+            }
         }
     }
 
@@ -38,5 +61,19 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         supabaseClient.handleDeeplinks(intent)
+        routeNotificationTap(intent)
+    }
+
+    private fun routeNotificationTap(intent: Intent?) {
+        val extras = intent?.extras ?: return
+        val dayKey = if (extras.containsKey(NotificationTapExtras.EXTRA_OPEN_DAY_KEY)) {
+            extras.getLong(NotificationTapExtras.EXTRA_OPEN_DAY_KEY)
+        } else {
+            null
+        }
+        val contactId = extras.getString(NotificationTapExtras.EXTRA_OPEN_CONTACT_ID)
+        if (dayKey != null || contactId != null) {
+            NotificationTapRouter.post(NotificationTarget(dayKey = dayKey, contactId = contactId))
+        }
     }
 }

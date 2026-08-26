@@ -12,11 +12,10 @@ kotlin {
     listOf(
         iosArm64(),
         iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "Shared"
-            isStatic = true
-        }
+    ).forEach { _ ->
+        // No iOS framework here: the app links a SINGLE Kotlin framework
+        // (:onboarding) which exports this module. Multiple static Kotlin
+        // frameworks duplicate the Kotlin runtime and crash on launch.
     }
     
     android {
@@ -61,6 +60,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
             // RevenueCat KMP SDK — app-wide subscription / entitlement management.
             implementation(libs.purchases.core)
         }

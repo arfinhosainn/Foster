@@ -63,4 +63,8 @@ sealed class Screen {
 
     @Serializable
     data object DiscountPaywall : Screen()
+
+    /** Grouped day view opened from a digest notification tap. */
+    @Serializable
+    data class DayAgenda(val dayKey: Long) : Screen()
 }

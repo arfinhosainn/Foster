@@ -7,7 +7,6 @@ import app.usenekko.home.di.addContactViewModelFactory
 import app.usenekko.home.domain.CheckIn
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
-import app.usenekko.shared.notifications.ReminderScheduler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -25,7 +24,6 @@ class ViewModelRotationRetentionTest {
         val store = ViewModelStore()
         val factory = addContactViewModelFactory(
             contactDataSource = dataSource,
-            reminderScheduler = ReminderScheduler(),
             subscriptionRepository = FakeSubscriptionRepository(),
         )
 

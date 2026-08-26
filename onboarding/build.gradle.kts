@@ -16,6 +16,12 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "Onboarding"
             isStatic = true
+            // Single iOS entry-point framework: re-export shared+home so all
+            // Kotlin APIs surface through ONE module. Linking multiple static
+            // Kotlin frameworks into the app embeds the runtime twice and
+            // crashes at launch (KT-42254 "runtime injected twice").
+            export(project(":shared"))
+            export(project(":home"))
         }
     }
 
@@ -41,8 +47,9 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
-            implementation(project(":shared"))
-            implementation(project(":home"))
+            // api() so they can be exported into the iOS framework.
+            api(project(":shared"))
+            api(project(":home"))
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)

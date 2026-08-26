@@ -1,0 +1,10 @@
+/* Español (neutro LATAM) — mismo orden de claves que en.lproj. */
+
+"notif_checkin_title" = "Haz check-in con %@";
+"notif_checkin_body" = "Es hora de preguntar cómo está %@";
+"notif_contact_fallback" = "tu contacto";
+"notif_digest_title_one" = "%d persona para hacer check-in hoy";
+"notif_digest_title_other" = "%d personas para hacer check-in hoy";
+"notif_digest_body" = "Empezando con %1$@, más %2$ld más";
+"notif_custom_reminder_title" = "%@";
+"notif_custom_reminder_body" = "Recordatorio de Nekko";

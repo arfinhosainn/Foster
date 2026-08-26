@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.Dispatchers
@@ -14,50 +13,103 @@ import kotlinx.coroutines.withContext
  * Android actual. The application context is supplied once at app start via
  * [ReminderScheduler.init]; before that (or if it was never called) all
  * operations are harmless no-ops.
+ *
+ * Alarms use `setExactAndAllowWhileIdle` (fires during Doze). The
+ * `USE_EXACT_ALARM` permission (Android 13+) is granted by default for
+ * reminder-centric apps; `SCHEDULE_EXACT_ALARM` remains the fallback grant on
+ * older targets, and an inexact alarm is the final fallback so scheduling
+ * never crashes.
  */
-actual class ReminderScheduler {
-    actual suspend fun schedule(
-        contactId: String,
-        contactName: String,
+actual class ReminderScheduler : NotificationSchedulingOps {
+    override suspend fun scheduleDay(plan: DayPlan) {
+        scheduleAlarm(
+            requestCode = plan.dayKey.hashCode(),
+            fireAtEpochMillis = plan.fireAtEpochMillis,
+            buildIntent = { intent ->
+                intent.putExtra(EXTRA_DAY_KEY, plan.dayKey)
+                intent.putExtra(EXTRA_ITEM_COUNT, plan.itemCount)
+                intent.putExtra(EXTRA_HEADLINE, plan.headline)
+                intent.putExtra(EXTRA_CATEGORY, plan.category)
+                plan.singleTargetId?.let { intent.putExtra(EXTRA_TARGET_ID, it) }
+                intent.putExtra(EXTRA_TARGET_IS_CONTACT, plan.singleIsContact)
+            },
+        )
+    }
+
+    override suspend fun scheduleStandalone(plan: StandalonePlan) {
+        scheduleAlarm(
+            requestCode = plan.key.hashCode(),
+            fireAtEpochMillis = plan.fireAtEpochMillis,
+            buildIntent = { intent ->
+                intent.putExtra(EXTRA_STANDALONE_KEY, plan.key)
+                intent.putExtra(EXTRA_TITLE, plan.title)
+                intent.putExtra(EXTRA_CATEGORY, plan.category)
+                plan.targetId?.let { intent.putExtra(EXTRA_TARGET_ID, it) }
+                intent.putExtra(EXTRA_TARGET_IS_CONTACT, plan.targetIsContact)
+            },
+        )
+    }
+
+    private suspend fun scheduleAlarm(
+        requestCode: Int,
         fireAtEpochMillis: Long,
+        buildIntent: (Intent) -> Unit,
     ) {
         val context = ReminderScheduler.appContext ?: return
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
         withContext(Dispatchers.Main) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val triggerAt = fireAtEpochMillis
-
-            if (triggerAt <= System.currentTimeMillis()) {
-                // In the past — nothing to schedule.
+            if (fireAtEpochMillis <= System.currentTimeMillis()) {
+                // In the past — nothing to schedule. Elapsed-day policy (catch-up
+                // or rollover) is decided by the reconciler, never here.
                 return@withContext
             }
+
+            val intent = Intent(context, CheckInReminderReceiver::class.java)
+            buildIntent(intent)
+
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
-                    triggerAt,
-                    pendingIntent(context, contactId, contactName),
+                    fireAtEpochMillis,
+                    pendingIntent,
                 )
             } else {
-                // SCHEDULE_EXACT_ALARM denied — fall back to an inexact alarm rather
-                // than crashing. Timing will drift slightly; exactness is best-effort.
+                // Exact alarms unavailable — fall back to inexact rather than
+                // crashing. Timing drifts slightly; delivery is best-effort.
                 alarmManager.setAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
-                    triggerAt,
-                    pendingIntent(context, contactId, contactName),
+                    fireAtEpochMillis,
+                    pendingIntent,
                 )
             }
         }
     }
 
-    actual suspend fun cancel(contactId: String) {
+    override suspend fun cancelDay(dayKey: Long) {
         val context = ReminderScheduler.appContext ?: return
         withContext(Dispatchers.Main) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            alarmManager.cancel(pendingIntent(context, contactId, contactName = null))
-            // Drop any already-delivered notification for this contact too.
-            NotificationManagerCompat.from(context).cancel(contactId.hashCode())
+            alarmPendingIntent(context, dayKey.hashCode())?.let { alarmManager.cancel(it) }
+            // Drop any already-delivered digest for this day too.
+            NotificationManagerCompat.from(context).cancel(dayKey.hashCode())
+        }
+    }
+
+    override suspend fun cancelStandalone(key: String) {
+        val context = ReminderScheduler.appContext ?: return
+        withContext(Dispatchers.Main) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            standalonePendingIntent(context, key)?.let { alarmManager.cancel(it) }
+            NotificationManagerCompat.from(context).cancel(key.hashCode())
         }
     }
 
@@ -77,22 +129,26 @@ actual class ReminderScheduler {
         }
     }
 
-    private fun pendingIntent(
-        context: Context,
-        contactId: String,
-        contactName: String?,
-    ): PendingIntent {
-        val intent = Intent(context, CheckInReminderReceiver::class.java).apply {
-            putExtra(EXTRA_CONTACT_ID, contactId)
-            putExtra(EXTRA_CONTACT_NAME, contactName)
-        }
-        // contactId (a UUID string) is the alarm request code so cancel() can
-        // target the exact alarm for a contact.
+    private fun alarmPendingIntent(context: Context, requestCode: Int): PendingIntent? {
+        // Extras are irrelevant for cancel matching; only the Intent filter
+        // (component + action/data/type) and request code identify the alarm.
+        // FLAG_NO_CREATE returns null when no matching alarm exists.
+        val intent = Intent(context, CheckInReminderReceiver::class.java)
         return PendingIntent.getBroadcast(
             context,
-            contactId.hashCode(),
+            requestCode,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    private fun standalonePendingIntent(context: Context, key: String): PendingIntent? {
+        val intent = Intent(context, CheckInReminderReceiver::class.java)
+        return PendingIntent.getBroadcast(
+            context,
+            key.hashCode(),
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
         )
     }
 
@@ -107,6 +163,14 @@ actual class ReminderScheduler {
     }
 }
 
-internal const val EXTRA_CONTACT_ID = "extra_contact_id"
-internal const val EXTRA_CONTACT_NAME = "extra_contact_name"
-internal const val CHANNEL_ID = "check_in_reminders"
+internal const val EXTRA_DAY_KEY = "extra_day_key"
+internal const val EXTRA_ITEM_COUNT = "extra_item_count"
+internal const val EXTRA_HEADLINE = "extra_headline"
+internal const val EXTRA_CATEGORY = "extra_category"
+internal const val EXTRA_TARGET_ID = "extra_target_id"
+internal const val EXTRA_TARGET_IS_CONTACT = "extra_target_is_contact"
+internal const val EXTRA_STANDALONE_KEY = "extra_standalone_key"
+internal const val EXTRA_TITLE = "extra_title"
+internal const val CHANNEL_CHECK_INS = "check_in_reminders"
+internal const val CHANNEL_CUSTOM_REMINDERS = "custom_reminders"
+internal const val CHANNEL_MISSED_CHECK_INS = "missed_check_ins"

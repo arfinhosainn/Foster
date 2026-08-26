@@ -9,4 +9,21 @@
     <string name="notif_contact_fallback">tu contacto</string>
     <string name="notif_channel_name">Recordatorios de check-in</string>
     <string name="notif_channel_description">Recordatorios para cuando sea momento de hacer check-in con un contacto</string>
+
+    <!-- Resumen agrupado del día (2+ pendientes el mismo día). -->
+    <plurals name="notif_digest_title">
+        <item quantity="one">%1$d persona para hacer check-in hoy</item>
+        <item quantity="other">%1$d personas para hacer check-in hoy</item>
+    </plurals>
+    <string name="notif_digest_body">Empezando con %1$s, más %2$d más</string>
+
+    <!-- Notificaciones de recordatorios personalizados. -->
+    <string name="notif_custom_reminder_title">%1$s</string>
+    <string name="notif_custom_reminder_body">Recordatorio de Nekko</string>
+
+    <!-- Canales por categoría. -->
+    <string name="notif_channel_custom_reminders">Recordatorios personalizados</string>
+    <string name="notif_channel_custom_reminders_description">Tus recordatorios guardados para fechas específicas</string>
+    <string name="notif_channel_missed_check_ins">Check-ins perdidos</string>
+    <string name="notif_channel_missed_check_ins_description">Avisos sobre check-ins que se te pasaron</string>
 </resources>

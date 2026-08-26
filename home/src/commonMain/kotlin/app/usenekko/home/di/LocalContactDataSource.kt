@@ -71,14 +71,12 @@ fun rememberHomeViewModel(): HomeViewModel {
 fun rememberAddContactViewModel(): AddContactViewModel {
     val contactDataSource = LocalContactDataSource.current
     val homeRepository = LocalHomeRepository.current
-    val reminderScheduler = remember { ReminderScheduler() }
     val subscriptionRepository = LocalSubscriptionRepository.current
     val paywallGateManager = LocalPaywallGateManager.current
     return viewModel(
         key = "add-contact",
         factory = addContactViewModelFactory(
             contactDataSource = contactDataSource,
-            reminderScheduler = reminderScheduler,
             subscriptionRepository = subscriptionRepository,
             homeRepository = homeRepository,
             paywallGateManager = paywallGateManager,
@@ -88,7 +86,6 @@ fun rememberAddContactViewModel(): AddContactViewModel {
 
 fun addContactViewModelFactory(
     contactDataSource: ContactDataSource,
-    reminderScheduler: ReminderScheduler,
     subscriptionRepository: SubscriptionRepository,
     homeRepository: HomeRepository? = null,
     paywallGateManager: PaywallGateManager? = null,
@@ -97,7 +94,6 @@ fun addContactViewModelFactory(
     initializer {
         AddContactViewModel(
             contactDataSource = contactDataSource,
-            reminderScheduler = reminderScheduler,
             subscriptionRepository = subscriptionRepository,
             homeRepository = homeRepository,
             paywallGateManager = paywallGateManager,
@@ -110,13 +106,11 @@ fun addContactViewModelFactory(
 fun rememberEditContactViewModel(contact: Contact): AddContactViewModel {
     val contactDataSource = LocalContactDataSource.current
     val homeRepository = LocalHomeRepository.current
-    val reminderScheduler = remember { ReminderScheduler() }
     val subscriptionRepository = LocalSubscriptionRepository.current
     return viewModel(
         key = "edit-contact-${contact.id}",
         factory = addContactViewModelFactory(
             contactDataSource = contactDataSource,
-            reminderScheduler = reminderScheduler,
             subscriptionRepository = subscriptionRepository,
             homeRepository = homeRepository,
             editingContact = contact,
@@ -129,7 +123,6 @@ fun rememberContactProfileViewModel(contactId: String): ContactProfileViewModel 
     val contactDataSource = LocalContactDataSource.current
     val profileDataSource = LocalProfileDataSource.current
     val profileRepository = LocalContactProfileRepository.current
-    val reminderScheduler = remember { ReminderScheduler() }
     return viewModel(
         key = "contact-profile-$contactId",
         factory = viewModelFactory {
@@ -137,7 +130,6 @@ fun rememberContactProfileViewModel(contactId: String): ContactProfileViewModel 
                 ContactProfileViewModel(
                     contactId,
                     contactDataSource,
-                    reminderScheduler,
                     profileDataSource,
                     profileRepository,
                 )

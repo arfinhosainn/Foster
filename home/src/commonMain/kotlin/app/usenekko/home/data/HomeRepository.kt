@@ -7,6 +7,7 @@ import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.MissedCheckIn
+import app.usenekko.home.domain.Reminder
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -40,6 +41,7 @@ data class HomeSnapshot(
     val recentCheckIns: List<CheckIn>,
     val checkInHistory: List<CheckIn>,
     val missedCheckIns: List<MissedCheckIn>,
+    val customReminders: List<Reminder> = emptyList(),
     val fetchedAt: Instant,
     val accountKey: String,
     val localDate: LocalDate,
@@ -211,6 +213,9 @@ class InMemoryHomeRepository(
         )
         if (missedCheckInsResult is Result.Error) return finishWithError(missedCheckInsResult.error)
 
+        val customRemindersResult = contactDataSource.getAllCustomReminders()
+        if (customRemindersResult is Result.Error) return finishWithError(customRemindersResult.error)
+
         if (accountKeyProvider() != accountKey) {
             return finishWithError(ContactError.NotAuthenticated)
         }
@@ -222,6 +227,7 @@ class InMemoryHomeRepository(
             recentCheckIns = (recentCheckInsResult as Result.Success).data,
             checkInHistory = (checkInHistoryResult as Result.Success).data,
             missedCheckIns = (missedCheckInsResult as Result.Success).data,
+            customReminders = (customRemindersResult as Result.Success).data,
             fetchedAt = now(),
             accountKey = accountKey,
             localDate = today,

@@ -6,7 +6,6 @@ import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.Reminder
 import app.usenekko.home.presentation.contactprofile.ContactProfileAction
 import app.usenekko.home.presentation.contactprofile.ContactProfileViewModel
-import app.usenekko.shared.notifications.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -53,7 +52,7 @@ class ContactProfileRemindersViewModelTest {
                 contacts = listOf(contact()),
                 reminders = listOf(reminder("r1"), reminder("r2", "other")),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             assertEquals(listOf("r1"), viewModel.state.value.reminders.map { it.id })
@@ -76,7 +75,7 @@ class ContactProfileRemindersViewModelTest {
                     CheckIn("c", "other", "2026-03-01T10:00:00Z", null),
                 ),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             assertEquals(2, viewModel.state.value.checkInCount)
@@ -91,7 +90,7 @@ class ContactProfileRemindersViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.OpenAddReminder)
@@ -130,7 +129,6 @@ class ContactProfileRemindersViewModelTest {
             val viewModel = ContactProfileViewModel(
                 "c1",
                 FakeContactDataSource(contacts = listOf(contact())),
-                ReminderScheduler(),
             )
             advanceUntilIdle()
 
@@ -150,7 +148,7 @@ class ContactProfileRemindersViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.OpenAddReminder)
@@ -174,7 +172,7 @@ class ContactProfileRemindersViewModelTest {
                 contacts = listOf(contact()),
                 reminders = listOf(reminder("r1")),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.EditReminder("r1"))
@@ -199,7 +197,7 @@ class ContactProfileRemindersViewModelTest {
                 contacts = listOf(contact()),
                 reminders = listOf(reminder("r1"), reminder("r2")),
             )
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.DeleteReminder("r1"))
@@ -222,7 +220,7 @@ class ContactProfileRemindersViewModelTest {
                 reminders = listOf(reminder("r1")),
             )
             dataSource.deleteReminderError = ContactError.Network
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.DeleteReminder("r1"))
@@ -243,7 +241,7 @@ class ContactProfileRemindersViewModelTest {
         try {
             val dataSource = FakeContactDataSource(contacts = listOf(contact()))
             dataSource.createReminderError = ContactError.Network
-            val viewModel = ContactProfileViewModel("c1", dataSource, ReminderScheduler())
+            val viewModel = ContactProfileViewModel("c1", dataSource)
             advanceUntilIdle()
 
             viewModel.onAction(ContactProfileAction.OpenAddReminder)

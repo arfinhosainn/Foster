@@ -10,12 +10,10 @@ import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.isCheckedInToday
 import app.usenekko.home.domain.nextCheckInDateLocal
-import app.usenekko.home.domain.nextReminder
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
 import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.domain.ProfileDataSource
-import app.usenekko.shared.notifications.ReminderScheduler
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +27,6 @@ import kotlinx.datetime.todayIn
 class ContactProfileViewModel(
     private val contactId: String,
     private val contactDataSource: ContactDataSource,
-    private val reminderScheduler: ReminderScheduler,
     private val profileDataSource: ProfileDataSource? = null,
     private val contactProfileRepository: ContactProfileRepository? = null,
 ) : ViewModel() {
@@ -184,6 +181,7 @@ class ContactProfileViewModel(
                     reminderDraftDescription = "",
                     reminderDraftRecurrence = "None",
                     reminderDraftDateEpochMillis = null,
+                    reminderDraftTimeOfDay = null,
                 )
             }
             ContactProfileAction.CloseAddReminder -> {
@@ -203,6 +201,9 @@ class ContactProfileViewModel(
             }
             is ContactProfileAction.ReminderDraftDateChanged -> {
                 _state.value = _state.value.copy(reminderDraftDateEpochMillis = action.dateEpochMillis)
+            }
+            is ContactProfileAction.ReminderDraftTimeChanged -> {
+                _state.value = _state.value.copy(reminderDraftTimeOfDay = action.timeOfDay)
             }
             ContactProfileAction.SaveReminder -> saveReminder()
             is ContactProfileAction.EditReminder -> editReminder(action.reminderId)
@@ -274,9 +275,6 @@ class ContactProfileViewModel(
                         daysUntilNextCheckIn = daysUntilNextCheckIn(updated),
                     )
                     refreshProfileAfterMutation()
-                    // next_check_in_date moved — cancel the old alarm and schedule
-                    // the new one (locally, no push service involved).
-                    rescheduleReminder(updated)
                     if (previousBadges != null) {
                         contactDataSource.detectAndTriggerBadgeReveal(previousBadges)
                     }
@@ -317,6 +315,7 @@ class ContactProfileViewModel(
                     description = _state.value.reminderDraftDescription.trim(),
                     recurrence = _state.value.reminderDraftRecurrence,
                     date = _state.value.reminderDraftDateEpochMillis,
+                    timeOfDay = _state.value.reminderDraftTimeOfDay,
                 )
             } else {
                 contactDataSource.createReminder(
@@ -325,6 +324,7 @@ class ContactProfileViewModel(
                     description = _state.value.reminderDraftDescription.trim(),
                     recurrence = _state.value.reminderDraftRecurrence,
                     date = _state.value.reminderDraftDateEpochMillis,
+                    timeOfDay = _state.value.reminderDraftTimeOfDay,
                 )
             }
 
@@ -339,6 +339,7 @@ class ContactProfileViewModel(
                         reminderDraftDescription = "",
                         reminderDraftRecurrence = "none",
                         reminderDraftDateEpochMillis = null,
+                        reminderDraftTimeOfDay = null,
                     )
                     refreshProfileAfterMutation()
                 }
@@ -360,6 +361,7 @@ class ContactProfileViewModel(
             reminderDraftDescription = reminder.description,
             reminderDraftRecurrence = reminder.recurrence,
             reminderDraftDateEpochMillis = reminder.dateEpochMillis,
+            reminderDraftTimeOfDay = reminder.timeOfDay,
             editingReminderId = reminder.id,
             isReminderListSheetOpen = false,
             isAddReminderSheetOpen = true,
@@ -386,19 +388,5 @@ class ContactProfileViewModel(
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val next = contact.nextCheckInDateLocal() ?: return 0
         return (next.toEpochDays() - today.toEpochDays()).toInt().coerceAtLeast(0)
-    }
-
-    private fun rescheduleReminder(contact: Contact) {
-        viewModelScope.launch {
-            if (!reminderScheduler.isEnabled()) return@launch
-            reminderScheduler.cancel(contact.id)
-            contact.nextReminder(Clock.System.now().toEpochMilliseconds())?.let { reminder ->
-                reminderScheduler.schedule(
-                    reminder.contactId,
-                    reminder.contactName,
-                    reminder.fireAtEpochMillis,
-                )
-            }
-        }
     }
 }

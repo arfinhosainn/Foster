@@ -21,6 +21,7 @@ sealed interface ContactProfileAction {
     data class ReminderDraftDescriptionChanged(val description: String) : ContactProfileAction
     data class ReminderDraftRecurrenceChanged(val recurrence: String) : ContactProfileAction
     data class ReminderDraftDateChanged(val dateEpochMillis: Long?) : ContactProfileAction
+    data class ReminderDraftTimeChanged(val timeOfDay: String?) : ContactProfileAction
     data object SaveReminder : ContactProfileAction
     data class EditReminder(val reminderId: String) : ContactProfileAction
     data class DeleteReminder(val reminderId: String) : ContactProfileAction
@@ -49,6 +50,7 @@ data class ContactProfileState(
     val reminderDraftDescription: String = "",
     val reminderDraftRecurrence: String = "None",
     val reminderDraftDateEpochMillis: Long? = null,
+    val reminderDraftTimeOfDay: String? = null,
     val editingReminderId: String? = null,
     val isSavingReminder: Boolean = false,
     val remindersError: String? = null,

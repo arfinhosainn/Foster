@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import app.usenekko.home.HomeScreen
+import app.usenekko.home.presentation.dayagenda.DayAgendaScreen
 import app.usenekko.home.presentation.CheckInsScreen
 import app.usenekko.home.presentation.badges.BadgeRevealStore
 import app.usenekko.home.presentation.badges.PlantRewardOverlay
@@ -271,10 +272,18 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                         onSubscribed = { navigator.goBack() },
                     )
 
-                    is Screen.DiscountPaywall -> DiscountPaywallScreen(
-                        onSubscribed = { navigator.goBack() },
-                    )
-                }
+                is Screen.DiscountPaywall -> DiscountPaywallScreen(
+                    onSubscribed = { navigator.goBack() },
+                )
+
+                is Screen.DayAgenda -> DayAgendaScreen(
+                    dayKey = screen.dayKey,
+                    onBack = { navigator.goBack() },
+                    onContactClick = { contactId ->
+                        navigator.navigate(Screen.ContactProfile(contactId))
+                    },
+                )
+            }
             }
             if (screen.isFirstRunSurface) {
                 NekkoTheme(darkTheme = true) { screenContent() }

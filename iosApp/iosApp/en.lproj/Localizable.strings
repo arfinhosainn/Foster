@@ -1,0 +1,10 @@
+/* English — notification copy, keys shared with Android strings.xml. */
+
+"notif_checkin_title" = "Check in with %@";
+"notif_checkin_body" = "It's time to check in on %@";
+"notif_contact_fallback" = "your contact";
+"notif_digest_title_one" = "%d person to check in with today";
+"notif_digest_title_other" = "%d people to check in with today";
+"notif_digest_body" = "Starting with %1$@, plus %2$ld more";
+"notif_custom_reminder_title" = "%@";
+"notif_custom_reminder_body" = "Reminder from Nekko";
