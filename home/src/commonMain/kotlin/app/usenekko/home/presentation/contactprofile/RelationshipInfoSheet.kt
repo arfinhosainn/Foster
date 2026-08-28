@@ -84,12 +84,12 @@ fun RelationshipInfoSheet(
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
     ) {
-        AdaptiveSurface {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding(),
-            ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .imePadding(),
+        ) {
+            AdaptiveSurface {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -164,12 +164,13 @@ fun RelationshipInfoSheet(
 
                     DashedDivider(modifier = Modifier.padding(horizontal = 24.dp))
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                GrassProgress(checkInCount = checkInCount)
-
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Full-bleed grass: deliberately OUTSIDE AdaptiveSurface so the
+            // sheet's 24dp horizontal padding doesn't inset it.
+            GrassProgress(checkInCount = checkInCount)
         }
     }
 }

@@ -40,7 +40,7 @@ fun NekkoActionButton(
     trailingIcon: ImageVector? = null,
     containerColor: Color = NekkoTheme.colors.background.b1,
     contentColor: Color = NekkoTheme.colors.text.primary,
-    iconTint: Color = NekkoTheme.colors.gray.primary,
+    iconTint: Color = NekkoTheme.colors.text.primary,
     iconSize: Dp = 20.dp,
     minWidth: Dp = 56.dp, // floor so icon-only stays a pill, never a perfect circle
     textStyle: TextStyle = NekkoTheme.typography.heading4Semibold,

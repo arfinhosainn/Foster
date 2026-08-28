@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.sideShine
 import app.usenekko.home.domain.Badge
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
@@ -138,6 +139,14 @@ private fun SoilRewardCard(
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
+        )
+
+        // Two-sided edge shine, drawn ABOVE the artwork (a border on the card
+        // itself would be painted over by the fillMaxSize image).
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .sideShine(RoundedCornerShape(44.dp), intensity = 0.4f),
         )
 
         Column(

@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -106,6 +107,14 @@ fun ContactProfileScreen(
                         val today = remember(c.nextCheckInDate, c.checkInFrequency) {
                             Clock.System.todayIn(TimeZone.currentSystemDefault())
                         }
+                        // Milestone badge: fires when the grass stage grows past the
+                        // last stage the user has seen; cleared once they open the
+                        // relationship info sheet (where the new grass is shown).
+                        val currentGrassStage = grassStageForCheckInCount(state.checkInCount)
+                        var lastSeenGrassStage by remember(c.id) { mutableIntStateOf(currentGrassStage) }
+                        LaunchedEffect(state.isRelationshipInfoOpen, currentGrassStage) {
+                            if (state.isRelationshipInfoOpen) lastSeenGrassStage = currentGrassStage
+                        }
                         ContactProfileHeader(
                             name = c.name,
                             avatarColor = c.avatarColor,
@@ -114,6 +123,7 @@ fun ContactProfileScreen(
                             isExpanded = state.isRelationshipInfoOpen,
                             daysUntilNextCheckIn = state.daysUntilNextCheckIn,
                             ringProgress = c.checkInProgressFraction(today),
+                            hasNewMilestone = currentGrassStage > lastSeenGrassStage,
                             onNameClick = {
                                 viewModel.onAction(ContactProfileAction.ToggleRelationshipInfo)
                             },

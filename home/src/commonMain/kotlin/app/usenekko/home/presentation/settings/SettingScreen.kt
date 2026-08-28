@@ -84,6 +84,7 @@ fun SettingScreen(
     onAccountClick: () -> Unit = {},
     onPremiumClick: () -> Unit = {},
     onAccountDeleted: () -> Unit = {},
+    initiallyShowAccountSheet: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val liquidState = rememberLiquidState()
@@ -104,7 +105,14 @@ fun SettingScreen(
     val selectedMode by themeStore?.mode?.collectAsState()
         ?: remember { mutableStateOf(AppThemeMode.SYSTEM) }
     var showAppearanceSheet by rememberSaveable { mutableStateOf(false) }
-    var showAccountSheet by rememberSaveable { mutableStateOf(false) }
+    // Opens pre-opened when arriving via the plant-reward "collect" flow
+    // (Screen.Settings(openAccountSheet = true)). The LaunchedEffect re-asserts
+    // it because rememberSaveable can restore showAccountSheet=false from a
+    // previous Settings visit, which would swallow the arrival flag.
+    var showAccountSheet by rememberSaveable { mutableStateOf(initiallyShowAccountSheet) }
+    LaunchedEffect(initiallyShowAccountSheet) {
+        if (initiallyShowAccountSheet) showAccountSheet = true
+    }
     var showGroupSheet by rememberSaveable { mutableStateOf(false) }
 
     // Delete Account — destructive & irreversible. Gated behind a typed

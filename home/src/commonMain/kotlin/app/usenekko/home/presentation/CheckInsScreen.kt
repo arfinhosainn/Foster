@@ -286,7 +286,7 @@ private fun GroupCell(
                 .aspectRatio(1f),
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(20.dp))
 
         Text(
             text = group.name,
@@ -296,7 +296,7 @@ private fun GroupCell(
             textAlign = TextAlign.Center,
         )
 
-        Spacer(Modifier.height(2.dp))
+        Spacer(Modifier.height(4.dp))
 
         Text(
             text = "$memberCount ${if (memberCount == 1) "person" else "people"}",
@@ -334,12 +334,12 @@ private fun GroupCard(
             )
         } else {
             Row {
-                members.take(3).forEachIndexed { index, contact ->
+                members.take(2).forEachIndexed { index, contact ->
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(44.dp)
                             .then(
-                                if (index > 0) Modifier.offset(x = -(18.dp * index))
+                                if (index > 0) Modifier.offset(x = -(10.dp * index))
                                 else Modifier,
                             )
                             .clip(CircleShape)

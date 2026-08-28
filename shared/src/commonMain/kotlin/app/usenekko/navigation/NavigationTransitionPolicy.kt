@@ -53,7 +53,7 @@ private fun screenTransitionStyle(screen: Screen): ScreenTransitionStyle {
         Screen.AddNote,
         Screen.Notification,
         is Screen.ContactProfile,
-        Screen.Settings,
+        is Screen.Settings,
         Screen.CheckIns,
         is Screen.GroupDetail -> ScreenTransitionStyle.Horizontal
 
@@ -61,7 +61,6 @@ private fun screenTransitionStyle(screen: Screen): ScreenTransitionStyle {
         is Screen.Brainstorm,
         Screen.Paywall,
         Screen.DiscountPaywall,
-        Screen.Account,
         Screen.GroupSettings,
         is Screen.DayAgenda -> ScreenTransitionStyle.Vertical
     }

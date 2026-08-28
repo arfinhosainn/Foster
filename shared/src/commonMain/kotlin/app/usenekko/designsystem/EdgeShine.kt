@@ -32,19 +32,20 @@ fun sideShineBrush(intensity: Float = 1f): Brush {
  * `clip(shape)` + `background(...)` so the shine paints on top of the fill.
  * [intensity] below 1f softens the rim for larger surfaces.
  */
-fun Modifier.sideShine(shape: Shape, width: Dp = 1.dp, intensity: Float = 1f): Modifier =
+fun Modifier.sideShine(shape: Shape, width: Dp = 1.dp, intensity: Float = 0.4f): Modifier =
     this.border(width, sideShineBrush(intensity), shape)
 
 /**
  * One-sided variant: hot LEFT edge only, fading out before the middle.
  * Right edge stays completely clean — pairs well with right-aligned art.
+ * [intensity] scales the left-edge alphas (1f = full strength), same as [sideShine].
  */
-fun Modifier.leftEdgeShine(shape: Shape, width: Dp = 1.dp): Modifier =
+fun Modifier.leftEdgeShine(shape: Shape, width: Dp = 1.dp, intensity: Float = 1f): Modifier =
     this.border(
         width,
         Brush.horizontalGradient(
-            0.00f to Color.White.copy(alpha = 0.10f), // hot left edge
-            0.35f to Color.White.copy(alpha = 0.03f),
+            0.00f to Color.White.copy(alpha = 0.10f * intensity), // hot left edge
+            0.35f to Color.White.copy(alpha = 0.03f * intensity),
             0.60f to Color.Transparent,               // gone past a third in
             1.00f to Color.Transparent,
         ),

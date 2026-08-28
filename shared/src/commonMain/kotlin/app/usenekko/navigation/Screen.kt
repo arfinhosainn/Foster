@@ -47,10 +47,7 @@ sealed class Screen {
     data class Brainstorm(val contactId: String) : Screen()
 
     @Serializable
-    data object Settings : Screen()
-
-    @Serializable
-    data object Account : Screen()
+    data class Settings(val openAccountSheet: Boolean = false) : Screen()
 
     @Serializable
     data object GroupSettings : Screen()

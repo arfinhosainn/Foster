@@ -84,7 +84,7 @@ import app.usenekko.home.presentation.components.groupMemberCount
 import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.shared.contacts.rememberContactPicker
 import app.usenekko.designsystem.avatar.ChooseAvatarBottomSheet
-import app.usenekko.designsystem.avatar.avatarResources
+import app.usenekko.designsystem.avatar.ProfilePhotoPicker
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_add
@@ -93,7 +93,6 @@ import nekko.home.generated.resources.ic_circlecheck
 import nekko.home.generated.resources.ic_close
 import nekko.home.generated.resources.ic_forward
 import nekko.home.generated.resources.ic_import
-import nekko.home.generated.resources.ic_pencil
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -125,7 +124,6 @@ import nekko.home.generated.resources.cd_add_members
 import nekko.home.generated.resources.cd_back
 import nekko.home.generated.resources.cd_close
 import nekko.home.generated.resources.cd_edit_profile_picture
-import nekko.home.generated.resources.cd_imported_photo
 import nekko.home.generated.resources.cd_selected
 import nekko.home.generated.resources.edit_contact_subtitle
 import nekko.home.generated.resources.edit_contact_title
@@ -419,9 +417,10 @@ internal fun NameAndAvatarStep(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        AvatarPreview(
-            avatarIndex = state.selectedAvatarIndex,
+        ProfilePhotoPicker(
             photoBitmap = state.importedPhoto,
+            avatarSize = 130.dp,
+            selectedAvatarIndex = state.selectedAvatarIndex,
             onEditClick = { showAvatarPicker = true },
         )
 
@@ -487,65 +486,6 @@ internal fun NameAndAvatarStep(
             onAvatarSelected = onAvatarSelected,
             onDismiss = { showAvatarPicker = false },
         )
-    }
-}
-
-@Composable
-private fun AvatarPreview(
-    avatarIndex: Int?,
-    photoBitmap: androidx.compose.ui.graphics.ImageBitmap?,
-    onEditClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(modifier = modifier.size(130.dp)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-                .border(4.dp, NekkoTheme.colors.stroke.secondary, CircleShape)
-                .clickable(onClick = onEditClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (photoBitmap != null) {
-                Image(
-                    bitmap = photoBitmap,
-                    contentDescription = stringResource(Res.string.cd_imported_photo),
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else if (avatarIndex != null) {
-                Image(
-                    imageVector = vectorResource(avatarResources.getOrElse(avatarIndex) {
-                        avatarResources.first()
-                    }),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(NekkoTheme.colors.fill.secondary),
-                )
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = 10.dp)
-                .size(height = 24.dp, width = 36.dp)
-                .clip(CircleShape)
-                .border(2.dp, NekkoTheme.colors.stroke.secondary.copy(alpha = 0.03f), CircleShape)
-                .background(NekkoTheme.colors.background.b2),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_pencil),
-                contentDescription = stringResource(Res.string.cd_edit_profile_picture),
-                tint = NekkoTheme.colors.text.primary,
-                modifier = Modifier.size(16.dp),
-            )
-        }
     }
 }
 

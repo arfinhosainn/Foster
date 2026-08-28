@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -184,36 +185,63 @@ class InMemoryHomeRepository(
 
     private suspend fun fetchAndPublish(accountKey: String): Result<HomeSnapshot, ContactError> {
         val today = today()
-        val contactsResult = contactDataSource.getContacts()
+
+        // All fetches are independent — run them in parallel. Previously these
+        // were sequential, so a refresh cost the SUM of 7 network round trips,
+        // which made surfaces like the add-contact group step crawl whenever
+        // the cache was cold or invalidated.
+        val (
+            contactsResult,
+            groupsResult,
+            membershipsResult,
+            recentCheckInsResult,
+            checkInHistoryResult,
+            missedCheckInsResult,
+            customRemindersResult,
+        ) = coroutineScope {
+            val contacts = async { contactDataSource.getContacts() }
+            val groups = async { contactDataSource.getGroups() }
+            val memberships = async { contactDataSource.getGroupMemberships() }
+            val recentCheckIns = async {
+                contactDataSource.getCheckIns(
+                    contactId = null,
+                    from = today.minus(DatePeriod(days = 12)).toString(),
+                    to = today.plus(DatePeriod(days = 13)).toString(),
+                )
+            }
+            val checkInHistory = async {
+                contactDataSource.getCheckIns(
+                    contactId = null,
+                    from = "1970-01-01",
+                    to = "2999-12-31",
+                )
+            }
+            val missedCheckIns = async {
+                contactDataSource.getMissedCheckIns(
+                    from = "1970-01-01",
+                    to = today.toString(),
+                )
+            }
+            val customReminders = async { contactDataSource.getAllCustomReminders() }
+
+            // Awaiting all keeps error-checking in the original priority order.
+            FetchResults(
+                contacts = contacts.await(),
+                groups = groups.await(),
+                memberships = memberships.await(),
+                recentCheckIns = recentCheckIns.await(),
+                checkInHistory = checkInHistory.await(),
+                missedCheckIns = missedCheckIns.await(),
+                customReminders = customReminders.await(),
+            )
+        }
+
         if (contactsResult is Result.Error) return finishWithError(contactsResult.error)
-
-        val groupsResult = contactDataSource.getGroups()
         if (groupsResult is Result.Error) return finishWithError(groupsResult.error)
-
-        val membershipsResult = contactDataSource.getGroupMemberships()
         if (membershipsResult is Result.Error) return finishWithError(membershipsResult.error)
-
-        val recentCheckInsResult = contactDataSource.getCheckIns(
-            contactId = null,
-            from = today.minus(DatePeriod(days = 12)).toString(),
-            to = today.plus(DatePeriod(days = 13)).toString(),
-        )
         if (recentCheckInsResult is Result.Error) return finishWithError(recentCheckInsResult.error)
-
-        val checkInHistoryResult = contactDataSource.getCheckIns(
-            contactId = null,
-            from = "1970-01-01",
-            to = "2999-12-31",
-        )
         if (checkInHistoryResult is Result.Error) return finishWithError(checkInHistoryResult.error)
-
-        val missedCheckInsResult = contactDataSource.getMissedCheckIns(
-            from = "1970-01-01",
-            to = today.toString(),
-        )
         if (missedCheckInsResult is Result.Error) return finishWithError(missedCheckInsResult.error)
-
-        val customRemindersResult = contactDataSource.getAllCustomReminders()
         if (customRemindersResult is Result.Error) return finishWithError(customRemindersResult.error)
 
         if (accountKeyProvider() != accountKey) {
@@ -235,6 +263,17 @@ class InMemoryHomeRepository(
         _state.value = HomeRepositoryState(snapshot = snapshot)
         return Result.Success(snapshot)
     }
+
+    /** Bundles the parallel fetch outcomes so they can be destructured cleanly. */
+    private data class FetchResults(
+        val contacts: Result<List<Contact>, ContactError>,
+        val groups: Result<List<Group>, ContactError>,
+        val memberships: Result<List<GroupMembership>, ContactError>,
+        val recentCheckIns: Result<List<CheckIn>, ContactError>,
+        val checkInHistory: Result<List<CheckIn>, ContactError>,
+        val missedCheckIns: Result<List<MissedCheckIn>, ContactError>,
+        val customReminders: Result<List<Reminder>, ContactError>,
+    )
 
     private fun finishWithError(error: ContactError): Result<HomeSnapshot, ContactError> {
         _state.value = _state.value.copy(isRefreshing = false, error = error)
