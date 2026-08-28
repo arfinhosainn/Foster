@@ -83,7 +83,6 @@ fun RelationshipInfoSheet(
         containerColor = NekkoTheme.colors.background.b1,
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = NekkoTheme.colors.gray.quaternary) },
-        modifier = modifier.padding(horizontal = 10.dp),
     ) {
         AdaptiveSurface {
             Column(

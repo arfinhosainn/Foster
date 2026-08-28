@@ -1,6 +1,9 @@
 package app.usenekko.home
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -21,6 +24,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,12 +60,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -67,8 +75,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.usenekko.designsystem.buttons.AudienceOption
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassNavigationRail
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.drop
+import app.usenekko.navigation.BottomBarActions
 import app.usenekko.designsystem.navbar.top.NekkoTopBar
 import app.usenekko.adaptive.WindowWidthSizeClass
 import app.usenekko.adaptive.AdaptivePresentation
@@ -107,6 +116,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.delay
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_acquaintance
 import nekko.home.generated.resources.ic_circlecheck
@@ -152,6 +163,7 @@ fun HomeScreen(
     onSettingsClick: () -> Unit = {},
     onShowPaywall: () -> Unit = {},
     onShowDiscountPaywall: () -> Unit = {},
+    bottomBarActions: BottomBarActions? = null,
     modifier: Modifier = Modifier,
 ) {
 
@@ -184,6 +196,24 @@ fun HomeScreen(
     }
 
     var showAddContact by rememberSaveable { mutableStateOf(false) }
+
+    // React to the shell-owned persistent bottom bar. Delivered as an event
+    // stream instead of a stored callback: during transitions both tabs are
+    // briefly composed, and a dispose-time unregister from the outgoing screen
+    // could otherwise leave the bar's "+" dead. Rare double-fire is possible if
+    // "+" is tapped mid-transition; harmless (both sheets converge).
+    val actions = bottomBarActions
+    if (actions != null) {
+        LaunchedEffect(actions) {
+            snapshotFlow { actions.addContactRequestCount }
+                .drop(1)
+                .collect { showAddContact = true }
+        }
+        LaunchedEffect(actions) {
+            snapshotFlow { showAddContact }
+                .collect { actions.isOverlayShowing = it }
+        }
+    }
 
     val everyoneOption = stringResource(Res.string.audience_everyone)
     val options = remember(state.groups, everyoneOption) {
@@ -229,19 +259,8 @@ fun HomeScreen(
         // Background/source for the liquid effect
 
 
-        if (useNavigationRail) {
-            GlassNavigationRail(
-                selectedIndex = 0,
-                onItemSelected = { index -> if (index == 1) onCheckInsClick() },
-                onAddClick = { showAddContact = true },
-                modifier = Modifier.align(Alignment.CenterStart),
-            )
-        }
-
         Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(if (useNavigationRail) Modifier.padding(start = 88.dp) else Modifier),
+            modifier = Modifier.fillMaxSize(),
             topBar = {
             NekkoTopBar(
                 audienceOptions = options,
@@ -263,15 +282,6 @@ fun HomeScreen(
                 onAvatarClick = { onSettingsClick() },
                 onPremiumClick = onShowPaywall,
             )
-            },
-            bottomBar = {
-                if (!useNavigationRail) {
-                    GlassBottomNavBar(
-                        selectedIndex = 0,
-                        onItemSelected = { index -> if (index == 1) onCheckInsClick() },
-                        onAddClick = { showAddContact = true },
-                            )
-                }
             },
             containerColor = NekkoTheme.colors.background.b0,
         )
@@ -428,6 +438,14 @@ fun HomeScreen(
                             timelineMaxCellSize = timelineMaxCellSize,
                             initialCountdownStartDate = state.initialCountdownStartDate,
                         )
+
+                        // Clearance so the shell-owned floating bottom bar never
+                        // covers the tail of the scrollable content.
+                        if (!useNavigationRail) {
+                            Spacer(Modifier.navigationBarsPadding().height(104.dp))
+                        } else {
+                            Spacer(Modifier.height(16.dp))
+                        }
                     }
                 }
                     }
@@ -641,15 +659,18 @@ private fun CheckInSection(
                         .padding(horizontal = 16.dp),
                 ) {
                     todayContacts.forEachIndexed { index, contact ->
-                        ContactCheckInRow(
-                            contact = contact,
-                            checkInCount = checkInCounts[contact.id] ?: 0,
-                            today = today,
-                            checkingInContactIds = checkingInContactIds,
-                            onCheckIn = onCheckIn,
-                            onContactClick = onContactClick,
-                            showDivider = index < todayContacts.lastIndex,
-                        )
+                        key(contact.id) {
+                            ContactCheckInRow(
+                                contact = contact,
+                                checkInCount = checkInCounts[contact.id] ?: 0,
+                                today = today,
+                                checkingInContactIds = checkingInContactIds,
+                                onCheckIn = onCheckIn,
+                                onContactClick = onContactClick,
+                                showDivider = index < todayContacts.lastIndex,
+                                index = index,
+                            )
+                        }
                     }
                 }
             }
@@ -657,7 +678,10 @@ private fun CheckInSection(
     }
 }
 
-private enum class CheckInRowTrailing { Button, Checked }
+private enum class CheckInRowTrailing { Button, Loading, Checked }
+
+private val CONTACT_CHECK_IN_ROW_PITCH = 89.dp
+private const val CONTACT_CHECK_IN_ROW_STAGGER_MS = 100L
 
 @Composable
 private fun ContactCheckInRow(
@@ -668,9 +692,31 @@ private fun ContactCheckInRow(
     onCheckIn: (String) -> Unit,
     onContactClick: (Contact) -> Unit,
     showDivider: Boolean,
+    index: Int,
 ) {
     val checkedInToday = contact.isCheckedInToday(today)
-    val inFlight = checkedInToday && contact.id in checkingInContactIds
+    val inFlight = contact.id in checkingInContactIds
+    val density = LocalDensity.current
+    val rowOffset = remember { Animatable(0f) }
+    var previousIndex by remember { mutableStateOf(index) }
+
+    LaunchedEffect(index) {
+        if (previousIndex == index) return@LaunchedEffect
+
+        val oldIndex = previousIndex
+        previousIndex = index
+        rowOffset.snapTo(
+            with(density) { (oldIndex - index) * CONTACT_CHECK_IN_ROW_PITCH.toPx() },
+        )
+        delay(abs(index - oldIndex) * CONTACT_CHECK_IN_ROW_STAGGER_MS)
+        rowOffset.animateTo(
+            targetValue = 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow,
+            ),
+        )
+    }
 
     val avatarRingBrush = Brush.sweepGradient(
         listOf(Color(0xFFFFCC33), Color(0xFF34C759), Color(0xFFFFCC33)),
@@ -679,6 +725,7 @@ private fun ContactCheckInRow(
     Column {
         Row(
             modifier = Modifier
+                .offset { IntOffset(0, rowOffset.value.roundToInt()) }
                 .fillMaxWidth()
                 .clickable(role = Role.Button) { onContactClick(contact) }
                 .padding(vertical = 16.dp),
@@ -708,7 +755,11 @@ private fun ContactCheckInRow(
             }
             Spacer(Modifier.width(12.dp))
             AnimatedContent(
-                targetState = if (checkedInToday) CheckInRowTrailing.Checked else CheckInRowTrailing.Button,
+                targetState = when {
+                    inFlight -> CheckInRowTrailing.Loading
+                    checkedInToday -> CheckInRowTrailing.Checked
+                    else -> CheckInRowTrailing.Button
+                },
                 transitionSpec = {
                     (scaleIn() + fadeIn()) togetherWith (scaleOut() + fadeOut())
                 },
@@ -732,21 +783,23 @@ private fun ContactCheckInRow(
                             color = Color.Black,
                         )
                     }
+                    CheckInRowTrailing.Loading -> Box(
+                        modifier = Modifier.size(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = NekkoTheme.colors.text.primary,
+                            strokeWidth = 2.dp,
+                        )
+                    }
                     else -> Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-                        if (inFlight) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                color = NekkoTheme.colors.text.primary,
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Icon(
-                                imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
-                                contentDescription = stringResource(Res.string.cd_checked_in),
-                                modifier = Modifier.size(24.dp),
-                                tint = NekkoTheme.colors.gray.secondary,
-                            )
-                        }
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.ic_circlecheckmark),
+                            contentDescription = stringResource(Res.string.cd_checked_in),
+                            modifier = Modifier.size(24.dp),
+                            tint = NekkoTheme.colors.gray.secondary,
+                        )
                     }
                 }
             }

@@ -13,24 +13,9 @@ import androidx.compose.ui.graphics.Color
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.GroupMembership
 import app.usenekko.theme.NekkoTheme
-import nekko.home.generated.resources.Res
-import nekko.home.generated.resources.avatar_blue
-import nekko.home.generated.resources.avatar_green
-import nekko.home.generated.resources.avatar_maroon
-import nekko.home.generated.resources.avatar_orange
-import nekko.home.generated.resources.avatar_red
-import nekko.home.generated.resources.avatar_yellow
+import app.usenekko.designsystem.avatar.avatarResources
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.vectorResource
-
-private val avatarResources = listOf(
-    Res.drawable.avatar_yellow,
-    Res.drawable.avatar_green,
-    Res.drawable.avatar_orange,
-    Res.drawable.avatar_red,
-    Res.drawable.avatar_maroon,
-    Res.drawable.avatar_blue,
-)
 
 fun avatarIndexForColor(avatarColor: String?): Int? = when (avatarColor?.removePrefix("#")?.uppercase()) {
     "FFCC33" -> 0

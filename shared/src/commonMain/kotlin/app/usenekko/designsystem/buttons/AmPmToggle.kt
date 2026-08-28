@@ -1,4 +1,4 @@
-package app.usenekko.home.addcontact.components
+package app.usenekko.designsystem.buttons
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,11 +21,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.theme.NekkoTheme
-import nekko.home.generated.resources.Res
-import nekko.home.generated.resources.time_am
-import nekko.home.generated.resources.time_pm
+import nekko.shared.generated.resources.Res
+import nekko.shared.generated.resources.time_am
+import nekko.shared.generated.resources.time_pm
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * A segmented toggle for selecting AM or PM.
+ *
+ * Matches the design: two pill-shaped segments inside a rounded container,
+ * with the selected one having a slightly more opaque fill.
+ */
 @Composable
 fun AmPmToggle(
     isAm: Boolean,
@@ -37,11 +45,14 @@ fun AmPmToggle(
 
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(NekkoTheme.colors.fill.tertiary)
+            .nekkoActionShell(
+                shape = RoundedCornerShape(100),
+                containerColor = NekkoTheme.colors.background.b1,
+            )
             .padding(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // AM segment
         val amBgColor by animateColorAsState(
             targetValue = if (isAm) selectedBg else unselectedBg.copy(alpha = 0f),
             label = "amBg",
@@ -50,26 +61,28 @@ fun AmPmToggle(
             targetValue = if (isAm) selectedTextColor else unselectedTextColor,
             label = "amText",
         )
+
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(50))
+                .clip(RoundedCornerShape(100))
                 .background(amBgColor)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = { onToggle(true) },
                 )
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = stringResource(Res.string.time_am),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
                 color = amTextColor,
             )
         }
 
+        // PM segment
         val pmBgColor by animateColorAsState(
             targetValue = if (!isAm) selectedBg else unselectedBg.copy(alpha = 0f),
             label = "pmBg",
@@ -78,6 +91,9 @@ fun AmPmToggle(
             targetValue = if (!isAm) selectedTextColor else unselectedTextColor,
             label = "pmText",
         )
+
+        Spacer(Modifier.width(4.dp))
+
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(50))
@@ -87,13 +103,13 @@ fun AmPmToggle(
                     indication = null,
                     onClick = { onToggle(false) },
                 )
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = stringResource(Res.string.time_pm),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
                 color = pmTextColor,
             )
         }

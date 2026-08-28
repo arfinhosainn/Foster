@@ -45,10 +45,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.usenekko.adaptive.WindowWidthSizeClass
-import app.usenekko.adaptive.windowWidthSizeClass
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassNavigationRail
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.drop
+import app.usenekko.navigation.BottomBarActions
 import app.usenekko.designsystem.navbar.top.NekkoTopBar
 import app.usenekko.designsystem.shapes.SawToothCircleShape
 import app.usenekko.home.di.LocalAccountRepository
@@ -81,6 +81,7 @@ fun CheckInsScreen(
     onShowPaywall: () -> Unit = {},
     onShowDiscountPaywall: () -> Unit = {},
     onAddClick: (() -> Unit)? = null,
+    bottomBarActions: BottomBarActions? = null,
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberGroupSettingsViewModel()
@@ -90,6 +91,22 @@ fun CheckInsScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     var showAddContact by rememberSaveable { mutableStateOf(false) }
     val handleAddClick = resolveCheckInsAddClick(onAddClick) { showAddContact = true }
+
+    // Event-stream bridge to the shell-owned persistent bottom bar (rationale
+    // in HomeScreen): "+" opens this screen's add-contact flow, honoring any
+    // external onAddClick override, while overlay state keeps the bar hidden.
+    val actions = bottomBarActions
+    if (actions != null) {
+        LaunchedEffect(actions) {
+            snapshotFlow { actions.addContactRequestCount }
+                .drop(1)
+                .collect { handleAddClick() }
+        }
+        LaunchedEffect(actions) {
+            snapshotFlow { showAddContact }
+                .collect { actions.isOverlayShowing = it }
+        }
+    }
 
     LaunchedEffect(accountRepository) {
         accountRepository.load()
@@ -103,24 +120,11 @@ fun CheckInsScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val useNavigationRail = windowWidthSizeClass(maxWidth) == WindowWidthSizeClass.Expanded
-
+    Box(modifier = modifier.fillMaxSize()) {
         Box(Modifier.matchParentSize().background(NekkoTheme.colors.background.b0))
 
-        if (useNavigationRail) {
-            GlassNavigationRail(
-                selectedIndex = 1,
-                onItemSelected = { index -> if (index == 0) onHomeClick() },
-                onAddClick = handleAddClick,
-                    modifier = Modifier.align(Alignment.CenterStart),
-            )
-        }
-
         Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(if (useNavigationRail) Modifier.padding(start = 88.dp) else Modifier),
+            modifier = Modifier.fillMaxSize(),
             topBar = {
                 NekkoTopBar(
                     title = stringResource(Res.string.settings_check_ins_stat),
@@ -135,15 +139,6 @@ fun CheckInsScreen(
                     onAvatarClick = onSettingsClick,
                     onPremiumClick = onShowPaywall,
                 )
-            },
-            bottomBar = {
-                if (!useNavigationRail) {
-                    GlassBottomNavBar(
-                        selectedIndex = 1,
-                        onItemSelected = { index -> if (index == 0) onHomeClick() },
-                        onAddClick = handleAddClick,
-                                )
-                }
             },
             containerColor = NekkoTheme.colors.background.b0,
         ) { innerPadding ->
@@ -178,6 +173,10 @@ fun CheckInsScreen(
                         textAlign = TextAlign.Center,
                     )
                 }
+
+                // Clearance so the shell-owned floating bottom bar never covers
+                // the tail of the scrollable content.
+                Spacer(Modifier.navigationBarsPadding().height(104.dp))
             }
         }
     }

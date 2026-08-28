@@ -54,7 +54,7 @@ import app.usenekko.home.presentation.components.ProfilePhotoPreview
 import app.usenekko.shared.contacts.rememberContactPicker
 import app.usenekko.onboarding.components.NekkoStepField
 import app.usenekko.onboarding.components.StepIndicator
-import app.usenekko.onboarding.contact.components.ChooseAvatarBottomSheet
+import app.usenekko.designsystem.avatar.ChooseAvatarBottomSheet
 import app.usenekko.onboarding.contact.components.ProfilePhotoPicker
 import app.usenekko.onboarding.presentation.rememberContactViewModel
 import app.usenekko.theme.NekkoTheme

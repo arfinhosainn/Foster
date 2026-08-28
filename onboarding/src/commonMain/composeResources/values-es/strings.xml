@@ -17,14 +17,9 @@
     <string name="add_step_new_contact_subtitle">Puedes completar los datos o importarlos de tus contactos</string>
     <string name="add_contact_name_label">Nombre del contacto</string>
     <string name="add_import_contact">Importar contacto</string>
-    <string name="add_choose_avatar">Elegir avatar</string>
-    <string name="add_select_avatar">Seleccionar avatar</string>
-    <string name="cd_avatar_number">Avatar %1$d</string>
     <string name="cd_selected_photo">Foto de perfil seleccionada</string>
     <string name="cd_selected_avatar">Avatar seleccionado</string>
     <string name="cd_edit_profile_picture">Editar foto de perfil</string>
-    <string name="time_am">a.m.</string>
-    <string name="time_pm">p.m.</string>
     <string name="add_step_time_title">Elige la hora del recordatorio</string>
     <string name="add_step_time_subtitle">¿Cada cuánto quieres recibir recordatorios?</string>
     <string name="add_step_group_title">Añádelo a un grupo</string>

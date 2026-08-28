@@ -284,7 +284,7 @@ private fun AddNoteCard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(24.dp))
-            .background(NekkoTheme.colors.fill.quaternary).shadow(2.dp,
+            .background(NekkoTheme.colors.fill.quaternary).shadow(0.dp,
                 RoundedCornerShape(24.dp))
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -297,7 +297,7 @@ private fun AddNoteCard(
             modifier = Modifier
                 .size(20.dp),
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = stringResource(Res.string.notes_add_note),
             color = NekkoTheme.colors.text.tertiary,

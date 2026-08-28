@@ -39,6 +39,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.usenekko.designsystem.avatar.ChooseAvatarBottomSheet
+import app.usenekko.designsystem.avatar.avatarResources
 import app.usenekko.theme.NekkoTheme
 import app.usenekko.home.presentation.components.ProfilePhotoPreview
 import kotlinx.coroutines.delay

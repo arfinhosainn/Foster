@@ -17,14 +17,9 @@
     <string name="add_step_new_contact_subtitle">You can fill out or import from your contacts</string>
     <string name="add_contact_name_label">Contact name</string>
     <string name="add_import_contact">Import contact</string>
-    <string name="add_choose_avatar">Choose Avatar</string>
-    <string name="add_select_avatar">Select Avatar</string>
-    <string name="cd_avatar_number">Avatar %1$d</string>
     <string name="cd_selected_photo">Selected Profile Photo</string>
     <string name="cd_selected_avatar">Selected Avatar</string>
     <string name="cd_edit_profile_picture">Edit Profile Picture</string>
-    <string name="time_am">AM</string>
-    <string name="time_pm">PM</string>
     <string name="add_step_time_title">Choose reminder time</string>
     <string name="add_step_time_subtitle">How often do you want to be reminded?</string>
     <string name="add_step_group_title">Add to a group</string>

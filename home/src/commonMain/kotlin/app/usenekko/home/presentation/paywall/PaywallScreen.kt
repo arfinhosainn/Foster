@@ -333,7 +333,7 @@ private fun PlanList(
     ) {
         PlanCard(
             title = stringResource(Res.string.paywall_annual_plan),
-            price = annualPrice ?: "—",
+            price = annualPrice ?: "$35.00",
             periodLabel = "year",
             originalPrice = "\$99.99",
             discount = "40% OFF",
@@ -342,7 +342,7 @@ private fun PlanList(
         )
         PlanCard(
             title = stringResource(Res.string.paywall_monthly_plan),
-            price = monthlyPrice ?: "—",
+            price = monthlyPrice ?: "39.99",
             periodLabel = "month",
             isSelected = selectedPeriod == BillingPeriod.MONTHLY,
             onClick = { onSelect(BillingPeriod.MONTHLY) },
@@ -398,7 +398,7 @@ private fun PlanCard(
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.clip(RoundedCornerShape(40))
                                 .background(PaywallYellow)
-                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                                .padding(horizontal = 6.dp, vertical = 0.dp),
                         )
                     }
                 }
@@ -421,7 +421,7 @@ private fun PlanCard(
                         color = PaywallWhite
                     )
                     Text(
-                        " /$periodLabel",
+                        "/ $periodLabel",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
                         color = PaywallWhite

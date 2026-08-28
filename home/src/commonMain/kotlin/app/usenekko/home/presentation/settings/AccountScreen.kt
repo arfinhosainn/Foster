@@ -38,6 +38,8 @@ import app.usenekko.home.di.rememberAccountViewModel
 import app.usenekko.home.presentation.badges.BadgeRow
 import app.usenekko.home.presentation.components.avatarIndexForId
 import app.usenekko.home.presentation.settings.components.SettingsTopBar
+import app.usenekko.designsystem.avatar.ChooseAvatarBottomSheet
+import app.usenekko.designsystem.avatar.avatarResources
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.settings_account
@@ -152,7 +154,7 @@ fun AccountScreen(
     }
 
     if (showAvatarPicker) {
-        ChooseProfileAvatarBottomSheet(
+        ChooseAvatarBottomSheet(
             selectedAvatarIndex = avatarIndexForId(state.profile?.selectedAvatarId),
             onAvatarSelected = viewModel::selectAvatar,
             onDismiss = { showAvatarPicker = false },

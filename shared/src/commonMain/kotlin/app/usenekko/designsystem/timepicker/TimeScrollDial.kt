@@ -1,4 +1,4 @@
-package app.usenekko.onboarding.timereminder.components
+package app.usenekko.designsystem.timepicker
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.exponentialDecay

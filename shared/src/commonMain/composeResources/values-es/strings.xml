@@ -15,4 +15,14 @@
     <!-- Navegación inferior -->
     <string name="nav_home">Inicio</string>
     <string name="nav_grow">Crecer</string>
+
+    <!-- Hora -->
+    <string name="time_am">a.m.</string>
+    <string name="time_pm">p.m.</string>
+
+    <!-- Selector de avatar -->
+    <string name="add_choose_avatar">Elegir avatar</string>
+    <string name="add_select_avatar">Seleccionar avatar</string>
+    <string name="cd_avatar_number">Avatar %1$d</string>
+    <string name="cd_close">Cerrar</string>
 </resources>

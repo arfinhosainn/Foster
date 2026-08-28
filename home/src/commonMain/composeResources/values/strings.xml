@@ -49,17 +49,12 @@
     <string name="add_import_contact">Import contact</string>
     <string name="cd_imported_photo">Imported contact photo</string>
     <string name="cd_edit_profile_picture">Edit profile picture</string>
-    <string name="add_choose_avatar">Choose Avatar</string>
-    <string name="add_select_avatar">Select Avatar</string>
-    <string name="cd_avatar_number">Avatar %1$d</string>
     <string name="add_no_groups_yet">No groups yet</string>
     <string name="add_wanna_create_group">Wanna create a new group?</string>
     <string name="add_tap_plus_button">Tap the plus button</string>
     <string name="cd_add_members">Add members</string>
     <string name="add_create_group">Create Group</string>
     <string name="add_new_group">New Group</string>
-    <string name="time_am">AM</string>
-    <string name="time_pm">PM</string>
     <string name="edit_subtitle">Update the details that keep your relationship on track.</string>
     <string name="edit_save_changes">Save changes</string>
     <string name="edit_discard_title">Discard changes?</string>

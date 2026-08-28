@@ -69,11 +69,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.designsystem.shapes.SawToothCircleShape
-import app.usenekko.home.addcontact.components.AmPmToggle
-import app.usenekko.home.addcontact.components.TimeScrollDial
+import app.usenekko.designsystem.buttons.AmPmToggle
+import app.usenekko.designsystem.timepicker.TimeScrollDial
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
@@ -82,14 +83,10 @@ import app.usenekko.home.presentation.components.contactsForGroup
 import app.usenekko.home.presentation.components.groupMemberCount
 import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.shared.contacts.rememberContactPicker
+import app.usenekko.designsystem.avatar.ChooseAvatarBottomSheet
+import app.usenekko.designsystem.avatar.avatarResources
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
-import nekko.home.generated.resources.avatar_blue
-import nekko.home.generated.resources.avatar_green
-import nekko.home.generated.resources.avatar_maroon
-import nekko.home.generated.resources.avatar_orange
-import nekko.home.generated.resources.avatar_red
-import nekko.home.generated.resources.avatar_yellow
 import nekko.home.generated.resources.ic_add
 import nekko.home.generated.resources.ic_back
 import nekko.home.generated.resources.ic_circlecheck
@@ -100,10 +97,8 @@ import nekko.home.generated.resources.ic_pencil
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.vectorResource
-import kotlin.math.min
 import nekko.home.generated.resources.action_next
 import nekko.home.generated.resources.action_save
-import nekko.home.generated.resources.add_choose_avatar
 import nekko.home.generated.resources.add_contact_name_label
 import nekko.home.generated.resources.add_create_group
 import nekko.home.generated.resources.add_freq_annually
@@ -116,7 +111,6 @@ import nekko.home.generated.resources.add_import_contact
 import nekko.home.generated.resources.add_new_group
 import nekko.home.generated.resources.add_no_groups_yet
 import nekko.home.generated.resources.add_save_contact
-import nekko.home.generated.resources.add_select_avatar
 import nekko.home.generated.resources.add_step_frequency_subtitle
 import nekko.home.generated.resources.add_step_frequency_title
 import nekko.home.generated.resources.add_step_group_subtitle
@@ -128,7 +122,6 @@ import nekko.home.generated.resources.add_step_time_title
 import nekko.home.generated.resources.add_tap_plus_button
 import nekko.home.generated.resources.add_wanna_create_group
 import nekko.home.generated.resources.cd_add_members
-import nekko.home.generated.resources.cd_avatar_number
 import nekko.home.generated.resources.cd_back
 import nekko.home.generated.resources.cd_close
 import nekko.home.generated.resources.cd_edit_profile_picture
@@ -147,14 +140,6 @@ private val frequencies = listOf(
     "annually" to Res.string.add_freq_annually
 )
 
-private val avatarResources: List<DrawableResource> = listOf(
-    Res.drawable.avatar_yellow,
-    Res.drawable.avatar_green,
-    Res.drawable.avatar_orange,
-    Res.drawable.avatar_red,
-    Res.drawable.avatar_maroon,
-    Res.drawable.avatar_blue,
-)
 
 private data class StepMeta(
     val titleRes: StringResource,
@@ -393,19 +378,10 @@ private fun FooterRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (currentStep > 0) {
-            FilledIconButton(
-                modifier = Modifier.size(58.dp),
+            NekkoActionButton(
                 onClick = onBackStep,
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = NekkoTheme.colors.fill.tertiary,
-                ),
-            ) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.ic_back),
-                    contentDescription = stringResource(Res.string.cd_back),
-                    tint = NekkoTheme.colors.text.primary,
-                )
-            }
+                leadingIcon = vectorResource(Res.drawable.ic_back),
+            )
 
             Spacer(Modifier.width(12.dp))
         }
@@ -414,7 +390,7 @@ private fun FooterRow(
             NekkoButton(
                 text = stringResource(Res.string.action_next),
                 onClick = onNextStep,
-                modifier = Modifier.weight(1f).height(58.dp),
+                modifier = Modifier.weight(1f),
                 enabled = canAdvance,
             )
         } else {
@@ -556,18 +532,18 @@ private fun AvatarPreview(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .offset(y = 16.dp)
-                .size(32.dp)
+                .offset(y = 10.dp)
+                .size(height = 24.dp, width = 36.dp)
                 .clip(CircleShape)
-                .border(2.dp, NekkoTheme.colors.stroke.secondary, CircleShape)
+                .border(2.dp, NekkoTheme.colors.stroke.secondary.copy(alpha = 0.03f), CircleShape)
                 .background(NekkoTheme.colors.background.b2),
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.Center
         ) {
-            Image(
+            Icon(
                 imageVector = vectorResource(Res.drawable.ic_pencil),
                 contentDescription = stringResource(Res.string.cd_edit_profile_picture),
-                modifier = Modifier.size(18.dp),
-                colorFilter = ColorFilter.tint(NekkoTheme.colors.background.onBackground),
+                tint = NekkoTheme.colors.text.primary,
+                modifier = Modifier.size(16.dp),
             )
         }
     }
@@ -601,123 +577,6 @@ private fun StepFieldContainer(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChooseAvatarBottomSheet(
-    selectedAvatarIndex: Int?,
-    onAvatarSelected: (Int) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var pendingAvatarIndex by rememberSaveable { mutableStateOf(selectedAvatarIndex) }
-    val selectionRingBrush = Brush.sweepGradient(
-        listOf(Color(0xFFFFCC33), Color(0xFF34C759), Color(0xFFFFCC33)),
-    )
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = NekkoTheme.colors.background.b1,
-        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                BottomSheetDefaults.DragHandle(
-                    color = NekkoTheme.colors.gray.quaternary,
-                    modifier = Modifier.align(Alignment.Center),
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 18.dp, top = 10.dp )
-                        .clip(CircleShape)
-                        .background(Color.Unspecified)
-                        .clickable(onClick = onDismiss),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = stringResource(Res.string.cd_close),
-                        tint = NekkoTheme.colors.gray.secondary,
-                    )
-                }
-            }
-        },
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-        ) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = stringResource(Res.string.add_choose_avatar),
-                    style = NekkoTheme.typography.heading1Bold,
-                    color = NekkoTheme.colors.text.primary,
-                )
-            }
-
-            Spacer(Modifier.height(40.dp))
-
-            val columns = 3
-            for (i in avatarResources.indices step columns) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                ) {
-                    for (j in i until min(i + columns, avatarResources.size)) {
-                        val isSelected = pendingAvatarIndex == j
-                        Box(
-                            modifier = Modifier
-                                .size(88.dp)
-                                .then(
-                                    if (isSelected) {
-                                        Modifier.border(
-                                            width = 3.dp,
-                                            brush = selectionRingBrush,
-                                            shape = CircleShape,
-                                        )
-                                    } else {
-                                        Modifier
-                                    },
-                                )
-                                .clickable { pendingAvatarIndex = j },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(CircleShape)
-                                    .background(NekkoTheme.colors.fill.secondary),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Image(
-                                    imageVector = vectorResource(avatarResources[j]),
-                                    contentDescription = stringResource(Res.string.cd_avatar_number, j + 1),
-                                    modifier = Modifier.size(64.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(16.dp))
-            }
-
-            Spacer(Modifier.height(32.dp))
-
-            NekkoButton(
-                text = stringResource(Res.string.add_select_avatar),
-                onClick = {
-                    pendingAvatarIndex?.let { index ->
-                        onAvatarSelected(index)
-                        onDismiss()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = pendingAvatarIndex != null,
-            )
-        }
-    }
-}
 
 @Composable
 internal fun GroupStep(
@@ -1081,7 +940,7 @@ internal fun FrequencyStep(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(15.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
         frequencies.forEach { (value, labelRes) ->
             ReminderOptionCard(
@@ -1111,6 +970,7 @@ internal fun ReminderTimeStep(
                 state.selectedHour * 60 + state.selectedMinute
             },
             onValueChange = onTimeDialChanged,
+            modifier = modifier.fillMaxWidth()
         )
 
         Spacer(Modifier.height(24.dp))
@@ -1214,7 +1074,7 @@ private fun ReminderOptionCard(
             .clip(RoundedCornerShape(24.dp))
             .background(NekkoTheme.colors.fill.secondary)
             .clickable(onClick = onClick)
-            .padding(vertical = 22.dp),
+            .padding(vertical = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(

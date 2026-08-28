@@ -24,9 +24,26 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import app.usenekko.onboarding.timereminder.TimeReminderScreen
 import app.usenekko.onboarding.welcome.WelcomeScreen
 import app.usenekko.onboarding.splash.SplashScreen
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import app.usenekko.adaptive.WindowWidthSizeClass
+import app.usenekko.adaptive.windowWidthSizeClass
+import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
+import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassNavigationRail
+import app.usenekko.navigation.BottomBarActions
 import app.usenekko.home.HomeScreen
 import app.usenekko.home.presentation.dayagenda.DayAgendaScreen
 import app.usenekko.home.presentation.CheckInsScreen
@@ -48,6 +65,7 @@ import app.usenekko.shared.paywall.PaywallGateManagerProvider
 import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
 import app.usenekko.theme.NekkoTheme
+import app.usenekko.theme.ThemePreferenceStoreProvider
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.SupabaseClient
 
@@ -129,7 +147,18 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
 
     val pendingBadge by BadgeRevealStore.pending.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val useRailLayout = windowWidthSizeClass(maxWidth) == WindowWidthSizeClass.Expanded
+        val bottomBarActions = remember { BottomBarActions() }
+
+        // Screens animate inside this padded container; the floating bottom bar /
+        // rail lives OUTSIDE it so its selection circle never participates in
+        // (or jumps during) screen transitions.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(if (useRailLayout) Modifier.padding(start = 88.dp) else Modifier),
+        ) {
         App(navigator) { screen ->
             val screenContent: @Composable () -> Unit = {
                 when (screen) {
@@ -209,13 +238,17 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                         onSettingsClick = { navigator.navigate(Screen.Settings) },
                         onShowPaywall = showPremiumPaywall,
                         onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
+                        bottomBarActions = bottomBarActions,
                     )
 
                     is Screen.CheckIns -> CheckInsScreen(
-                        onHomeClick = { navigator.replaceAll(Screen.Home) },
+                        // Horizontal pop back to Home so both tab directions use
+                        // matching directional page-style slides (no Reset flash).
+                        onHomeClick = { navigator.goBack() },
                         onSettingsClick = { navigator.navigate(Screen.Settings) },
                         onShowPaywall = showPremiumPaywall,
                         onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
+                        bottomBarActions = bottomBarActions,
                     )
 
                     is Screen.ContactProfile -> ContactProfileScreen(
@@ -291,6 +324,17 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                 screenContent()
             }
         }
+        } // end rail-padded content container
+
+        // Single persistent navigation bar: its selection circle glides between
+        // tabs while screens slide underneath (see NavigationTransitionPolicy).
+        PersistentBottomNavigationBar(
+            navigator = navigator,
+            actions = bottomBarActions,
+            useRail = useRailLayout,
+            onSelectTab = { index -> navigator.selectMainTab(index) },
+            modifier = Modifier.align(if (useRailLayout) Alignment.CenterStart else Alignment.BottomCenter),
+        )
 
         pendingBadge?.let { badge ->
             NekkoTheme {
@@ -330,6 +374,80 @@ val Screen.isFirstRunSurface: Boolean
 
         else -> false
     }
+
+/**
+ * Tab selection for the shell-owned bottom bar. Tap targets:
+ * - Tab 0 (Home): from CheckIns, pop back with a leftward slide.
+ * - Tab 1 (Grow): from Home, push forward with a rightward slide.
+ */
+private fun Navigator.selectMainTab(index: Int) {
+    when (index) {
+        0 -> if (currentScreen is Screen.CheckIns) goBack()
+        1 -> if (currentScreen is Screen.Home) navigate(Screen.CheckIns)
+    }
+}
+
+/**
+ * The one bottom bar shared by all tab screens. Rendered above [app.usenekko.App]'s
+ * AnimatedContent so the indicator's travel animation runs concurrently with —
+ * and unaffected by — the horizontal page transition of the screens. Hidden
+ * while non-tab screens are pushed or while a tab screen shows an overlay.
+ */
+@Composable
+private fun PersistentBottomNavigationBar(
+    navigator: Navigator,
+    actions: BottomBarActions,
+    useRail: Boolean,
+    onSelectTab: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // The shell renders this bar outside App()'s NekkoTheme (that theme only
+    // wraps the NavHost), so supply the same wrapper stack locally — otherwise
+    // GlassBottomNavBar reads missing ExtendedColors and crashes on first show.
+    ThemePreferenceStoreProvider {
+    NekkoTheme {
+    val selectedIndex: Int? = when (navigator.currentScreen) {
+        Screen.Home -> 0
+        Screen.CheckIns -> 1
+        else -> null
+    }
+
+    // Freeze the last tab while non-tab destinations sit on top, so the fading
+    // bar doesn't visibly reset its circle back to item 0 mid-exit.
+    val stickySelectedIndex = remember { mutableIntStateOf(0) }
+    if (selectedIndex != null && !actions.isOverlayShowing) {
+        stickySelectedIndex.intValue = selectedIndex
+    }
+
+    val visible = selectedIndex != null && !actions.isOverlayShowing
+
+    AnimatedVisibility(
+        visible = visible,
+        enter =
+            if (useRail) fadeIn(tween(200))
+            else slideInVertically(tween(240)) { it } + fadeIn(tween(240)),
+        exit =
+            if (useRail) fadeOut(tween(160))
+            else slideOutVertically(tween(180)) { it } + fadeOut(tween(180)),
+        modifier = modifier,
+    ) {
+        if (useRail) {
+            GlassNavigationRail(
+                selectedIndex = stickySelectedIndex.intValue,
+                onItemSelected = onSelectTab,
+                onAddClick = actions::notifyAddContactRequested,
+            )
+        } else {
+            GlassBottomNavBar(
+                selectedIndex = stickySelectedIndex.intValue,
+                onItemSelected = onSelectTab,
+                onAddClick = actions::notifyAddContactRequested,
+            )
+        }
+    }
+    }
+    }
+} // end NekkoTheme / ThemePreferenceStoreProvider / bar composable
 
 internal fun authSessionAction(status: SessionStatus, isSplash: Boolean): AuthSessionAction {
     if (!isSplash) return AuthSessionAction.Ignore
