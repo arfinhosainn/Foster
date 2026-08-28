@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import app.usenekko.home.data.BrainstormRepository
 import app.usenekko.home.domain.BrainstormError
 import app.usenekko.home.domain.BrainstormGeneration
+import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 class BrainstormViewModel(
     private val contactId: String,
     private val repository: BrainstormRepository,
+    private val contactDataSource: ContactDataSource? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BrainstormState())
@@ -24,6 +26,7 @@ class BrainstormViewModel(
         observeHistory()
         loadHistory()
         generate()
+        loadContactPhoneNumber()
     }
 
     fun onAction(action: BrainstormAction) {
@@ -31,6 +34,28 @@ class BrainstormViewModel(
             BrainstormAction.Generate -> generate()
             BrainstormAction.DismissNotice ->
                 _state.value = _state.value.copy(notice = null, error = null)
+            is BrainstormAction.ShowNotice ->
+                _state.value = _state.value.copy(notice = action.message, error = null)
+        }
+    }
+
+    /**
+     * Resolves the contact's phone number (captured at import time) so
+     * brainstorm cards can hand their content off to the SMS app. Phone is
+     * optional — manual contacts have none and the UI shows a notice instead.
+     */
+    private fun loadContactPhoneNumber() {
+        val dataSource = contactDataSource ?: return
+        viewModelScope.launch {
+            when (val result = dataSource.getContacts()) {
+                is Result.Success -> {
+                    val phone = result.data
+                        .firstOrNull { it.id == contactId }
+                        ?.phoneNumber
+                    _state.value = _state.value.copy(contactPhoneNumber = phone)
+                }
+                is Result.Error -> Unit // phone is optional; never block brainstorm on this
+            }
         }
     }
 

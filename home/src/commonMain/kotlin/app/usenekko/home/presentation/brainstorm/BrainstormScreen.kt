@@ -26,14 +26,18 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import app.usenekko.home.di.rememberBrainstormViewModel
+import app.usenekko.home.domain.BrainstormTopic
 import app.usenekko.home.presentation.brainstorm.components.BrainstormTabs
 import app.usenekko.home.presentation.brainstorm.components.BrainstormTopBar
 import app.usenekko.home.presentation.brainstorm.components.CurrentOutputContent
 import app.usenekko.home.presentation.brainstorm.components.HistoryContent
+import app.usenekko.shared.messaging.rememberSmsComposer
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.brainstorm_no_phone_number
 import nekko.home.generated.resources.gradients
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BrainstormScreen(
@@ -44,6 +48,11 @@ fun BrainstormScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     var selectedTab by remember { mutableStateOf(BrainstormTab.CurrentOutput) }
+
+    val noPhoneNumberMessage = stringResource(Res.string.brainstorm_no_phone_number)
+    val smsComposer = rememberSmsComposer(
+        onUnavailable = { viewModel.onAction(BrainstormAction.ShowNotice(noPhoneNumberMessage)) },
+    )
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -101,11 +110,31 @@ fun BrainstormScreen(
                         notice = state.notice,
                         error = state.error,
                         onDismissNotice = { viewModel.onAction(BrainstormAction.DismissNotice) },
+                        onSendMessage = { topic ->
+                            val phone = state.contactPhoneNumber
+                            val body = topic.description
+                            if (phone.isNullOrBlank() || body.isNullOrBlank()) {
+                                viewModel.onAction(BrainstormAction.ShowNotice(noPhoneNumberMessage))
+                            } else {
+                                smsComposer(phone, body)
+                            }
+                        },
                     )
                     BrainstormTab.History -> HistoryContent(
                         sessions = state.history,
                         isLoading = state.isLoadingHistory,
                         error = state.error,
+                        onSendMessage = { topic ->
+                            val phone = state.contactPhoneNumber
+                            val body = topic.description
+                            if (phone.isNullOrBlank() || body.isNullOrBlank()) {
+                                viewModel.onAction(BrainstormAction.ShowNotice(noPhoneNumberMessage))
+                            } else {
+                                smsComposer(phone, body)
+                            }
+                        },
+                        notice = state.notice,
+                        onDismissNotice = { viewModel.onAction(BrainstormAction.DismissNotice) },
                     )
                 }
             }

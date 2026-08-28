@@ -7,6 +7,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -19,11 +20,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -34,6 +40,9 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.home.domain.BrainstormTopic
 import app.usenekko.home.presentation.brainstorm.BrainstormTab
 import app.usenekko.theme.NekkoTheme
+import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.brainstorm_send_message_cd
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BrainstormTopBar(
@@ -122,27 +131,54 @@ fun BrainstormTabs(
 fun TopicCard(
     topic: BrainstormTopic,
     index: Int,
+    onSendMessage: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(NekkoTheme.colors.fill.tertiary)
-            .padding(20.dp),
-    ) {
-        Text(
-            text = "${index + 1}.  ${topic.title}",
-            style = NekkoTheme.typography.heading4,
-            color = NekkoTheme.colors.text.primary,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = topic.description.orEmpty(),
-            style = NekkoTheme.typography.heading4,
-            fontWeight = FontWeight.Normal,
-            color = NekkoTheme.colors.text.secondary,
-        )
+    val canSendMessage = onSendMessage != null && !topic.description.isNullOrBlank()
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(NekkoTheme.colors.fill.tertiary)
+                .padding(20.dp),
+        ) {
+            Text(
+                text = "${index + 1}.  ${topic.title}",
+                style = NekkoTheme.typography.heading4,
+                color = NekkoTheme.colors.text.primary,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = topic.description.orEmpty(),
+                style = NekkoTheme.typography.heading4,
+                fontWeight = FontWeight.Normal,
+                color = NekkoTheme.colors.text.secondary,
+                // Keep clear of the send icon pinned to the bottom-right corner.
+                modifier = Modifier.padding(end = 36.dp, bottom = 4.dp),
+            )
+        }
+
+        if (canSendMessage) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 12.dp, bottom = 12.dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(NekkoTheme.colors.fill.secondary)
+                    .clickable(onClick = onSendMessage),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = stringResource(Res.string.brainstorm_send_message_cd),
+                    tint = NekkoTheme.colors.text.primary,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
     }
 
     Spacer(modifier = Modifier.height(12.dp))
