@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
  * never crashes.
  */
 actual class ReminderScheduler : NotificationSchedulingOps {
-    override suspend fun scheduleDay(plan: DayPlan) {
+    actual override suspend fun scheduleDay(plan: DayPlan) {
         scheduleAlarm(
             requestCode = plan.dayKey.hashCode(),
             fireAtEpochMillis = plan.fireAtEpochMillis,
@@ -36,7 +36,7 @@ actual class ReminderScheduler : NotificationSchedulingOps {
         )
     }
 
-    override suspend fun scheduleStandalone(plan: StandalonePlan) {
+    actual override suspend fun scheduleStandalone(plan: StandalonePlan) {
         scheduleAlarm(
             requestCode = plan.key.hashCode(),
             fireAtEpochMillis = plan.fireAtEpochMillis,
@@ -94,7 +94,7 @@ actual class ReminderScheduler : NotificationSchedulingOps {
         }
     }
 
-    override suspend fun cancelDay(dayKey: Long) {
+    actual override suspend fun cancelDay(dayKey: Long) {
         val context = ReminderScheduler.appContext ?: return
         withContext(Dispatchers.Main) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -104,7 +104,7 @@ actual class ReminderScheduler : NotificationSchedulingOps {
         }
     }
 
-    override suspend fun cancelStandalone(key: String) {
+    actual override suspend fun cancelStandalone(key: String) {
         val context = ReminderScheduler.appContext ?: return
         withContext(Dispatchers.Main) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager

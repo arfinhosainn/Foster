@@ -26,4 +26,7 @@
     <string name="add_select_avatar">Select Avatar</string>
     <string name="cd_avatar_number">Avatar %1$d</string>
     <string name="cd_close">Close</string>
+    <string name="cd_selected_photo">Selected Profile Photo</string>
+    <string name="cd_selected_avatar">Selected Avatar</string>
+    <string name="cd_edit_profile_picture">Edit Profile Picture</string>
 </resources>

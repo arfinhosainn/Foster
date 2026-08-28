@@ -17,7 +17,7 @@ class NavigationTransitionPolicyTest {
             Screen.AddNote,
             Screen.Notification,
             Screen.ContactProfile("contact-id"),
-            Screen.Settings,
+            Screen.Settings(),
             Screen.GroupDetail("group-id", "Group"),
         )
 
@@ -37,7 +37,6 @@ class NavigationTransitionPolicyTest {
         val routes = listOf(
             Screen.Brainstorm("contact-id"),
             Screen.Paywall,
-            Screen.Account,
             Screen.GroupSettings,
         )
 
@@ -75,7 +74,7 @@ class NavigationTransitionPolicyTest {
         assertEquals(
             ScreenTransitionStyle.Horizontal,
             transitionStyle(
-                initial = state(Screen.Settings, NavigationOperation.Forward),
+                initial = state(Screen.Settings(), NavigationOperation.Forward),
                 target = state(Screen.Home, NavigationOperation.Backward),
             ),
         )
@@ -87,14 +86,14 @@ class NavigationTransitionPolicyTest {
             ScreenTransitionStyle.Vertical,
             transitionStyle(
                 initial = state(Screen.Home),
-                target = state(Screen.Account, NavigationOperation.Replace),
+                target = state(Screen.GroupSettings, NavigationOperation.Replace),
             ),
         )
         assertEquals(
             ScreenTransitionStyle.Reset,
             transitionStyle(
                 initial = state(Screen.Notification),
-                target = state(Screen.Account, NavigationOperation.ResetStack),
+                target = state(Screen.GroupSettings, NavigationOperation.ResetStack),
             ),
         )
     }

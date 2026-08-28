@@ -41,7 +41,7 @@ import kotlin.coroutines.resume
  */
 actual class ReminderScheduler : NotificationSchedulingOps {
 
-    override suspend fun scheduleDay(plan: DayPlan) {
+    actual override suspend fun scheduleDay(plan: DayPlan) {
         val authorized = isAuthorized()
         if (!authorized) return
 
@@ -73,7 +73,7 @@ actual class ReminderScheduler : NotificationSchedulingOps {
         store.save(state.copy(deliveredDays = state.deliveredDays + plan.dayKey))
     }
 
-    override suspend fun scheduleStandalone(plan: StandalonePlan) {
+    actual override suspend fun scheduleStandalone(plan: StandalonePlan) {
         val authorized = isAuthorized()
         if (!authorized) return
 
@@ -92,13 +92,13 @@ actual class ReminderScheduler : NotificationSchedulingOps {
         store.save(state.copy(deliveredKeys = state.deliveredKeys + plan.key))
     }
 
-    override suspend fun cancelDay(dayKey: Long) {
+    actual override suspend fun cancelDay(dayKey: Long) {
         val identifier = "day:$dayKey"
         center.removePendingNotificationRequestsWithIdentifiers(listOf(identifier))
         center.removeDeliveredNotificationsWithIdentifiers(listOf(identifier))
     }
 
-    override suspend fun cancelStandalone(key: String) {
+    actual override suspend fun cancelStandalone(key: String) {
         val identifier = "custom:$key"
         center.removePendingNotificationRequestsWithIdentifiers(listOf(identifier))
         center.removeDeliveredNotificationsWithIdentifiers(listOf(identifier))

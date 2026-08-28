@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,17 +54,19 @@ fun BrainstormCard(
             .clip(BRAINSTORM_CARD_SHAPE)
 
             .background(NekkoTheme.colors.fill.quaternary)
-            .leftEdgeShine(BRAINSTORM_CARD_SHAPE) // ← edge-lit shine, left side only
+            .leftEdgeShine(BRAINSTORM_CARD_SHAPE, intensity = 0.4f) // ← edge-lit shine, left side only
             .clickable(onClick = onClick),
     ) {
+        // Sized so it doesn't fill the whole card (Crop + no size would stretch it
+        // edge-to-edge and lock it to the middle). Aligned to BottomEnd, then offset
+        // further down/right so the blob's hotspot sits in the bottom-end corner;
+        // the overflow is clipped by the card's shape.
         Image(
             painter = painterResource(Res.drawable.img_gradientss),
             contentDescription = null,
-            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .fillMaxHeight(0.9f)
-                .aspectRatio(1199f / 540f),
+                .align(Alignment.CenterEnd)
+                .offset(x = 80.dp, y = 0.dp),
         )
         Column(
             modifier = Modifier

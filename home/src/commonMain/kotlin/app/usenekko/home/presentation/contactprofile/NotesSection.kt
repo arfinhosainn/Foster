@@ -32,8 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -132,7 +133,23 @@ private fun NoteCard(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    val cardColor = NekkoTheme.colors.background.b0
+    var bodyTruncated by remember { mutableStateOf(false) }
+    val bodyColor = NekkoTheme.colors.text.tertiary
+
+    // Fade applied to the text GLYPHS themselves (not a background overlay):
+    // scroll-roll style — the last visible line is already heavily faded where
+    // it starts (~75% faded at the top of line 6 ≈ 0.83 of the text height)
+    // and ~90% faded by its bottom edge.
+    // Only used when the body actually overflows; the date row below is never
+    // touched since it's drawn as a separate composable.
+    val bodyFadeBrush = remember(bodyColor) {
+        Brush.verticalGradient(
+            0.00f to bodyColor,
+            0.40f to bodyColor,
+            0.83f to bodyColor.copy(alpha = 0.25f), // top of the last line
+            1.00f to bodyColor.copy(alpha = 0.10f), // bottom of the last line
+        )
+    }
 
     Column(
         modifier = modifier
@@ -162,75 +179,65 @@ private fun NoteCard(
                 text = note.body,
                 maxLines = 6,
                 overflow = TextOverflow.Clip,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                fontWeight = FontWeight.Normal,
+                onTextLayout = { bodyTruncated = it.hasVisualOverflow },
+                style = TextStyle(
+                    // Brush takes precedence; SolidColor renders as a normal solid
+                    // text color, bodyFadeBrush only when the body overflows so
+                    // short notes stay fully crisp.
+                    brush = if (bodyTruncated) bodyFadeBrush else SolidColor(bodyColor),
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.Normal,
+                ),
+            )
+        }
+
+        // Height gap so the faded text never sits behind the date row.
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = formatNoteDate(note.createdAt),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
                 color = NekkoTheme.colors.text.tertiary,
             )
 
-            // Large fade mask matching the card background.
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colorStops = arrayOf(
-                                0.00f to Color.Transparent,
-                                0.38f to Color.Transparent,
-                                0.78f to cardColor.copy(alpha = 0.92f),
-                                1.00f to cardColor,
-                            ),
-                        ),
-                    ),
-            )
-
-            // Footer is drawn after the fade, so it remains visible.
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = formatNoteDate(note.createdAt),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = NekkoTheme.colors.text.tertiary,
+            Box {
+                Icon(
+                    imageVector = Icons.Default.MoreHoriz,
+                    contentDescription = stringResource(Res.string.notes_options_cd),
+                    tint = NekkoTheme.colors.text.tertiary,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable { menuExpanded = true },
                 )
 
-                Box {
-                    Icon(
-                        imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = stringResource(Res.string.notes_options_cd),
-                        tint = NekkoTheme.colors.text.tertiary,
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clickable { menuExpanded = true },
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier
+                        .width(NOTE_MENU_WIDTH)
+                        .background(NekkoTheme.colors.background.b0),
+                ) {
+                    DropdownMenuItem(
+                        modifier = Modifier.height(36.dp),
+                        text = {
+                            Text(
+                                text = stringResource(Res.string.action_delete),
+                                color = NekkoTheme.colors.text.primary,
+                            )
+                        },
+                        onClick = {
+                            menuExpanded = false
+                            onDelete()
+                        },
                     )
-
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false },
-                        shape = RoundedCornerShape(24.dp),
-                        modifier = Modifier
-                            .width(NOTE_MENU_WIDTH)
-                            .background(NekkoTheme.colors.background.b0),
-                    ) {
-                        DropdownMenuItem(
-                            modifier = Modifier.height(36.dp),
-                            text = {
-                                Text(
-                                    text = stringResource(Res.string.action_delete),
-                                    color = NekkoTheme.colors.text.primary,
-                                )
-                            },
-                            onClick = {
-                                menuExpanded = false
-                                onDelete()
-                            },
-                        )
-                    }
                 }
             }
         }

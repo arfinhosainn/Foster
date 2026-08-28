@@ -47,6 +47,7 @@ import app.usenekko.home.presentation.components.ContactAvatar
 import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_dropdown
+import nekko.home.generated.resources.notif
 import nekko.home.generated.resources.ic_notification
 import nekko.home.generated.resources.ic_reminder
 import org.jetbrains.compose.resources.vectorResource
@@ -60,6 +61,7 @@ fun ContactProfileHeader(
     isExpanded: Boolean,
     daysUntilNextCheckIn: Int,
     ringProgress: Float,
+    hasNewMilestone: Boolean = false,
     onNameClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onCheckInClick: () -> Unit,
@@ -82,8 +84,8 @@ fun ContactProfileHeader(
 
             Box(
                 modifier = Modifier
-                    .offset(y = 50.dp)
-                    .size(82.dp),
+                    .offset(y = 45.dp) // 45 + 46 (half of 92) keeps the avatar center where it was (50 + 41)
+                    .size(92.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 val trackColor = NekkoTheme.colors.fill.tertiary
@@ -93,8 +95,10 @@ fun ContactProfileHeader(
                     1f to Color(0xFF34C759),
                 )
                 Canvas(Modifier.matchParentSize()) {
-                    val stroke = 2.dp.toPx()
-                    val radius = 40.dp.toPx() + stroke / 2f
+                    val stroke = 3.dp.toPx()
+                    // Ring band: 42.5–45.5dp from center — fully inside the 46dp
+                    // canvas half-size (no clipping) and clear of the 40dp avatar.
+                    val radius = 44.dp.toPx()
                     drawCircle(
                         color = trackColor,
                         radius = radius,
@@ -126,7 +130,7 @@ fun ContactProfileHeader(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(25.dp))
         Row(
             modifier = Modifier
                 .clickable(
@@ -144,12 +148,23 @@ fun ContactProfileHeader(
                 color = NekkoTheme.colors.text.primary
             )
             Spacer(Modifier.width(6.dp))
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_dropdown),
-                contentDescription = if (isExpanded) "Collapse relationship info" else "Expand relationship info",
-                tint = NekkoTheme.colors.gray.primary,
-                modifier = Modifier.padding(start = 2.dp),
-            )
+            if (hasNewMilestone) {
+                // New relationship milestone (grass grew) → chevron with red badge dot.
+                // tint = Color.Unspecified keeps the colors baked into the vector.
+                Icon(
+                    imageVector = vectorResource(Res.drawable.notif),
+                    contentDescription = "New relationship milestone",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.padding(start = 2.dp),
+                )
+            } else {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_dropdown),
+                    contentDescription = if (isExpanded) "Collapse relationship info" else "Expand relationship info",
+                    tint = NekkoTheme.colors.gray.primary,
+                    modifier = Modifier.padding(start = 2.dp),
+                )
+            }
         }
         Spacer(Modifier.height(4.dp))
 
@@ -172,7 +187,7 @@ fun ContactProfileHeader(
                 "Check-In",
                 onClick = onCheckInClick,
                 textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp)
                     .wrapContentHeight().wrapContentHeight(),
             )
         }

@@ -3,6 +3,7 @@ package app.usenekko.home.presentation.settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -55,8 +57,13 @@ import app.usenekko.home.presentation.badges.badgeIcon
 import app.usenekko.home.presentation.components.avatarIndexForId
 import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.designsystem.avatar.ChooseAvatarBottomSheet
+import app.usenekko.designsystem.avatar.ProfilePhotoPicker
 import app.usenekko.designsystem.avatar.avatarResources
 import app.usenekko.theme.NekkoTheme
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import app.usenekko.home.domain.Badge
+import app.usenekko.home.presentation.badges.PlantUnlockedBadgeOverlay
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_close
 import nekko.home.generated.resources.ic_contacts
@@ -83,6 +90,8 @@ fun AccountBottomSheet(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showAvatarPicker by rememberSaveable { mutableStateOf(false) }
+    // Unlocked flower tapped in the badge row → collection-preview card.
+    var previewBadge by remember { mutableStateOf<Badge?>(null) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -108,6 +117,9 @@ fun AccountBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    // Blur the sheet content while the badge preview card is up —
+                    // the Dialog's scrim sits above this, so the blur reads through.
+                    .then(if (previewBadge != null) Modifier.blur(20.dp) else Modifier)
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -125,10 +137,10 @@ fun AccountBottomSheet(
             }
 
             Spacer(Modifier.height(28.dp))
-            AccountAvatar(
+            ProfilePhotoPicker(
+                photoBitmap = null,
                 selectedAvatarId = state.profile?.selectedAvatarId,
                 onEditClick = { showAvatarPicker = true },
-                modifier = Modifier.size(120.dp),
             )
             if (state.isUpdatingAvatar) {
                 Spacer(Modifier.height(20.dp))
@@ -188,7 +200,10 @@ fun AccountBottomSheet(
 
             if (state.badgeSlots.isNotEmpty()) {
                 Spacer(Modifier.height(40.dp))
-                AccountBadgeRow(state.badgeSlots)
+                AccountBadgeRow(
+                    badges = state.badgeSlots,
+                    onBadgeClick = { previewBadge = it },
+                )
             }
 
             state.error?.let { error ->
@@ -210,6 +225,31 @@ fun AccountBottomSheet(
             onAvatarSelected = viewModel::selectAvatar,
             onDismiss = { showAvatarPicker = false },
         )
+    }
+
+    // Collection preview: same badge card as the reward overlay, but in its
+    // already-collected state (no Collect button, no Skip). Shown in a Dialog so
+    // it layers above this modal sheet's window.
+    previewBadge?.let { badge ->
+        Dialog(
+            onDismissRequest = { previewBadge = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.45f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                PlantUnlockedBadgeOverlay(
+                    badge = badge,
+                    onCollect = {},
+                    onDismiss = { previewBadge = null },
+                    initiallyRevealed = true,
+                    showActions = false,
+                )
+            }
+        }
     }
 }
 
@@ -277,7 +317,10 @@ private fun AccountStat(
 }
 
 @Composable
-private fun AccountBadgeRow(badges: List<BadgeSlot>) {
+private fun AccountBadgeRow(
+    badges: List<BadgeSlot>,
+    onBadgeClick: (Badge) -> Unit,
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -285,16 +328,28 @@ private fun AccountBadgeRow(badges: List<BadgeSlot>) {
                 .horizontalScroll(rememberScrollState()),
         ) {
             badges.forEach { slot ->
-                AccountBadgeItem(slot)
+                AccountBadgeItem(slot, onBadgeClick = onBadgeClick)
             }
         }
     }
 }
 
 @Composable
-private fun AccountBadgeItem(slot: BadgeSlot) {
+private fun AccountBadgeItem(
+    slot: BadgeSlot,
+    onBadgeClick: (Badge) -> Unit,
+) {
     Column(
-        modifier = Modifier.width(96.dp),
+        // Only already-collected (unlocked) flowers open the preview card.
+        modifier = Modifier
+            .width(96.dp)
+            .then(
+                if (slot.unlocked) {
+                    Modifier.clickable { onBadgeClick(slot.badge) }
+                } else {
+                    Modifier
+                },
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(

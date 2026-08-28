@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.designsystem.sideShine
 import app.usenekko.home.domain.Badge
 import app.usenekko.home.domain.BadgeSlot
 import app.usenekko.theme.NekkoTheme
@@ -194,6 +195,9 @@ fun PlantUnlockedBadgeOverlay(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     initiallyRevealed: Boolean = false,
+    // false = collection preview (tap an already-unlocked flower in the account
+    // sheet): no Collect button and no Skip — only the close icon dismisses.
+    showActions: Boolean = true,
 ) {
     var revealed by remember(initiallyRevealed) { mutableStateOf(initiallyRevealed) }
 
@@ -214,20 +218,129 @@ fun PlantUnlockedBadgeOverlay(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
         )
+
+        // Two-sided edge shine, drawn ABOVE the artwork (a border on the card
+        // itself would be painted over by the fillMaxSize image).
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp, vertical = 24.dp),
-        ) {
+                .matchParentSize()
+                .sideShine(RoundedCornerShape(44.dp), intensity = 0.4f),
+        )
+        if (showActions) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 28.dp, vertical = 24.dp),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_close),
+                            contentDescription = stringResource(Res.string.cd_close),
+                            tint = Color.Unspecified,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clickable(onClick = onDismiss),
+                        )
+
+                        Text(
+                            text = stringResource(Res.string.action_skip),
+                            color = NekkoTheme.colors.text.secondary,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = if (revealed) "A new plant has grown!" else "Plant unlocked",
+                        color = NekkoTheme.colors.text.primary,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = if (revealed) badge.name else "Tap to reveal your new plant",
+                        color = NekkoTheme.colors.text.tertiary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                    )
+
+                    Spacer(Modifier.height(29.dp))
+                    if (revealed) {
+                        Image(
+                            painter = painterResource(badgeCollectArtwork(badge)),
+                            contentDescription = badge.name,
+                            modifier = Modifier.size(151.dp, 210.dp),
+                        )
+                        Spacer(Modifier.height(29.dp))
+                        Text(
+                            text = badge.description,
+                            color = NekkoTheme.colors.background.onBackground,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp,
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        Text(
+                            text = "✦",
+                            color = Color(0xFFF2A900),
+                            fontSize = 64.sp,
+                            modifier = Modifier.padding(vertical = 58.dp),
+                        )
+                    }
+
+                    Spacer(Modifier.height(29.dp))
+                    if (revealed) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(58.dp)
+                                .clip(RoundedCornerShape(32.dp))
+                                .background(NekkoTheme.colors.background.onBackground)
+                                .clickable(onClick = onCollect),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.badges_collect_plant),
+                                color = NekkoTheme.colors.background.b0,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(Res.string.badges_tap_reveal),
+                            color = Color(0xFF718096),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp,
+                        )
+                    }
+                }
+            }
+        } else {
+            // Collection preview (unlocked flower tapped in the account sheet):
+            // 24dp padding all around, close icon pinned to the very top-left
+            // corner, 64dp gap down to the title/subtitle, the flower graphic
+            // centered in the remaining middle space, and the detail text 29dp
+            // right below the flower.
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                Row(modifier = Modifier.fillMaxWidth()) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_close),
                         contentDescription = stringResource(Res.string.cd_close),
@@ -236,83 +349,38 @@ fun PlantUnlockedBadgeOverlay(
                             .size(28.dp)
                             .clickable(onClick = onDismiss),
                     )
-
-                    Text(
-                        text = stringResource(Res.string.action_skip),
-                        color = NekkoTheme.colors.text.secondary,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
                 }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(24.dp))
                 Text(
-                    text = if (revealed) "A new plant has grown!" else "Plant unlocked",
+                    text = "A new plant has grown!",
                     color = NekkoTheme.colors.text.primary,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    text = if (revealed) badge.name else "Tap to reveal your new plant",
+                    text = badge.name,
                     color = NekkoTheme.colors.text.tertiary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                 )
 
-                Spacer(Modifier.height(29.dp))
-                if (revealed) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Image(
                         painter = painterResource(badgeCollectArtwork(badge)),
                         contentDescription = badge.name,
                         modifier = Modifier.size(151.dp, 210.dp),
                     )
-                    Spacer(Modifier.height(29.dp))
-                    Text(
-                        text = badge.description,
-                        color = NekkoTheme.colors.background.onBackground,
-                        fontSize = 14.sp,
-                        lineHeight = 20.sp,
-                        textAlign = TextAlign.Center,
-                    )
-                } else {
-                    Text(
-                        text = "✦",
-                        color = Color(0xFFF2A900),
-                        fontSize = 64.sp,
-                        modifier = Modifier.padding(vertical = 58.dp),
-                    )
                 }
 
-                Spacer(Modifier.height(29.dp))
-                if (revealed) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(58.dp)
-                            .clip(RoundedCornerShape(32.dp))
-                            .background(NekkoTheme.colors.background.onBackground)
-                            .clickable(onClick = onCollect),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.badges_collect_plant),
-                            color = NekkoTheme.colors.background.b0,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                } else {
-                    Text(
-                        text = stringResource(Res.string.badges_tap_reveal),
-                        color = Color(0xFF718096),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp,
-                    )
-                }
             }
         }
     }

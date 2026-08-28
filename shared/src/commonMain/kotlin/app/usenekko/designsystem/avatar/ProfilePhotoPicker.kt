@@ -1,13 +1,8 @@
-package app.usenekko.onboarding.contact.components
+package app.usenekko.designsystem.avatar
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,11 +11,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,39 +22,44 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.usenekko.designsystem.avatar.ChooseAvatarBottomSheet
-import app.usenekko.designsystem.avatar.avatarResources
 import app.usenekko.theme.NekkoTheme
-import app.usenekko.home.presentation.components.ProfilePhotoPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import nekko.onboarding.generated.resources.Res
-import nekko.onboarding.generated.resources.ic_pencil
+import nekko.shared.generated.resources.Res
+import nekko.shared.generated.resources.cd_edit_profile_picture
+import nekko.shared.generated.resources.cd_selected_avatar
+import nekko.shared.generated.resources.cd_selected_photo
+import nekko.shared.generated.resources.ic_pencil
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.milliseconds
-import nekko.onboarding.generated.resources.cd_edit_profile_picture
-import nekko.onboarding.generated.resources.cd_selected_avatar
-import nekko.onboarding.generated.resources.cd_selected_photo
-import org.jetbrains.compose.resources.stringResource
 
+/**
+ * The app-wide profile photo/avatar picker. Shows the picked [photoBitmap],
+ * falling back to the avatar at [selectedAvatarIndex] / [selectedAvatarId],
+ * with the pencil edit badge at the bottom. Tap opens the editor; press-and-hold
+ * zooms the avatar (for the fullscreen preview) with haptic feedback.
+ *
+ * This is the single source of truth for this UI — do not reimplement it in
+ * feature modules.
+ */
 @Composable
 fun ProfilePhotoPicker(
     photoBitmap: ImageBitmap?,
     onEditClick: () -> Unit,
-    onPreviewChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     avatarSize: Dp = 120.dp,
     selectedAvatarIndex: Int? = null,
+    selectedAvatarId: String? = null,
+    onPreviewChanged: (Boolean) -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -75,6 +73,9 @@ fun ProfilePhotoPicker(
         ), label = "AvatarScaleAnimation"
     )
 
+    val resolvedAvatarIndex = selectedAvatarIndex
+        ?: selectedAvatarId?.toIntOrNull()?.takeIf { it in avatarResources.indices }
+
     Box(
         modifier = modifier
             .size(avatarSize)
@@ -86,11 +87,9 @@ fun ProfilePhotoPicker(
         Box(
             Modifier
                 .fillMaxSize()
-
                 .clip(CircleShape)
                 .border(4.dp, NekkoTheme.colors.stroke.secondary, CircleShape)
                 .background(NekkoTheme.colors.fill.secondary)
-
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onTap = { onEditClick() },
@@ -119,9 +118,9 @@ fun ProfilePhotoPicker(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-            } else if (selectedAvatarIndex != null && selectedAvatarIndex in avatarResources.indices) {
+            } else if (resolvedAvatarIndex != null && resolvedAvatarIndex in avatarResources.indices) {
                 Image(
-                    imageVector = vectorResource(avatarResources[selectedAvatarIndex]),
+                    imageVector = vectorResource(avatarResources[resolvedAvatarIndex]),
                     contentDescription = stringResource(Res.string.cd_selected_avatar),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -152,45 +151,5 @@ fun ProfilePhotoPicker(
                 modifier = Modifier.size(16.dp),
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ProfilePhotoPickerPreview() {
-    Surface {
-        Box(
-            modifier = Modifier
-                .size(300.dp)
-                .padding(20.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            ProfilePhotoPicker(
-                photoBitmap = null,
-                onEditClick = {},
-                onPreviewChanged = {}
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun ProfilePhotoPreviewComponentPreview() {
-
-    NekkoTheme {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Background content to show transparency
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
-            )
-            ProfilePhotoPreview(
-                visible = true,
-                photoBitmap = null
-            )
-        }
-
     }
 }

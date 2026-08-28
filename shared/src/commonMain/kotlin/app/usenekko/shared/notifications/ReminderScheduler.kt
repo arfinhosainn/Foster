@@ -43,6 +43,14 @@ interface NotificationSchedulingOps {
 
 expect class ReminderScheduler() : NotificationSchedulingOps {
 
+    override suspend fun scheduleDay(plan: DayPlan)
+
+    override suspend fun scheduleStandalone(plan: StandalonePlan)
+
+    override suspend fun cancelDay(dayKey: Long)
+
+    override suspend fun cancelStandalone(key: String)
+
     /** Whether the OS currently allows this app to post notifications. */
     suspend fun isEnabled(): Boolean
 

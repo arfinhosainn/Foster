@@ -38,6 +38,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import app.usenekko.adaptive.WindowWidthSizeClass
 import app.usenekko.adaptive.windowWidthSizeClass
@@ -53,7 +54,6 @@ import app.usenekko.home.presentation.brainstorm.BrainstormScreen
 import app.usenekko.home.presentation.contactprofile.ContactProfileScreen
 import app.usenekko.home.presentation.paywall.DiscountPaywallScreen
 import app.usenekko.home.presentation.paywall.PaywallScreen
-import app.usenekko.home.presentation.settings.AccountScreen
 import app.usenekko.home.presentation.settings.GroupDetailScreen
 import app.usenekko.home.presentation.settings.GroupSettingsScreen
 import app.usenekko.home.presentation.settings.SettingScreen
@@ -74,7 +74,15 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
     OnboardingDraftStoreProvider(supabaseClient) {
         // Sits below OnboardingDraftStoreProvider (needs LocalSubscriptionRepository).
         PaywallGateManagerProvider {
-            OnboardingAppContent(navigator, supabaseClient)
+            // ONE shared theme store for the whole shell (screens, bottom bar,
+            // reward overlay) so the in-app Light/Dark setting applies everywhere —
+            // previously the bar/overlay sat outside any provider and fell back
+            // to the DEVICE theme.
+            ThemePreferenceStoreProvider {
+                NekkoTheme {
+                    OnboardingAppContent(navigator, supabaseClient)
+                }
+            }
         }
     }
 }
@@ -146,10 +154,18 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
     }
 
     val pendingBadge by BadgeRevealStore.pending.collectAsState()
+    val showRewardOverlay = pendingBadge != null
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val useRailLayout = windowWidthSizeClass(maxWidth) == WindowWidthSizeClass.Expanded
         val bottomBarActions = remember { BottomBarActions() }
+
+        // While the reward overlay is up, everything behind it is blurred.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(if (showRewardOverlay) Modifier.blur(20.dp) else Modifier),
+        ) {
 
         // Screens animate inside this padded container; the floating bottom bar /
         // rail lives OUTSIDE it so its selection circle never participates in
@@ -235,7 +251,7 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                         onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
                         onBrainstormClick = { contactId -> navigator.navigate(Screen.Brainstorm(contactId)) },
                         onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
-                        onSettingsClick = { navigator.navigate(Screen.Settings) },
+                        onSettingsClick = { navigator.navigate(Screen.Settings()) },
                         onShowPaywall = showPremiumPaywall,
                         onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
                         bottomBarActions = bottomBarActions,
@@ -245,7 +261,7 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                         // Horizontal pop back to Home so both tab directions use
                         // matching directional page-style slides (no Reset flash).
                         onHomeClick = { navigator.goBack() },
-                        onSettingsClick = { navigator.navigate(Screen.Settings) },
+                        onSettingsClick = { navigator.navigate(Screen.Settings()) },
                         onShowPaywall = showPremiumPaywall,
                         onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
                         bottomBarActions = bottomBarActions,
@@ -275,10 +291,7 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                                 navigator.replaceAll(Screen.Welcome)
                             }
                         },
-                    )
-
-                    is Screen.Account -> AccountScreen(
-                        onBack = { navigator.goBack() },
+                        initiallyShowAccountSheet = screen.openAccountSheet,
                     )
 
                     is Screen.GroupSettings -> GroupSettingsScreen(
@@ -335,18 +348,20 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
             onSelectTab = { index -> navigator.selectMainTab(index) },
             modifier = Modifier.align(if (useRailLayout) Alignment.CenterStart else Alignment.BottomCenter),
         )
+        } // end blurred backdrop container
 
         pendingBadge?.let { badge ->
-            NekkoTheme {
-                PlantRewardOverlay(
-                    badge = badge,
-                    onCollect = {
-                        BadgeRevealStore.consume()
-                        navigator.navigate(Screen.Account)
-                    },
-                    onDismiss = { BadgeRevealStore.consume() },
-                )
-            }
+            PlantRewardOverlay(
+                badge = badge,
+                onCollect = {
+                    BadgeRevealStore.consume()
+                    // Land on Settings with the account sheet pre-opened — that's
+                    // the real profile surface (the standalone Account screen is
+                    // no longer part of this flow).
+                    navigator.navigate(Screen.Settings(openAccountSheet = true))
+                },
+                onDismiss = { BadgeRevealStore.consume() },
+            )
         }
     }
 }
@@ -401,11 +416,9 @@ private fun PersistentBottomNavigationBar(
     onSelectTab: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // The shell renders this bar outside App()'s NekkoTheme (that theme only
-    // wraps the NavHost), so supply the same wrapper stack locally — otherwise
-    // GlassBottomNavBar reads missing ExtendedColors and crashes on first show.
-    ThemePreferenceStoreProvider {
-    NekkoTheme {
+    // Theme now comes from the single root wrapper in OnboardingApp, so this bar
+    // follows the in-app Light/Dark setting live (it used to sit outside any
+    // provider and read a stale snapshot / device theme).
     val selectedIndex: Int? = when (navigator.currentScreen) {
         Screen.Home -> 0
         Screen.CheckIns -> 1
@@ -445,9 +458,7 @@ private fun PersistentBottomNavigationBar(
             )
         }
     }
-    }
-    }
-} // end NekkoTheme / ThemePreferenceStoreProvider / bar composable
+} // end PersistentBottomNavigationBar
 
 internal fun authSessionAction(status: SessionStatus, isSplash: Boolean): AuthSessionAction {
     if (!isSplash) return AuthSessionAction.Ignore
