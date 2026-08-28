@@ -163,42 +163,24 @@ class HomeViewModel(
             val now = Clock.System.now()
             val nowIso = now.toString()
             // logCheckIn returns only the updated contact, not the created check-in
-            // row, so we optimistically append a temporary local entry. Reconciliation
-            // later swaps its id for the server row without duplicating (see below).
+            // row, so append a temporary local entry after the request succeeds.
+            // Reconciliation later swaps its id for the server row without duplicating.
             val tempCheckIn = CheckIn(
                 id = "temp-$contactId-${now.toEpochMilliseconds()}",
                 contactId = contactId,
                 checkedInAt = nowIso,
             )
 
-            // Capture the exact pre-tap snapshot so failure can roll back cleanly
-            // instead of recomputing (which could drift from the real pre-state).
+            // Capture the exact pre-tap snapshot so failure can restore the loading
+            // state cleanly instead of recomputing (which could drift from the real
+            // pre-state).
             val preState = _state.value
             val preAllContacts = allContacts
 
-            // Optimistic apply: mark in-flight and reflect the checked-in state now.
+            // Mark the request in flight without changing the contact or history yet.
             _state.value = preState.copy(
                 checkingInContactIds = preState.checkingInContactIds + contactId,
                 checkInError = null,
-                checkIns = preState.checkIns + tempCheckIn,
-            )
-            allContacts = allContacts.map { existing ->
-                if (existing.id == contactId) {
-                    existing.copy(
-                        lastCheckInDate = update.lastCheckInDate,
-                        nextCheckInDate = update.nextCheckInDate,
-                        streakCount = update.streakCount,
-                    )
-                } else {
-                    existing
-                }
-            }
-            recomputeCounts(
-                contacts = allContacts,
-                groupId = _state.value.selectedGroupId,
-                memberships = memberships,
-                checkedInTodayContactIds = _state.value.checkIns.contactIdsCheckedInOn(today) +
-                    allContacts.filter { it.isCheckedInToday(today) }.map { it.id },
             )
 
             val previousBadges = contactDataSource.unlockedBadgeIdsOrNull()
@@ -220,15 +202,21 @@ class HomeViewModel(
                             existing
                         }
                     }
+                    val completedState = _state.value.copy(
+                        allContacts = allContacts,
+                        contacts = _state.value.contacts.map { existing ->
+                            allContacts.firstOrNull { it.id == existing.id } ?: existing
+                        },
+                        checkIns = _state.value.checkIns + tempCheckIn,
+                        checkingInContactIds = _state.value.checkingInContactIds - contactId,
+                    )
+                    _state.value = completedState
                     recomputeCounts(
                         contacts = allContacts,
                         groupId = _state.value.selectedGroupId,
                         memberships = memberships,
-                        checkedInTodayContactIds = _state.value.checkIns.contactIdsCheckedInOn(today) +
+                        checkedInTodayContactIds = completedState.checkIns.contactIdsCheckedInOn(today) +
                             allContacts.filter { it.isCheckedInToday(today) }.map { it.id },
-                    )
-                    _state.value = _state.value.copy(
-                        checkingInContactIds = _state.value.checkingInContactIds - contactId,
                     )
                     if (previousBadges != null) {
                         contactDataSource.detectAndTriggerBadgeReveal(previousBadges)

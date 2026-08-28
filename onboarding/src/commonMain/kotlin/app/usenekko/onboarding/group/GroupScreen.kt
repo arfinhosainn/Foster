@@ -50,7 +50,7 @@ import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.designsystem.shapes.SawToothCircleShape
 import app.usenekko.onboarding.components.StepIndicator
-import app.usenekko.onboarding.contact.components.avatarResources
+import app.usenekko.designsystem.avatar.avatarResources
 import app.usenekko.onboarding.group.components.CreateGroupBottomSheet
 import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.onboarding.presentation.rememberGroupViewModel

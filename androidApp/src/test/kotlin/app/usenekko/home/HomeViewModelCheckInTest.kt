@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -77,6 +78,45 @@ class HomeViewModelCheckInTest {
             assertEquals(1, viewModel.state.value.checkIns.size)
             assertEquals("c1", viewModel.state.value.checkIns.first().contactId)
             assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun checkInKeepsContactInOriginalPositionUntilRequestCompletes() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val checkInGate = CompletableDeferred<Unit>()
+            val dataSource = FakeContactDataSource(
+                contacts = listOf(contact("first"), contact("second")),
+            ).apply {
+                this.checkInGate = checkInGate
+            }
+            val viewModel = HomeViewModel(dataSource, ReminderScheduler())
+            advanceUntilIdle()
+
+            viewModel.checkIn("first")
+            runCurrent()
+
+            assertEquals(setOf("first"), viewModel.state.value.checkingInContactIds)
+            assertEquals(
+                listOf("first", "second"),
+                viewModel.state.value.contacts.forTodayCheckInList(today).map { it.id },
+            )
+            assertEquals(null, viewModel.state.value.contacts.first { it.id == "first" }.lastCheckInDate)
+            assertTrue(viewModel.state.value.checkIns.isEmpty())
+
+            checkInGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
+            assertEquals(
+                listOf("second", "first"),
+                viewModel.state.value.contacts.forTodayCheckInList(today).map { it.id },
+            )
+            assertEquals(1, viewModel.state.value.checkIns.size)
         } finally {
             Dispatchers.resetMain()
         }
@@ -471,7 +511,7 @@ class HomeViewModelCheckInTest {
     }
 
     @Test
-    fun optimisticStateAppliedBeforeNetworkCompletes() = runTest {
+    fun checkInStateRemainsUnchangedBeforeNetworkCompletes() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
@@ -483,18 +523,19 @@ class HomeViewModelCheckInTest {
             viewModel.checkIn("c1")
             advanceUntilIdle()
 
-            // While the network is still gated, the contact is already reflected as
-            // checked-in (optimistic) and marked in-flight.
+            // While the network is still gated, only the loading state is reflected.
             assertTrue(viewModel.state.value.checkingInContactIds.contains("c1"))
-            assertEquals(0, viewModel.state.value.outstandingCount)
-            assertEquals(1, viewModel.state.value.upToDateCount)
-            assertEquals(today.toString(), viewModel.state.value.contacts.single { it.id == "c1" }.lastCheckInDate)
-            assertEquals(1, viewModel.state.value.checkIns.size)
-            assertTrue(viewModel.state.value.checkIns.single().id.startsWith("temp-"))
+            assertEquals(1, viewModel.state.value.outstandingCount)
+            assertEquals(0, viewModel.state.value.upToDateCount)
+            assertEquals(null, viewModel.state.value.contacts.single { it.id == "c1" }.lastCheckInDate)
+            assertTrue(viewModel.state.value.checkIns.isEmpty())
 
             dataSource.checkInGate?.complete(Unit)
             advanceUntilIdle()
             assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
+            assertEquals(today.toString(), viewModel.state.value.contacts.single { it.id == "c1" }.lastCheckInDate)
+            assertEquals(1, viewModel.state.value.checkIns.size)
+            assertTrue(viewModel.state.value.checkIns.single().id.startsWith("temp-"))
         } finally {
             Dispatchers.resetMain()
         }

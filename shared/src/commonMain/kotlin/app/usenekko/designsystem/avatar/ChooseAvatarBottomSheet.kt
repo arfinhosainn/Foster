@@ -1,4 +1,4 @@
-package app.usenekko.onboarding.contact.components
+package app.usenekko.designsystem.avatar
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,7 +24,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,27 +36,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.theme.NekkoTheme
-import nekko.onboarding.generated.resources.Res
-import nekko.onboarding.generated.resources.avatar_blue
-import nekko.onboarding.generated.resources.avatar_green
-import nekko.onboarding.generated.resources.avatar_maroon
-import nekko.onboarding.generated.resources.avatar_orange
-import nekko.onboarding.generated.resources.avatar_red
-import nekko.onboarding.generated.resources.avatar_yellow
-import nekko.onboarding.generated.resources.ic_close
+import nekko.shared.generated.resources.Res
+import nekko.shared.generated.resources.add_choose_avatar
+import nekko.shared.generated.resources.add_select_avatar
+import nekko.shared.generated.resources.avatar_blue
+import nekko.shared.generated.resources.avatar_green
+import nekko.shared.generated.resources.avatar_maroon
+import nekko.shared.generated.resources.avatar_orange
+import nekko.shared.generated.resources.avatar_red
+import nekko.shared.generated.resources.avatar_yellow
+import nekko.shared.generated.resources.cd_avatar_number
+import nekko.shared.generated.resources.cd_close
+import nekko.shared.generated.resources.ic_close
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.math.min
-import nekko.onboarding.generated.resources.add_choose_avatar
-import nekko.onboarding.generated.resources.add_select_avatar
-import nekko.onboarding.generated.resources.cd_avatar_number
-import nekko.onboarding.generated.resources.cd_close
-import org.jetbrains.compose.resources.stringResource
 
 // Reordered to match the design grid: Yellow, Green, Orange / Red, Purple, Blue.
 // NOTE: check that avatar_maroon is actually the purple asset in your drawables —
 // if it renders as a wine/maroon tone instead of purple, you're likely missing
 // a dedicated purple asset and this is just standing in for it.
+// Indexes here are the app-wide avatar IDs (persisted as "0".."5").
 val avatarResources: List<DrawableResource> = listOf(
     Res.drawable.avatar_yellow,
     Res.drawable.avatar_green,
@@ -68,14 +67,23 @@ val avatarResources: List<DrawableResource> = listOf(
     Res.drawable.avatar_blue,
 )
 
+/**
+ * The one avatar picker sheet, shared by onboarding, add-contact and account
+ * settings. Visually: two pill rows of avatars in a rounded sheet with a
+ * gradient selection ring and a full-width select button.
+ *
+ * @param selectedAvatarIndex optionally pre-selects an avatar (account editing);
+ * pass nothing for a fresh selection (onboarding / new contact).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChooseAvatarBottomSheet(
+    selectedAvatarIndex: Int? = null,
     onAvatarSelected: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    var selectedIndex by rememberSaveable { mutableStateOf(selectedAvatarIndex) }
 
     // Gradient used for the selection ring — swap these two colors for real
     // theme tokens if you have accent/success colors defined elsewhere.
@@ -97,7 +105,7 @@ fun ChooseAvatarBottomSheet(
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .padding(end = 18.dp, top  = 10.dp)
+                        .padding(end = 18.dp, top = 10.dp)
                         .clip(CircleShape)
                         .background(Color.Unspecified)
                         .clickable { onDismiss() },
@@ -178,8 +186,12 @@ fun ChooseAvatarBottomSheet(
             NekkoButton(
                 text = stringResource(Res.string.add_select_avatar),
                 onClick = {
-                    selectedIndex?.let { onAvatarSelected(it) }
+                    selectedIndex?.let { index ->
+                        onAvatarSelected(index)
+                        onDismiss()
+                    }
                 },
+                enabled = selectedIndex != null,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

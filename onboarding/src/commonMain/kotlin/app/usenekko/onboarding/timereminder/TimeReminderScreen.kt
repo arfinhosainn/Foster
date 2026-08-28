@@ -36,8 +36,8 @@ import app.usenekko.designsystem.buttons.NekkoActionButton
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.presentation.rememberTimeReminderViewModel
-import app.usenekko.onboarding.timereminder.components.AmPmToggle
-import app.usenekko.onboarding.timereminder.components.TimeScrollDial
+import app.usenekko.designsystem.buttons.AmPmToggle
+import app.usenekko.designsystem.timepicker.TimeScrollDial
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
