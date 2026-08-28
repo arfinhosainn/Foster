@@ -28,6 +28,7 @@ fun CurrentOutputContent(
     notice: String?,
     error: String?,
     onDismissNotice: () -> Unit,
+    onSendMessage: ((BrainstormTopic) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -74,7 +75,11 @@ fun CurrentOutputContent(
 
             Spacer(modifier = Modifier.height(12.dp))
             topics.forEachIndexed { index, topic ->
-                TopicCard(topic = topic, index = index)
+                TopicCard(
+                    topic = topic,
+                    index = index,
+                    onSendMessage = onSendMessage?.let { send -> { send(topic) } },
+                )
             }
         }
     }

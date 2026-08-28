@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.usenekko.home.domain.BrainstormSession
+import app.usenekko.home.domain.BrainstormTopic
 import app.usenekko.theme.NekkoTheme
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -45,6 +46,9 @@ fun HistoryContent(
     sessions: List<BrainstormSession>,
     isLoading: Boolean,
     error: String?,
+    onSendMessage: ((BrainstormTopic) -> Unit)? = null,
+    notice: String? = null,
+    onDismissNotice: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -53,6 +57,11 @@ fun HistoryContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
     ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+        if (notice != null) {
+            NoticeBanner(text = notice, onDismiss = onDismissNotice)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
         when {
             isLoading -> HistoryLoadingSkeleton()
             error != null -> ErrorBanner(text = error, modifier = Modifier.padding(top = 16.dp))
@@ -84,7 +93,11 @@ fun HistoryContent(
                             Spacer(modifier = Modifier.height(12.dp))
                         } else {
                             session.topics.forEachIndexed { index, topic ->
-                                TopicCard(topic = topic, index = index)
+                                TopicCard(
+                                    topic = topic,
+                                    index = index,
+                                    onSendMessage = onSendMessage?.let { send -> { send(topic) } },
+                                )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                         }
@@ -92,6 +105,7 @@ fun HistoryContent(
                 }
             }
         }
+        } // end notice + content Column
     }
 }
 

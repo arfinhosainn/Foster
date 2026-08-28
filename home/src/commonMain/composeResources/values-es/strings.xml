@@ -123,6 +123,8 @@
     <string name="brainstorm_empty_no_ideas">Aún no hay ideas disponibles. Vuelve mañana para ver sugerencias nuevas.</string>
     <string name="brainstorm_history_empty">Aún no hay lluvias de ideas anteriores. Genera tu primer lote de ideas en la pestaña de salida actual.</string>
     <string name="brainstorm_history_item">Una sesión de lluvia de ideas anterior</string>
+    <string name="brainstorm_send_message_cd">Enviar este mensaje a tu contacto</string>
+    <string name="brainstorm_no_phone_number">No hay número de teléfono guardado para este contacto. Impórtalo desde tus contactos del teléfono para enviarle mensajes directamente.</string>
     <string name="badges_title">Insignias</string>
     <string name="badges_collect_plant">Recoger planta</string>
     <string name="badges_tap_reveal">TOCA PARA REVELAR</string>

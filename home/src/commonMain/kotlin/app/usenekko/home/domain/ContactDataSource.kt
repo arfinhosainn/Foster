@@ -9,6 +9,7 @@ interface ContactDataSource {
         avatarColor: String?,
         checkInFrequency: String,
         reminderTime: String?,
+        phoneNumber: String? = null,
     ): Result<Contact, ContactError>
     suspend fun updateContact(
         contactId: String,
@@ -16,6 +17,7 @@ interface ContactDataSource {
         avatarColor: String?,
         checkInFrequency: String,
         reminderTime: String?,
+        phoneNumber: String? = null,
     ): Result<Contact, ContactError>
     suspend fun deleteContact(contactId: String): Result<Unit, ContactError>
     suspend fun getGroups(): Result<List<Group>, ContactError>

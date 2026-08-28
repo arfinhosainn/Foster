@@ -35,6 +35,7 @@ private data class ContactDto(
     @SerialName("next_check_in_date") val nextCheckInDate: String? = null,
     @SerialName("last_check_in_date") val lastCheckInDate: String? = null,
     @SerialName("streak_count") val streakCount: Int = 0,
+    @SerialName("phone_number") val phoneNumber: String? = null,
 ) {
     fun toDomain() = Contact(
         id = id,
@@ -45,6 +46,7 @@ private data class ContactDto(
         nextCheckInDate = nextCheckInDate,
         lastCheckInDate = lastCheckInDate,
         streakCount = streakCount,
+        phoneNumber = phoneNumber,
     )
 }
 
@@ -187,6 +189,7 @@ class SupabaseContactDataSource(
         avatarColor: String?,
         checkInFrequency: String,
         reminderTime: String?,
+        phoneNumber: String?,
     ): Result<Contact, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()
@@ -202,8 +205,9 @@ class SupabaseContactDataSource(
                         "avatar_color" to avatarColor,
                         "check_in_frequency" to checkInFrequency,
                         "reminder_time" to reminderTime,
+                        "phone_number" to phoneNumber,
                     )
-                ) { select(Columns.list("id", "name", "avatar_color", "check_in_frequency", "reminder_time", "next_check_in_date", "last_check_in_date", "streak_count")) }
+                ) { select(Columns.list("id", "name", "avatar_color", "check_in_frequency", "reminder_time", "next_check_in_date", "last_check_in_date", "streak_count", "phone_number")) }
                 .decodeSingle<ContactDto>()
 
             Result.Success(inserted.toDomain())
@@ -218,6 +222,7 @@ class SupabaseContactDataSource(
         avatarColor: String?,
         checkInFrequency: String,
         reminderTime: String?,
+        phoneNumber: String?,
     ): Result<Contact, ContactError> {
         return try {
             val session = client.auth.currentSessionOrNull()
@@ -231,6 +236,7 @@ class SupabaseContactDataSource(
                     this["avatar_color"] = avatarColor
                     this["check_in_frequency"] = checkInFrequency
                     this["reminder_time"] = reminderTime
+                    this["phone_number"] = phoneNumber
                 }) {
                     filter { eq("id", contactId) }
                     filter { eq("owner_id", userId) }
