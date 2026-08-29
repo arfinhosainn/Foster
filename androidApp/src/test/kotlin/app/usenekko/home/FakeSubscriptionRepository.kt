@@ -20,12 +20,12 @@ class FakeSubscriptionRepository(
         _isSubscribed.value = value
     }
 
-    override suspend fun refresh() {}
+    override suspend fun refresh(): Result<Unit, SubscriptionError> = Result.Success(Unit)
 
     override suspend fun loadPaywallOffering(): Result<PaywallOffering, SubscriptionError> =
         Result.Error(SubscriptionError.NotConfigured)
 
-    override suspend fun purchase(pkg: PaywallPackage): PurchaseOutcome = PurchaseOutcome.Error("not implemented")
+    override suspend fun purchase(pkg: PaywallPackage): PurchaseOutcome = PurchaseOutcome.Error
 
     override suspend fun restorePurchases(): Result<Boolean, SubscriptionError> = Result.Success(false)
 }

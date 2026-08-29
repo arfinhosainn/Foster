@@ -6,6 +6,7 @@ import app.usenekko.home.data.BrainstormRepository
 import app.usenekko.home.domain.BrainstormError
 import app.usenekko.home.domain.BrainstormGeneration
 import app.usenekko.home.domain.ContactDataSource
+import app.usenekko.home.domain.toUserMessageResource
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,7 +71,7 @@ class BrainstormViewModel(
                     history = repositoryState.snapshot?.history.orEmpty(),
                     isLoadingHistory = repositoryState.snapshot == null,
                     isRefreshing = repositoryState.isRefreshing,
-                    error = repositoryState.error?.let(::messageOf) ?: _state.value.error,
+                    error = repositoryState.error?.toUserMessageResource() ?: _state.value.error,
                 )
             }
         }
@@ -90,7 +91,7 @@ class BrainstormViewModel(
                 is Result.Error -> {
                     _state.value = _state.value.copy(
                         isLoadingHistory = false,
-                        error = messageOf(result.error),
+                        error = result.error.toUserMessageResource(),
                     )
                 }
             }
@@ -125,17 +126,11 @@ class BrainstormViewModel(
                 is Result.Error -> {
                     _state.value = _state.value.copy(
                         isGenerating = false,
-                        error = messageOf(result.error),
+                        error = result.error.toUserMessageResource(),
                     )
                 }
             }
         }
     }
 
-    private fun messageOf(error: BrainstormError): String = when (error) {
-        is BrainstormError.Network -> "Network error. Check your connection and try again."
-        is BrainstormError.NotAuthenticated -> "Your session expired. Please sign in again."
-        is BrainstormError.Unknown -> error.detail?.takeIf { it.isNotBlank() }
-            ?: "Something went wrong. Please try again."
-    }
 }

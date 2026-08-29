@@ -335,7 +335,7 @@ private fun AddContactSheetContent(
         if (state.error != null) {
             Spacer(Modifier.height(16.dp))
             Text(
-                text = state.error,
+                text = stringResource(state.error),
                 fontSize = 14.sp,
                 color = NekkoTheme.colors.red.default,
                 textAlign = TextAlign.Center,

@@ -5,6 +5,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.MissedCheckIn
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.StringResource
 
 data class HomeState(
     val isLoading: Boolean = true,
@@ -21,6 +22,6 @@ data class HomeState(
     val checkInCounts: Map<String, Int> = emptyMap(),
     val initialCountdownStartDate: LocalDate? = null,
     val checkingInContactIds: Set<String> = emptySet(),
-    val checkInError: String? = null,
-    val error: String? = null,
+    val checkInError: StringResource? = null,
+    val error: StringResource? = null,
 )

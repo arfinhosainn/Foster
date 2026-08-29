@@ -25,6 +25,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.kotlinx.datetime)
+    testImplementation(libs.compose.components.resources)
     testImplementation(project(":home"))
 }
 

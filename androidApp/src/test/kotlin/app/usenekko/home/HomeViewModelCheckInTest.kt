@@ -29,6 +29,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -279,7 +280,7 @@ class HomeViewModelCheckInTest {
             advanceUntilIdle()
 
             assertTrue(viewModel.state.value.checkingInContactIds.isEmpty())
-            assertEquals("Unknown(detail=log_check_in is unavailable)", viewModel.state.value.checkInError)
+            assertNotNull(viewModel.state.value.checkInError)
             assertEquals(1, dataSource.logCheckInCalls.size)
             assertEquals(1, viewModel.state.value.outstandingCount)
         } finally {

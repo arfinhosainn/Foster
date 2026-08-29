@@ -67,6 +67,8 @@ import nekko.onboarding.generated.resources.add_contact_name_label
 import nekko.onboarding.generated.resources.add_import_contact
 import nekko.onboarding.generated.resources.add_step_new_contact_subtitle
 import nekko.onboarding.generated.resources.add_step_new_contact_title
+import nekko.onboarding.generated.resources.contact_import_failed
+import nekko.onboarding.generated.resources.error_contact_name_required
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,8 +88,13 @@ fun ContactScreen(
         onContactSelected = { contact ->
             viewModel.onAction(ContactAction.ContactImported(contact))
         },
-        onPermissionDenied = { },
+        onPermissionDenied = {
+            viewModel.onAction(ContactAction.ImportFailed)
+        },
     )
+
+    val contactImportFailedMessage = stringResource(Res.string.contact_import_failed)
+    val contactNameRequiredMessage = stringResource(Res.string.error_contact_name_required)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -96,7 +103,10 @@ fun ContactScreen(
                 ContactEvent.NavigateBack -> onBack()
                 ContactEvent.NavigateSkip -> onSkip()
                 ContactEvent.NameRequired -> snackbarHostState.showSnackbar(
-                    message = "Please enter a contact name to continue",
+                    message = contactNameRequiredMessage,
+                )
+                ContactEvent.ImportFailed -> snackbarHostState.showSnackbar(
+                    message = contactImportFailedMessage,
                 )
             }
         }

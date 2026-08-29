@@ -7,6 +7,7 @@ import app.usenekko.shared.paywall.PaywallGateManager
 import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.PurchaseOutcome
 import app.usenekko.shared.subscription.SubscriptionRepository
+import app.usenekko.shared.subscription.toUserMessageResource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,6 @@ import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.paywall_purchase_failed
 import nekko.home.generated.resources.paywall_restore_failed
 import nekko.home.generated.resources.paywall_restore_none
-import org.jetbrains.compose.resources.getString
 
 class DiscountPaywallViewModel(
     private val subscriptionRepository: SubscriptionRepository,
@@ -75,7 +75,7 @@ class DiscountPaywallViewModel(
                 }
                 is PurchaseOutcome.Error -> {
                     _state.update { it.copy(isPurchasing = false) }
-                    _events.send(DiscountPaywallEvent.ShowError(outcome.message ?: getString(Res.string.paywall_purchase_failed)))
+                    _events.send(DiscountPaywallEvent.ShowError(Res.string.paywall_purchase_failed))
                 }
             }
         }
@@ -91,12 +91,12 @@ class DiscountPaywallViewModel(
                     if (result.data) {
                         _events.send(DiscountPaywallEvent.Subscribed)
                     } else {
-                        _events.send(DiscountPaywallEvent.ShowError(getString(Res.string.paywall_restore_none)))
+                        _events.send(DiscountPaywallEvent.ShowError(Res.string.paywall_restore_none))
                     }
                 }
                 is Result.Error -> {
                     _state.update { it.copy(isRestoring = false) }
-                    _events.send(DiscountPaywallEvent.ShowError(getString(Res.string.paywall_restore_failed)))
+                    _events.send(DiscountPaywallEvent.ShowError(result.error.toUserMessageResource()))
                 }
             }
         }

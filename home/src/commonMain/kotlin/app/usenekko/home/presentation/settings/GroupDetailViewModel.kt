@@ -9,12 +9,14 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.Group
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.toUserMessageResource
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 
 data class GroupDetailState(
     val groupId: String = "",
@@ -27,7 +29,7 @@ data class GroupDetailState(
     val isMoveDialogOpen: Boolean = false,
     val movingContact: Contact? = null,
     val isMutating: Boolean = false,
-    val error: String? = null,
+    val error: StringResource? = null,
 )
 
 sealed interface GroupDetailAction {
@@ -68,7 +70,7 @@ class GroupDetailViewModel(
             _state.value = _state.value.copy(
                 isLoading = false,
                 isRefreshing = false,
-                error = repositoryState.error.toString(),
+                error = repositoryState.error.toUserMessageResource(),
             )
         } else if (repositoryState.isRefreshing) {
             _state.value = _state.value.copy(isLoading = true, isRefreshing = true)
@@ -91,7 +93,7 @@ class GroupDetailViewModel(
             members = members,
             checkInCounts = checkInCounts,
             otherGroups = snapshot.groups.filter { it.id != groupId },
-            error = repositoryState.error?.toString(),
+            error = repositoryState.error?.toUserMessageResource(),
         )
     }
 
@@ -139,10 +141,10 @@ class GroupDetailViewModel(
             members = members,
             checkInCounts = checkInCounts,
             otherGroups = groups.filter { it.id != groupId },
-            error = (contactsResult as? Result.Error)?.error?.toString()
-                ?: (groupsResult as? Result.Error)?.error?.toString()
-                ?: (membershipsResult as? Result.Error)?.error?.toString()
-                ?: (checkInsResult as? Result.Error)?.error?.toString(),
+            error = (contactsResult as? Result.Error)?.error?.toUserMessageResource()
+                ?: (groupsResult as? Result.Error)?.error?.toUserMessageResource()
+                ?: (membershipsResult as? Result.Error)?.error?.toUserMessageResource()
+                ?: (checkInsResult as? Result.Error)?.error?.toUserMessageResource(),
         )
     }
 
@@ -182,7 +184,7 @@ class GroupDetailViewModel(
                 is Result.Error -> {
                     _state.value = _state.value.copy(
                         isMutating = false,
-                        error = result.error.toString(),
+                        error = result.error.toUserMessageResource(),
                     )
                 }
             }
@@ -202,7 +204,7 @@ class GroupDetailViewModel(
                 is Result.Error -> {
                     _state.value = _state.value.copy(
                         isMutating = false,
-                        error = result.error.toString(),
+                        error = result.error.toUserMessageResource(),
                     )
                 }
             }

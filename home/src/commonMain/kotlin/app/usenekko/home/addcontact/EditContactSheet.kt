@@ -165,7 +165,7 @@ fun EditContactSheet(
                 state.error?.let { error ->
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = error,
+                        text = stringResource(error),
                         fontSize = 14.sp,
                         color = NekkoTheme.colors.red.default,
                         textAlign = TextAlign.Center,

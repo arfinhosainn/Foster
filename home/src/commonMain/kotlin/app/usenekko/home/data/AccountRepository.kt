@@ -2,6 +2,7 @@ package app.usenekko.home.data
 
 import app.usenekko.home.domain.BadgeSlot
 import app.usenekko.home.domain.ContactDataSource
+import app.usenekko.home.domain.toUserMessage
 import app.usenekko.shared.domain.AccountProfile
 import app.usenekko.shared.domain.ProfileDataSource
 import app.usenekko.shared.domain.Result
@@ -119,7 +120,7 @@ class InMemoryAccountRepository(
                 }
             }
             is Result.Error -> {
-                val error = result.error.toString()
+                val error = result.error.toUserMessage()
                 _state.value = _state.value.copy(isUpdatingAvatar = false, error = error)
                 Result.Error(error)
             }
@@ -174,8 +175,8 @@ class InMemoryAccountRepository(
         val badgesResult = badgesDeferred.await()
         val userBadgesResult = userBadgesDeferred.await()
         val badgeError = listOfNotNull(
-            (badgesResult as? Result.Error)?.error?.toString(),
-            (userBadgesResult as? Result.Error)?.error?.toString(),
+            (badgesResult as? Result.Error)?.error?.toUserMessage(),
+            (userBadgesResult as? Result.Error)?.error?.toUserMessage(),
         ).firstOrNull()
 
         if (badgeError != null) {

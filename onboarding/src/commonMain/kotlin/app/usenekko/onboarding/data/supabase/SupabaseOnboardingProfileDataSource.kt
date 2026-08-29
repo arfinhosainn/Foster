@@ -20,6 +20,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.storage.storage
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -197,6 +198,7 @@ class SupabaseOnboardingProfileDataSource(
     }
 
     private fun mapError(e: Exception): OnboardingProfileError {
+        if (e is CancellationException) throw e
         return when {
             e.message?.contains("JWT", ignoreCase = true) == true -> OnboardingProfileError.NotAuthenticated
             e.message?.contains("network", ignoreCase = true) == true -> OnboardingProfileError.Network
@@ -206,6 +208,7 @@ class SupabaseOnboardingProfileDataSource(
     }
 
     private fun mapProfileError(e: Exception): ProfileError {
+        if (e is CancellationException) throw e
         return when {
             e.message?.contains("JWT", ignoreCase = true) == true -> ProfileError.NotAuthenticated
             e.message?.contains("network", ignoreCase = true) == true -> ProfileError.Network

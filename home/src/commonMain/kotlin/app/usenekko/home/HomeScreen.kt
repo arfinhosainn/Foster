@@ -119,6 +119,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import nekko.home.generated.resources.Res
+import nekko.home.generated.resources.home_load_error_title
 import nekko.home.generated.resources.ic_acquaintance
 import nekko.home.generated.resources.ic_circlecheck
 import nekko.home.generated.resources.ic_circlecheckmark
@@ -365,14 +366,14 @@ fun HomeScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                "Couldn't load your contacts",
+                                stringResource(Res.string.home_load_error_title),
                                 color = NekkoTheme.colors.text.primary,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Medium,
                             )
                             Spacer(Modifier.height(10.dp))
                             Text(
-                                state.error!!,
+                                stringResource(state.error!!),
                                 color = NekkoTheme.colors.text.tertiary,
                                 fontSize = 14.sp,
                             )

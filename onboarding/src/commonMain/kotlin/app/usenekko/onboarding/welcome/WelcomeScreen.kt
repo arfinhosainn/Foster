@@ -31,11 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.TermsAndPrivacyNotice
+import app.usenekko.onboarding.domain.OnboardingAuthError
 import app.usenekko.onboarding.domain.OnboardingProfileError
-import app.usenekko.onboarding.domain.toUserMessage
+import app.usenekko.onboarding.domain.toOnboardingAuthError
+import app.usenekko.onboarding.presentation.toUserMessageResource
 import app.usenekko.theme.NekkoTheme
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
+import kotlinx.coroutines.CancellationException
 import io.github.jan.supabase.compose.auth.composable.rememberSignInWithApple
 import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
 import io.github.jan.supabase.compose.auth.composeAuth
@@ -43,6 +46,7 @@ import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.auth_continue_apple
 import nekko.onboarding.generated.resources.auth_continue_google
 import nekko.onboarding.generated.resources.cd_google
+import nekko.onboarding.generated.resources.action_try_again
 import nekko.onboarding.generated.resources.gradients
 import nekko.onboarding.generated.resources.ic_apple
 import nekko.onboarding.generated.resources.ic_google
@@ -63,7 +67,7 @@ fun WelcomeScreen(
     onRetryProfileLoad: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    var errorMessage by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
+    var errorMessage by androidx.compose.runtime.remember { mutableStateOf<OnboardingAuthError?>(null) }
 
     val googleSignInAction = supabaseClient.composeAuth.rememberSignInWithGoogle(
         onResult = { result ->
@@ -74,12 +78,12 @@ fun WelcomeScreen(
                     onGoogleSignInSuccess()
                 }
                 is NativeSignInResult.Error -> {
-                    kotlin.io.println("GoogleSignIn Error: ${result.message}")
-                    errorMessage = result.message
+                    kotlin.io.println("GoogleSignIn failed")
+                    errorMessage = OnboardingAuthError.Provider
                 }
                 is NativeSignInResult.NetworkError -> {
-                    kotlin.io.println("GoogleSignIn NetworkError: ${result.message}")
-                    errorMessage = "Network error. Check your connection."
+                    kotlin.io.println("GoogleSignIn network failure")
+                    errorMessage = OnboardingAuthError.Network
                 }
                 NativeSignInResult.ClosedByUser -> {
                     kotlin.io.println("GoogleSignIn: User cancelled")
@@ -96,12 +100,12 @@ fun WelcomeScreen(
                     onAppleSignInSuccess()
                 }
                 is NativeSignInResult.Error -> {
-                    kotlin.io.println("AppleSignIn Error: ${result.message}")
-                    errorMessage = result.message
+                    kotlin.io.println("AppleSignIn failed")
+                    errorMessage = OnboardingAuthError.Provider
                 }
                 is NativeSignInResult.NetworkError -> {
-                    kotlin.io.println("AppleSignIn NetworkError: ${result.message}")
-                    errorMessage = "Network error. Check your connection."
+                    kotlin.io.println("AppleSignIn network failure")
+                    errorMessage = OnboardingAuthError.Network
                 }
                 NativeSignInResult.ClosedByUser -> {
                     kotlin.io.println("AppleSignIn: User cancelled")
@@ -181,13 +185,15 @@ fun WelcomeScreen(
                 NekkoButton(
                     text = stringResource(Res.string.auth_continue_apple),
                     onClick = {
+                        errorMessage = null
                         try {
                             println("Starting Apple Sign-In flow...")
                             appleSignInAction.startFlow()
                             println("Apple startFlow returned (no exception)")
                         } catch (e: Exception) {
-                            println("Apple startFlow threw: ${e.message}")
-                            errorMessage = "Error: ${e.message}"
+                            if (e is CancellationException) throw e
+                            println("Apple startFlow failed")
+                            errorMessage = e.toOnboardingAuthError()
                         }
                     },
                     leadingIcon = {
@@ -215,20 +221,22 @@ fun WelcomeScreen(
                     },
                     text = stringResource(Res.string.auth_continue_google),
                     onClick = {
+                        errorMessage = null
                         try {
                             println("Starting Google Sign-In flow...")
                             googleSignInAction.startFlow()
                             println("startFlow returned (no exception)")
                         } catch (e: Exception) {
-                            println("startFlow threw: ${e.message}")
-                            errorMessage = "Error: ${e.message}"
+                            if (e is CancellationException) throw e
+                            println("Google startFlow failed")
+                            errorMessage = e.toOnboardingAuthError()
                         }
                     },
                     loading = false
                 )
                 errorMessage?.let {
                     Text(
-                        text = it,
+                        text = stringResource(it.toUserMessageResource()),
                         color = NekkoTheme.colors.red.default,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center,
@@ -238,14 +246,17 @@ fun WelcomeScreen(
                 }
                 profileLoadError?.let { error ->
                     Text(
-                        text = error.toUserMessage(),
+                        text = stringResource(error.toUserMessageResource()),
                         color = NekkoTheme.colors.red.default,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(Modifier.height(12.dp))
-                    NekkoButton(text = "Try again", onClick = onRetryProfileLoad)
+                    NekkoButton(
+                        text = stringResource(Res.string.action_try_again),
+                        onClick = onRetryProfileLoad,
+                    )
                 }
 
                 Spacer(Modifier.height(24.dp))

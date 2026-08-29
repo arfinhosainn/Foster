@@ -7,6 +7,7 @@ import app.usenekko.shared.paywall.PaywallGateManager
 import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.PurchaseOutcome
 import app.usenekko.shared.subscription.SubscriptionRepository
+import app.usenekko.shared.subscription.toUserMessageResource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,6 @@ import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.paywall_purchase_failed
 import nekko.home.generated.resources.paywall_restore_failed
 import nekko.home.generated.resources.paywall_restore_none
-import org.jetbrains.compose.resources.getString
 
 class PaywallViewModel(
     private val subscriptionRepository: SubscriptionRepository,
@@ -53,7 +53,7 @@ class PaywallViewModel(
                     _state.update {
                         it.copy(isLoading = false)
                     }
-                    _events.send(PaywallEvent.ShowError("Couldn't load plans. Please try again."))
+                    _events.send(PaywallEvent.ShowError(result.error.toUserMessageResource()))
                 }
             }
         }
@@ -79,7 +79,7 @@ class PaywallViewModel(
                 }
                 is PurchaseOutcome.Error -> {
                     _state.update { it.copy(isPurchasing = false) }
-                    _events.send(PaywallEvent.ShowError(outcome.message ?: getString(Res.string.paywall_purchase_failed)))
+                    _events.send(PaywallEvent.ShowError(Res.string.paywall_purchase_failed))
                 }
             }
         }
@@ -95,12 +95,12 @@ class PaywallViewModel(
                     if (result.data) {
                         _events.send(PaywallEvent.Subscribed)
                     } else {
-                        _events.send(PaywallEvent.ShowError(getString(Res.string.paywall_restore_none)))
+                        _events.send(PaywallEvent.ShowError(Res.string.paywall_restore_none))
                     }
                 }
                 is Result.Error -> {
                     _state.update { it.copy(isRestoring = false) }
-                    _events.send(PaywallEvent.ShowError(getString(Res.string.paywall_restore_failed)))
+                    _events.send(PaywallEvent.ShowError(result.error.toUserMessageResource()))
                 }
             }
         }

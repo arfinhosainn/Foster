@@ -24,7 +24,7 @@ interface SubscriptionRepository {
     val isSubscribed: StateFlow<Boolean>
 
     /** Re-fetch entitlement from RevenueCat (call on app foreground / after auth). */
-    suspend fun refresh()
+    suspend fun refresh(): Result<Unit, SubscriptionError>
 
     /** Current Offering's monthly + annual packages, with store prices + trial info. */
     suspend fun loadPaywallOffering(): Result<PaywallOffering, SubscriptionError>
@@ -62,7 +62,7 @@ data class PaywallOffering(
 sealed interface PurchaseOutcome {
     data object Success : PurchaseOutcome
     data object Cancelled : PurchaseOutcome
-    data class Error(val message: String?) : PurchaseOutcome
+    data object Error : PurchaseOutcome
 }
 
 sealed interface SubscriptionError {

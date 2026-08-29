@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -162,7 +163,7 @@ class AccountViewModelTest {
             advanceUntilIdle()
 
             assertEquals("1", viewModel.state.value.profile?.selectedAvatarId)
-            assertEquals("Network", viewModel.state.value.error)
+            assertNotNull(viewModel.state.value.error)
         } finally {
             Dispatchers.resetMain()
         }

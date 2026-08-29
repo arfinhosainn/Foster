@@ -73,6 +73,7 @@ class ContactViewModel(
                     )
                 }
             }
+            ContactAction.ImportFailed -> sendEvent(ContactEvent.ImportFailed)
             is ContactAction.NextClicked -> {
                 if (_state.value.contactName.isBlank()) {
                     sendEvent(ContactEvent.NameRequired)

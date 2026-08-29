@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.home.di.LocalDeleteAccountDataSource
 import app.usenekko.home.domain.DeleteAccountError
+import app.usenekko.home.domain.toUserMessageResource
 import app.usenekko.home.presentation.settings.components.AppearanceBottomSheet
 import app.usenekko.home.presentation.settings.components.DeleteAccountBottomSheet
 import app.usenekko.home.presentation.settings.components.PremiumCard
@@ -57,6 +58,7 @@ import app.usenekko.theme.LocalThemeStore
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.rememberLiquidState
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.ic_appearance
 import nekko.home.generated.resources.ic_contacts
@@ -120,7 +122,7 @@ fun SettingScreen(
     val deleteAccountDataSource = LocalDeleteAccountDataSource.current
     var showDeleteSheet by rememberSaveable { mutableStateOf(false) }
     var deleteLoading by remember { mutableStateOf(false) }
-    var deleteError by remember { mutableStateOf<String?>(null) }
+    var deleteError by remember { mutableStateOf<StringResource?>(null) }
 
     fun confirmDeleteAccount() {
         scope.launch {
@@ -134,17 +136,7 @@ fun SettingScreen(
 
                 is Result.Error -> {
                     deleteLoading = false
-                    deleteError = when (val err = result.error) {
-                        is DeleteAccountError.Network ->
-                            "Network error. Check your connection and try again."
-
-                        is DeleteAccountError.NotAuthenticated ->
-                            "Your session expired. Please sign in again."
-
-                        is DeleteAccountError.Unknown ->
-                            err.detail?.takeIf { it.isNotBlank() }
-                                ?: "Something went wrong. Your account was not deleted."
-                    }
+                    deleteError = result.error.toUserMessageResource()
                 }
             }
         }

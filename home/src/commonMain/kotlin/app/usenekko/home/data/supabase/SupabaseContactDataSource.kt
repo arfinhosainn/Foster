@@ -24,6 +24,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.datetime.LocalDate
+import kotlinx.coroutines.CancellationException
 
 @Serializable
 private data class ContactDto(
@@ -778,10 +779,13 @@ class SupabaseContactDataSource(
         }
     }
 
-    private fun mapError(e: Exception): ContactError = when {
-        e.message?.contains("JWT", ignoreCase = true) == true -> ContactError.NotAuthenticated
-        e.message?.contains("network", ignoreCase = true) == true -> ContactError.Network
-        e.message?.contains("timeout", ignoreCase = true) == true -> ContactError.Network
-        else -> ContactError.Unknown(e.message)
+    private fun mapError(e: Exception): ContactError {
+        if (e is CancellationException) throw e
+        return when {
+            e.message?.contains("JWT", ignoreCase = true) == true -> ContactError.NotAuthenticated
+            e.message?.contains("network", ignoreCase = true) == true -> ContactError.Network
+            e.message?.contains("timeout", ignoreCase = true) == true -> ContactError.Network
+            else -> ContactError.Unknown(e.message)
+        }
     }
 }

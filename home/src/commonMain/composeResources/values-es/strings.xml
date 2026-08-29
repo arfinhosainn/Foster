@@ -12,6 +12,12 @@
     <string name="action_ok">Aceptar</string>
     <string name="action_create">Crear</string>
     <string name="action_upgrade">Mejorar plan</string>
+    <string name="error_session_expired">Tu sesión expiró. Vuelve a iniciar sesión.</string>
+    <string name="error_network">Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="error_unexpected">Algo salió mal. Inténtalo de nuevo.</string>
+    <string name="error_delete_account">Algo salió mal. No se eliminó tu cuenta.</string>
+    <string name="home_load_error_title">No pudimos cargar tus contactos</string>
+    <string name="brainstorm_cooldown">Ya generaste ideas hoy. Vuelve mañana para ver sugerencias nuevas.</string>
     <string name="cd_close">Cerrar</string>
     <string name="cd_back">Atrás</string>
     <string name="cd_selected">Seleccionado</string>

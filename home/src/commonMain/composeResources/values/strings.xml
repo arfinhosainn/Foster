@@ -12,6 +12,12 @@
     <string name="action_ok">OK</string>
     <string name="action_create">Create</string>
     <string name="action_upgrade">Upgrade</string>
+    <string name="error_session_expired">Your session expired. Please sign in again.</string>
+    <string name="error_network">Check your connection and try again.</string>
+    <string name="error_unexpected">Something went wrong. Please try again.</string>
+    <string name="error_delete_account">Something went wrong. Your account was not deleted.</string>
+    <string name="home_load_error_title">Couldn&apos;t load your contacts</string>
+    <string name="brainstorm_cooldown">Already generated today. Check back tomorrow for fresh ideas.</string>
     <string name="cd_close">Close</string>
     <string name="cd_back">Back</string>
     <string name="cd_selected">Selected</string>

@@ -39,13 +39,14 @@ import kotlinx.datetime.toLocalDateTime
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.brainstorm_history_empty
 import nekko.home.generated.resources.brainstorm_history_item
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun HistoryContent(
     sessions: List<BrainstormSession>,
     isLoading: Boolean,
-    error: String?,
+    error: StringResource?,
     onSendMessage: ((BrainstormTopic) -> Unit)? = null,
     notice: String? = null,
     onDismissNotice: () -> Unit = {},
@@ -64,7 +65,7 @@ fun HistoryContent(
         }
         when {
             isLoading -> HistoryLoadingSkeleton()
-            error != null -> ErrorBanner(text = error, modifier = Modifier.padding(top = 16.dp))
+            error != null -> ErrorBanner(text = stringResource(error), modifier = Modifier.padding(top = 16.dp))
             sessions.isEmpty() -> Text(
                 text = stringResource(Res.string.brainstorm_history_empty),
                 style = NekkoTheme.typography.bodyMedium,

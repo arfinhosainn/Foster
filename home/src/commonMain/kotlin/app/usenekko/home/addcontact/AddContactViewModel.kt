@@ -8,6 +8,7 @@ import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.ContactDataSource
 import app.usenekko.home.domain.ContactError
 import app.usenekko.home.domain.GroupMembership
+import app.usenekko.home.domain.toUserMessageResource
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.contacts.ImportedContact
 import app.usenekko.shared.paywall.PaywallGateManager
@@ -71,7 +72,7 @@ class AddContactViewModel(
                 },
                 initialGroupResolved = state.initialGroupResolved || !pickerState.isLoading,
                 groupsLoading = pickerState.isLoading,
-                error = pickerState.error?.toString(),
+                error = pickerState.error?.toUserMessageResource(),
             )
         }
     }
@@ -162,7 +163,7 @@ class AddContactViewModel(
                 }
                 is Result.Error -> {
                     _state.update {
-                        it.copy(isCreatingGroup = false, error = result.error.toString())
+                        it.copy(isCreatingGroup = false, error = result.error.toUserMessageResource())
                     }
                 }
             }
@@ -272,7 +273,7 @@ class AddContactViewModel(
                     }
 
                     if (groupResult is Result.Error) {
-                        _state.update { it.copy(isSubmitting = false, error = groupResult.error.toString()) }
+                        _state.update { it.copy(isSubmitting = false, error = groupResult.error.toUserMessageResource()) }
                         return@launch
                     }
 
@@ -285,7 +286,7 @@ class AddContactViewModel(
                     _events.send(AddContactEvent.Saved)
                 }
                 is Result.Error -> {
-                    _state.update { it.copy(isSubmitting = false, error = result.error.toString()) }
+                    _state.update { it.copy(isSubmitting = false, error = result.error.toUserMessageResource()) }
                 }
             }
         }

@@ -10,6 +10,7 @@ import app.usenekko.home.domain.computeCheckInUpdate
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.isCheckedInToday
 import app.usenekko.home.domain.nextCheckInDateLocal
+import app.usenekko.home.domain.toUserMessageResource
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
 import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.shared.domain.Result
@@ -60,13 +61,13 @@ class ContactProfileViewModel(
                 reminders = snapshot.reminders,
                 checkInCount = snapshot.checkInCount,
                 daysUntilNextCheckIn = contact?.let { daysUntilNextCheckIn(it) } ?: 0,
-                refreshError = error?.toString(),
+                refreshError = error?.toUserMessageResource(),
             )
         } else if (error != null) {
             _state.value = _state.value.copy(
                 isLoading = false,
                 isRefreshing = false,
-                refreshError = error.toString(),
+                refreshError = error.toUserMessageResource(),
             )
         }
     }
@@ -116,7 +117,7 @@ class ContactProfileViewModel(
                     _state.value = _state.value.copy(notes = result.data, notesError = null)
                 }
                 is Result.Error -> {
-                    _state.value = _state.value.copy(notesError = result.error.toString())
+                    _state.value = _state.value.copy(notesError = result.error.toUserMessageResource())
                 }
             }
         }
@@ -129,7 +130,7 @@ class ContactProfileViewModel(
                     _state.value = _state.value.copy(reminders = result.data, remindersError = null)
                 }
                 is Result.Error -> {
-                    _state.value = _state.value.copy(remindersError = result.error.toString())
+                    _state.value = _state.value.copy(remindersError = result.error.toUserMessageResource())
                 }
             }
         }
@@ -237,7 +238,7 @@ class ContactProfileViewModel(
                 is Result.Error -> {
                     _state.value = _state.value.copy(
                         isSavingNote = false,
-                        notesError = result.error.toString(),
+                        notesError = result.error.toUserMessageResource(),
                     )
                 }
             }
@@ -282,7 +283,7 @@ class ContactProfileViewModel(
                 is Result.Error -> {
                     _state.value = _state.value.copy(
                         isCheckingIn = false,
-                        checkInError = result.error.toString(),
+                        checkInError = result.error.toUserMessageResource(),
                     )
                 }
             }
@@ -294,7 +295,7 @@ class ContactProfileViewModel(
             when (val result = contactDataSource.deleteNote(noteId)) {
                 is Result.Success -> refreshProfileAfterMutation()
                 is Result.Error -> {
-                    _state.value = _state.value.copy(notesError = result.error.toString())
+                    _state.value = _state.value.copy(notesError = result.error.toUserMessageResource())
                 }
             }
         }
@@ -346,7 +347,7 @@ class ContactProfileViewModel(
                 is Result.Error -> {
                     _state.value = _state.value.copy(
                         isSavingReminder = false,
-                        remindersError = result.error.toString(),
+                        remindersError = result.error.toUserMessageResource(),
                     )
                 }
             }
@@ -373,7 +374,7 @@ class ContactProfileViewModel(
             when (val result = contactDataSource.deleteReminder(reminderId)) {
                 is Result.Success -> refreshProfileAfterMutation()
                 is Result.Error -> {
-                    _state.value = _state.value.copy(remindersError = result.error.toString())
+                    _state.value = _state.value.copy(remindersError = result.error.toUserMessageResource())
                 }
             }
         }

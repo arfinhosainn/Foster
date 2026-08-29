@@ -52,13 +52,14 @@ import nekko.home.generated.resources.cd_close
 import nekko.home.generated.resources.delete_type_confirm
 import nekko.home.generated.resources.settings_delete_account
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.StringResource
 import nekko.home.generated.resources.delete_warning_body
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeleteAccountBottomSheet(
     isLoading: Boolean,
-    errorMessage: String?,
+    errorMessage: StringResource?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -176,7 +177,7 @@ fun DeleteAccountBottomSheet(
             errorMessage?.let { message ->
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = message,
+                    text = stringResource(message),
                     color = Color(0xFFFF4B4B),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,

@@ -17,6 +17,7 @@ import app.usenekko.home.domain.Reminder
 import app.usenekko.home.domain.buildDuePlan
 import app.usenekko.home.domain.isOutstanding
 import app.usenekko.home.domain.isCheckedInToday
+import app.usenekko.home.domain.toUserMessageResource
 import app.usenekko.home.presentation.badges.detectAndTriggerBadgeReveal
 import app.usenekko.home.presentation.badges.unlockedBadgeIdsOrNull
 import app.usenekko.home.presentation.components.resolveInitialCountdownStartDate
@@ -72,7 +73,7 @@ class HomeViewModel(
                 is Result.Error -> _state.value = _state.value.copy(
                     isLoading = false,
                     isRefreshing = false,
-                    error = result.error.toString(),
+                    error = result.error.toUserMessageResource(),
                 )
             }
             hasLoadedRepository = true
@@ -90,7 +91,7 @@ class HomeViewModel(
                 repositoryState.snapshot?.let(::applySnapshot)
                 _state.value = _state.value.copy(
                     isRefreshing = repositoryState.isRefreshing,
-                    error = repositoryState.error?.toString(),
+                    error = repositoryState.error?.toUserMessageResource(),
                 )
             }
         }
@@ -239,7 +240,7 @@ class HomeViewModel(
                     allContacts = preAllContacts
                     _state.value = preState.copy(
                         checkingInContactIds = preState.checkingInContactIds - contactId,
-                        checkInError = result.error.toString(),
+                        checkInError = result.error.toUserMessageResource(),
                     )
                     recomputeCounts(
                         contacts = preAllContacts,

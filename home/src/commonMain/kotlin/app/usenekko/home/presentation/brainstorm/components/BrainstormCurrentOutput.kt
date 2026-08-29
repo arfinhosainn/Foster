@@ -19,6 +19,7 @@ import app.usenekko.theme.NekkoTheme
 import nekko.home.generated.resources.Res
 import nekko.home.generated.resources.brainstorm_empty_current
 import nekko.home.generated.resources.brainstorm_empty_no_ideas
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -26,7 +27,7 @@ fun CurrentOutputContent(
     topics: List<BrainstormTopic>?,
     isGenerating: Boolean,
     notice: String?,
-    error: String?,
+    error: StringResource?,
     onDismissNotice: () -> Unit,
     onSendMessage: ((BrainstormTopic) -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -44,7 +45,7 @@ fun CurrentOutputContent(
             Spacer(modifier = Modifier.height(12.dp))
         }
         if (error != null) {
-            ErrorBanner(text = error)
+            ErrorBanner(text = stringResource(error))
             Spacer(modifier = Modifier.height(12.dp))
         }
 

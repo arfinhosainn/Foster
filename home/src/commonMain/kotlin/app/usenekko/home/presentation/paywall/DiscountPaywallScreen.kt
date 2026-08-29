@@ -74,6 +74,7 @@ import nekko.home.generated.resources.discount_one_time_offer
 import nekko.home.generated.resources.discount_processing
 import nekko.home.generated.resources.paywall_restore_cta
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.getString
 
 /**
  * Real pricing worked backward from the 60% discount:
@@ -110,7 +111,7 @@ fun DiscountPaywallScreen(
         viewModel.events.collect { event ->
             when (event) {
                 DiscountPaywallEvent.Subscribed -> onSubscribed()
-                is DiscountPaywallEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
+                is DiscountPaywallEvent.ShowError -> snackbarHostState.showSnackbar(getString(event.message))
             }
         }
     }

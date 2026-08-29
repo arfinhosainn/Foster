@@ -4,9 +4,12 @@ import app.usenekko.onboarding.addnote.AddNoteAction
 import app.usenekko.onboarding.addnote.AddNoteViewModel
 import app.usenekko.onboarding.domain.OnboardingDraft
 import app.usenekko.onboarding.domain.OnboardingDraftLocalDataSource
+import app.usenekko.onboarding.domain.OnboardingDraftStorageError
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.onboarding.domain.NoteDraft
 import app.usenekko.onboarding.presentation.OnboardingDraftStore
+import app.usenekko.shared.domain.EmptyResult
+import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -81,13 +84,14 @@ class AddNoteOnboardingFlowTest {
     private fun createDraftStore(initialDraft: OnboardingDraft = OnboardingDraft()): OnboardingDraftStore {
         return OnboardingDraftStore(
             object : OnboardingDraftLocalDataSource {
-                override suspend fun getDraft(): OnboardingDraft {
-                    return initialDraft
-                }
+                override suspend fun getDraft(): Result<OnboardingDraft, OnboardingDraftStorageError> =
+                    Result.Success(initialDraft)
 
-                override suspend fun saveDraft(draft: OnboardingDraft) = Unit
+                override suspend fun saveDraft(draft: OnboardingDraft): EmptyResult<OnboardingDraftStorageError> =
+                    Result.Success(Unit)
 
-                override suspend fun clearDraft() = Unit
+                override suspend fun clearDraft(): EmptyResult<OnboardingDraftStorageError> =
+                    Result.Success(Unit)
             },
         )
     }
