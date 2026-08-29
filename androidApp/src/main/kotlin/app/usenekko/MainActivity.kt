@@ -9,6 +9,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import app.usenekko.navigation.Screen
 import app.usenekko.navigation.rememberNavigator
 import app.usenekko.onboarding.OnboardingApp
@@ -23,7 +25,15 @@ import app.usenekko.shared.subscription.initRevenueCat
 class MainActivity : ComponentActivity() {
     private val supabaseClient by lazy { createAppSupabaseClient() }
 
+    // Holds the Android 12+ system splash on screen until the initial
+    // auth/session routing settles (Splash -> real screen) or the profile
+    // check fails (the splash error/retry UI must become visible). Kept in
+    // sync by OnboardingApp via onSplashBusyChanged.
+    private val splashHeldVisible = mutableStateOf(true)
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { splashHeldVisible.value }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         supabaseClient.handleDeeplinks(intent)
@@ -37,7 +47,9 @@ class MainActivity : ComponentActivity() {
             BackHandler(enabled = navigator.canGoBack) {
                 navigator.goBack()
             }
-            OnboardingApp(navigator, supabaseClient)
+            OnboardingApp(navigator, supabaseClient) { busy ->
+                splashHeldVisible.value = busy
+            }
 
             // Notification tap routing — buffered so cold-start taps (extras
             // arriving before the nav graph/auth routing is ready) replay once

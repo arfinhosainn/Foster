@@ -70,7 +70,6 @@ import app.usenekko.shared.paywall.LocalPaywallGateManager
 import app.usenekko.shared.paywall.PaywallGateManagerProvider
 import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
-import app.usenekko.shared.subscription.SubscriptionError
 import app.usenekko.theme.NekkoTheme
 import app.usenekko.theme.ThemePreferenceStoreProvider
 import nekko.onboarding.generated.resources.Res
@@ -78,9 +77,6 @@ import nekko.onboarding.generated.resources.error_draft_clear
 import nekko.onboarding.generated.resources.error_draft_corrupt
 import nekko.onboarding.generated.resources.error_draft_read
 import nekko.onboarding.generated.resources.error_draft_write
-import nekko.onboarding.generated.resources.error_subscription_network
-import nekko.onboarding.generated.resources.error_subscription_unknown
-import nekko.onboarding.generated.resources.error_subscription_unavailable
 import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CancellationException
@@ -90,7 +86,11 @@ import io.github.jan.supabase.SupabaseClient
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) {
+fun OnboardingApp(
+    navigator: Navigator,
+    supabaseClient: SupabaseClient? = null,
+    onSplashBusyChanged: (Boolean) -> Unit = {},
+) {
     OnboardingDraftStoreProvider(supabaseClient) {
         // Sits below OnboardingDraftStoreProvider (needs LocalSubscriptionRepository).
         PaywallGateManagerProvider {
@@ -100,7 +100,7 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
             // to the DEVICE theme.
             ThemePreferenceStoreProvider {
                 NekkoTheme {
-                    OnboardingAppContent(navigator, supabaseClient)
+                    OnboardingAppContent(navigator, supabaseClient, onSplashBusyChanged)
                 }
             }
         }
@@ -108,7 +108,11 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
 }
 
 @Composable
-private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseClient?) {
+private fun OnboardingAppContent(
+    navigator: Navigator,
+    supabaseClient: SupabaseClient?,
+    onSplashBusyChanged: (Boolean) -> Unit,
+) {
     val profileDataSource = LocalOnboardingProfileDataSource.current
     val draftStore = LocalOnboardingDraftStore.current
     val supabaseClient = LocalSupabaseClient.current
@@ -121,11 +125,6 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
         clear = stringResource(Res.string.error_draft_clear),
         corrupt = stringResource(Res.string.error_draft_corrupt),
     )
-    val subscriptionMessages = SubscriptionMessages(
-        unavailable = stringResource(Res.string.error_subscription_unavailable),
-        network = stringResource(Res.string.error_subscription_network),
-        unknown = stringResource(Res.string.error_subscription_unknown),
-    )
 
     LaunchedEffect(draftStore, draftStorageMessages) {
         draftStore.storageErrors.collect { error ->
@@ -136,13 +135,14 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
     val subscriptionRepository = LocalSubscriptionRepository.current
     val paywallGateManager = LocalPaywallGateManager.current
 
-    LaunchedEffect(subscriptionRepository, subscriptionMessages) {
-        when (val result = subscriptionRepository.refresh()) {
-            is Result.Success -> Unit
-            is Result.Error -> draftStorageSnackbarHostState.showSnackbar(
-                subscriptionMessages.message(result.error),
-            )
-        }
+    // Silent startup refresh of the subscription entitlement: this is a
+    // background refresh with no user action to retry, so a failure must NOT
+    // pop the shared snackbar — previously every cold start where RevenueCat
+    // was unconfigured/unreachable surfaced "Something went wrong. Please try
+    // again." over the Home screen. The last-known entitlement state is kept,
+    // and user-initiated surfaces (paywall, restore) surface their own errors.
+    LaunchedEffect(subscriptionRepository) {
+        subscriptionRepository.refresh()
     }
 
     LaunchedEffect(Unit) {
@@ -176,6 +176,16 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                 AuthSessionAction.Ignore -> Unit
             }
         }
+    }
+
+    // Reports whether the splash is still "busy" (auth/session check running,
+    // user still on Screen.Splash with no profile error). Android holds the
+    // system splash on screen while this is true; once the check fails the
+    // error/retry UI must be released into view. No-op on other targets.
+    LaunchedEffect(navigator.currentScreen, profileLoadError.value) {
+        onSplashBusyChanged(
+            navigator.currentScreen is Screen.Splash && profileLoadError.value == null,
+        )
     }
 
     // Single delivery point for every gate-approved impression (exit-intent,
@@ -495,17 +505,6 @@ private data class DraftStorageMessages(
     }
 }
 
-private data class SubscriptionMessages(
-    val unavailable: String,
-    val network: String,
-    val unknown: String,
-) {
-    fun message(error: SubscriptionError): String = when (error) {
-        SubscriptionError.NotConfigured -> unavailable
-        SubscriptionError.Network -> network
-        is SubscriptionError.Unknown -> unknown
-    }
-}
 
 val Screen.isFirstRunSurface: Boolean
     get() = when (this) {
