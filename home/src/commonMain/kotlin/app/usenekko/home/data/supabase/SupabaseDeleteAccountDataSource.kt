@@ -11,6 +11,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.CancellationException
 
 private val deleteJson = Json { ignoreUnknownKeys = true }
 
@@ -46,6 +47,7 @@ class SupabaseDeleteAccountDataSource(
             val parsed = try {
                 deleteJson.decodeFromString<DeleteAccountResponse>(body)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 DeleteAccountResponse(success = response.status.isSuccess())
             }
 
@@ -57,6 +59,7 @@ class SupabaseDeleteAccountDataSource(
                 Result.Error(DeleteAccountError.Unknown(detail))
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.Error(mapError(e))
         }
     }

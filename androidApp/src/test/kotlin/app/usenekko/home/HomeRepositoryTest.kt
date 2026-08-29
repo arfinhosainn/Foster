@@ -10,6 +10,7 @@ import app.usenekko.home.domain.GroupMembership
 import app.usenekko.home.domain.MissedCheckIn
 import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -152,6 +153,22 @@ class HomeRepositoryTest {
     }
 
     @Test
+    fun cancellationFromDataSourceIsNotConvertedToHomeError() = runTest {
+        val cancellation = CancellationException("screen was closed")
+        val dataSource = CountingDataSource().apply {
+            contactsFailure = cancellation
+        }
+        val repository = repository(dataSource, this)
+
+        try {
+            repository.load(forceRefresh = true)
+            org.junit.Assert.fail("Expected the data-source cancellation to propagate")
+        } catch (_: CancellationException) {
+            return@runTest
+        }
+    }
+
+    @Test
     fun changingAccountNeverReturnsPreviousSnapshot() = runTest {
         var account = "account-a"
         val dataSource = CountingDataSource()
@@ -226,6 +243,7 @@ private class CountingDataSource : ContactDataSource by FakeContactDataSource(
     checkIns = initialCheckIns,
 ) {
     var contactsResult: Result<List<Contact>, ContactError> = Result.Success(initialContacts)
+    var contactsFailure: Throwable? = null
     var groupsResult: Result<List<Group>, ContactError> = Result.Success(initialGroups)
     var membershipsResult: Result<List<GroupMembership>, ContactError> = Result.Success(initialMemberships)
     var checkInsResult: Result<List<CheckIn>, ContactError> = Result.Success(initialCheckIns)
@@ -242,6 +260,7 @@ private class CountingDataSource : ContactDataSource by FakeContactDataSource(
 
     override suspend fun getContacts(): Result<List<Contact>, ContactError> {
         contactsReads++
+        contactsFailure?.let { throw it }
         return contactsResult
     }
 

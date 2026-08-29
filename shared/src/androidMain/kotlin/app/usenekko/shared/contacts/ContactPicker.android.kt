@@ -25,14 +25,30 @@ actual fun rememberContactPicker(
     val contactPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickContact(),
         onResult = { uri ->
-            uri?.let { readContact(context, it) }?.let(onContactSelected)
+            if (uri == null) return@rememberLauncherForActivityResult
+            try {
+                val contact = readContact(context, uri)
+                if (contact == null) {
+                    onPermissionDenied()
+                } else {
+                    onContactSelected(contact)
+                }
+            } catch (error: Exception) {
+                println("ContactPicker[Android]: contact read failed")
+                onPermissionDenied()
+            }
         },
     )
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             if (granted) {
-                contactPicker.launch(null)
+                try {
+                    contactPicker.launch(null)
+                } catch (error: Exception) {
+                    println("ContactPicker[Android]: picker launch failed")
+                    onPermissionDenied()
+                }
             } else {
                 onPermissionDenied()
             }
@@ -41,12 +57,17 @@ actual fun rememberContactPicker(
 
     return remember(context, contactPicker, permissionLauncher) {
         {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) ==
-                PackageManager.PERMISSION_GRANTED
-            ) {
-                contactPicker.launch(null)
-            } else {
-                permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+            try {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) ==
+                    PackageManager.PERMISSION_GRANTED
+                ) {
+                    contactPicker.launch(null)
+                } else {
+                    permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                }
+            } catch (error: Exception) {
+                println("ContactPicker[Android]: permission or picker launch failed")
+                onPermissionDenied()
             }
         }
     }

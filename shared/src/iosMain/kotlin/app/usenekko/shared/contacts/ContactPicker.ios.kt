@@ -36,17 +36,23 @@ actual fun rememberContactPicker(
             if (presenter == null) {
                 onPermissionDenied()
             } else {
-                val delegate = ContactPickerDelegate(onContactSelected)
-                activeDelegate = delegate
-                val picker = CNContactPickerViewController()
-                picker.delegate = delegate
-                picker.displayedPropertyKeys = listOf(
-                    CNContactGivenNameKey,
-                    CNContactFamilyNameKey,
-                    CNContactImageDataKey,
-                    CNContactPhoneNumbersKey,
-                )
-                presenter.presentViewController(picker, animated = true, completion = null)
+                try {
+                    val delegate = ContactPickerDelegate(onContactSelected, onPermissionDenied)
+                    activeDelegate = delegate
+                    val picker = CNContactPickerViewController()
+                    picker.delegate = delegate
+                    picker.displayedPropertyKeys = listOf(
+                        CNContactGivenNameKey,
+                        CNContactFamilyNameKey,
+                        CNContactImageDataKey,
+                        CNContactPhoneNumbersKey,
+                    )
+                    presenter.presentViewController(picker, animated = true, completion = null)
+                } catch (error: Exception) {
+                    println("ContactPicker[iOS]: picker presentation failed")
+                    activeDelegate = null
+                    onPermissionDenied()
+                }
             }
         }
     }
@@ -59,27 +65,36 @@ private var activeDelegate: ContactPickerDelegate? = null
 @OptIn(ExperimentalForeignApi::class)
 private class ContactPickerDelegate(
     private val onContactSelected: (ImportedContact) -> Unit,
+    private val onImportFailure: () -> Unit,
 ) : NSObject(), CNContactPickerDelegateProtocol {
     override fun contactPicker(
         picker: CNContactPickerViewController,
         didSelectContact: CNContact,
     ) {
-        val name = listOf(didSelectContact.givenName, didSelectContact.familyName)
-            .filter { it.isNotBlank() }
-            .joinToString(" ")
-            .ifBlank { didSelectContact.organizationName }
-            .trim()
-        if (name.isNotEmpty()) {
-            onContactSelected(
-                ImportedContact(
-                    name = name,
-                    photo = didSelectContact.imageData?.toImageBitmap()
-                        ?: didSelectContact.thumbnailImageData?.toImageBitmap(),
-                    phoneNumber = didSelectContact.primaryPhoneNumber(),
-                ),
-            )
+        try {
+            val name = listOf(didSelectContact.givenName, didSelectContact.familyName)
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+                .ifBlank { didSelectContact.organizationName }
+                .trim()
+            if (name.isEmpty()) {
+                onImportFailure()
+            } else {
+                onContactSelected(
+                    ImportedContact(
+                        name = name,
+                        photo = didSelectContact.imageData?.toImageBitmap()
+                            ?: didSelectContact.thumbnailImageData?.toImageBitmap(),
+                        phoneNumber = didSelectContact.primaryPhoneNumber(),
+                    ),
+                )
+            }
+        } catch (error: Exception) {
+            println("ContactPicker[iOS]: contact read failed")
+            onImportFailure()
+        } finally {
+            activeDelegate = null
         }
-        activeDelegate = null
     }
 
     override fun contactPickerDidCancel(picker: CNContactPickerViewController) {

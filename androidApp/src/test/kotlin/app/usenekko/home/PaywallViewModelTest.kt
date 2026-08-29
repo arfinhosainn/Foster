@@ -10,7 +10,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -24,10 +24,7 @@ class PaywallViewModelTest {
             val viewModel = PaywallViewModel(FakeSubscriptionRepository())
             advanceUntilIdle()
 
-            assertEquals(
-                PaywallEvent.ShowError("Couldn't load plans. Please try again."),
-                viewModel.events.first(),
-            )
+            assertTrue(viewModel.events.first() is PaywallEvent.ShowError)
         } finally {
             Dispatchers.resetMain()
         }

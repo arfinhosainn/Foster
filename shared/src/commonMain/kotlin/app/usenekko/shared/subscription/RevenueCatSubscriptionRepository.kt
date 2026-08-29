@@ -15,6 +15,7 @@ import com.revenuecat.purchases.kmp.models.PurchasesException
 import com.revenuecat.purchases.kmp.models.PurchasesTransactionException
 import com.revenuecat.purchases.kmp.models.StoreProduct
 import com.revenuecat.purchases.kmp.models.freePhase
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,13 +38,19 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
     // RC Package that awaitPurchase() needs.
     private var cachedPackages: Map<String, Package> = emptyMap()
 
-    override suspend fun refresh() {
-        if (!Purchases.isConfigured) return
+    override suspend fun refresh(): Result<Unit, SubscriptionError> {
+        if (!Purchases.isConfigured) return Result.Error(SubscriptionError.NotConfigured)
         try {
             val info = Purchases.sharedInstance.awaitCustomerInfo()
             _isSubscribed.value = isUnlimitedActive(info)
-        } catch (_: Exception) {
+            return Result.Success(Unit)
+        } catch (error: Exception) {
+            if (error is CancellationException) throw error
             // Keep last-known state on transient errors.
+            return when (error) {
+                is PurchasesException -> Result.Error(error.toSubscriptionError())
+                else -> Result.Error(SubscriptionError.Unknown(null))
+            }
         }
     }
 
@@ -57,14 +64,15 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
         } catch (e: PurchasesException) {
             Result.Error(e.toSubscriptionError())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.Error(SubscriptionError.Unknown(e.message))
         }
     }
 
     override suspend fun purchase(pkg: PaywallPackage): PurchaseOutcome {
-        if (!Purchases.isConfigured) return PurchaseOutcome.Error("RevenueCat not configured")
+        if (!Purchases.isConfigured) return PurchaseOutcome.Error
         val rcPackage = cachedPackages[pkg.identifier]
-            ?: return PurchaseOutcome.Error("Selected plan is no longer available")
+            ?: return PurchaseOutcome.Error
         return try {
             val result = Purchases.sharedInstance.awaitPurchase(rcPackage)
             // Flip entitlement immediately — no restart needed.
@@ -72,9 +80,10 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
             PurchaseOutcome.Success
         } catch (e: PurchasesTransactionException) {
             if (e.userCancelled) PurchaseOutcome.Cancelled
-            else PurchaseOutcome.Error(e.message)
+            else PurchaseOutcome.Error
         } catch (e: Exception) {
-            PurchaseOutcome.Error(e.message)
+            if (e is CancellationException) throw e
+            PurchaseOutcome.Error
         }
     }
 
@@ -88,6 +97,7 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
         } catch (e: PurchasesException) {
             Result.Error(e.toSubscriptionError())
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.Error(SubscriptionError.Unknown(e.message))
         }
     }
@@ -164,7 +174,7 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
         return when {
             msg.contains("network", ignoreCase = true) -> SubscriptionError.Network
             msg.contains("timeout", ignoreCase = true) -> SubscriptionError.Network
-            else -> SubscriptionError.Unknown(msg)
+            else -> SubscriptionError.Unknown(null)
         }
     }
 }

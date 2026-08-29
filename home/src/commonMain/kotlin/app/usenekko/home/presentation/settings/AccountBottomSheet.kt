@@ -209,7 +209,7 @@ fun AccountBottomSheet(
             state.error?.let { error ->
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    text = error,
+                    text = stringResource(error),
                     color = Color(0xFFFF4B4B),
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,

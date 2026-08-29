@@ -5,7 +5,9 @@ import androidx.compose.runtime.remember
 import app.usenekko.shared.subscription.SubscriptionRepository
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.time.Clock
 
 /**
  * Why the discount paywall wants to appear. Any single trigger is enough —
@@ -231,14 +232,22 @@ class PaywallGateManager(
         writeMutex.withLock {
             val updated = transform(cachedState)
             cachedState = updated
-            runCatching { dataSource.setState(updated) }
+            persistSafely(updated)
         }
     }
 
     private suspend fun persist(state: PaywallGateState) {
         writeMutex.withLock {
             cachedState = state
-            runCatching { dataSource.setState(state) }
+            persistSafely(state)
+        }
+    }
+
+    private suspend fun persistSafely(state: PaywallGateState) {
+        try {
+            dataSource.setState(state)
+        } catch (error: Exception) {
+            if (error is CancellationException) throw error
         }
     }
 

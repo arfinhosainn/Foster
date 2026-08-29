@@ -1,5 +1,7 @@
 package app.usenekko.home.addcontact
 
+import org.jetbrains.compose.resources.StringResource
+
 import androidx.compose.ui.graphics.ImageBitmap
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Group
@@ -33,7 +35,7 @@ data class AddContactState(
     val initialMinute: Int = 30,
     val initialIsAm: Boolean = false,
     val isSubmitting: Boolean = false,
-    val error: String? = null,
+    val error: StringResource? = null,
 ) {
     val isEditing: Boolean
         get() = editingContactId != null

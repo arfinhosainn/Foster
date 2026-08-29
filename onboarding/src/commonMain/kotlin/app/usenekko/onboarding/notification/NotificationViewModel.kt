@@ -6,7 +6,6 @@ import app.usenekko.onboarding.domain.OnboardingProfileDataSource
 import app.usenekko.onboarding.domain.OnboardingDraft
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.shared.domain.Result
-import app.usenekko.onboarding.domain.toUserMessage
 import app.usenekko.onboarding.presentation.OnboardingDraftStore
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +52,7 @@ class NotificationViewModel(
         val completedDraft = draftStore.draft.value.copy(
             notificationPermissionAsked = notificationPermissionAsked,
             notificationPermissionGranted = notificationPermissionGranted,
-            currentStep = OnboardingStep.Complete,
+            currentStep = OnboardingStep.Notification,
         )
         draftStore.update { completedDraft }
         submitOnboarding(completedDraft)
@@ -70,7 +69,7 @@ class NotificationViewModel(
                 }
                 is Result.Error -> {
                     _state.value = _state.value.copy(isSubmitting = false)
-                    _events.send(NotificationEvent.ShowError(result.error.toUserMessage()))
+                    _events.send(NotificationEvent.ShowError(result.error))
                 }
             }
         }

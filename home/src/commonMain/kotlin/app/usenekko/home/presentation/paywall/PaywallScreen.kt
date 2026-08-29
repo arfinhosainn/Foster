@@ -78,6 +78,7 @@ import nekko.home.generated.resources.paywall_monthly_plan
 import nekko.home.generated.resources.paywall_restore_cta
 import nekko.home.generated.resources.paywall_restoring
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.getString
 
 @Composable
 fun PaywallScreen(
@@ -93,7 +94,7 @@ fun PaywallScreen(
         viewModel.events.collect { event ->
             when (event) {
                 PaywallEvent.Subscribed -> onSubscribed()
-                is PaywallEvent.ShowError -> snackbarHostState.showSnackbar(event.message)
+                is PaywallEvent.ShowError -> snackbarHostState.showSnackbar(getString(event.message))
             }
         }
     }

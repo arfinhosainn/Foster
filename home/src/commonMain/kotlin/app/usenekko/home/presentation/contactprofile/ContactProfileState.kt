@@ -3,6 +3,7 @@ package app.usenekko.home.presentation.contactprofile
 import app.usenekko.home.domain.Contact
 import app.usenekko.home.domain.Note
 import app.usenekko.home.domain.Reminder
+import org.jetbrains.compose.resources.StringResource
 
 sealed interface ContactProfileAction {
     data object ToggleRelationshipInfo : ContactProfileAction
@@ -35,13 +36,13 @@ data class ContactProfileState(
     val daysUntilNextCheckIn: Int = 0,
     val isRelationshipInfoOpen: Boolean = false,
     val isCheckingIn: Boolean = false,
-    val checkInError: String? = null,
+    val checkInError: StringResource? = null,
     val notes: List<Note> = emptyList(),
     val isAddNoteSheetOpen: Boolean = false,
     val draftTitle: String = "",
     val draftDescription: String = "",
     val isSavingNote: Boolean = false,
-    val notesError: String? = null,
+    val notesError: StringResource? = null,
     val reminders: List<Reminder> = emptyList(),
     val checkInCount: Int = 0,
     val isReminderListSheetOpen: Boolean = false,
@@ -53,6 +54,6 @@ data class ContactProfileState(
     val reminderDraftTimeOfDay: String? = null,
     val editingReminderId: String? = null,
     val isSavingReminder: Boolean = false,
-    val remindersError: String? = null,
-    val refreshError: String? = null,
+    val remindersError: StringResource? = null,
+    val refreshError: StringResource? = null,
 )

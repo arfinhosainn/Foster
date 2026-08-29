@@ -3,6 +3,7 @@ package app.usenekko.home.presentation.paywall
 import app.usenekko.shared.subscription.BillingPeriod
 import app.usenekko.shared.subscription.PaywallOffering
 import app.usenekko.shared.subscription.PaywallPackage
+import org.jetbrains.compose.resources.StringResource
 
 sealed interface PaywallAction {
     data class SelectPeriod(val period: BillingPeriod) : PaywallAction
@@ -13,7 +14,7 @@ sealed interface PaywallAction {
 sealed interface PaywallEvent {
     /** Emitted after a successful purchase OR a restore that found an active subscription. */
     data object Subscribed : PaywallEvent
-    data class ShowError(val message: String) : PaywallEvent
+    data class ShowError(val message: StringResource) : PaywallEvent
 }
 
 data class PaywallState(

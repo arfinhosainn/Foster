@@ -55,6 +55,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import nekko.onboarding.generated.resources.action_next
 import nekko.onboarding.generated.resources.cd_logo
+import nekko.onboarding.generated.resources.error_name_required
 import nekko.onboarding.generated.resources.name_full_name
 import nekko.onboarding.generated.resources.name_what_call
 import org.jetbrains.compose.resources.stringResource
@@ -69,6 +70,7 @@ fun NameScreen(
     val viewModel = rememberNameViewModel()
     val name by viewModel.name.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val nameRequiredMessage = stringResource(Res.string.error_name_required)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -77,7 +79,7 @@ fun NameScreen(
                 NameEvent.NavigateBack -> onBack()
                 NameEvent.NavigateSkip -> onSkip()
                 NameEvent.NameRequired -> snackbarHostState.showSnackbar(
-                    message = "Please enter your name to continue",
+                    message = nameRequiredMessage,
                 )
             }
         }

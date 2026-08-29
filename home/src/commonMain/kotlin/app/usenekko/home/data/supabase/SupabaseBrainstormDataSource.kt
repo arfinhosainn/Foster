@@ -22,6 +22,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.coroutines.CancellationException
 import kotlin.time.Clock
 
 private val brainstormJson = Json { ignoreUnknownKeys = true }
@@ -84,6 +85,7 @@ class SupabaseBrainstormDataSource(
                 else -> Result.Error(BrainstormError.Unknown("We couldn't generate suggestions. Please try again."))
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.Error(mapError(e))
         }
     }
@@ -104,6 +106,7 @@ class SupabaseBrainstormDataSource(
 
             Result.Success(sessions)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.Error(mapError(e))
         }
     }
@@ -134,6 +137,7 @@ class SupabaseBrainstormDataSource(
 
             Result.Success(count)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Result.Error(mapError(e))
         }
     }

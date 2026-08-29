@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.usenekko.home.data.AccountRepository
 import app.usenekko.home.data.HomeRepository
+import app.usenekko.home.domain.toAccountErrorResource
+import app.usenekko.home.domain.toUserMessageResource
 import app.usenekko.home.domain.BadgeSlot
 import app.usenekko.shared.domain.AccountProfile
 import kotlinx.coroutines.coroutineScope
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 
 data class AccountState(
     val isLoading: Boolean = true,
@@ -24,7 +27,7 @@ data class AccountState(
     val totalCheckIns: Int = 0,
     val badgeSlots: List<BadgeSlot> = emptyList(),
     val isUpdatingAvatar: Boolean = false,
-    val error: String? = null,
+    val error: StringResource? = null,
 )
 
 class AccountViewModel(
@@ -53,7 +56,7 @@ class AccountViewModel(
                     totalCheckIns = home.snapshot?.checkInHistory?.size ?: 0,
                     badgeSlots = account.snapshot?.badgeSlots.orEmpty(),
                     isUpdatingAvatar = account.isUpdatingAvatar,
-                    error = account.error ?: home.error?.toString(),
+                    error = account.error?.toAccountErrorResource() ?: home.error?.toUserMessageResource(),
                 )
             }.collectLatest { _state.value = it }
         }

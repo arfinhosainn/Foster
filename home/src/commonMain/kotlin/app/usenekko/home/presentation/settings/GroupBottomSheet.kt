@@ -202,7 +202,7 @@ fun GroupBottomSheet(
                 state.error?.let { error ->
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = error,
+                        text = stringResource(error),
                         color = NekkoTheme.colors.red.default,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
@@ -340,7 +340,7 @@ private fun GroupMembersContent(
         state.error?.let { error ->
             Spacer(Modifier.height(16.dp))
             Text(
-                text = error,
+                text = stringResource(error),
                 color = NekkoTheme.colors.red.default,
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center,

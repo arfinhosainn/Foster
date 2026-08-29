@@ -17,12 +17,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.StepIndicator
+import app.usenekko.onboarding.domain.OnboardingProfileError
 import app.usenekko.onboarding.notification.rememberNotificationPermissionLauncher
 import app.usenekko.onboarding.presentation.rememberNotificationViewModel
 import app.usenekko.theme.NekkoTheme
@@ -44,6 +48,11 @@ import nekko.onboarding.generated.resources.checkin_imglight
 import org.jetbrains.compose.resources.painterResource
 import nekko.onboarding.generated.resources.action_skip
 import nekko.onboarding.generated.resources.cd_checkin_illustration
+import nekko.onboarding.generated.resources.error_profile_network
+import nekko.onboarding.generated.resources.error_profile_not_authenticated
+import nekko.onboarding.generated.resources.error_profile_not_found
+import nekko.onboarding.generated.resources.error_profile_server
+import nekko.onboarding.generated.resources.error_unexpected
 import nekko.onboarding.generated.resources.notif_get_notified
 import nekko.onboarding.generated.resources.notif_subtitle
 import org.jetbrains.compose.resources.stringResource
@@ -56,6 +65,14 @@ fun NotificationScreen(
 ) {
     val viewModel = rememberNotificationViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val profileErrorMessages = ProfileErrorMessages(
+        notAuthenticated = stringResource(Res.string.error_profile_not_authenticated),
+        profileNotFound = stringResource(Res.string.error_profile_not_found),
+        network = stringResource(Res.string.error_profile_network),
+        server = stringResource(Res.string.error_profile_server),
+        unexpected = stringResource(Res.string.error_unexpected),
+    )
 
     val requestNotificationPermission = rememberNotificationPermissionLauncher(
         onGranted = {
@@ -73,8 +90,9 @@ fun NotificationScreen(
         viewModel.events.collect { event ->
             when (event) {
                 NotificationEvent.NavigateToMainApp -> onNavigateToMainApp()
-                is NotificationEvent.ShowError -> { /* snackbar or error UI */
-                }
+                is NotificationEvent.ShowError -> snackbarHostState.showSnackbar(
+                    profileErrorMessages.message(event.error),
+                )
             }
         }
     }
@@ -95,8 +113,25 @@ fun NotificationScreen(
             }
         },
         onBack = onBack,
+        snackbarHostState = snackbarHostState,
         modifier = modifier,
     )
+}
+
+private data class ProfileErrorMessages(
+    val notAuthenticated: String,
+    val profileNotFound: String,
+    val network: String,
+    val server: String,
+    val unexpected: String,
+) {
+    fun message(error: OnboardingProfileError): String = when (error) {
+        OnboardingProfileError.NotAuthenticated -> notAuthenticated
+        OnboardingProfileError.ProfileNotFound -> profileNotFound
+        OnboardingProfileError.Network -> network
+        OnboardingProfileError.Server -> server
+        is OnboardingProfileError.Unknown -> unexpected
+    }
 }
 
 @Composable
@@ -104,6 +139,7 @@ private fun NotificationScreenContent(
     state: NotificationState,
     onAction: (NotificationAction) -> Unit,
     onBack: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val painter =
@@ -113,6 +149,7 @@ private fun NotificationScreenContent(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(

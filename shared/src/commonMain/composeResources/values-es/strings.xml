@@ -28,4 +28,7 @@
     <string name="cd_selected_photo">Foto de perfil seleccionada</string>
     <string name="cd_selected_avatar">Avatar seleccionado</string>
     <string name="cd_edit_profile_picture">Editar foto de perfil</string>
+    <string name="error_subscription_unavailable">Las suscripciones no están disponibles temporalmente. Inténtalo más tarde.</string>
+    <string name="error_subscription_network">Comprueba tu conexión e inténtalo de nuevo.</string>
+    <string name="error_subscription_unknown">Algo salió mal. Inténtalo de nuevo.</string>
 </resources>

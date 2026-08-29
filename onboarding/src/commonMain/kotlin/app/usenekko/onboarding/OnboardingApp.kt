@@ -17,6 +17,7 @@ import app.usenekko.onboarding.group.GroupScreen
 import app.usenekko.onboarding.name.NameScreen
 import app.usenekko.onboarding.notification.NotificationScreen
 import app.usenekko.onboarding.presentation.LocalOnboardingProfileDataSource
+import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.onboarding.presentation.LocalSupabaseClient
 import app.usenekko.onboarding.presentation.OnboardingDraftStoreProvider
 import app.usenekko.onboarding.data.supabase.SupabaseOnboardingProfileDataSource
@@ -35,6 +36,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -59,6 +62,7 @@ import app.usenekko.home.presentation.settings.GroupDetailScreen
 import app.usenekko.home.presentation.settings.GroupSettingsScreen
 import app.usenekko.home.presentation.settings.SettingScreen
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
+import app.usenekko.onboarding.domain.OnboardingDraftStorageError
 import app.usenekko.onboarding.domain.OnboardingProfileError
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.shared.domain.Result
@@ -66,9 +70,20 @@ import app.usenekko.shared.paywall.LocalPaywallGateManager
 import app.usenekko.shared.paywall.PaywallGateManagerProvider
 import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
+import app.usenekko.shared.subscription.SubscriptionError
 import app.usenekko.theme.NekkoTheme
 import app.usenekko.theme.ThemePreferenceStoreProvider
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.error_draft_clear
+import nekko.onboarding.generated.resources.error_draft_corrupt
+import nekko.onboarding.generated.resources.error_draft_read
+import nekko.onboarding.generated.resources.error_draft_write
+import nekko.onboarding.generated.resources.error_subscription_network
+import nekko.onboarding.generated.resources.error_subscription_unknown
+import nekko.onboarding.generated.resources.error_subscription_unavailable
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import io.github.jan.supabase.SupabaseClient
@@ -95,25 +110,49 @@ fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) 
 @Composable
 private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseClient?) {
     val profileDataSource = LocalOnboardingProfileDataSource.current
+    val draftStore = LocalOnboardingDraftStore.current
     val supabaseClient = LocalSupabaseClient.current
     val scope = rememberCoroutineScope()
     val profileLoadError = remember { mutableStateOf<OnboardingProfileError?>(null) }
+    val draftStorageSnackbarHostState = remember { SnackbarHostState() }
+    val draftStorageMessages = DraftStorageMessages(
+        read = stringResource(Res.string.error_draft_read),
+        write = stringResource(Res.string.error_draft_write),
+        clear = stringResource(Res.string.error_draft_clear),
+        corrupt = stringResource(Res.string.error_draft_corrupt),
+    )
+    val subscriptionMessages = SubscriptionMessages(
+        unavailable = stringResource(Res.string.error_subscription_unavailable),
+        network = stringResource(Res.string.error_subscription_network),
+        unknown = stringResource(Res.string.error_subscription_unknown),
+    )
+
+    LaunchedEffect(draftStore, draftStorageMessages) {
+        draftStore.storageErrors.collect { error ->
+            draftStorageSnackbarHostState.showSnackbar(draftStorageMessages.message(error))
+        }
+    }
 
     val subscriptionRepository = LocalSubscriptionRepository.current
     val paywallGateManager = LocalPaywallGateManager.current
 
+    LaunchedEffect(subscriptionRepository, subscriptionMessages) {
+        when (val result = subscriptionRepository.refresh()) {
+            is Result.Success -> Unit
+            is Result.Error -> draftStorageSnackbarHostState.showSnackbar(
+                subscriptionMessages.message(result.error),
+            )
+        }
+    }
+
     LaunchedEffect(Unit) {
         var recoveryAttempted = false
-        launch {
-            subscriptionRepository.refresh()
-        }
         supabaseClient.auth.sessionStatus.collect { status ->
             when (authSessionAction(status, navigator.currentScreen is Screen.Splash)) {
                 AuthSessionAction.Route -> {
                     recoveryAttempted = false
                     profileLoadError.value = null
-                    val session = supabaseClient.auth.currentSessionOrNull()
-                    logAccount(session?.user?.email, session?.user?.id, "authenticated session")
+                    logAccount("authenticated session")
                     routeAfterAuth(profileDataSource, navigator) { error ->
                         profileLoadError.value = error
                     }
@@ -121,11 +160,13 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                 AuthSessionAction.Recover -> {
                     if (!recoveryAttempted) {
                         recoveryAttempted = true
-                        runCatching { supabaseClient.auth.refreshCurrentSession() }
-                            .onFailure { error ->
-                                println("NekkoAuth[session refresh failed]: ${error.message}")
-                                profileLoadError.value = OnboardingProfileError.Network
-                            }
+                        try {
+                            supabaseClient.auth.refreshCurrentSession()
+                        } catch (error: Exception) {
+                            if (error is CancellationException) throw error
+                            println("NekkoAuth[session refresh failed]")
+                            profileLoadError.value = OnboardingProfileError.Network
+                        }
                     }
                 }
                 AuthSessionAction.ShowWelcome -> {
@@ -344,7 +385,12 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                                 // returned success). Best-effort local sign-out so the
                                 // stale session doesn't leave the app half-authenticated,
                                 // then drop the whole stack back to Welcome (no account).
-                                runCatching { supabaseClient.auth.signOut() }
+                                try {
+                                    supabaseClient.auth.signOut()
+                                } catch (error: Exception) {
+                                    if (error is CancellationException) throw error
+                                    println("NekkoAuth[sign out after account deletion failed]")
+                                }
                                 navigator.replaceAll(Screen.Welcome)
                             }
                         },
@@ -420,6 +466,11 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                 onDismiss = { BadgeRevealStore.consume() },
             )
         }
+
+        SnackbarHost(
+            hostState = draftStorageSnackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }
 
@@ -428,6 +479,32 @@ internal enum class AuthSessionAction {
     Recover,
     ShowWelcome,
     Ignore,
+}
+
+private data class DraftStorageMessages(
+    val read: String,
+    val write: String,
+    val clear: String,
+    val corrupt: String,
+) {
+    fun message(error: OnboardingDraftStorageError): String = when (error) {
+        OnboardingDraftStorageError.Read -> read
+        OnboardingDraftStorageError.Write -> write
+        OnboardingDraftStorageError.Clear -> clear
+        OnboardingDraftStorageError.Corrupt -> corrupt
+    }
+}
+
+private data class SubscriptionMessages(
+    val unavailable: String,
+    val network: String,
+    val unknown: String,
+) {
+    fun message(error: SubscriptionError): String = when (error) {
+        SubscriptionError.NotConfigured -> unavailable
+        SubscriptionError.Network -> network
+        is SubscriptionError.Unknown -> unknown
+    }
 }
 
 val Screen.isFirstRunSurface: Boolean
@@ -540,7 +617,7 @@ internal suspend fun routeAfterAuth(
             navigator.replaceAll(stepResult.data.toScreen())
         }
         is Result.Error -> {
-            println("NekkoAuth[profile routing]: profile load failed: ${stepResult.error}")
+            println("NekkoAuth[profile routing]: profile load failed")
             if (stepResult.error == OnboardingProfileError.ProfileNotFound) {
                 when (val ensureResult = profileDataSource.ensureProfileExists()) {
                     is Result.Success -> {
@@ -548,7 +625,7 @@ internal suspend fun routeAfterAuth(
                         navigator.replaceAll(Screen.Name)
                     }
                     is Result.Error -> {
-                        println("NekkoAuth[profile routing]: profile creation failed: ${ensureResult.error}")
+                        println("NekkoAuth[profile routing]: profile creation failed")
                         onProfileLoadError(ensureResult.error)
                     }
                 }
@@ -578,8 +655,7 @@ private suspend fun routeAfterSignIn(
         }
     }
 
-    val session = supabaseClient.auth.currentSessionOrNull()
-    logAccount(session?.user?.email, session?.user?.id, source)
+    logAccount(source)
     routeAfterAuth(profileDataSource, navigator, onProfileLoadError)
 }
 
@@ -599,6 +675,6 @@ private fun OnboardingStep?.toScreen(): Screen {
     }
 }
 
-private fun logAccount(email: String?, userId: String?, source: String) {
-    kotlin.io.println("NekkoAuth[$source]: email=${email ?: "null"} userId=${userId ?: "null"}")
+private fun logAccount(source: String) {
+    kotlin.io.println("NekkoAuth[$source]: authenticated session available")
 }

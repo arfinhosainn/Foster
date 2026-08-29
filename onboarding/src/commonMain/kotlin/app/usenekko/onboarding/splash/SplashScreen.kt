@@ -14,8 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.domain.OnboardingProfileError
-import app.usenekko.onboarding.domain.toUserMessage
+import app.usenekko.onboarding.presentation.toUserMessageResource
 import app.usenekko.theme.NekkoTheme
+import nekko.onboarding.generated.resources.Res
+import nekko.onboarding.generated.resources.action_try_again
+import nekko.onboarding.generated.resources.error_profile_load_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SplashScreen(
@@ -41,18 +45,21 @@ fun SplashScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "We couldn't load your profile",
+                    text = stringResource(Res.string.error_profile_load_title),
                     style = NekkoTheme.typography.heading2Bold,
                     color = NekkoTheme.colors.text.primary,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = profileLoadError.toUserMessage(),
+                    text = stringResource(profileLoadError.toUserMessageResource()),
                     style = NekkoTheme.typography.body,
                     color = NekkoTheme.colors.text.primary,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                NekkoButton(text = "Try again", onClick = onRetry)
+                NekkoButton(
+                    text = stringResource(Res.string.action_try_again),
+                    onClick = onRetry,
+                )
             }
         }
     }

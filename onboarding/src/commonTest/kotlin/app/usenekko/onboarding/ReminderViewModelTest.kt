@@ -5,9 +5,12 @@ import app.usenekko.onboarding.dayreminder.ReminderOptions
 import app.usenekko.onboarding.dayreminder.ReminderViewModel
 import app.usenekko.onboarding.domain.OnboardingDraft
 import app.usenekko.onboarding.domain.OnboardingDraftLocalDataSource
+import app.usenekko.onboarding.domain.OnboardingDraftStorageError
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.onboarding.domain.ReminderFrequency
 import app.usenekko.onboarding.presentation.OnboardingDraftStore
+import app.usenekko.shared.domain.EmptyResult
+import app.usenekko.shared.domain.Result
 import kotlinx.coroutines.CompletableDeferred
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -55,12 +58,14 @@ private class GatedDraftDataSource(
     private val base: OnboardingDraft,
     private val gate: CompletableDeferred<Unit>,
 ) : OnboardingDraftLocalDataSource {
-    override suspend fun getDraft(): OnboardingDraft {
+    override suspend fun getDraft(): Result<OnboardingDraft, OnboardingDraftStorageError> {
         gate.await()
-        return base
+        return Result.Success(base)
     }
 
-    override suspend fun saveDraft(draft: OnboardingDraft) = Unit
+    override suspend fun saveDraft(draft: OnboardingDraft): EmptyResult<OnboardingDraftStorageError> =
+        Result.Success(Unit)
 
-    override suspend fun clearDraft() = Unit
+    override suspend fun clearDraft(): EmptyResult<OnboardingDraftStorageError> =
+        Result.Success(Unit)
 }
