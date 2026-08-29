@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.components.TermsAndPrivacyNotice
+import app.usenekko.onboarding.domain.OnboardingProfileError
+import app.usenekko.onboarding.domain.toUserMessage
 import app.usenekko.theme.NekkoTheme
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
@@ -57,6 +59,8 @@ fun WelcomeScreen(
     supabaseClient: SupabaseClient,
     onGoogleSignInSuccess: () -> Unit = {},
     onAppleSignInSuccess: () -> Unit = {},
+    profileLoadError: OnboardingProfileError? = null,
+    onRetryProfileLoad: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var errorMessage by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
@@ -231,6 +235,17 @@ fun WelcomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(Modifier.height(12.dp))
+                }
+                profileLoadError?.let { error ->
+                    Text(
+                        text = error.toUserMessage(),
+                        color = NekkoTheme.colors.red.default,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    NekkoButton(text = "Try again", onClick = onRetryProfileLoad)
                 }
 
                 Spacer(Modifier.height(24.dp))

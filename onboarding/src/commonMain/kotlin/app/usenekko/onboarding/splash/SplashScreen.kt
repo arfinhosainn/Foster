@@ -2,16 +2,26 @@ package app.usenekko.onboarding.splash
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import app.usenekko.designsystem.buttons.NekkoButton
+import app.usenekko.onboarding.domain.OnboardingProfileError
+import app.usenekko.onboarding.domain.toUserMessage
 import app.usenekko.theme.NekkoTheme
 
 @Composable
 fun SplashScreen(
     modifier: Modifier = Modifier,
+    profileLoadError: OnboardingProfileError? = null,
+    onRetry: () -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -19,10 +29,31 @@ fun SplashScreen(
             .background(NekkoTheme.colors.background.b0),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "Nekko",
-            style = NekkoTheme.typography.heading1Bold,
-            color = NekkoTheme.colors.text.primary,
-        )
+        if (profileLoadError == null) {
+            Text(
+                text = "Nekko",
+                style = NekkoTheme.typography.heading1Bold,
+                color = NekkoTheme.colors.text.primary,
+            )
+        } else {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "We couldn't load your profile",
+                    style = NekkoTheme.typography.heading2Bold,
+                    color = NekkoTheme.colors.text.primary,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = profileLoadError.toUserMessage(),
+                    style = NekkoTheme.typography.body,
+                    color = NekkoTheme.colors.text.primary,
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                NekkoButton(text = "Try again", onClick = onRetry)
+            }
+        }
     }
 }

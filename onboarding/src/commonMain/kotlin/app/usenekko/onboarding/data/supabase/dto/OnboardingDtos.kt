@@ -24,6 +24,12 @@ data class CompleteOnboardingPayload(
 )
 
 @Serializable
+data class EnsureProfilePayload(
+    val id: String,
+    @SerialName("onboarding_step") val onboardingStep: Int,
+)
+
+@Serializable
 data class GroupDto(
     val name: String,
     val color: String? = null,

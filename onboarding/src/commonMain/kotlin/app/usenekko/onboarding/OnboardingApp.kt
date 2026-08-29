@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import app.usenekko.App
 import app.usenekko.navigation.Navigator
@@ -58,6 +59,7 @@ import app.usenekko.home.presentation.settings.GroupDetailScreen
 import app.usenekko.home.presentation.settings.GroupSettingsScreen
 import app.usenekko.home.presentation.settings.SettingScreen
 import app.usenekko.onboarding.domain.OnboardingProfileDataSource
+import app.usenekko.onboarding.domain.OnboardingProfileError
 import app.usenekko.onboarding.domain.OnboardingStep
 import app.usenekko.shared.domain.Result
 import app.usenekko.shared.paywall.LocalPaywallGateManager
@@ -66,8 +68,11 @@ import app.usenekko.shared.paywall.PaywallTrigger
 import app.usenekko.shared.subscription.LocalSubscriptionRepository
 import app.usenekko.theme.NekkoTheme
 import app.usenekko.theme.ThemePreferenceStoreProvider
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import io.github.jan.supabase.SupabaseClient
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun OnboardingApp(navigator: Navigator, supabaseClient: SupabaseClient? = null) {
@@ -92,6 +97,7 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
     val profileDataSource = LocalOnboardingProfileDataSource.current
     val supabaseClient = LocalSupabaseClient.current
     val scope = rememberCoroutineScope()
+    val profileLoadError = remember { mutableStateOf<OnboardingProfileError?>(null) }
 
     val subscriptionRepository = LocalSubscriptionRepository.current
     val paywallGateManager = LocalPaywallGateManager.current
@@ -105,9 +111,12 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
             when (authSessionAction(status, navigator.currentScreen is Screen.Splash)) {
                 AuthSessionAction.Route -> {
                     recoveryAttempted = false
+                    profileLoadError.value = null
                     val session = supabaseClient.auth.currentSessionOrNull()
                     logAccount(session?.user?.email, session?.user?.id, "authenticated session")
-                    routeAfterAuth(profileDataSource, navigator)
+                    routeAfterAuth(profileDataSource, navigator) { error ->
+                        profileLoadError.value = error
+                    }
                 }
                 AuthSessionAction.Recover -> {
                     if (!recoveryAttempted) {
@@ -115,10 +124,14 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
                         runCatching { supabaseClient.auth.refreshCurrentSession() }
                             .onFailure { error ->
                                 println("NekkoAuth[session refresh failed]: ${error.message}")
+                                profileLoadError.value = OnboardingProfileError.Network
                             }
                     }
                 }
-                AuthSessionAction.ShowWelcome -> navigator.replaceAll(Screen.Welcome)
+                AuthSessionAction.ShowWelcome -> {
+                    profileLoadError.value = null
+                    navigator.replaceAll(Screen.Welcome)
+                }
                 AuthSessionAction.Ignore -> Unit
             }
         }
@@ -178,19 +191,63 @@ private fun OnboardingAppContent(navigator: Navigator, supabaseClient: SupabaseC
         App(navigator) { screen ->
             val screenContent: @Composable () -> Unit = {
                 when (screen) {
-                    is Screen.Splash -> SplashScreen()
+                    is Screen.Splash -> SplashScreen(
+                        profileLoadError = profileLoadError.value,
+                        onRetry = {
+                            profileLoadError.value = null
+                            scope.launch {
+                                if (supabaseClient.auth.currentSessionOrNull() == null) {
+                                    navigator.replaceAll(Screen.Welcome)
+                                } else {
+                                    routeAfterAuth(profileDataSource, navigator) { error ->
+                                        profileLoadError.value = error
+                                    }
+                                }
+                            }
+                        },
+                    )
 
                     is Screen.Welcome -> WelcomeScreen(
                         supabaseClient = supabaseClient,
+                        profileLoadError = profileLoadError.value,
+                        onRetryProfileLoad = {
+                            profileLoadError.value = null
+                            scope.launch {
+                                routeAfterSignIn(
+                                    supabaseClient = supabaseClient,
+                                    profileDataSource = profileDataSource,
+                                    navigator = navigator,
+                                    source = "profile retry",
+                                ) { error ->
+                                    profileLoadError.value = error
+                                }
+                            }
+                        },
                         onGoogleSignInSuccess = {
-                            val session = supabaseClient.auth.currentSessionOrNull()
-                            logAccount(session?.user?.email, session?.user?.id, "Google sign-in")
-                            scope.launch { routeAfterAuth(profileDataSource, navigator) }
+                            profileLoadError.value = null
+                            scope.launch {
+                                routeAfterSignIn(
+                                    supabaseClient = supabaseClient,
+                                    profileDataSource = profileDataSource,
+                                    navigator = navigator,
+                                    source = "Google sign-in",
+                                ) { error ->
+                                    profileLoadError.value = error
+                                }
+                            }
                         },
                         onAppleSignInSuccess = {
-                            val session = supabaseClient.auth.currentSessionOrNull()
-                            logAccount(session?.user?.email, session?.user?.id, "Apple sign-in")
-                            scope.launch { routeAfterAuth(profileDataSource, navigator) }
+                            profileLoadError.value = null
+                            scope.launch {
+                                routeAfterSignIn(
+                                    supabaseClient = supabaseClient,
+                                    profileDataSource = profileDataSource,
+                                    navigator = navigator,
+                                    source = "Apple sign-in",
+                                ) { error ->
+                                    profileLoadError.value = error
+                                }
+                            }
                         },
                     )
 
@@ -471,19 +528,59 @@ internal fun authSessionAction(status: SessionStatus, isSplash: Boolean): AuthSe
     }
 }
 
-private suspend fun routeAfterAuth(
+internal suspend fun routeAfterAuth(
     profileDataSource: OnboardingProfileDataSource,
     navigator: Navigator,
+    onProfileLoadError: (OnboardingProfileError) -> Unit = {},
 ) {
+    println("NekkoAuth[profile routing]: loading onboarding state")
     when (val stepResult = profileDataSource.getOnboardingStep()) {
         is Result.Success -> {
+            println("NekkoAuth[profile routing]: onboarding step=${stepResult.data}")
             navigator.replaceAll(stepResult.data.toScreen())
         }
         is Result.Error -> {
-            profileDataSource.ensureProfileExists()
-            navigator.replaceAll(Screen.Name)
+            println("NekkoAuth[profile routing]: profile load failed: ${stepResult.error}")
+            if (stepResult.error == OnboardingProfileError.ProfileNotFound) {
+                when (val ensureResult = profileDataSource.ensureProfileExists()) {
+                    is Result.Success -> {
+                        println("NekkoAuth[profile routing]: profile created; opening onboarding")
+                        navigator.replaceAll(Screen.Name)
+                    }
+                    is Result.Error -> {
+                        println("NekkoAuth[profile routing]: profile creation failed: ${ensureResult.error}")
+                        onProfileLoadError(ensureResult.error)
+                    }
+                }
+            } else {
+                onProfileLoadError(stepResult.error)
+            }
         }
     }
+}
+
+private suspend fun routeAfterSignIn(
+    supabaseClient: SupabaseClient,
+    profileDataSource: OnboardingProfileDataSource,
+    navigator: Navigator,
+    source: String,
+    onProfileLoadError: (OnboardingProfileError) -> Unit,
+) {
+    if (supabaseClient.auth.currentSessionOrNull() == null) {
+        val authenticated = withTimeoutOrNull(10_000.milliseconds) {
+            supabaseClient.auth.sessionStatus.first { status ->
+                status is SessionStatus.Authenticated
+            }
+        }
+        if (authenticated == null || supabaseClient.auth.currentSessionOrNull() == null) {
+            onProfileLoadError(OnboardingProfileError.NotAuthenticated)
+            return
+        }
+    }
+
+    val session = supabaseClient.auth.currentSessionOrNull()
+    logAccount(session?.user?.email, session?.user?.id, source)
+    routeAfterAuth(profileDataSource, navigator, onProfileLoadError)
 }
 
 private fun OnboardingStep?.toScreen(): Screen {
