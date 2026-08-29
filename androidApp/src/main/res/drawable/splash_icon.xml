@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Full splash logo: green circle (launcher icon background, #14532D) behind
+    the launcher foreground. Baked into a single drawable instead of relying on
+    windowSplashScreenIconBackgroundColor, which is ignored by some Android
+    12+ devices/OEM skins. On the dark splash (background is also #14532D)
+    the circle blends invisibly into the background, so only the logo shows.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/splash_icon_background" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/ic_launcher_foreground" />
+</layer-list>

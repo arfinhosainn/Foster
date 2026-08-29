@@ -19,7 +19,10 @@ kotlinxSerialization = "1.11.0"
 supabase = "3.7.0"
 ktor = "3.5.1"
 liquid-glass = "1.1.1"
-purchases-kmp = "3.4.0"
+purchases-kmp = "3.6.0"
+
+core-splashscreen = "1.2.0"
+
 
 
 
@@ -47,6 +50,9 @@ compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-previ
 
 jetbrains-compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "material-icons" }
 
+
+
+core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }

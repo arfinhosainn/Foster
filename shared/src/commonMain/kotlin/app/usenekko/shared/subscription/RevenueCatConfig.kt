@@ -24,5 +24,10 @@ expect val revenueCatApiKey: String
  */
 fun initRevenueCat() {
     if (Purchases.isConfigured) return
+    // Placeholder keys (actual values not yet replaced) make every SDK call
+    // fail with a backend auth error, which surfaced as a spurious
+    // "Something went wrong" snackbar on every cold start. Skip configuring so
+    // callers get NotConfigured instead of Unknown until the real keys land.
+    if (revenueCatApiKey.startsWith("YOUR_")) return
     Purchases.configure(apiKey = revenueCatApiKey)
 }
