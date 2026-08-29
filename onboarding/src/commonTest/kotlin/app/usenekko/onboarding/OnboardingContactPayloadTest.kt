@@ -1,6 +1,7 @@
 package app.usenekko.onboarding
 
 import app.usenekko.onboarding.data.supabase.toCompleteOnboardingPayload
+import app.usenekko.onboarding.data.supabase.dto.EnsureProfilePayload
 import app.usenekko.onboarding.domain.CustomReminderDraft
 import app.usenekko.onboarding.domain.GroupDraft
 import app.usenekko.onboarding.domain.NoteDraft
@@ -73,5 +74,18 @@ class OnboardingContactPayloadTest {
         assertTrue("contactId" !in json)
         assertTrue("contactId" !in json.getValue("customReminders").toString())
         assertTrue("contactId" !in json.getValue("notes").toString())
+    }
+
+    @Test
+    fun ensureProfilePayloadHasAnExplicitSerializableShape() {
+        val payload = EnsureProfilePayload(
+            id = "user-1",
+            onboardingStep = 1,
+        )
+
+        val json = Json.encodeToJsonElement(payload).jsonObject
+
+        assertEquals("user-1", json.getValue("id").toString().trim('"'))
+        assertEquals("1", json.getValue("onboarding_step").toString())
     }
 }

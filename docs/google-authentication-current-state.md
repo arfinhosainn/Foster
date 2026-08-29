@@ -2,7 +2,7 @@
 
 > **Audience:** product and engineering stakeholders
 >
-> **Repository review:** 2026-08-28
+> **Repository review:** 2026-08-29
 >
 > This document describes the behavior implemented in the repository. It does not reproduce any keys or secrets. The database status references below reflect the repository’s record that `migration_v2_erd.sql` was applied and verified in Supabase on 2026-08-01.
 
@@ -11,7 +11,7 @@
 - Google sign-in is implemented through Supabase’s native/Compose authentication integration. The app does not implement a separate Google token exchange, email/password flow, or `signUp` call.
 - Supabase Auth is the system of record for the authenticated identity. The app uses the Supabase-generated `auth.users.id` UUID as the account key; email is metadata, not the primary user key.
 - There is no explicit `isNewUser` flag and no lookup by email. A user is treated as new or returning based on the authenticated UUID and whether that UUID has a `profiles` row with completed onboarding state.
-- A completed profile sends the user to Home. An incomplete profile resumes at its saved onboarding step. A missing profile or any profile-read error currently falls into the same recovery path and sends the user to the Name screen.
+- A completed profile sends the user to Home. An incomplete profile resumes at its saved onboarding step. A confirmed missing profile is provisioned at the Name step, while profile-read and provisioning errors remain retryable instead of sending the user into onboarding.
 - Session loading, saving, and refresh are delegated to the Supabase Auth SDK. The app enables automatic session restoration and refresh; it does not manually serialize access or refresh tokens.
 - Onboarding drafts are a separate device-local concern. Android uses Preferences DataStore and iOS uses `NSUserDefaults`; the draft contains onboarding fields and progress, not auth tokens.
 - The Android OAuth callback boundary is implemented. iOS has Google SDK and URL-scheme configuration, but no Swift-level URL forwarding handler was found; this path should be verified on a real iOS sign-in run.
@@ -55,7 +55,7 @@ routeAfterAuth() reads the authenticated user's profiles row
         |
         +--> completed profile  -> Home
         +--> incomplete profile -> saved onboarding step
-        +--> read/provisioning error -> Name screen
+        +--> read/provisioning error -> retryable error on current surface
 ```
 
 ### What the code does
@@ -103,13 +103,13 @@ This gives the following practical classification:
 | Profile exists but onboarding is incomplete | The app resumes from `profiles.onboarding_step`. |
 | Profile has `onboarding_completed_at` | The app goes directly to Home. |
 | App was reinstalled but the user signs in with the same Google identity | The same Supabase UUID resolves to the existing server profile and data; completed users bypass onboarding. |
-| Profile query fails for any reason | The app currently treats it like a provisioning case, attempts `ensureProfileExists()`, and still navigates to Name. |
+| Profile query fails | The app stays on Splash or Welcome, shows a retryable error, and does not create or overwrite a profile. |
 
 ### Important limitation
 
-There is no separate “new user” decision in the application. A missing profile, a network failure, an expired/invalid JWT, an unexpected response, and some other database errors are all returned as `Result.Error` and currently follow the same Name-screen path. The result of `ensureProfileExists()` is not checked before navigation.
+There is no separate “new user” flag in the application. A zero-row profile query is classified as `ProfileNotFound`; only that result invokes `ensureProfileExists()`, and onboarding starts only after provisioning succeeds. Network, expired/invalid JWT, unexpected response, and other database errors remain on the current surface with a retry action.
 
-That means a returning user could temporarily be shown onboarding if the profile read fails, even though the account and profile already exist. This is a routing/error-handling limitation, not an indication that Supabase created a duplicate account.
+This prevents a returning user from being shown onboarding merely because a profile request temporarily fails. A confirmed missing profile is still treated as a new server-side profile, not as a new Google account; the Supabase UUID remains the identity key.
 
 ## 4. Session lifecycle and persistence
 
@@ -133,7 +133,7 @@ The app starts at `Screen.Splash` and collects `supabaseClient.auth.sessionStatu
 | --- | --- |
 | `Initializing` | Wait; no route change. |
 | `Authenticated` | Read the current session and call `routeAfterAuth()`. |
-| `RefreshFailure` | Try `refreshCurrentSession()` once; failure is printed to the log. |
+| `RefreshFailure` | Try `refreshCurrentSession()` once; an explicit failure shows a retryable network error on Splash. |
 | `NotAuthenticated` | Replace the navigation stack with Welcome. |
 
 Once the app has left Splash, auth status events are deliberately ignored by `authSessionAction()`. The app therefore relies on the initial routing decision and explicit navigation for the rest of the flow.
@@ -235,7 +235,7 @@ If deletion fails or the request is unauthenticated, the app shows an error and 
 ## 8. Current gaps and points to communicate
 
 1. **No explicit new-user flag:** “New” means “this authenticated UUID has no usable completed profile state,” not “the Google email has never appeared in the app.”
-2. **Profile-read errors can look like new users:** network, JWT, missing-row, and other errors share the Name-screen recovery path. The provisioning result is not checked before navigation.
+2. **Profile provisioning depends on the live schema and RLS:** only an explicitly empty profile result is provisioned; read or upsert failures remain visible and retryable.
 3. **iOS callback forwarding needs verification:** Google SDK linkage and URL schemes exist, but no Swift URL handoff was found.
 4. **Token storage is library-managed:** the app enables automatic persistence and refresh but does not document or control the underlying platform storage in its own code.
 5. **No normal logout:** the explicit sign-out call is currently part of successful account deletion rather than a user-facing logout feature.

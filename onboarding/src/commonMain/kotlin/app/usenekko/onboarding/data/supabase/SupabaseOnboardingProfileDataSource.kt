@@ -2,6 +2,7 @@ package app.usenekko.onboarding.data.supabase
 
 import app.usenekko.onboarding.data.supabase.dto.CompleteOnboardingPayload
 import app.usenekko.onboarding.data.supabase.dto.CustomReminderDto
+import app.usenekko.onboarding.data.supabase.dto.EnsureProfilePayload
 import app.usenekko.onboarding.data.supabase.dto.GroupDto
 import app.usenekko.onboarding.data.supabase.dto.NoteDto
 import app.usenekko.onboarding.data.supabase.dto.OnboardingStepResponse
@@ -69,13 +70,22 @@ class SupabaseOnboardingProfileDataSource(
         return try {
             val session = client.auth.currentSessionOrNull()
                 ?: return Result.Error(OnboardingProfileError.NotAuthenticated)
+            val userId = session.user?.id
+                ?: return Result.Error(OnboardingProfileError.NotAuthenticated)
 
-            val response = client.postgrest
+            val responses = client.postgrest
                 .from("profiles")
                 .select(columns = Columns.list("onboarding_step", "onboarding_completed_at")) {
-                    single()
+                    filter { eq("id", userId) }
                 }
-                .decodeAs<OnboardingStepResponse>()
+                .decodeList<OnboardingStepResponse>()
+            val response = when (responses.size) {
+                0 -> return Result.Error(OnboardingProfileError.ProfileNotFound)
+                1 -> responses.single()
+                else -> return Result.Error(
+                    OnboardingProfileError.Unknown("Multiple profiles found for the signed-in user"),
+                )
+            }
 
             val step = if (response.onboardingCompletedAt != null) {
                 OnboardingStep.Complete
@@ -150,7 +160,10 @@ class SupabaseOnboardingProfileDataSource(
             val userId = session.user?.id ?: return Result.Error(OnboardingProfileError.NotAuthenticated)
 
             client.postgrest.from("profiles").upsert(
-                mapOf("id" to userId, "onboarding_step" to OnboardingStep.Name.index)
+                EnsureProfilePayload(
+                    id = userId,
+                    onboardingStep = OnboardingStep.Name.index,
+                ),
             ) {
                 onConflict = "id"
                 ignoreDuplicates = true
