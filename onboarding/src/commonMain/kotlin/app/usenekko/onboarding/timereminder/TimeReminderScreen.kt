@@ -38,6 +38,7 @@ import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.presentation.rememberTimeReminderViewModel
 import app.usenekko.designsystem.buttons.AmPmToggle
 import app.usenekko.designsystem.timepicker.TimeScrollDial
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
@@ -121,33 +122,37 @@ private fun TimeReminderScreenContent(
             )
         },
         bottomBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 30.dp)
-                    .padding(bottom = 24.dp, top = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                NekkoActionButton(
-                    onClick = onBack,
-                    leadingIcon = vectorResource(Res.drawable.ic_back),
-                    modifier = Modifier.weight(0.19f),
-                )
-                Spacer(Modifier.width(12.dp))
-                NekkoButton(
-                    text = stringResource(Res.string.action_next),
-                    onClick = onNavigateToNext,
-                    modifier = Modifier.weight(0.8f),
-                )
+            AdaptiveSurface {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp, top = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    NekkoActionButton(
+                        onClick = onBack,
+                        leadingIcon = vectorResource(Res.drawable.ic_back),
+                        modifier = Modifier.weight(0.19f),
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    NekkoButton(
+                        text = stringResource(Res.string.action_next),
+                        onClick = onNavigateToNext,
+                        modifier = Modifier.weight(0.8f),
+                    )
+                }
             }
         },
         containerColor = NekkoTheme.colors.background.b0
     ) { innerPadding ->
-        Column(
+        AdaptiveSurface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+            ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -191,6 +196,7 @@ private fun TimeReminderScreenContent(
             )
 
             Spacer(Modifier.weight(1f))
+        }
         }
     }
 }

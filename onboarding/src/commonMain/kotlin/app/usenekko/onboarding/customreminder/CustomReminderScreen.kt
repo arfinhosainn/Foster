@@ -27,6 +27,7 @@ import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.customreminder.components.AddReminderBottomSheet
 import app.usenekko.onboarding.customreminder.components.CustomReminderCard
 import app.usenekko.onboarding.presentation.rememberCustomReminderViewModel
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.liquefiable
 import io.github.fletchmckee.liquid.rememberLiquidState
@@ -134,33 +135,37 @@ private fun CustomReminderScreenContent(
                 )
             },
             bottomBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 30.dp)
-                        .padding(bottom = 24.dp, top = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    NekkoActionButton(
-                        onClick = onBack,
-                        leadingIcon = vectorResource(Res.drawable.ic_back),
-                        modifier = modifier.weight(0.19f),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    NekkoButton(
-                        text = stringResource(Res.string.action_next),
-                        onClick = onNavigateToNext,
-                        modifier = Modifier.weight(0.8f),
-                    )
+                AdaptiveSurface {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp, top = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        NekkoActionButton(
+                            onClick = onBack,
+                            leadingIcon = vectorResource(Res.drawable.ic_back),
+                            modifier = modifier.weight(0.19f),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        NekkoButton(
+                            text = stringResource(Res.string.action_next),
+                            onClick = onNavigateToNext,
+                            modifier = Modifier.weight(0.8f),
+                        )
+                    }
                 }
             },
             containerColor = NekkoTheme.colors.background.b0
         ) { innerPadding ->
-            Column(
+            AdaptiveSurface(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -217,7 +222,7 @@ private fun CustomReminderScreenContent(
                 } else {
                     LazyColumn(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                        contentPadding = PaddingValues(vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -262,6 +267,7 @@ private fun CustomReminderScreenContent(
                         }
                     }
                 }
+            }
             }
         }
 

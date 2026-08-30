@@ -51,6 +51,7 @@ import app.usenekko.onboarding.addnote.components.AddNoteBottomSheet
 import app.usenekko.onboarding.addnote.components.NoteCard
 import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.presentation.rememberAddNoteViewModel
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_add
@@ -153,38 +154,42 @@ private fun AddNoteScreenContent(
                 )
             },
             bottomBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 30.dp)
-                        .padding(bottom = 24.dp, top = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    NekkoActionButton(
-                        onClick = onBack,
-                        leadingIcon = vectorResource(Res.drawable.ic_back),
-                        modifier = modifier.weight(0.19f),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    NekkoButton(
-                        text = stringResource(Res.string.action_next),
-                        onClick = onNavigateToNext,
-                        modifier = Modifier.weight(0.8f),
-                        loading = state.isSubmitting,
-                    )
+                AdaptiveSurface {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp, top = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        NekkoActionButton(
+                            onClick = onBack,
+                            leadingIcon = vectorResource(Res.drawable.ic_back),
+                            modifier = modifier.weight(0.19f),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        NekkoButton(
+                            text = stringResource(Res.string.action_next),
+                            onClick = onNavigateToNext,
+                            modifier = Modifier.weight(0.8f),
+                            loading = state.isSubmitting,
+                        )
+                    }
                 }
             },
             containerColor = NekkoTheme.colors.background.b0
         ) { innerPadding ->
-            Column(
+            AdaptiveSurface(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
             ) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 30.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize(),
                 ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                     Spacer(Modifier.height(40.dp))
                     Text(
                         text = stringResource(Res.string.onb_addnote_title),
@@ -260,7 +265,7 @@ private fun AddNoteScreenContent(
                     Spacer(Modifier.height(40.dp))
                     LazyColumn(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 40.dp, vertical = 40.dp),
+                        contentPadding = PaddingValues(vertical = 40.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
@@ -279,6 +284,7 @@ private fun AddNoteScreenContent(
                         }
                     }
                 }
+            }
             }
         }
 

@@ -41,6 +41,7 @@ import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.onboarding.domain.OnboardingProfileError
 import app.usenekko.onboarding.notification.rememberNotificationPermissionLauncher
 import app.usenekko.onboarding.presentation.rememberNotificationViewModel
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.checkin_img
@@ -185,34 +186,36 @@ private fun NotificationScreenContent(
             )
         },
         bottomBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 30.dp)
-                    .padding(bottom = 24.dp, top = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(Modifier.width(12.dp))
-                NekkoButton(
-                    text = if (state.isNotificationEnabled) "Finish" else "Turn on Notification",
-                    onClick = { onAction(NotificationAction.TurnOnClicked) },
-                    modifier = Modifier.weight(1f),
-                    loading = state.isSubmitting,
-                )
+            AdaptiveSurface {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp, top = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Spacer(Modifier.width(12.dp))
+                    NekkoButton(
+                        text = if (state.isNotificationEnabled) "Finish" else "Turn on Notification",
+                        onClick = { onAction(NotificationAction.TurnOnClicked) },
+                        modifier = Modifier.weight(1f),
+                        loading = state.isSubmitting,
+                    )
+                }
             }
         },
         containerColor = NekkoTheme.colors.background.b0
     ) { innerPadding ->
-        Column(
+        AdaptiveSurface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 30.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Spacer(Modifier.height(42.dp))
                 Text(
@@ -235,8 +238,7 @@ private fun NotificationScreenContent(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 30.dp),
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
@@ -245,6 +247,7 @@ private fun NotificationScreenContent(
                     contentScale = ContentScale.Fit
                 )
             }
+        }
         }
     }
 }

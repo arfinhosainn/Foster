@@ -46,8 +46,8 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import app.usenekko.adaptive.WindowWidthSizeClass
 import app.usenekko.adaptive.windowWidthSizeClass
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassBottomNavBar
-import app.usenekko.designsystem.navbar.bottom.bottomNavBar.GlassNavigationRail
+import app.usenekko.designsystem.navbar.bottom.bottomNavBar.SolidBottomNavBar
+import app.usenekko.designsystem.navbar.bottom.bottomNavBar.SolidNavigationRail
 import app.usenekko.navigation.BottomBarActions
 import app.usenekko.home.HomeScreen
 import app.usenekko.home.presentation.dayagenda.DayAgendaScreen
@@ -224,6 +224,17 @@ private fun OnboardingAppContent(
         val useRailLayout = windowWidthSizeClass(maxWidth) == WindowWidthSizeClass.Expanded
         val bottomBarActions = remember { BottomBarActions() }
 
+        // The rail is only visible on the two tab destinations (Home / CheckIns);
+        // on every other screen — including all of onboarding — it is hidden.
+        // Reserve the 88dp gutter only when the rail is actually shown, so tablet
+        // onboarding content isn't indented next to an empty strip.
+        val selectedIndex: Int? = when (navigator.currentScreen) {
+            Screen.Home -> 0
+            Screen.CheckIns -> 1
+            else -> null
+        }
+        val railVisible = useRailLayout && selectedIndex != null
+
         // While the reward overlay is up, everything behind it is blurred.
         Box(
             modifier = Modifier
@@ -237,7 +248,7 @@ private fun OnboardingAppContent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .then(if (useRailLayout) Modifier.padding(start = 88.dp) else Modifier),
+                .then(if (railVisible) Modifier.padding(start = 88.dp) else Modifier),
         ) {
         App(navigator) { screen ->
             val screenContent: @Composable () -> Unit = {
@@ -578,13 +589,13 @@ private fun PersistentBottomNavigationBar(
         modifier = modifier,
     ) {
         if (useRail) {
-            GlassNavigationRail(
+            SolidNavigationRail(
                 selectedIndex = stickySelectedIndex.intValue,
                 onItemSelected = onSelectTab,
                 onAddClick = actions::notifyAddContactRequested,
             )
         } else {
-            GlassBottomNavBar(
+            SolidBottomNavBar(
                 selectedIndex = stickySelectedIndex.intValue,
                 onItemSelected = onSelectTab,
                 onAddClick = actions::notifyAddContactRequested,
