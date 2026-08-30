@@ -1,5 +1,5 @@
 -- =============================================================================
--- Nekko Schema v2 — migration toward the new ERD design
+-- Foster Schema v2 — migration toward the new ERD design
 -- Reference ERD: ~/Desktop/supabase_schema_erd (1).html
 --
 -- Run top to bottom in the Supabase SQL editor.

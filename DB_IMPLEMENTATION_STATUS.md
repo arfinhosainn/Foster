@@ -1,4 +1,4 @@
-# Nekko — Current Database Implementation (Status)
+# Foster — Current Database Implementation (Status)
 
 > Status snapshot of the Supabase database. The migration toward the new ERD
 > (`migration_v2_erd.sql`) has been **applied and verified live**.
@@ -8,12 +8,12 @@
 
 ## 1. Overview
 
-Nekko is a Kotlin Multiplatform (Compose) app with modules: `androidApp`, `shared`, `onboarding`, `home`.
+Foster is a Kotlin Multiplatform (Compose) app with modules: `androidApp`, `shared`, `onboarding`, `home`.
 The only backend integration so far is **Supabase** and it is used **only by onboarding**.
 The `home` module is UI-only (sample/static data, no DB calls yet).
 
 - Project ref: `https://ulrzuzrwilemkcahsvih.supabase.co`
-- Supabase client config: `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/SupabaseConfig.kt`
+- Supabase client config: `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/SupabaseConfig.kt`
 - Auth: Google OAuth via `supabase-kt` `ComposeAuth.googleNativeLogin(serverClientId = <Google web client id>)`
 - Installed plugins on the client: `Auth`, `Postgrest`, `Storage`
 
@@ -223,7 +223,7 @@ Payload-key notes (verified against `OnboardingDtos.kt`, not guessed):
 
 ## 7. Kotlin Data Layer
 
-### Domain (`onboarding/src/commonMain/kotlin/app/usenekko/onboarding/domain/`)
+### Domain (`onboarding/src/commonMain/kotlin/app/usefoster/onboarding/domain/`)
 - `OnboardingProfileDataSource` interface:
   - `submitOnboarding(draft: OnboardingDraft): EmptyResult<OnboardingProfileError>`
   - `getOnboardingStep(): Result<OnboardingStep?, OnboardingProfileError>`
@@ -307,11 +307,11 @@ Payload-key notes (verified against `OnboardingDtos.kt`, not guessed):
 | `onboarding/sql/complete_onboarding.sql` | Implemented: tables + RLS + RPC |
 | `onboarding/sql/migration_email.sql` | phone → email migration (applied) |
 | `onboarding/sql/migration_v2_erd.sql` | **Applied & verified live**: fixes + new ERD layer |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/SupabaseConfig.kt` | Supabase URL/keys, client factory |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/SupabaseOnboardingProfileDataSource.kt` | All Supabase reads/writes |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/dto/OnboardingDtos.kt` | Request/response DTOs |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/domain/OnboardingProfileDataSource.kt` | Domain interface |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/domain/OnboardingDraft.kt` | Local draft model |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/presentation/OnboardingDraftStore.kt` | Local draft store |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/SupabaseConfig.kt` | Supabase URL/keys, client factory |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/SupabaseOnboardingProfileDataSource.kt` | All Supabase reads/writes |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/dto/OnboardingDtos.kt` | Request/response DTOs |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/domain/OnboardingProfileDataSource.kt` | Domain interface |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/domain/OnboardingDraft.kt` | Local draft model |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/presentation/OnboardingDraftStore.kt` | Local draft store |
 | `onboarding/src/androidMain/.../DataStoreOnboardingDraftDataSource.kt` | Android local persistence |
 | `onboarding/src/iosMain/.../NSUserDefaultsOnboardingDraftDataSource.kt` | iOS local persistence |

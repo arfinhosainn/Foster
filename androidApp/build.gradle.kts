@@ -31,15 +31,15 @@ dependencies {
 }
 
 android {
-    namespace = "app.usenekko"
+    namespace = "app.usefoster"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "app.usenekko"
+        applicationId = "app.usefoster"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
     }
     packaging {
         resources {

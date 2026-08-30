@@ -39,8 +39,8 @@ Harden app error handling in small, independently validated slices so users neve
 # Technical Design
 
 ### Current Implementation
-- `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/welcome/WelcomeScreen.kt` assigns provider result text and `"Error: ${e.message}"` directly to the visible sign-in error.
-- `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/domain/OnboardingProfileErrorMessages.kt` still interpolates `Unknown.detail`; `OnboardingApp.kt` and `WelcomeScreen.kt` already use the typed `OnboardingProfileError.toUserMessage()` boundary for profile-routing feedback.
+- `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/welcome/WelcomeScreen.kt` assigns provider result text and `"Error: ${e.message}"` directly to the visible sign-in error.
+- `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/domain/OnboardingProfileErrorMessages.kt` still interpolates `Unknown.detail`; `OnboardingApp.kt` and `WelcomeScreen.kt` already use the typed `OnboardingProfileError.toUserMessage()` boundary for profile-routing feedback.
 - `NotificationViewModel.completeOnboarding()` writes `currentStep = OnboardingStep.Complete` before `submitOnboarding()` succeeds, while `NotificationScreen.kt` currently ignores `NotificationEvent.ShowError`; the existing snackbar/event pattern in `ContactScreen.kt` is the UI precedent.
 - `OnboardingDraftLocalDataSource`, `OnboardingDraftStore`, `DataStoreOnboardingDraftDataSource`, and `NSUserDefaultsOnboardingDraftDataSource` currently use plain return values and fire-and-forget persistence; the platform sources silently remove malformed drafts.
 - `ContactScreen.kt` passes an empty `onPermissionDenied` callback to the shared picker, and the Android picker can throw while reading a selected contact.
@@ -96,10 +96,10 @@ graph LR
 ### Proposed Changes & File Structure
 
 #### Authentication and profile messages
-- Add `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/domain/OnboardingAuthError.kt` and safe message mapping.
+- Add `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/domain/OnboardingAuthError.kt` and safe message mapping.
 - Update `WelcomeScreen.kt` so `NativeSignInResult.Error`, network failures, and `startFlow()` exceptions never become visible raw strings; cancellation remains silent.
 - Update `OnboardingProfileErrorMessages.kt` so `Unknown` always maps to generic retry copy without `detail`.
-- Add common message/classification tests under `onboarding/src/commonTest/kotlin/app/usenekko/onboarding/`.
+- Add common message/classification tests under `onboarding/src/commonTest/kotlin/app/usefoster/onboarding/`.
 
 #### Final submission
 - Update `NotificationViewModel.kt` to submit a snapshot that remains at `OnboardingStep.Notification`; clear local draft and emit navigation only after success.
@@ -115,7 +115,7 @@ graph LR
 #### Contact import
 - Add a picker-failure action/event in `ContactAction.kt`, `ContactEvent.kt`, and `ContactViewModel.kt`.
 - Replace the empty callback in `ContactScreen.kt` with a friendly snackbar message and resource-backed copy in both onboarding `strings.xml` files.
-- Harden `shared/src/androidMain/kotlin/app/usenekko/shared/contacts/ContactPicker.android.kt` and the iOS counterpart so permission, presentation, and contact-read failures use the existing callback rather than escaping or disappearing.
+- Harden `shared/src/androidMain/kotlin/app/usefoster/shared/contacts/ContactPicker.android.kt` and the iOS counterpart so permission, presentation, and contact-read failures use the existing callback rather than escaping or disappearing.
 
 ### Risks
 - Changing the draft data-source contract requires updating every common-test fake; compile both common code and the iOS test target after that slice.

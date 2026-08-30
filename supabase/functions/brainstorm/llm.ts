@@ -1,5 +1,5 @@
 // =============================================================================
-// Nekko — Brainstorm LLM abstraction
+// Foster — Brainstorm LLM abstraction
 // -----------------------------------------------------------------------------
 // This is the ONLY file that talks to the LLM provider. Everything else in
 // index.ts calls `complete(prompt)` and expects plain text back.

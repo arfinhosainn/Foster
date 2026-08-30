@@ -1,8 +1,8 @@
 # Voqal Onboarding Architecture Reference
 
-> Reference from the Voqal project for future implementation in Nekko.
+> Reference from the Voqal project for future implementation in Foster.
 >
-> Important: the Voqal screen names below are **reference-only**. Do not implement Voqal screens such as email, password, username, language, or interests in Nekko unless the Nekko product explicitly adds those screens later. Nekko must use the actual onboarding route list from `shared/src/commonMain/kotlin/app/usenekko/navigation/Screen.kt` and `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/OnboardingApp.kt`.
+> Important: the Voqal screen names below are **reference-only**. Do not implement Voqal screens such as email, password, username, language, or interests in Foster unless the Foster product explicitly adds those screens later. Foster must use the actual onboarding route list from `shared/src/commonMain/kotlin/app/usefoster/navigation/Screen.kt` and `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/OnboardingApp.kt`.
 
 ## Directory Structure
 
@@ -293,7 +293,7 @@ sealed interface Result<out D, out E> {
 typealias EmptyResult<E> = Result<Unit, E>
 ```
 
-## Key Takeaways for Nekko
+## Key Takeaways for Foster
 
 1. **MVI per screen** — State/Action/Event/ViewModel/Screen (5 files each)
 2. **DataStore for draft persistence** — write-through on every change, restore on startup
@@ -306,15 +306,15 @@ typealias EmptyResult<E> = Result<Unit, E>
 
 ---
 
-# Nekko Onboarding Implementation Specification
+# Foster Onboarding Implementation Specification
 
-This section is the concrete implementation plan for Nekko. Use this section when implementing onboarding persistence, ViewModels, permissions, and final sync.
+This section is the concrete implementation plan for Foster. Use this section when implementing onboarding persistence, ViewModels, permissions, and final sync.
 
-The current Nekko onboarding UI exists mostly as local `remember { mutableStateOf(...) }` screen state. The implementation goal is to move onboarding to a predictable MVI structure with a shared local draft store.
+The current Foster onboarding UI exists mostly as local `remember { mutableStateOf(...) }` screen state. The implementation goal is to move onboarding to a predictable MVI structure with a shared local draft store.
 
-## Actual Nekko Onboarding Screens
+## Actual Foster Onboarding Screens
 
-This is the current Nekko onboarding flow. This list is the source of truth for implementation.
+This is the current Foster onboarding flow. This list is the source of truth for implementation.
 
 ```text
 Welcome
@@ -334,16 +334,16 @@ Welcome
 Current route declarations live in:
 
 ```text
-shared/src/commonMain/kotlin/app/usenekko/navigation/Screen.kt
+shared/src/commonMain/kotlin/app/usefoster/navigation/Screen.kt
 ```
 
 Current screen wiring lives in:
 
 ```text
-onboarding/src/commonMain/kotlin/app/usenekko/onboarding/OnboardingApp.kt
+onboarding/src/commonMain/kotlin/app/usefoster/onboarding/OnboardingApp.kt
 ```
 
-Do not add these Voqal screens to Nekko:
+Do not add these Voqal screens to Foster:
 
 1. Email.
 2. Password.
@@ -351,11 +351,11 @@ Do not add these Voqal screens to Nekko:
 4. Language.
 5. Interests.
 
-Do not create backend columns or draft fields for those Voqal-only screens unless the Nekko product scope changes.
+Do not create backend columns or draft fields for those Voqal-only screens unless the Foster product scope changes.
 
 ## Important Architecture Decision
 
-Nekko onboarding must use **local draft persistence + final batch sync**.
+Foster onboarding must use **local draft persistence + final batch sync**.
 
 Do **not** implement full offline-first database sync for onboarding.
 
@@ -423,7 +423,7 @@ Store completed durable app data:
 Implement onboarding under:
 
 ```text
-onboarding/src/commonMain/kotlin/app/usenekko/onboarding/
+onboarding/src/commonMain/kotlin/app/usefoster/onboarding/
 ```
 
 Use this structure:
@@ -477,13 +477,13 @@ onboarding/
 Platform-specific files:
 
 ```text
-onboarding/src/androidMain/kotlin/app/usenekko/onboarding/
+onboarding/src/androidMain/kotlin/app/usefoster/onboarding/
 ├── data/
 │   └── DataStoreFactory.android.kt
 └── permissions/
     └── PermissionController.android.kt
 
-onboarding/src/iosMain/kotlin/app/usenekko/onboarding/
+onboarding/src/iosMain/kotlin/app/usefoster/onboarding/
 ├── data/
 │   └── DataStoreFactory.ios.kt
 └── permissions/
@@ -579,7 +579,7 @@ Rules:
 2. Do not store formatted dates as the source of truth. Store epoch millis and format in the UI.
 3. Do not store UI-only flags in the draft unless they must survive restart.
 4. Do not put Compose types, Android types, or iOS types in domain models.
-5. Do not add `email`, `password`, `username`, `selectedLanguageId`, or `selectedInterestIds` to Nekko's draft model based on the Voqal reference.
+5. Do not add `email`, `password`, `username`, `selectedLanguageId`, or `selectedInterestIds` to Foster's draft model based on the Voqal reference.
 
 ## DataStore Data Source
 
@@ -633,7 +633,7 @@ class DataStoreOnboardingDraftDataSource(
 
 Recommendation:
 
-Use one JSON preference key for the whole draft, because Nekko onboarding contains nested lists (`groups`, `customReminders`, `notes`). This is simpler and safer than spreading complex nested data over many preference keys.
+Use one JSON preference key for the whole draft, because Foster onboarding contains nested lists (`groups`, `customReminders`, `notes`). This is simpler and safer than spreading complex nested data over many preference keys.
 
 Required:
 
@@ -848,7 +848,7 @@ Each screen should update `OnboardingDraft.currentStep` to its matching `Onboard
 
 ## Permission Architecture
 
-Nekko already needs notification permission and will need more permissions later. Keep permissions generic.
+Foster already needs notification permission and will need more permissions later. Keep permissions generic.
 
 Use:
 
@@ -1004,7 +1004,7 @@ Rules:
 2. Do not mirror the entire local `OnboardingDraft` as one backend JSON blob unless the backend is temporary.
 3. Store normalized records for things the app will use after onboarding.
 4. Server `onboarding_step` is for routing/resume decisions, not for storing all form data.
-5. Do not add Voqal-only columns such as `email`, `password`, `username`, `language`, or `interests` unless Nekko later adds those product features.
+5. Do not add Voqal-only columns such as `email`, `password`, `username`, `language`, or `interests` unless Foster later adds those product features.
 
 ## Resume Behavior
 

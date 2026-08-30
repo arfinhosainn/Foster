@@ -6,7 +6,7 @@
          (foreground + background) is visible on the white splash. -->
     <color name="splash_icon_background">#14532D</color>
     <!-- Window background after the splash dismisses; matches
-         NekkoTheme.colors.background.b0 (see shared/theme/Color.kt) so there's
+         FosterTheme.colors.background.b0 (see shared/theme/Color.kt) so there's
          no flash between the splash and the app content. -->
     <color name="window_background">#FAFAFA</color>
 </resources>

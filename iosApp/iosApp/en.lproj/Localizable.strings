@@ -7,4 +7,4 @@
 "notif_digest_title_other" = "%d people to check in with today";
 "notif_digest_body" = "Starting with %1$@, plus %2$ld more";
 "notif_custom_reminder_title" = "%@";
-"notif_custom_reminder_body" = "Reminder from Nekko";
+"notif_custom_reminder_body" = "Reminder from Foster";

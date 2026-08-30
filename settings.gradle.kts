@@ -1,4 +1,4 @@
-rootProject.name = "Nekko"
+rootProject.name = "Foster"
 
 pluginManagement {
     repositories {

@@ -19,7 +19,7 @@
         android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Nekko.Splash">
+        android:theme="@style/Theme.Foster.Splash">
         <activity
             android:exported="true"
             android:name=".MainActivity"
@@ -38,17 +38,17 @@
 
                 <data
                     android:host="auth-callback"
-                    android:scheme="app.usenekko" />
+                    android:scheme="app.usefoster" />
             </intent-filter>
         </activity>
 
         <receiver
             android:exported="false"
-            android:name="app.usenekko.shared.notifications.CheckInReminderReceiver" />
+            android:name="app.usefoster.shared.notifications.CheckInReminderReceiver" />
 
         <receiver
             android:exported="false"
-            android:name="app.usenekko.shared.notifications.ReminderBootReceiver">
+            android:name="app.usefoster.shared.notifications.ReminderBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />

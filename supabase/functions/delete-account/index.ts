@@ -1,5 +1,5 @@
 // =============================================================================
-// Nekko — delete-account Edge Function
+// Foster — delete-account Edge Function
 // -----------------------------------------------------------------------------
 // Deleting a user from `auth.users` requires the Admin API (service role). A
 // `security definer` Postgres function CANNOT do it: its owner role (`postgres`)

@@ -57,19 +57,19 @@
 6. Add previews or deterministic layout-policy tests for compact, medium, and expanded widths, including no selected contact and selected-contact replacement.
 
 ### Files To Review
-- `shared/src/commonMain/kotlin/app/usenekko/adaptive/WindowWidthSizeClass.kt`
-- `shared/src/commonMain/kotlin/app/usenekko/navigation/NekkoNavHost.kt`
-- `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/OnboardingApp.kt`
-- `home/src/commonMain/kotlin/app/usenekko/home/HomeScreen.kt`
-- `home/src/commonMain/kotlin/app/usenekko/home/presentation/contactprofile/ContactProfileScreen.kt`
-- `home/src/commonMain/kotlin/app/usenekko/home/presentation/settings/GroupBottomSheet.kt`
-- `home/src/commonMain/kotlin/app/usenekko/home/presentation/settings/GroupDetailScreen.kt`
+- `shared/src/commonMain/kotlin/app/usefoster/adaptive/WindowWidthSizeClass.kt`
+- `shared/src/commonMain/kotlin/app/usefoster/navigation/FosterNavHost.kt`
+- `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/OnboardingApp.kt`
+- `home/src/commonMain/kotlin/app/usefoster/home/HomeScreen.kt`
+- `home/src/commonMain/kotlin/app/usefoster/home/presentation/contactprofile/ContactProfileScreen.kt`
+- `home/src/commonMain/kotlin/app/usefoster/home/presentation/settings/GroupBottomSheet.kt`
+- `home/src/commonMain/kotlin/app/usefoster/home/presentation/settings/GroupDetailScreen.kt`
 - Existing adaptive and Android unit tests.
 
 ### Risks & Mitigations
 - **Duplicated contact-profile logic:** extract shared content/actions before adding pane layout; keep one view-model ownership path per visible profile.
 - **Unexpected navigator mutations:** expanded contact selection must be handled locally, while compact/medium selection must continue using the existing route callback.
-- **Animation mismatch:** only full-screen route changes should reach `NekkoNavHost`; pane content changes need a local, restrained layout transition or no transition.
+- **Animation mismatch:** only full-screen route changes should reach `FosterNavHost`; pane content changes need a local, restrained layout transition or no transition.
 - **Lifecycle churn:** use stable contact keys and existing refresh guards so changing selection does not cancel unrelated outgoing work unexpectedly.
 - **Insufficient group context:** do not force a group pane if the current UI cannot provide a stable master list; preserve the existing full-screen `GroupDetail` route.
 

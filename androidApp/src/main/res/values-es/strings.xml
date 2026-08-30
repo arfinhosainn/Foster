@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Español (neutro LATAM) — mismo orden de claves que values/strings.xml. -->
 <resources>
-    <string name="app_name">Nekko</string>
+    <string name="app_name">Foster</string>
 
     <!-- Notificaciones de recordatorio de check-in (se resuelven al momento
          de mostrarse, respetando el idioma del dispositivo o el idioma
