@@ -29,7 +29,7 @@
 | Local draft stores | Preserve unfinished onboarding on the current device; they are not the session store. |
 | `delete-account` Edge Function | Verifies the caller’s JWT, deletes the Supabase auth user, and lets foreign-key cascades remove account data. |
 
-The main configuration is in `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/SupabaseConfig.kt`, and the shared client is created by `createAppSupabaseClient()`.
+The main configuration is in `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/SupabaseConfig.kt`, and the shared client is created by `createAppSupabaseClient()`.
 
 ## 2. Google sign-in flow
 
@@ -121,9 +121,9 @@ This prevents a returning user from being shown onboarding merely because a prof
 - `autoSaveToStorage = true` — persist session changes through the Auth SDK.
 - `alwaysAutoRefresh = true` — refresh the session as it approaches expiry.
 - `enableLifecycleCallbacks = true` — allow lifecycle-aware refresh behavior.
-- `host = "auth-callback"` and `scheme = "app.usenekko"` — configure the app callback URL.
+- `host = "auth-callback"` and `scheme = "app.usefoster"` — configure the app callback URL.
 
-The physical token storage mechanism is not implemented or selected by Nekko code; it is managed by the Supabase/Ktor/platform library stack. The repository does not expose a custom token database, token serializer, or manual access/refresh-token encryption layer.
+The physical token storage mechanism is not implemented or selected by Foster code; it is managed by the Supabase/Ktor/platform library stack. The repository does not expose a custom token database, token serializer, or manual access/refresh-token encryption layer.
 
 ### Startup state machine
 
@@ -203,7 +203,7 @@ Therefore, `complete_onboarding.sql` should not be read in isolation as the live
 ### Android
 
 - `MainActivity` lazily creates the shared Supabase client.
-- `AndroidManifest.xml` exposes `app.usenekko://auth-callback` as a browsable `VIEW` route.
+- `AndroidManifest.xml` exposes `app.usefoster://auth-callback` as a browsable `VIEW` route.
 - The activity uses `singleTop` so a callback can be delivered to an existing activity.
 - `onCreate()` calls `supabaseClient.handleDeeplinks(intent)` for cold-start callbacks.
 - `onNewIntent()` calls `setIntent(intent)` and then `handleDeeplinks(intent)` for warm callbacks.
@@ -211,7 +211,7 @@ Therefore, `complete_onboarding.sql` should not be read in isolation as the live
 
 ### iOS
 
-- `Info.plist` contains a Google client ID, the Google reverse-client URL scheme, and the `app.usenekko` app scheme.
+- `Info.plist` contains a Google client ID, the Google reverse-client URL scheme, and the `app.usefoster` app scheme.
 - The Xcode project links `GoogleSignIn`/`GoogleSignInSwift` and pins `GoogleSignIn-iOS` to 9.2.0.
 - The iOS app creates the shared Kotlin Supabase client in `MainViewController` and starts the same `OnboardingApp` flow.
 - No Swift `onOpenURL`, application URL callback, scene URL callback, or `GIDSignIn.handle` forwarding code was found in the inspected iOS source.
@@ -246,15 +246,15 @@ If deletion fails or the request is unauthenticated, the app shows an error and 
 
 | File | Relevant symbols or purpose |
 | --- | --- |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/SupabaseConfig.kt` | Supabase URL/client configuration, Google client registration, session persistence flags. |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/welcome/WelcomeScreen.kt` | `rememberSignInWithGoogle`, provider result handling, sign-in UI. |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/OnboardingApp.kt` | Session observer, `authSessionAction`, `routeAfterAuth`, post-delete sign-out. |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/SupabaseOnboardingProfileDataSource.kt` | Session-gated profile reads, profile provisioning, onboarding RPC call, payload mapping. |
-| `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/presentation/LocalOnboardingDraftStore.kt` | Shared client and repository wiring; account key from `session.user.id`. |
-| `onboarding/src/androidMain/kotlin/app/usenekko/onboarding/data/DataStoreOnboardingDraftDataSource.kt` | Android draft persistence. |
-| `onboarding/src/iosMain/kotlin/app/usenekko/onboarding/data/NSUserDefaultsOnboardingDraftDataSource.kt` | iOS draft persistence. |
-| `androidApp/src/main/kotlin/app/usenekko/MainActivity.kt` | Android deep-link handling in `onCreate` and `onNewIntent`. |
-| `androidApp/src/main/AndroidManifest.xml` | Android `app.usenekko://auth-callback` route and `singleTop` activity. |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/SupabaseConfig.kt` | Supabase URL/client configuration, Google client registration, session persistence flags. |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/welcome/WelcomeScreen.kt` | `rememberSignInWithGoogle`, provider result handling, sign-in UI. |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/OnboardingApp.kt` | Session observer, `authSessionAction`, `routeAfterAuth`, post-delete sign-out. |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/SupabaseOnboardingProfileDataSource.kt` | Session-gated profile reads, profile provisioning, onboarding RPC call, payload mapping. |
+| `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/presentation/LocalOnboardingDraftStore.kt` | Shared client and repository wiring; account key from `session.user.id`. |
+| `onboarding/src/androidMain/kotlin/app/usefoster/onboarding/data/DataStoreOnboardingDraftDataSource.kt` | Android draft persistence. |
+| `onboarding/src/iosMain/kotlin/app/usefoster/onboarding/data/NSUserDefaultsOnboardingDraftDataSource.kt` | iOS draft persistence. |
+| `androidApp/src/main/kotlin/app/usefoster/MainActivity.kt` | Android deep-link handling in `onCreate` and `onNewIntent`. |
+| `androidApp/src/main/AndroidManifest.xml` | Android `app.usefoster://auth-callback` route and `singleTop` activity. |
 | `iosApp/iosApp/Info.plist` | iOS Google client ID and URL schemes. |
 | `iosApp/iosApp/ContentView.swift` | Embeds the Kotlin `MainViewController`; contains no URL callback forwarding. |
 | `onboarding/sql/migration_v2_erd.sql` | Current recorded schema/RPC migration and ownership/RLS behavior. |

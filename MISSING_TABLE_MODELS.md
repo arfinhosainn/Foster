@@ -1,4 +1,4 @@
-# Nekko — Missing Kotlin Table Models
+# Foster — Missing Kotlin Table Models
 
 > Context for future sessions: the ERD migration (`onboarding/sql/migration_v2_erd.sql`)
 > has been **applied and verified live** in Supabase. The 8 new tables have **no
@@ -33,7 +33,7 @@ Also missing for modified tables:
 
 ## What exists today (onboarding-only)
 
-- `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/dto/OnboardingDtos.kt` — `CompleteOnboardingPayload`, `GroupDto`, `CustomReminderDto`, `NoteDto`, `OnboardingStepResponse`
+- `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/dto/OnboardingDtos.kt` — `CompleteOnboardingPayload`, `GroupDto`, `CustomReminderDto`, `NoteDto`, `OnboardingStepResponse`
 - Domain drafts: `GroupDraft`, `CustomReminderDraft`, `NoteDraft`, `ReminderTimeDraft`, `ReminderFrequency`, `OnboardingDraft`
 - `home` is UI-only, still on sample data (`CheckinGridSample.kt`) — no DB reads
 
@@ -41,4 +41,4 @@ Also missing for modified tables:
 
 - Migration (applied): `onboarding/sql/migration_v2_erd.sql`
 - Status doc: `DB_IMPLEMENTATION_STATUS.md`
-- Supabase client: `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/SupabaseConfig.kt`
+- Supabase client: `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/SupabaseConfig.kt`

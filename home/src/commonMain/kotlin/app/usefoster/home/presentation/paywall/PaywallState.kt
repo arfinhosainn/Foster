@@ -1,0 +1,47 @@
+package app.usefoster.home.presentation.paywall
+
+import app.usefoster.shared.subscription.BillingPeriod
+import app.usefoster.shared.subscription.PaywallOffering
+import app.usefoster.shared.subscription.PaywallPackage
+import org.jetbrains.compose.resources.StringResource
+
+sealed interface PaywallAction {
+    data class SelectPeriod(val period: BillingPeriod) : PaywallAction
+    data object Purchase : PaywallAction
+    data object Restore : PaywallAction
+}
+
+sealed interface PaywallEvent {
+    /** Emitted after a successful purchase OR a restore that found an active subscription. */
+    data object Subscribed : PaywallEvent
+    data class ShowError(val message: StringResource) : PaywallEvent
+}
+
+data class PaywallState(
+    val isLoading: Boolean = true,
+    val offering: PaywallOffering? = null,
+    val selectedPeriod: BillingPeriod = BillingPeriod.ANNUAL,
+    val isPurchasing: Boolean = false,
+    val isRestoring: Boolean = false,
+) {
+    val selectedPackage: PaywallPackage?
+        get() = when (selectedPeriod) {
+            BillingPeriod.MONTHLY -> offering?.monthly
+            BillingPeriod.ANNUAL -> offering?.annual
+        }
+
+    /**
+     * CTA adapts automatically based on the selected package's intro offer:
+     * "Continue with 7-day free trial" if a free trial is detected from the
+     * store, "Subscribe" otherwise. Never hardcoded.
+     */
+    val ctaText: String
+        get() {
+            val pkg = selectedPackage ?: return "Subscribe"
+            return if (pkg.hasFreeTrial) {
+                "Continue with ${pkg.trialString ?: "free trial"}"
+            } else {
+                "Subscribe"
+            }
+        }
+}

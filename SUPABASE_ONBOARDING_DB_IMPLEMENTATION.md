@@ -1,6 +1,6 @@
 # Supabase Onboarding DB Implementation Plan
 
-This document describes the online database implementation for Nekko onboarding using Supabase.
+This document describes the online database implementation for Foster onboarding using Supabase.
 
 The current app already has local draft persistence:
 
@@ -97,7 +97,7 @@ OnboardingDraft(
 )
 ```
 
-Do not add Voqal-only fields such as email, password, username, language, or interests unless Nekko adds those product features.
+Do not add Voqal-only fields such as email, password, username, language, or interests unless Foster adds those product features.
 
 ## Supabase Tables
 
@@ -236,7 +236,7 @@ interface OnboardingProfileDataSource {
 Create a Supabase implementation:
 
 ```text
-onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/
+onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/
 └── SupabaseOnboardingProfileDataSource.kt
 ```
 

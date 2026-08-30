@@ -34,7 +34,7 @@ end $$;
 -- to Blue Flower would collide with the existing Blue Flower row before that
 -- row can be renamed to Pink Flower.
 update public.badges
-set name = '__nekko_badge_migration__' || name
+set name = '__foster_badge_migration__' || name
 where name in (
   'Seedling', 'Soil', 'Green Flower', 'Wild Flower', 'Lotus Flower',
   'Mushroom Flower', 'Sunflower', 'Grove Keeper', 'Red Flower',
@@ -44,93 +44,93 @@ where name in (
 
 update public.badges
 set name = case
-      when name = '__nekko_badge_migration__Seedling'
-        or name = '__nekko_badge_migration__Soil'
-        or (name = '__nekko_badge_migration__Green Flower' and threshold = 1)
+      when name = '__foster_badge_migration__Seedling'
+        or name = '__foster_badge_migration__Soil'
+        or (name = '__foster_badge_migration__Green Flower' and threshold = 1)
         then 'Soil'
-      when name = '__nekko_badge_migration__Wild Flower'
-        or name = '__nekko_badge_migration__Lotus Flower'
+      when name = '__foster_badge_migration__Wild Flower'
+        or name = '__foster_badge_migration__Lotus Flower'
         then 'Lotus Flower'
-      when name = '__nekko_badge_migration__Mushroom Flower'
-        or (name = '__nekko_badge_migration__Sunflower' and threshold = 30)
+      when name = '__foster_badge_migration__Mushroom Flower'
+        or (name = '__foster_badge_migration__Sunflower' and threshold = 30)
         then 'Sunflower'
-      when name = '__nekko_badge_migration__Grove Keeper'
-        or name = '__nekko_badge_migration__Red Flower'
-        or name = '__nekko_badge_migration__Brown Flower'
+      when name = '__foster_badge_migration__Grove Keeper'
+        or name = '__foster_badge_migration__Red Flower'
+        or name = '__foster_badge_migration__Brown Flower'
         then 'Brown Flower'
-      when name = '__nekko_badge_migration__Yellow Flower'
-        or (name = '__nekko_badge_migration__Blue Flower' and threshold = 60)
+      when name = '__foster_badge_migration__Yellow Flower'
+        or (name = '__foster_badge_migration__Blue Flower' and threshold = 60)
         then 'Blue Flower'
-      when name = '__nekko_badge_migration__Blue Flower' and threshold = 100
-        or name = '__nekko_badge_migration__Pink Flower'
+      when name = '__foster_badge_migration__Blue Flower' and threshold = 100
+        or name = '__foster_badge_migration__Pink Flower'
         then 'Pink Flower'
-      when name = '__nekko_badge_migration__Towering Oak'
-        or name = '__nekko_badge_migration__Green Flower'
-        or (name = '__nekko_badge_migration__Sunflower' and threshold = 150)
+      when name = '__foster_badge_migration__Towering Oak'
+        or name = '__foster_badge_migration__Green Flower'
+        or (name = '__foster_badge_migration__Sunflower' and threshold = 150)
         then 'Green Flower'
-      when name = '__nekko_badge_migration__Mushrooms'
+      when name = '__foster_badge_migration__Mushrooms'
         then 'Mushrooms'
       else name
     end,
     description = case
-      when name = '__nekko_badge_migration__Seedling'
-        or name = '__nekko_badge_migration__Soil'
-        or (name = '__nekko_badge_migration__Green Flower' and threshold = 1)
+      when name = '__foster_badge_migration__Seedling'
+        or name = '__foster_badge_migration__Soil'
+        or (name = '__foster_badge_migration__Green Flower' and threshold = 1)
         then 'Your very first check-in starts the soil.'
-      when name = '__nekko_badge_migration__Wild Flower'
-        or name = '__nekko_badge_migration__Lotus Flower'
+      when name = '__foster_badge_migration__Wild Flower'
+        or name = '__foster_badge_migration__Lotus Flower'
         then 'Reach 15 check-ins and your lotus flower begins to bloom.'
-      when name = '__nekko_badge_migration__Mushroom Flower'
-        or (name = '__nekko_badge_migration__Sunflower' and threshold = 30)
+      when name = '__foster_badge_migration__Mushroom Flower'
+        or (name = '__foster_badge_migration__Sunflower' and threshold = 30)
         then 'Reach 30 check-ins and grow a sunflower.'
-      when name = '__nekko_badge_migration__Grove Keeper'
-        or name = '__nekko_badge_migration__Red Flower'
-        or name = '__nekko_badge_migration__Brown Flower'
+      when name = '__foster_badge_migration__Grove Keeper'
+        or name = '__foster_badge_migration__Red Flower'
+        or name = '__foster_badge_migration__Brown Flower'
         then 'Reach 45 check-ins and grow a brown flower.'
-      when name = '__nekko_badge_migration__Yellow Flower'
-        or (name = '__nekko_badge_migration__Blue Flower' and threshold = 60)
+      when name = '__foster_badge_migration__Yellow Flower'
+        or (name = '__foster_badge_migration__Blue Flower' and threshold = 60)
         then 'Reach 60 check-ins and grow a blue lotus.'
-      when name = '__nekko_badge_migration__Blue Flower' and threshold = 100
-        or name = '__nekko_badge_migration__Pink Flower'
+      when name = '__foster_badge_migration__Blue Flower' and threshold = 100
+        or name = '__foster_badge_migration__Pink Flower'
         then 'Reach 75 check-ins and grow a pink flower.'
-      when name = '__nekko_badge_migration__Towering Oak'
-        or name = '__nekko_badge_migration__Green Flower'
-        or (name = '__nekko_badge_migration__Sunflower' and threshold = 150)
+      when name = '__foster_badge_migration__Towering Oak'
+        or name = '__foster_badge_migration__Green Flower'
+        or (name = '__foster_badge_migration__Sunflower' and threshold = 150)
         then 'Reach 90 check-ins and grow a green flower.'
-      when name = '__nekko_badge_migration__Mushrooms'
+      when name = '__foster_badge_migration__Mushrooms'
         then 'Reach 115 check-ins and discover the mushrooms.'
       else description
     end,
     threshold = case
-      when name = '__nekko_badge_migration__Seedling'
-        or name = '__nekko_badge_migration__Soil'
-        or (name = '__nekko_badge_migration__Green Flower' and threshold = 1)
+      when name = '__foster_badge_migration__Seedling'
+        or name = '__foster_badge_migration__Soil'
+        or (name = '__foster_badge_migration__Green Flower' and threshold = 1)
         then 1
-      when name = '__nekko_badge_migration__Wild Flower'
-        or name = '__nekko_badge_migration__Lotus Flower'
+      when name = '__foster_badge_migration__Wild Flower'
+        or name = '__foster_badge_migration__Lotus Flower'
         then 15
-      when name = '__nekko_badge_migration__Mushroom Flower'
-        or (name = '__nekko_badge_migration__Sunflower' and threshold = 30)
+      when name = '__foster_badge_migration__Mushroom Flower'
+        or (name = '__foster_badge_migration__Sunflower' and threshold = 30)
         then 30
-      when name = '__nekko_badge_migration__Grove Keeper'
-        or name = '__nekko_badge_migration__Red Flower'
-        or name = '__nekko_badge_migration__Brown Flower'
+      when name = '__foster_badge_migration__Grove Keeper'
+        or name = '__foster_badge_migration__Red Flower'
+        or name = '__foster_badge_migration__Brown Flower'
         then 45
-      when name = '__nekko_badge_migration__Yellow Flower'
-        or (name = '__nekko_badge_migration__Blue Flower' and threshold = 60)
+      when name = '__foster_badge_migration__Yellow Flower'
+        or (name = '__foster_badge_migration__Blue Flower' and threshold = 60)
         then 60
-      when name = '__nekko_badge_migration__Blue Flower' and threshold = 100
-        or name = '__nekko_badge_migration__Pink Flower'
+      when name = '__foster_badge_migration__Blue Flower' and threshold = 100
+        or name = '__foster_badge_migration__Pink Flower'
         then 75
-      when name = '__nekko_badge_migration__Towering Oak'
-        or name = '__nekko_badge_migration__Green Flower'
-        or (name = '__nekko_badge_migration__Sunflower' and threshold = 150)
+      when name = '__foster_badge_migration__Towering Oak'
+        or name = '__foster_badge_migration__Green Flower'
+        or (name = '__foster_badge_migration__Sunflower' and threshold = 150)
         then 90
-      when name = '__nekko_badge_migration__Mushrooms'
+      when name = '__foster_badge_migration__Mushrooms'
         then 115
       else threshold
     end
-where name like '__nekko_badge_migration__%';
+where name like '__foster_badge_migration__%';
 
 insert into public.badges (name, description, threshold)
 select 'Soil', 'Your very first check-in starts the soil.', 1

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSContactsUsageDescription</key>
-	<string>Nekko uses your contacts to import a person you want to keep in touch with.</string>
+	<string>Foster uses your contacts to import a person you want to keep in touch with.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>GIDClientID</key>
@@ -14,7 +14,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.874656360216-h79g2ccnq5t5sihsd8e4u7tpu22rg7k5</string>
-				<string>app.usenekko</string>
+				<string>app.usefoster</string>
 			</array>
 		</dict>
 	</array>

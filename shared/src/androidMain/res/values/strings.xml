@@ -17,7 +17,7 @@
 
     <!-- Standalone custom reminder notifications. -->
     <string name="notif_custom_reminder_title">%1$s</string>
-    <string name="notif_custom_reminder_body">Reminder from Nekko</string>
+    <string name="notif_custom_reminder_body">Reminder from Foster</string>
 
     <!-- Per-category channels. -->
     <string name="notif_channel_custom_reminders">Custom reminders</string>

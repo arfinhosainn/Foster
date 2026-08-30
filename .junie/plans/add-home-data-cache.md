@@ -75,11 +75,11 @@ graph TD
 - Use the existing date-window helpers in `HomeViewModel` for recent/history check-ins, and force a new windowed snapshot when the local day changes.
 
 ### File Structure
-- Add a Home repository/cache and snapshot model under `home/src/commonMain/kotlin/app/usenekko/home/data/` or the existing Home domain/data boundary.
-- Modify `home/src/commonMain/kotlin/app/usenekko/home/presentation/HomeViewModel.kt` and `HomeState.kt` for cached-first and refresh states.
-- Modify `home/src/commonMain/kotlin/app/usenekko/home/HomeScreen.kt` for stale foreground refresh.
-- Modify `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/presentation/LocalOnboardingDraftStore.kt` and `home/src/commonMain/kotlin/app/usenekko/home/di/LocalContactDataSource.kt` for shared construction/injection.
-- Update the successful mutation paths in `home/src/commonMain/kotlin/app/usenekko/home/addcontact/AddContactViewModel.kt`, `home/src/commonMain/kotlin/app/usenekko/home/presentation/settings/GroupSettingsViewModel.kt`, `GroupDetailViewModel.kt`, and Home check-in handling.
+- Add a Home repository/cache and snapshot model under `home/src/commonMain/kotlin/app/usefoster/home/data/` or the existing Home domain/data boundary.
+- Modify `home/src/commonMain/kotlin/app/usefoster/home/presentation/HomeViewModel.kt` and `HomeState.kt` for cached-first and refresh states.
+- Modify `home/src/commonMain/kotlin/app/usefoster/home/HomeScreen.kt` for stale foreground refresh.
+- Modify `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/presentation/LocalOnboardingDraftStore.kt` and `home/src/commonMain/kotlin/app/usefoster/home/di/LocalContactDataSource.kt` for shared construction/injection.
+- Update the successful mutation paths in `home/src/commonMain/kotlin/app/usefoster/home/addcontact/AddContactViewModel.kt`, `home/src/commonMain/kotlin/app/usefoster/home/presentation/settings/GroupSettingsViewModel.kt`, `GroupDetailViewModel.kt`, and Home check-in handling.
 
 ### Risks & Mitigations
 - **Stale data after mutations:** centralize invalidation and keep force-refresh after successful writes.

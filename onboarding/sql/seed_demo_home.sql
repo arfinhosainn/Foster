@@ -1,5 +1,5 @@
 -- =============================================================================
--- Nekko — DEMO DATA SEED for the Home screen
+-- Foster — DEMO DATA SEED for the Home screen
 --
 -- WHAT IT NEEDS FROM YOU (top of the DO block):
 --   * v_user_id   : your auth.users UUID  (Dashboard -> Authentication -> Users)

@@ -19,7 +19,7 @@ kotlin {
     }
 
     android {
-        namespace = "app.usenekko.home"
+        namespace = "app.usefoster.home"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 

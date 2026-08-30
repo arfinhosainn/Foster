@@ -1,5 +1,5 @@
 // =============================================================================
-// Nekko — brainstorm Edge Function
+// Foster — brainstorm Edge Function
 // -----------------------------------------------------------------------------
 // Generates personalized conversation suggestions for a contact from their real
 // notes + relationship info, persists them in brainstorm_sessions /
@@ -37,7 +37,7 @@ const json = (status: number, body: unknown) =>
   });
 
 // Tone handling for sensitive content is a hard requirement, not polish.
-const SYSTEM_PROMPT = `You are Brainstorm, a warm and thoughtful conversation assistant inside the Nekko relationship app.
+const SYSTEM_PROMPT = `You are Brainstorm, a warm and thoughtful conversation assistant inside the Foster relationship app.
 You are given notes and relationship context about a specific contact. Generate 4 to 6 specific, personalized suggestions of things the user could actually say or ask this contact — grounded in the real notes, not generic topic categories.
 Each suggestion must be a concrete, ready-to-use phrase or question (1–2 sentences), tailored to what is in the notes.
 If the notes reference an upcoming date, milestone, event, or anything time-sensitive, fold that directly into at least one suggestion.

@@ -4,6 +4,6 @@
     <color name="splash_background">#14532D</color>
     <color name="splash_icon_background">#14532D</color>
     <!-- Window background after the splash dismisses; matches
-         NekkoTheme.colors.background.b0 in dark mode (shared/theme/Color.kt). -->
+         FosterTheme.colors.background.b0 in dark mode (shared/theme/Color.kt). -->
     <color name="window_background">#101012</color>
 </resources>

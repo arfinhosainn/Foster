@@ -1,4 +1,4 @@
-# Plan: Smart, Grouped Local Notifications for Nekko
+# Plan: Smart, Grouped Local Notifications for Foster
 
 > Status: **APPROVED WITH CHANGES** — review feedback incorporated (v2).
 > Companion doc: `docs/notifications-current-state.md` (audit of today's system)
@@ -127,7 +127,7 @@ Day-grouping keeps us comfortably under it (days ≤ contacts).
 ## 5. Grouped day view (tap target)
 
 New `@Serializable Screen.DayAgenda(day: String)` in the existing custom nav stack
-(`shared/.../navigation/Screen.kt` + `NekkoNavHost` + `OnboardingApp` dispatch):
+(`shared/.../navigation/Screen.kt` + `FosterNavHost` + `OnboardingApp` dispatch):
 
 - Lists that day's items: due check-ins (with Check-In button), overdue contacts, and links into
   custom reminders — reusing existing row components where possible.

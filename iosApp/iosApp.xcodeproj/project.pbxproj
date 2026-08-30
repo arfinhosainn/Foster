@@ -12,7 +12,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		F72596F734EC37AD32DDBE4A /* Nekko.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nekko.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F72596F734EC37AD32DDBE4A /* Foster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Foster.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -66,7 +66,7 @@
 		755456A10E0CBD7C2B92D610 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F72596F734EC37AD32DDBE4A /* Nekko.app */,
+				F72596F734EC37AD32DDBE4A /* Foster.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -96,7 +96,7 @@
 				D89F4D083018839D005B07F9 /* GoogleSignInSwift */,
 			);
 			productName = iosApp;
-			productReference = F72596F734EC37AD32DDBE4A /* Nekko.app */;
+			productReference = F72596F734EC37AD32DDBE4A /* Foster.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

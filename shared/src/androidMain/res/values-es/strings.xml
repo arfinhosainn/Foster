@@ -19,7 +19,7 @@
 
     <!-- Notificaciones de recordatorios personalizados. -->
     <string name="notif_custom_reminder_title">%1$s</string>
-    <string name="notif_custom_reminder_body">Recordatorio de Nekko</string>
+    <string name="notif_custom_reminder_body">Recordatorio de Foster</string>
 
     <!-- Canales por categoría. -->
     <string name="notif_channel_custom_reminders">Recordatorios personalizados</string>

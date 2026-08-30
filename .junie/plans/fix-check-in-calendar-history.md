@@ -37,12 +37,12 @@ Fix the Home check-in/relationship tracker grid so each cell represents a stable
 # Technical Design
 
 ### Current Implementation
-- `home/src/commonMain/kotlin/app/usenekko/home/HomeScreen.kt` owns the local current date, passes `HomeState.checkIns` and filtered contacts into `buildCheckInTimelineEvents`, and renders the result through `rememberTimelineSlots` and `CheckInTimelineGrid`.
-- `home/src/commonMain/kotlin/app/usenekko/home/presentation/components/TimelineEvents.kt` combines `CheckIn` rows with contact scheduling fields. The current working-tree version correctly separates actual history from due contacts, but still feeds an event-anchored start into the grid.
-- `home/src/commonMain/kotlin/app/usenekko/home/presentation/components/CheckinGrid.kt` has a fixed `TIMELINE_SLOT_COUNT` of 26 and chronological slot construction, but `rememberTimelineSlots` currently uses `timelineStartForEvents`, allowing the visible range to shift when the event set changes.
-- `home/src/commonMain/kotlin/app/usenekko/home/data/HomeRepository.kt` already fetches both a recent range and an all-time `checkInHistory` range in `HomeSnapshot`.
-- `home/src/commonMain/kotlin/app/usenekko/home/presentation/HomeViewModel.kt` owns check-in mutations and invalidates/reloads the repository after success; the timeline must use the all-time history field rather than only the recent-range field.
-- Tests are Android local JUnit tests in `androidApp/src/test/kotlin/app/usenekko/home`, with existing focused coverage in `TimelineEventsTest.kt` and `HomeViewModelCheckInTest.kt`.
+- `home/src/commonMain/kotlin/app/usefoster/home/HomeScreen.kt` owns the local current date, passes `HomeState.checkIns` and filtered contacts into `buildCheckInTimelineEvents`, and renders the result through `rememberTimelineSlots` and `CheckInTimelineGrid`.
+- `home/src/commonMain/kotlin/app/usefoster/home/presentation/components/TimelineEvents.kt` combines `CheckIn` rows with contact scheduling fields. The current working-tree version correctly separates actual history from due contacts, but still feeds an event-anchored start into the grid.
+- `home/src/commonMain/kotlin/app/usefoster/home/presentation/components/CheckinGrid.kt` has a fixed `TIMELINE_SLOT_COUNT` of 26 and chronological slot construction, but `rememberTimelineSlots` currently uses `timelineStartForEvents`, allowing the visible range to shift when the event set changes.
+- `home/src/commonMain/kotlin/app/usefoster/home/data/HomeRepository.kt` already fetches both a recent range and an all-time `checkInHistory` range in `HomeSnapshot`.
+- `home/src/commonMain/kotlin/app/usefoster/home/presentation/HomeViewModel.kt` owns check-in mutations and invalidates/reloads the repository after success; the timeline must use the all-time history field rather than only the recent-range field.
+- Tests are Android local JUnit tests in `androidApp/src/test/kotlin/app/usefoster/home`, with existing focused coverage in `TimelineEventsTest.kt` and `HomeViewModelCheckInTest.kt`.
 
 ### Key Decisions
 - **Pure timeline projection:** Keep date-to-event computation in `TimelineEvents.kt` and slot rendering in `CheckinGrid.kt`; `HomeViewModel` continues to expose repository-backed state. This preserves the existing Kotlin Multiplatform separation and makes cadence/date rules directly unit-testable.
@@ -87,7 +87,7 @@ graph TD
 Use the existing Android local JUnit setup and pure timeline helpers; no new testing framework is required. Run the focused regression suites with:
 
 ```text
-./gradlew :androidApp:testDebugUnitTest --tests app.usenekko.home.TimelineEventsTest --tests app.usenekko.home.HomeViewModelCheckInTest
+./gradlew :androidApp:testDebugUnitTest --tests app.usefoster.home.TimelineEventsTest --tests app.usefoster.home.HomeViewModelCheckInTest
 ```
 
 ### Key Scenarios
@@ -107,9 +107,9 @@ Use the existing Android local JUnit setup and pure timeline helpers; no new tes
 - Check-ins near a local midnight are grouped by the same local date used by the UI.
 
 ### Test Changes
-- Extend `androidApp/src/test/kotlin/app/usenekko/home/TimelineEventsTest.kt` for date-only window advancement, exact occurrence dates, independent completed/missed/pending statuses, future-dot behavior, missed-occurrence non-carry-forward, and next-day history retention; replace expectations that require event-anchored starts.
-- Extend `androidApp/src/test/kotlin/app/usenekko/home/TimelineEventsTest.kt` to assert the initial countdown start date and slot-zero placement.
-- Extend `androidApp/src/test/kotlin/app/usenekko/home/HomeViewModelCheckInTest.kt` to assert that a successful check-in followed by reload retains the prior check-in row and updated next due date.
+- Extend `androidApp/src/test/kotlin/app/usefoster/home/TimelineEventsTest.kt` for date-only window advancement, exact occurrence dates, independent completed/missed/pending statuses, future-dot behavior, missed-occurrence non-carry-forward, and next-day history retention; replace expectations that require event-anchored starts.
+- Extend `androidApp/src/test/kotlin/app/usefoster/home/TimelineEventsTest.kt` to assert the initial countdown start date and slot-zero placement.
+- Extend `androidApp/src/test/kotlin/app/usefoster/home/HomeViewModelCheckInTest.kt` to assert that a successful check-in followed by reload retains the prior check-in row and updated next due date.
 - Keep `FakeContactDataSource.kt` able to distinguish full-history and recent-range responses so the regression proves the grid is not accidentally fed only the recent snapshot.
 
 # Delivery Steps
@@ -117,19 +117,19 @@ Use the existing Android local JUnit setup and pure timeline helpers; no new tes
 ### ✓ Step 1: Stabilize fixed-date timeline projection
 The check-in grid renders a stable 26-date window with occurrences attached to their exact scheduled or completed dates.
 
-- Update `home/src/commonMain/kotlin/app/usenekko/home/presentation/components/TimelineEvents.kt` to project scheduled contacts onto exact dates, merge immutable check-in history, and assign status independently per contact/date occurrence.
+- Update `home/src/commonMain/kotlin/app/usefoster/home/presentation/components/TimelineEvents.kt` to project scheduled contacts onto exact dates, merge immutable check-in history, and assign status independently per contact/date occurrence.
 - Preserve daily, weekly, biweekly, and monthly cadence rules without filling intervening dates, carrying missed occurrences forward, or revealing future avatars early.
 - Respect a newly added contact’s explicit first scheduled date; only contacts first due today use the current-day initial fallback, while future first occurrences remain visually hidden until their date is current.
-- Update `home/src/commonMain/kotlin/app/usenekko/home/presentation/components/CheckinGrid.kt` so slot construction always uses `timelineStartForToday(today)`; only date advancement changes the rolling position.
-- Extend `androidApp/src/test/kotlin/app/usenekko/home/TimelineEventsTest.kt` for fixed anchoring, exact due dates, date-locked missed occurrences, mixed same-day statuses, and future cells.
+- Update `home/src/commonMain/kotlin/app/usefoster/home/presentation/components/CheckinGrid.kt` so slot construction always uses `timelineStartForToday(today)`; only date advancement changes the rolling position.
+- Extend `androidApp/src/test/kotlin/app/usefoster/home/TimelineEventsTest.kt` for fixed anchoring, exact due dates, date-locked missed occurrences, mixed same-day statuses, and future cells.
 
 ### ✓ Step 2: Preserve history through check-in and day changes
 A completed check-in remains visible on its original date after refreshes and after the local calendar advances.
 
-- Ensure `home/src/commonMain/kotlin/app/usenekko/home/presentation/HomeViewModel.kt` exposes `HomeSnapshot.checkInHistory` for the timeline while retaining the existing invalidate and force-refresh flow.
-- Keep `home/src/commonMain/kotlin/app/usenekko/home/data/HomeRepository.kt` full-history loading contract aligned with the calendar’s visible-window projection.
-- Keep `home/src/commonMain/kotlin/app/usenekko/home/HomeScreen.kt` recomputing the pure projection when the local date changes, without introducing date navigation or changing contact-row actions.
-- Update `androidApp/src/test/kotlin/app/usenekko/home/FakeContactDataSource.kt` and `HomeViewModelCheckInTest.kt` to cover successful completion, reload, next-day rendering, date-locked missed occurrences, and separation of recent versus full history.
+- Ensure `home/src/commonMain/kotlin/app/usefoster/home/presentation/HomeViewModel.kt` exposes `HomeSnapshot.checkInHistory` for the timeline while retaining the existing invalidate and force-refresh flow.
+- Keep `home/src/commonMain/kotlin/app/usefoster/home/data/HomeRepository.kt` full-history loading contract aligned with the calendar’s visible-window projection.
+- Keep `home/src/commonMain/kotlin/app/usefoster/home/HomeScreen.kt` recomputing the pure projection when the local date changes, without introducing date navigation or changing contact-row actions.
+- Update `androidApp/src/test/kotlin/app/usefoster/home/FakeContactDataSource.kt` and `HomeViewModelCheckInTest.kt` to cover successful completion, reload, next-day rendering, date-locked missed occurrences, and separation of recent versus full history.
 - Run the focused `:androidApp:testDebugUnitTest` timeline and ViewModel suites to validate the integrated behavior.
 
 ### ✓ Step 3: Start the first-use countdown at slot zero

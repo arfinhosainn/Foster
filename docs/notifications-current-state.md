@@ -1,4 +1,4 @@
-# Nekko Notifications — Current State Report
+# Foster Notifications — Current State Report
 
 > Audit of the notification system as of `ui-fix/app-theme-issue` (Aug 2026).
 > Purpose: baseline for planning changes to the notification experience.
@@ -18,10 +18,10 @@ There is exactly **one type of notification**: a per-contact "time to check in" 
 
 Key files:
 
-- `shared/src/commonMain/kotlin/app/usenekko/shared/notifications/ReminderScheduler.kt` (expect; cap = 64 pending)
+- `shared/src/commonMain/kotlin/app/usefoster/shared/notifications/ReminderScheduler.kt` (expect; cap = 64 pending)
 - `shared/src/androidMain/.../ReminderScheduler.android.kt`, `CheckInReminderReceiver.kt`
 - `shared/src/iosMain/.../ReminderScheduler.ios.kt`
-- `home/src/commonMain/kotlin/app/usenekko/home/domain/ReminderSchedule.kt` (fire-time math)
+- `home/src/commonMain/kotlin/app/usefoster/home/domain/ReminderSchedule.kt` (fire-time math)
 
 ## When reminders are scheduled (3 scenarios)
 

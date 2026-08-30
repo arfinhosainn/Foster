@@ -55,7 +55,7 @@ Create a dedicated `feature/r8-optimization` branch from the current `main` base
 ### Proposed Changes
 1. On `feature/r8-optimization`, update `androidApp/build.gradle.kts` so the `release` build enables `isMinifyEnabled` and `isShrinkResources` and continues using the optimized default configuration plus `proguard-rules.pro`.
 2. Inspect the release shrinker output and dependency consumer rules; classify warnings as missing optional classes, genuine reflective entry points, or safe-to-ignore diagnostics rather than suppressing them wholesale.
-3. Add a minimal rule to `androidApp/proguard-rules.pro` only when a reproducible release failure requires it. Prioritize manifest components and generated serialization classes only if their runtime tests demonstrate stripping; do not keep entire `app.usenekko` or dependency packages.
+3. Add a minimal rule to `androidApp/proguard-rules.pro` only when a reproducible release failure requires it. Prioritize manifest components and generated serialization classes only if their runtime tests demonstrate stripping; do not keep entire `app.usefoster` or dependency packages.
 4. Build and install the minified release, exercise the critical flows, and compare APK/AAB size, mapping, shrinker usage/configuration outputs, resource usage, and startup against the current non-minified release.
 5. Record the final rules and any accepted warnings in the plan or a focused build note so future changes can distinguish required contracts from obsolete workarounds.
 
@@ -89,8 +89,8 @@ graph LR
 ### File Structure
 - Modify `androidApp/build.gradle.kts` for release minification and resource shrinking.
 - Audit `androidApp/proguard-rules.pro`; modify it only for a proven, narrowly scoped keep rule.
-- Inspect `androidApp/src/main/AndroidManifest.xml`, `androidApp/src/main/kotlin/app/usenekko/MainActivity.kt`, and `shared/src/androidMain/kotlin/app/usenekko/shared/notifications/CheckInReminderReceiver.kt` as release entry-point contracts.
-- Inspect `onboarding/src/commonMain/kotlin/app/usenekko/onboarding/data/supabase/dto/OnboardingDtos.kt` and the Supabase data-source implementations when class-retention diagnostics implicate serialization or auth.
+- Inspect `androidApp/src/main/AndroidManifest.xml`, `androidApp/src/main/kotlin/app/usefoster/MainActivity.kt`, and `shared/src/androidMain/kotlin/app/usefoster/shared/notifications/CheckInReminderReceiver.kt` as release entry-point contracts.
+- Inspect `onboarding/src/commonMain/kotlin/app/usefoster/onboarding/data/supabase/dto/OnboardingDtos.kt` and the Supabase data-source implementations when class-retention diagnostics implicate serialization or auth.
 - Update/add Android release validation coverage beside `androidApp/src/test` only where deterministic behavior can be checked without replacing real-device smoke validation.
 
 ### Risks
@@ -108,7 +108,7 @@ graph LR
 
 ### Key Scenarios
 - Launch through `MainActivity` and complete the welcome/onboarding path, including `@Serializable` payload submission and persisted onboarding state.
-- Exercise Supabase authentication and the `app.usenekko://auth-callback` deep link through `handleDeeplinks`.
+- Exercise Supabase authentication and the `app.usefoster://auth-callback` deep link through `handleDeeplinks`.
 - Open Home, navigate to contact/profile/settings flows, and verify icons, Compose resources, and subscription/paywall initialization remain available.
 - Schedule a reminder, terminate the app process, and verify `CheckInReminderReceiver` posts the notification with the expected contact data.
 - Confirm release startup, navigation, sign-out/delete-account behavior, and cold launch after installation.
