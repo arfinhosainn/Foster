@@ -47,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_close
@@ -97,14 +98,14 @@ fun CreateGroupBottomSheet(
             }
         },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.92f) // approximates the near-full-height sheet in the design
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
-                .imePadding(), // pushes Save up to sit just above the keyboard
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.92f) // approximates the near-full-height sheet in the design
+                    .padding(bottom = 24.dp)
+                    .imePadding(), // pushes Save up to sit just above the keyboard
+            ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = stringResource(Res.string.add_create_group),
@@ -162,6 +163,7 @@ fun CreateGroupBottomSheet(
                     .clickable(enabled = isSaveEnabled) { onSave(groupName) }
                     .padding(vertical = 12.dp)
             )
+        }
         }
     }
 

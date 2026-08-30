@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.addnote.AddNoteAction
 import app.usenekko.onboarding.addnote.AddNoteState
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_close
@@ -90,13 +91,13 @@ fun AddNoteBottomSheet(
         },
         modifier = modifier,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .imePadding(),
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+                    .imePadding(),
+            ) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = if (state.editingNoteId == null) "Add Note" else "Edit Note",
@@ -183,6 +184,7 @@ fun AddNoteBottomSheet(
                 onClick = { onAction(AddNoteAction.SaveClicked) },
                 modifier = Modifier.fillMaxWidth().height(58.dp),
             )
+        }
         }
     }
 }

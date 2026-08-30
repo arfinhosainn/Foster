@@ -62,6 +62,11 @@ private const val BarHeight = 68
 private const val IndicatorSize = 54
 private const val CellWidth = 56
 private const val PillInnerPadding = 8 // start/end breathing room inside the pill
+// Rail breathing room: keeps the pill/add-button away from the screen's top and
+// bottom corners on tall displays — without it both hug the edges and the
+// middle gap reads as enormous. Bumped until the add button still sits in the
+// thumb zone but nothing feels pinned to a corner.
+private const val RailVerticalPadding = 44
 
 // Solid navbar background (frosted-glass / Liquid removed).
 // Dark: keep #18181B. Light: white.
@@ -95,7 +100,7 @@ private val Destinations = listOf(
 )
 
 @Composable
-fun GlassBottomNavBar(
+fun SolidBottomNavBar(
     selectedIndex: Int,
     onItemSelected: (Int) -> Unit,
     onAddClick: () -> Unit,
@@ -127,7 +132,7 @@ fun GlassBottomNavBar(
 }
 
 @Composable
-fun GlassNavigationRail(
+fun SolidNavigationRail(
     selectedIndex: Int,
     onItemSelected: (Int) -> Unit,
     onAddClick: () -> Unit,
@@ -137,7 +142,10 @@ fun GlassNavigationRail(
         modifier
             .width(88.dp)
             .fillMaxHeight()
-            .padding(horizontal = 12.dp, vertical = 24.dp),
+            // Keep the add button above the gesture-nav area (the bottom bar
+            // does the same via navigationBarsPadding).
+            .navigationBarsPadding()
+            .padding(horizontal = 12.dp, vertical = RailVerticalPadding.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         NavRailPill(
@@ -358,13 +366,13 @@ private fun SolidIconButton(
 
 @PreviewLightDark
 @Composable
-private fun PreviewGlassBottomBar() = NekkoTheme {
+private fun PreviewSolidNavBar() = NekkoTheme {
     Box(
         Modifier
             .fillMaxSize()
             .background(NekkoTheme.colors.background.b0),
     ) {
-        GlassBottomNavBar(
+        SolidBottomNavBar(
             selectedIndex = 1,
             onItemSelected = {},
             onAddClick = {},

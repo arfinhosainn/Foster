@@ -35,6 +35,7 @@ import app.usenekko.onboarding.domain.OnboardingAuthError
 import app.usenekko.onboarding.domain.OnboardingProfileError
 import app.usenekko.onboarding.domain.toOnboardingAuthError
 import app.usenekko.onboarding.presentation.toUserMessageResource
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
@@ -158,10 +159,11 @@ fun WelcomeScreen(
                 .weight(1f).background(NekkoTheme.colors.background.b0),
             contentAlignment = Alignment.TopCenter
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = modifier.padding(horizontal = 40.dp)
-            ) {
+            AdaptiveSurface {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                 Text(
                     text = stringResource(Res.string.welcome_title),
                     fontSize = 34.sp,
@@ -266,6 +268,7 @@ fun WelcomeScreen(
                     onPrivacyClick = { /* navigate to Privacy screen or open URL */ },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 )
+            }
             }
         }
     }

@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.presentation.rememberNameViewModel
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_logo
@@ -112,29 +113,32 @@ fun NameScreen(
                 )
             },
             bottomBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 30.dp)
-                        .padding(bottom = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    NekkoButton(
-                        text = stringResource(Res.string.action_next),
-                        onClick = { viewModel.onContinueClicked() },
-                        modifier = Modifier.weight(1f),
-                    )
+                AdaptiveSurface {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        NekkoButton(
+                            text = stringResource(Res.string.action_next),
+                            onClick = { viewModel.onContinueClicked() },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             },
             containerColor = NekkoTheme.colors.background.b0
         ) { innerPadding ->
-            Column(
+            AdaptiveSurface(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(innerPadding)
-                    .padding(horizontal = 30.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(innerPadding),
             ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
 
                 Image(
                     painter = painterResource(Res.drawable.ic_logo),
@@ -165,6 +169,7 @@ fun NameScreen(
                 )
 
                 Spacer(Modifier.weight(1f))
+            }
             }
         }
     }

@@ -57,6 +57,7 @@ import app.usenekko.onboarding.components.StepIndicator
 import app.usenekko.designsystem.avatar.ChooseAvatarBottomSheet
 import app.usenekko.designsystem.avatar.ProfilePhotoPicker
 import app.usenekko.onboarding.presentation.rememberContactViewModel
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_back
@@ -148,35 +149,39 @@ fun ContactScreen(
                 )
             },
             bottomBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 30.dp)
-                        .padding(bottom = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    NekkoActionButton(
-                        onClick = { viewModel.onAction(ContactAction.BackClicked) },
-                        leadingIcon = vectorResource(Res.drawable.ic_back),
-                        modifier = Modifier.weight(0.19f),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    NekkoButton(
-                        text = stringResource(Res.string.action_next),
-                        onClick = { viewModel.onAction(ContactAction.NextClicked) },
-                        modifier = Modifier.weight(0.8f),
-                    )
+                AdaptiveSurface {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        NekkoActionButton(
+                            onClick = { viewModel.onAction(ContactAction.BackClicked) },
+                            leadingIcon = vectorResource(Res.drawable.ic_back),
+                            modifier = Modifier.weight(0.19f),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        NekkoButton(
+                            text = stringResource(Res.string.action_next),
+                            onClick = { viewModel.onAction(ContactAction.NextClicked) },
+                            modifier = Modifier.weight(0.8f),
+                        )
+                    }
                 }
             },
             containerColor = NekkoTheme.colors.background.b0
         ) { innerPadding ->
-            Column(
+            AdaptiveSurface(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(innerPadding)
-                    .padding(horizontal = 30.dp)
-                    .verticalScroll(rememberScrollState())
+                    .padding(innerPadding),
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
                 Spacer(Modifier.height(40.dp))
 
                 Column(
@@ -277,6 +282,7 @@ fun ContactScreen(
                 }
 
                 Spacer(Modifier.weight(1f))
+            }
             }
         }
     }

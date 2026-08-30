@@ -54,6 +54,7 @@ import app.usenekko.designsystem.avatar.avatarResources
 import app.usenekko.onboarding.group.components.CreateGroupBottomSheet
 import app.usenekko.onboarding.presentation.LocalOnboardingDraftStore
 import app.usenekko.onboarding.presentation.rememberGroupViewModel
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import io.github.fletchmckee.liquid.liquefiable
 import io.github.fletchmckee.liquid.rememberLiquidState
@@ -140,38 +141,43 @@ fun GroupScreen(
                 )
             },
             bottomBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(NekkoTheme.colors.background.b0)
-                        .padding(horizontal = 30.dp)
-                        .padding(bottom = 24.dp, top = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    NekkoActionButton(
-                        onClick = { viewModel.onBackClicked() },
-                        leadingIcon = vectorResource(Res.drawable.ic_back),
-                        modifier = Modifier.weight(0.19f),
-                    )
+                AdaptiveSurface {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(NekkoTheme.colors.background.b0)
+                            .padding(bottom = 24.dp, top = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        NekkoActionButton(
+                            onClick = { viewModel.onBackClicked() },
+                            leadingIcon = vectorResource(Res.drawable.ic_back),
+                            modifier = Modifier.weight(0.19f),
+                        )
 
-                    Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(12.dp))
 
-                    NekkoButton(
-                        text = stringResource(Res.string.action_next),
-                        onClick = { viewModel.onNextClicked() },
-                        modifier = Modifier.weight(0.8f),
-                    )
+                        NekkoButton(
+                            text = stringResource(Res.string.action_next),
+                            onClick = { viewModel.onNextClicked() },
+                            modifier = Modifier.weight(0.8f),
+                        )
+                    }
                 }
             },
             containerColor = NekkoTheme.colors.background.b0,
         ) { innerPadding ->
-            Column(
+            AdaptiveSurface(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .padding(innerPadding),
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
                 Spacer(Modifier.height(40.dp))
 
                 Text(
@@ -228,6 +234,7 @@ fun GroupScreen(
                 )
 
                 Spacer(Modifier.height(32.dp))
+            }
             }
         }
     }

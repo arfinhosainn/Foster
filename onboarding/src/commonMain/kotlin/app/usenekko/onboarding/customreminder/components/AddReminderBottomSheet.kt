@@ -32,6 +32,7 @@ import app.usenekko.designsystem.buttons.NekkoButton
 import app.usenekko.onboarding.customreminder.CustomReminderAction
 import app.usenekko.onboarding.customreminder.CustomReminderState
 import app.usenekko.onboarding.customreminder.toReminderDate
+import app.usenekko.adaptive.AdaptiveSurface
 import app.usenekko.theme.NekkoTheme
 import nekko.onboarding.generated.resources.Res
 import nekko.onboarding.generated.resources.ic_close
@@ -150,12 +151,12 @@ fun AddReminderBottomSheet(
         },
         modifier = modifier
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-        ) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+            ) {
             // Header
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
@@ -340,6 +341,7 @@ fun AddReminderBottomSheet(
                 onClick = { onAction(CustomReminderAction.SaveReminderClicked) },
                 modifier = Modifier.fillMaxWidth()
             )
+        }
         }
     }
 }
