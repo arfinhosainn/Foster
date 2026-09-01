@@ -379,6 +379,60 @@ fun CheckInTimelineGrid(
         }
     }
 }
+/**
+ * Renders an arbitrary list of chronological slots (e.g. the days of one month)
+ * in [TIMELINE_COLUMNS]-column rows using the exact same cell rendering as
+ * [CheckInTimelineGrid] (avatars, check badges, missed gaps, inactive dots).
+ *
+ * Unlike the home timeline there is no fixed 26-slot layout: rows are simply
+ * filled left-to-right and a partial last row stays left-aligned. There is also
+ * no pending check-in bubble — history is past-oriented.
+ */
+@Composable
+fun CheckInMonthGrid(
+    slots: List<TimelineSlot>,
+    modifier: Modifier = Modifier,
+    colors: TimelineGridColors = timelineGridColors(),
+    horizontalSpacing: Dp = 6.dp,
+    verticalSpacing: Dp = 6.dp,
+    maxCellSize: Dp? = null,
+    onSlotClick: ((TimelineSlot) -> Unit)? = null,
+) {
+    if (slots.isEmpty()) return
+
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val effectiveHorizontalSpacing =
+            horizontalSpacing.coerceAtLeast(MIN_TIMELINE_HORIZONTAL_SPACING)
+        val effectiveVerticalSpacing = timelineRowSpacing(verticalSpacing)
+        val cellSize = timelineCellSizeForWidth(maxWidth, effectiveHorizontalSpacing, maxCellSize)
+        val gridWidth = cellSize * TIMELINE_COLUMNS +
+                effectiveHorizontalSpacing * (TIMELINE_COLUMNS - 1)
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(effectiveVerticalSpacing),
+        ) {
+            slots.chunked(TIMELINE_COLUMNS).forEach { rowSlots ->
+                Row(
+                    modifier = Modifier.size(width = gridWidth, height = cellSize),
+                    horizontalArrangement = Arrangement.spacedBy(effectiveHorizontalSpacing),
+                ) {
+                    rowSlots.forEach { slot ->
+                        Box(
+                            modifier = Modifier
+                                .size(cellSize)
+                                .zIndex(if (slot.avatarCount > 0) 2f else 0f),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            TimelineCell(slot, colors, animateBubble = false, onSlotClick, cellSize)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun TimelineCell(
