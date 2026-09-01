@@ -45,8 +45,8 @@ fun FosterActionButton(
     minWidth: Dp = 56.dp, // floor so icon-only stays a pill, never a perfect circle
     textStyle: TextStyle = FosterTheme.typography.heading4Semibold,
     contentPadding: PaddingValues = PaddingValues(
-        horizontal = if (!text.isNullOrBlank()) 24.dp else 18.dp,
-        vertical = 14.dp,
+        horizontal = if (!text.isNullOrBlank()) 24.dp else 22.dp,
+        vertical = 16.dp,
     ),
 ) {
     val shape = RoundedCornerShape(50)

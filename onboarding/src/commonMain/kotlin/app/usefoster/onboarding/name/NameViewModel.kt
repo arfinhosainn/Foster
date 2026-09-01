@@ -12,9 +12,13 @@ import kotlinx.coroutines.launch
 
 class NameViewModel(
     private val draftStore: OnboardingDraftStore,
+    private val validateName: ValidateName = ValidateName(),
 ) : ViewModel() {
     private val _name = MutableStateFlow(draftStore.draft.value.name)
     val name = _name.asStateFlow()
+
+    private val _showNameError = MutableStateFlow(false)
+    val showNameError = _showNameError.asStateFlow()
 
     private val _events = Channel<NameEvent>()
     val events = _events.receiveAsFlow()
@@ -25,16 +29,23 @@ class NameViewModel(
 
     fun onNameChanged(value: String) {
         _name.value = value
+        // Error clears as soon as the user starts typing again; it only
+        // re-appears on a failed Continue attempt.
+        _showNameError.value = value.isBlank() && _showNameError.value
         draftStore.update {
             it.copy(name = value, currentStep = OnboardingStep.Name)
         }
     }
 
     fun onContinueClicked() {
-        if (_name.value.isBlank()) {
-            sendEvent(NameEvent.NameRequired)
+        if (!validateName.validate(_name.value)) {
+            // Inline validation: mark the field, no snackbar. The Continue
+            // button is disabled while the name is blank — this covers the
+            // too-short / too-long cases via keyboard "Done".
+            _showNameError.value = true
             return
         }
+        _showNameError.value = false
         draftStore.update { it.copy(currentStep = OnboardingStep.Contact) }
         sendEvent(NameEvent.NavigateToNext)
     }

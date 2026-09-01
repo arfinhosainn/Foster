@@ -93,10 +93,9 @@ fun HistoryContent(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                         } else {
-                            session.topics.forEachIndexed { index, topic ->
+                            session.topics.forEach { topic ->
                                 TopicCard(
                                     topic = topic,
-                                    index = index,
                                     onSendMessage = onSendMessage?.let { send -> { send(topic) } },
                                 )
                             }

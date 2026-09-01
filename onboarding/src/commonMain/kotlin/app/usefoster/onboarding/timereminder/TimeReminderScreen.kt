@@ -185,6 +185,9 @@ private fun TimeReminderScreenContent(
                 onValueChange = { newTotal ->
                     onAction(TimeReminderAction.ScrollToMinute(newTotal))
                 },
+                // AdaptiveSurface above already applies horizontal padding;
+                // keep the dial full-width inside it to avoid double padding.
+                horizontalPadding = 0.dp,
             )
 
             Spacer(Modifier.height(24.dp))

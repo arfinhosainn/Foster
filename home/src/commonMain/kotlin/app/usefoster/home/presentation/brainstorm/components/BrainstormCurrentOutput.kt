@@ -75,10 +75,9 @@ fun CurrentOutputContent(
         } else {
 
             Spacer(modifier = Modifier.height(12.dp))
-            topics.forEachIndexed { index, topic ->
+            topics.forEach { topic ->
                 TopicCard(
                     topic = topic,
-                    index = index,
                     onSendMessage = onSendMessage?.let { send -> { send(topic) } },
                 )
             }

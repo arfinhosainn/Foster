@@ -2,7 +2,6 @@ package app.usefoster.home.presentation.contactprofile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,8 +21,14 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import app.usefoster.designsystem.buttons.FosterActionButton
 import app.usefoster.home.domain.Note
 import app.usefoster.theme.FosterTheme
+import app.usefoster.theme.LocalFosterIsDark
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -78,19 +84,36 @@ fun NotesSection(
             modifier = modifier
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             noteGridRows(notes).forEach { rowNotes ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     rowNotes.forEach { note ->
-                        NoteCard(
-                            note = note,
-                            onDelete = { onDeleteNote(note.id) },
-                            modifier = Modifier.weight(1f),
-                        )
+                        key(note.id) {
+                            val transitionState = remember {
+                                MutableTransitionState(false).apply {
+                                    targetState = true
+                                }
+                            }
+
+                            AnimatedVisibility(
+                                visibleState = transitionState,
+                                enter = fadeIn(animationSpec = tween(300)) +
+                                    scaleIn(
+                                        initialScale = 0.92f,
+                                        animationSpec = tween(300),
+                                    ),
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                NoteCard(
+                                    note = note,
+                                    onDelete = { onDeleteNote(note.id) },
+                                )
+                            }
+                        }
                     }
                     if (rowNotes.size == 1) {
                         AddNoteCard(
@@ -257,8 +280,8 @@ private fun NotesEmptyState(
     ) {
         Image(
             painter = painterResource(
-                if (isSystemInDarkTheme()) {
-                    Res.drawable.ic_flower_light
+                if (LocalFosterIsDark.current) {
+                    Res.drawable.ic_flower_night
                 } else {
                     Res.drawable.ic_flower_light
                 },

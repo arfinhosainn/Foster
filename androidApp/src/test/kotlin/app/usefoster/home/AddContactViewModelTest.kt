@@ -217,7 +217,7 @@ class AddContactViewModelTest {
 
             assertEquals(0, viewModel.state.value.currentStep)
             assertEquals("", viewModel.state.value.name)
-            assertNull(viewModel.state.value.selectedAvatarIndex)
+            assertEquals(0, viewModel.state.value.selectedAvatarIndex)
             assertNull(viewModel.state.value.selectedGroupId)
             assertEquals("weekly", viewModel.state.value.selectedFrequency)
             assertFalse(viewModel.state.value.isEditing)

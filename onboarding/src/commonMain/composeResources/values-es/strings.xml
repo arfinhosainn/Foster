@@ -57,6 +57,7 @@
     <string name="error_draft_clear">Tu configuración está completa, pero no pudimos borrar la copia local</string>
     <string name="error_draft_corrupt">No pudimos restaurar tu configuración guardada. Puedes empezar de nuevo</string>
     <string name="error_name_required">Ingresa tu nombre para continuar</string>
+    <string name="error_name_length">El nombre debe tener entre 4 y 50 caracteres.</string>
     <string name="error_contact_name_required">Ingresa el nombre de un contacto para continuar</string>
     <string name="error_profile_load_title">No pudimos cargar tu perfil</string>
     <string name="error_subscription_unavailable">Las suscripciones no están disponibles temporalmente. Inténtalo más tarde.</string>

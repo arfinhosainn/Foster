@@ -36,8 +36,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import app.usefoster.designsystem.snackbar.FosterSnackbarHost
+import app.usefoster.designsystem.snackbar.FosterSnackbarStyle
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -488,8 +489,9 @@ private fun OnboardingAppContent(
             )
         }
 
-        SnackbarHost(
+        FosterSnackbarHost(
             hostState = draftStorageSnackbarHostState,
+            style = FosterSnackbarStyle.Error,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }

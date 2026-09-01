@@ -7,4 +7,6 @@ data class ContactState(
     val selectedAvatarIndex: Int? = null,
     val importedPhoto: ImageBitmap? = null,
     val showAvatarPicker: Boolean = false,
+    /** Inline "name is required" error, shown under the name field. */
+    val showNameError: Boolean = false,
 )

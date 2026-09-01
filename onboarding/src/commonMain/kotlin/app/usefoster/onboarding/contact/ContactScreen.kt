@@ -23,8 +23,9 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import app.usefoster.designsystem.snackbar.FosterSnackbarHost
+import app.usefoster.designsystem.snackbar.FosterSnackbarStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -103,9 +104,6 @@ fun ContactScreen(
                 ContactEvent.NavigateToNext -> onNavigateToNext()
                 ContactEvent.NavigateBack -> onBack()
                 ContactEvent.NavigateSkip -> onSkip()
-                ContactEvent.NameRequired -> snackbarHostState.showSnackbar(
-                    message = contactNameRequiredMessage,
-                )
                 ContactEvent.ImportFailed -> snackbarHostState.showSnackbar(
                     message = contactImportFailedMessage,
                 )
@@ -130,7 +128,12 @@ fun ContactScreen(
             modifier = Modifier
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .then(blurModifier),
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            snackbarHost = {
+                FosterSnackbarHost(
+                    hostState = snackbarHostState,
+                    style = FosterSnackbarStyle.Error,
+                )
+            },
             topBar = {
                 CenterAlignedTopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -166,6 +169,9 @@ fun ContactScreen(
                             text = stringResource(Res.string.action_next),
                             onClick = { viewModel.onAction(ContactAction.NextClicked) },
                             modifier = Modifier.weight(0.8f),
+                            // Disabled until a name exists — prevents the error
+                            // instead of reacting to it.
+                            enabled = state.contactName.isNotBlank(),
                         )
                     }
                 }
@@ -257,6 +263,17 @@ fun ContactScreen(
                             ),
                         )
                     }
+                }
+
+                if (state.showNameError) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = contactNameRequiredMessage,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = FosterTheme.colors.red.default,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
 
                 Spacer(Modifier.height(32.dp))

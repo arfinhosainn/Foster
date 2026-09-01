@@ -10,6 +10,7 @@ import app.usefoster.home.presentation.components.contactsForGroup
 import app.usefoster.home.presentation.components.groupMemberCount
 import app.usefoster.shared.contacts.ImportedContact
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,8 +18,10 @@ import org.junit.Test
 class AddContactStateTest {
 
     @Test
-    fun stepZeroCanAdvanceBeforeContactDetailsAreEntered() {
-        assertTrue(AddContactState().canAdvanceFromStep)
+    fun stepZeroRequiresAContactNameBeforeAdvancing() {
+        assertFalse(AddContactState().canAdvanceFromStep)
+        assertFalse(AddContactState(name = "  ").canAdvanceFromStep)
+        assertTrue(AddContactState(name = "Alex").canAdvanceFromStep)
     }
 
     @Test
