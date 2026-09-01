@@ -57,6 +57,7 @@
     <string name="error_draft_clear">Your setup is complete, but we could not clear its local copy</string>
     <string name="error_draft_corrupt">We could not restore your saved setup. You can start again</string>
     <string name="error_name_required">Please enter your name to continue</string>
+    <string name="error_name_length">Name must be between 4 and 50 characters.</string>
     <string name="error_contact_name_required">Please enter a contact name to continue</string>
     <string name="error_profile_load_title">We couldn&apos;t load your profile</string>
     <string name="error_subscription_unavailable">Subscriptions are temporarily unavailable. Please try again later.</string>

@@ -121,6 +121,17 @@ class AddContactViewModel(
         }
     }
 
+    /**
+     * Rewinds the wizard back to its first step. Called when the edit sheet is
+     * (re)opened so the contact always starts the flow on step 0, even if a
+     * previous session of the sheet was dismissed mid-way. Draft edits are kept.
+     */
+    fun resetEditStep() {
+        _state.update { state ->
+            if (state.isEditing && !state.isSubmitting) state.copy(currentStep = 0, error = null) else state
+        }
+    }
+
     fun resetDraft() {
         _state.update { current ->
             // Keep the group catalog so step 1 stays populated on the next run;

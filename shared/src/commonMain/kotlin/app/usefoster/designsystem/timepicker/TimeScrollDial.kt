@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.designsystem.sideShine
@@ -63,6 +64,7 @@ fun TimeScrollDial(
     totalMinutes: Int,
     onValueChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    horizontalPadding: Dp = 30.dp,
 ) {
     val safeInitialMinute = totalMinutes.coerceIn(0, TOTAL_MINUTES - 1)
     val density = LocalDensity.current
@@ -160,7 +162,7 @@ fun TimeScrollDial(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 30.dp)
+                .padding(horizontal = horizontalPadding)
                 .clip(dialShape)
                 .drawWithContent {
                     drawRect(surfaceColor)

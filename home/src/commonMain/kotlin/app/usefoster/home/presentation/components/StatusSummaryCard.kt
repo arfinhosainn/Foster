@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -68,7 +69,7 @@ fun StatusSummaryCard(
                     painter = painterResource(gradientOrbResource),
                     contentDescription = null,
                     modifier = Modifier
-                        .blur(radius = 30.dp, edgeTreatment = BlurredEdgeTreatment.Unbounded)
+                        .blur(radius = 20.dp),
                 )
             }
 
@@ -97,8 +98,8 @@ fun StatusSummaryCard(
                 // Divider
                 Box(
                     modifier = Modifier
-                        .width(0.8.dp)
-                        .height(80.dp)
+                        .width(1.dp)
+                        .height(100.dp)
                         .background(FosterTheme.colors.fill.quaternary)
                 )
 

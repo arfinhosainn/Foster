@@ -247,7 +247,7 @@ fun AddContactScreen(
 }
 
 @Composable
-private fun AddContactSheetContent(
+internal fun AddContactSheetContent(
     state: AddContactState,
     isEditing: Boolean,
     onNameChanged: (String) -> Unit,
@@ -262,6 +262,7 @@ private fun AddContactSheetContent(
     onSubmit: () -> Unit,
     onImportContact: () -> Unit,
     modifier: Modifier = Modifier,
+    submitLabelRes: StringResource = Res.string.add_save_contact,
 ) {
     val stepMeta = steps[state.currentStep].let {
         if (isEditing && state.currentStep == 0) {
@@ -350,6 +351,7 @@ private fun AddContactSheetContent(
             canAdvance = state.canAdvanceFromStep,
             canSubmit = state.canSubmit,
             isSubmitting = state.isSubmitting,
+            submitLabelRes = submitLabelRes,
             onBackStep = onBackStep,
             onNextStep = onNextStep,
             onSubmit = onSubmit,
@@ -366,6 +368,7 @@ private fun FooterRow(
     canAdvance: Boolean,
     canSubmit: Boolean,
     isSubmitting: Boolean,
+    submitLabelRes: StringResource,
     onBackStep: () -> Unit,
     onNextStep: () -> Unit,
     onSubmit: () -> Unit,
@@ -393,7 +396,7 @@ private fun FooterRow(
             )
         } else {
             FosterButton(
-                text = stringResource(Res.string.add_save_contact),
+                text = stringResource(submitLabelRes),
                 onClick = onSubmit,
                 modifier = Modifier.weight(1f).height(58.dp),
                 enabled = canSubmit,

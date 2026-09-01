@@ -69,6 +69,7 @@ import foster.onboarding.generated.resources.add_wanna_create_group
 import foster.onboarding.generated.resources.cd_add_members
 import foster.onboarding.generated.resources.cd_group_member_avatar
 import foster.onboarding.generated.resources.group_add_user_subtitle
+import foster.onboarding.generated.resources.ic_plus
 import org.jetbrains.compose.resources.stringResource
 
 private const val GroupColumns = 2
@@ -255,7 +256,7 @@ private fun GroupGrid(
     onGroupClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) = Column(
-    modifier = modifier.fillMaxWidth().padding(horizontal = 25.dp),
+    modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(28.dp),
 ) {
     groups.chunked(GroupColumns).forEach { rowGroups ->
@@ -343,9 +344,9 @@ private fun GroupCard(
     ) {
         if (memberAvatarIds.isEmpty()) {
             Icon(
-                imageVector = Icons.Filled.Add,
+                imageVector = vectorResource(Res.drawable.ic_plus),
                 contentDescription = stringResource(Res.string.cd_add_members),
-                tint = FosterTheme.colors.text.quaternary,
+                tint = FosterTheme.colors.gray.secondary,
                 modifier = Modifier.size(40.dp),
             )
         } else {

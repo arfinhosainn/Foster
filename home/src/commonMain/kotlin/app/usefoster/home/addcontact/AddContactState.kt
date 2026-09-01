@@ -13,8 +13,11 @@ data class AddContactState(
     val editingContactId: String? = null,
     val name: String = "",
     val initialName: String = "",
-    val selectedAvatarIndex: Int? = null,
-    val initialAvatarIndex: Int? = null,
+    // A default avatar (index 0) is always pre-selected so the user
+    // can just continue without touching the picker; they only open it
+    // when they want a different avatar известия.
+    val selectedAvatarIndex: Int? = 0,
+    val initialAvatarIndex: Int? = 0,
     val importedPhoto: ImageBitmap? = null,
     val importedPhoneNumber: String? = null,
     val groups: List<Group> = emptyList(),
@@ -55,7 +58,9 @@ data class AddContactState(
         get() = isEditing && hasChanges && !isSubmitting
 
     val canAdvanceFromStep: Boolean
-        get() = true
+        // Step 0 (name/avatar) requires a name — typed or imported —
+        // before the user can proceed. Other steps are always advanceable.
+        get() = currentStep > 0 || name.isNotBlank()
 
     val canSubmit: Boolean
         get() = !isSubmitting

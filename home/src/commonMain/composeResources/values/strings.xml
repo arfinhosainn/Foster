@@ -8,6 +8,7 @@
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
     <string name="action_done">Done</string>
+    <string name="action_finish">Finish</string>
     <string name="action_skip">Skip</string>
     <string name="action_ok">OK</string>
     <string name="action_create">Create</string>

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -41,7 +42,9 @@ import app.usefoster.home.domain.BrainstormTopic
 import app.usefoster.home.presentation.brainstorm.BrainstormTab
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.ic_point
 import foster.home.generated.resources.brainstorm_send_message_cd
+import org.jetbrains.compose.resources.vectorResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -130,7 +133,6 @@ fun BrainstormTabs(
 @Composable
 fun TopicCard(
     topic: BrainstormTopic,
-    index: Int,
     onSendMessage: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -144,11 +146,19 @@ fun TopicCard(
                 .background(FosterTheme.colors.fill.tertiary)
                 .padding(20.dp),
         ) {
-            Text(
-                text = "${index + 1}.  ${topic.title}",
-                style = FosterTheme.typography.heading4,
-                color = FosterTheme.colors.text.primary,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    imageVector = vectorResource(Res.drawable.ic_point),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = topic.title,
+                    style = FosterTheme.typography.heading4,
+                    color = FosterTheme.colors.text.primary,
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = topic.description.orEmpty(),

@@ -1,7 +1,9 @@
 package app.usefoster.onboarding.name
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,8 +24,6 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -56,7 +56,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import foster.onboarding.generated.resources.action_next
 import foster.onboarding.generated.resources.cd_logo
-import foster.onboarding.generated.resources.error_name_required
+import foster.onboarding.generated.resources.error_name_length
+import foster.onboarding.generated.resources.logo_curve
 import foster.onboarding.generated.resources.name_full_name
 import foster.onboarding.generated.resources.name_what_call
 import org.jetbrains.compose.resources.stringResource
@@ -70,8 +71,8 @@ fun NameScreen(
 ) {
     val viewModel = rememberNameViewModel()
     val name by viewModel.name.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val nameRequiredMessage = stringResource(Res.string.error_name_required)
+    val showNameError by viewModel.showNameError.collectAsStateWithLifecycle()
+    val nameLengthMessage = stringResource(Res.string.error_name_length)
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -79,9 +80,6 @@ fun NameScreen(
                 NameEvent.NavigateToNext -> onNavigateToNext()
                 NameEvent.NavigateBack -> onBack()
                 NameEvent.NavigateSkip -> onSkip()
-                NameEvent.NameRequired -> snackbarHostState.showSnackbar(
-                    message = nameRequiredMessage,
-                )
             }
         }
     }
@@ -96,7 +94,6 @@ fun NameScreen(
 
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -124,6 +121,9 @@ fun NameScreen(
                             text = stringResource(Res.string.action_next),
                             onClick = { viewModel.onContinueClicked() },
                             modifier = Modifier.weight(1f),
+                            // Disabled until a name exists — prevents the error
+                            // instead of reacting to it.
+                            enabled = name.isNotBlank(),
                         )
                     }
                 }
@@ -141,10 +141,11 @@ fun NameScreen(
                 ) {
 
                 Image(
-                    painter = painterResource(Res.drawable.ic_logo),
+                    painter = painterResource(Res.drawable.logo_curve),
                     contentDescription = stringResource(Res.string.cd_logo),
+                    modifier = modifier.size(75.dp)
                 )
-                Spacer(Modifier.height(0.dp))
+                Spacer(Modifier.height(50.dp))
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -164,9 +165,25 @@ fun NameScreen(
 
                 NameField(
                     value = name,
+                    isError = showNameError,
                     onValueChange = { viewModel.onNameChanged(it) },
                     onDone = { viewModel.onContinueClicked() },
                 )
+
+                // Inline validation message — fades in/out with the error state.
+                AnimatedVisibility(visible = showNameError) {
+                    Column {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = nameLengthMessage,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = FosterTheme.colors.red.default,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
 
                 Spacer(Modifier.weight(1f))
             }
@@ -179,6 +196,7 @@ fun NameScreen(
 private fun NameField(
     value: String,
     onValueChange: (String) -> Unit,
+    isError: Boolean = false,
     onDone: () -> Unit = {},
 ) {
     TextField(
@@ -194,7 +212,18 @@ private fun NameField(
         },
         modifier = Modifier
             .fillMaxWidth()
-            .height(62.dp),
+            .height(62.dp)
+            .then(
+                if (isError) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = FosterTheme.colors.red.default,
+                        shape = RoundedCornerShape(25.dp),
+                    )
+                } else {
+                    Modifier
+                },
+            ),
         shape = RoundedCornerShape(25.dp),
         singleLine = true,
         textStyle = TextStyle(

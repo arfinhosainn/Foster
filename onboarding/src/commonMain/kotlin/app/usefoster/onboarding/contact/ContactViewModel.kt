@@ -17,7 +17,10 @@ class ContactViewModel(
     private val _state = MutableStateFlow(
         ContactState(
             contactName = draftStore.draft.value.contactName,
-            selectedAvatarIndex = draftStore.draft.value.selectedAvatarId?.toIntOrNull(),
+            // A default avatar (index 0) is always pre-selected so the user
+            // can just continue without touching the picker; they only need
+            // to open it when they want a different avatar.
+            selectedAvatarIndex = draftStore.draft.value.selectedAvatarId?.toIntOrNull() ?: 0,
         )
     )
     val state = _state.asStateFlow()
@@ -32,7 +35,14 @@ class ContactViewModel(
     fun onAction(action: ContactAction) {
         when (action) {
             is ContactAction.ContactNameChanged -> {
-                _state.update { it.copy(contactName = action.value) }
+                _state.update {
+                    it.copy(
+                        contactName = action.value,
+                        // Error clears as soon as the user starts typing again;
+                        // it only re-appears on a failed Next attempt.
+                        showNameError = action.value.isBlank() && it.showNameError,
+                    )
+                }
                 draftStore.update {
                     it.copy(
                         contactName = action.value,
@@ -62,6 +72,7 @@ class ContactViewModel(
                         contactName = action.contact.name,
                         selectedAvatarIndex = if (action.contact.photo != null) null else it.selectedAvatarIndex,
                         importedPhoto = action.contact.photo,
+                        showNameError = action.contact.name.isBlank(),
                     )
                 }
                 draftStore.update {
@@ -76,15 +87,33 @@ class ContactViewModel(
             ContactAction.ImportFailed -> sendEvent(ContactEvent.ImportFailed)
             is ContactAction.NextClicked -> {
                 if (_state.value.contactName.isBlank()) {
-                    sendEvent(ContactEvent.NameRequired)
+                    // Inline validation: mark the field, no snackbar. The Next
+                    // button is disabled anyway — this covers keyboard "Done".
+                    _state.update { it.copy(showNameError = true) }
                 } else {
-                    draftStore.update { it.copy(currentStep = OnboardingStep.Group) }
+                    _state.update { it.copy(showNameError = false) }
+                    draftStore.update {
+                        it.copy(
+                            currentStep = OnboardingStep.Group,
+                            // Persist the (possibly default) avatar selection so
+                            // continuing without touching the picker still uses a
+                            // real avatar. Imported photos keep a null avatar id.
+                            selectedAvatarId = _state.value.selectedAvatarIndex?.toString()
+                                ?: it.selectedAvatarId,
+                        )
+                    }
                     sendEvent(ContactEvent.NavigateToNext)
                 }
             }
             is ContactAction.BackClicked -> sendEvent(ContactEvent.NavigateBack)
             is ContactAction.SkipClicked -> {
-                draftStore.update { it.copy(currentStep = OnboardingStep.Group) }
+                draftStore.update {
+                    it.copy(
+                        currentStep = OnboardingStep.Group,
+                        selectedAvatarId = _state.value.selectedAvatarIndex?.toString()
+                            ?: it.selectedAvatarId,
+                    )
+                }
                 sendEvent(ContactEvent.NavigateSkip)
             }
         }

@@ -25,8 +25,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import app.usefoster.designsystem.snackbar.FosterSnackbarHost
+import app.usefoster.designsystem.snackbar.FosterSnackbarStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -120,7 +121,12 @@ private fun AddNoteScreenContent(
         val blurModifier = if (state.isBottomSheetVisible) Modifier.blur(20.dp) else Modifier
 
         Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = {
+                FosterSnackbarHost(
+                    hostState = snackbarHostState,
+                    style = FosterSnackbarStyle.Error,
+                )
+            },
             modifier = Modifier
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .then(blurModifier),

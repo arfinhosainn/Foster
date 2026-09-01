@@ -25,8 +25,9 @@ import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import app.usefoster.designsystem.snackbar.FosterSnackbarHost
+import app.usefoster.designsystem.snackbar.FosterSnackbarStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -350,8 +351,9 @@ fun DiscountPaywallScreen(
             )
         }
 
-        SnackbarHost(
+        FosterSnackbarHost(
             hostState = snackbarHostState,
+            style = FosterSnackbarStyle.Error,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }

@@ -1,53 +1,53 @@
 package app.usefoster.home.addcontact
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.usefoster.adaptive.AdaptiveSurface
-import app.usefoster.designsystem.buttons.FosterButton
 import app.usefoster.shared.contacts.rememberContactPicker
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.action_finish
+import foster.home.generated.resources.action_save
 import foster.home.generated.resources.cd_close
-import foster.home.generated.resources.edit_contact_title
-import foster.home.generated.resources.edit_discard_body
-import foster.home.generated.resources.edit_discard_title
-import foster.home.generated.resources.edit_keep_editing
-import foster.home.generated.resources.edit_save_changes
-import foster.home.generated.resources.edit_subtitle
+import foster.home.generated.resources.ic_close
 import org.jetbrains.compose.resources.stringResource
-import foster.home.generated.resources.edit_discard_confirm
+import org.jetbrains.compose.resources.vectorResource
 
+/**
+ * Edit-contact sheet — the same wizard sheet used by the add-contact flow
+ * ([AddContactSheetContent]), opened from the pen icon on the contact profile
+ * screen.
+ *
+ * Differences from the add flow are intentionally minimal:
+ *  - the corner control morphs: plain ✕ when there is nothing to save, plain
+ *    "Save" text once the user has edited something — a bail-and-save that
+ *    works from any step, and a subtle "unsaved edits" indicator;
+ *  - the last-step footer button reads "Finish";
+ *  - closing the sheet keeps the draft state, so re-opening resumes exactly
+ *    where the user left off (state is only dropped when they leave the
+ *    contact profile screen, which destroys the view model).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditContactSheet(
@@ -57,13 +57,15 @@ fun EditContactSheet(
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var showDiscardDialog by remember { mutableStateOf(false) }
-    val requestDismiss = {
-        if (state.hasChanges && !state.isSubmitting) {
-            showDiscardDialog = true
+    // Corner Save and the last-step Finish button: persist what changed and
+    // close. With nothing changed, they close without writing.
+    val finishEditing = {
+        if (state.hasChanges && state.canSubmit) {
+            viewModel.submit()
         } else if (!state.isSubmitting) {
             onDismiss()
         }
+        Unit
     }
     val launchContactPicker = rememberContactPicker(
         onContactSelected = viewModel::onContactImported,
@@ -73,115 +75,78 @@ fun EditContactSheet(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                AddContactEvent.Saved -> onSaved()
+                AddContactEvent.Saved -> {
+                    // Fresh edit session next time the sheet opens.
+                    viewModel.resetEditStep()
+                    onSaved()
+                }
                 is AddContactEvent.ShowPaywall -> Unit
             }
         }
     }
 
     ModalBottomSheet(
-        onDismissRequest = requestDismiss,
+        onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = FosterTheme.colors.background.b0,
         shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = FosterTheme.colors.gray.quaternary) },
-        modifier = modifier,
-    ) {
-        AdaptiveSurface {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .imePadding()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 28.dp),
-            ) {
+        dragHandle = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BottomSheetDefaults.DragHandle(
+                    color = FosterTheme.colors.gray.quaternary,
+                    modifier = Modifier.align(Alignment.Center),
+                )
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 18.dp, top = 10.dp)
+                        .wrapContentSize()
+                        .clip(CircleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            enabled = !state.isSubmitting,
+                            onClick = if (state.hasChanges) finishEditing else onDismiss,
+                        )
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = stringResource(Res.string.edit_contact_title),
-                        style = FosterTheme.typography.heading2,
-                        fontWeight = FontWeight.SemiBold,
-                        color = FosterTheme.colors.text.primary,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    IconButton(
-                        onClick = requestDismiss,
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                    ) {
+                    if (state.hasChanges) {
+                        Text(
+                            text = stringResource(Res.string.action_save),
+                            style = FosterTheme.typography.heading4Semibold,
+                            color = FosterTheme.colors.text.primary,
+                        )
+                    } else {
                         Icon(
-                            imageVector = Icons.Filled.Close,
+                            imageVector = vectorResource(Res.drawable.ic_close),
                             contentDescription = stringResource(Res.string.cd_close),
                             tint = FosterTheme.colors.text.primary,
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }
-
-                Text(
-                    text = stringResource(Res.string.edit_subtitle),
-                    style = FosterTheme.typography.bodyMedium,
-                    color = FosterTheme.colors.text.secondary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Spacer(Modifier.height(28.dp))
-                EditSectionTitle("Basic details")
-                NameAndAvatarStep(
-                    state = state,
-                    onNameChanged = viewModel::onNameChanged,
-                    onAvatarSelected = viewModel::onAvatarSelected,
-                    onImportContact = launchContactPicker,
-                )
-
-                Spacer(Modifier.height(28.dp))
-                EditSectionTitle("Relationship group")
-                GroupStep(
-                    groups = state.groups,
-                    contacts = state.contacts,
-                    memberships = state.memberships,
-                    groupsLoading = state.groupsLoading,
-                    selectedGroupId = state.selectedGroupId,
-                    pendingAvatarColor = AddContactViewModel.colorHexes[state.selectedAvatarIndex ?: 0],
-                    onGroupSelected = viewModel::onGroupSelected,
-                    onCreateGroupClicked = viewModel::onCreateGroupClicked,
-                )
-
-                Spacer(Modifier.height(28.dp))
-                EditSectionTitle("Check-in schedule")
-                FrequencyStep(
-                    state = state,
-                    onFrequencySelected = viewModel::onFrequencySelected,
-                )
-                Spacer(Modifier.height(24.dp))
-                ReminderTimeStep(
-                    state = state,
-                    onTimeSelected = viewModel::onTimeSelected,
-                    onTimeDialChanged = viewModel::onTimeDialChanged,
-                )
-
-                state.error?.let { error ->
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(error),
-                        fontSize = 14.sp,
-                        color = FosterTheme.colors.red.default,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                Spacer(Modifier.height(28.dp))
-                FosterButton(
-                    text = stringResource(Res.string.edit_save_changes),
-                    onClick = viewModel::submit,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = state.canSaveChanges,
-                    loading = state.isSubmitting,
-                )
             }
+        },
+        modifier = modifier,
+    ) {
+        AdaptiveSurface {
+            AddContactSheetContent(
+                state = state,
+                isEditing = true,
+                onNameChanged = viewModel::onNameChanged,
+                onAvatarSelected = viewModel::onAvatarSelected,
+                onGroupSelected = viewModel::onGroupSelected,
+                onCreateGroupClicked = viewModel::onCreateGroupClicked,
+                onFrequencySelected = viewModel::onFrequencySelected,
+                onTimeSelected = viewModel::onTimeSelected,
+                onTimeDialChanged = viewModel::onTimeDialChanged,
+                onBackStep = viewModel::onBackStep,
+                onNextStep = viewModel::onNextStep,
+                onSubmit = finishEditing,
+                onImportContact = launchContactPicker,
+                submitLabelRes = Res.string.action_finish,
+            )
         }
     }
 
@@ -192,37 +157,4 @@ fun EditContactSheet(
             onSave = viewModel::onSaveGroup,
         )
     }
-
-    if (showDiscardDialog) {
-        AlertDialog(
-            onDismissRequest = { showDiscardDialog = false },
-            title = { Text(stringResource(Res.string.edit_discard_title)) },
-            text = { Text(stringResource(Res.string.edit_discard_body)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDiscardDialog = false
-                        onDismiss()
-                    },
-                ) {
-                    Text(stringResource(Res.string.edit_discard_confirm), color = FosterTheme.colors.red.default)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDiscardDialog = false }) {
-                    Text(stringResource(Res.string.edit_keep_editing))
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun EditSectionTitle(text: String) {
-    Text(
-        text = text,
-        style = FosterTheme.typography.heading4Semibold,
-        color = FosterTheme.colors.text.primary,
-        modifier = Modifier.padding(bottom = 14.dp),
-    )
 }
