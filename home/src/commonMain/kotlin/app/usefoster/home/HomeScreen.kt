@@ -161,6 +161,7 @@ fun HomeScreen(
     onContactClick: (Contact) -> Unit,
     onBrainstormClick: (String) -> Unit = {},
     onCheckInsClick: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onShowPaywall: () -> Unit = {},
     onShowDiscountPaywall: () -> Unit = {},
@@ -322,7 +323,9 @@ fun HomeScreen(
                         upToDateCount = state.upToDateCount,
                         outstandingBgResource = Res.drawable.ic_globe,
                         upToDateBgResource = Res.drawable.ic_fire,
-                        gradientOrbResource = Res.drawable.img_gradientss
+                        gradientOrbResource = Res.drawable.img_gradientss,
+                        onOutstandingClick = onOpenHistory,
+                        onUpToDateClick = onOpenHistory,
                     )
 
                     state.checkInError?.let {

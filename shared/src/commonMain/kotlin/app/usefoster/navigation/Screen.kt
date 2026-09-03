@@ -40,6 +40,10 @@ sealed class Screen {
     @Serializable
     data object CheckIns : Screen()
 
+    /** Check-in history, opened from the home status summary card. */
+    @Serializable
+    data object CheckInHistory : Screen()
+
     @Serializable
     data class ContactProfile(val contactId: String) : Screen()
 

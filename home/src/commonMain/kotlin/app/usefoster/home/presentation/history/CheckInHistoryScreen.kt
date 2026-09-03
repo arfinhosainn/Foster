@@ -1,8 +1,6 @@
 package app.usefoster.home.presentation.history
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,104 +9,100 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.usefoster.home.presentation.components.CheckInMonthGrid
-import app.usefoster.home.presentation.components.TimelineEvent
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.usefoster.home.di.rememberCheckInHistoryViewModel
+import app.usefoster.home.presentation.components.CheckInTimelineGrid
+import app.usefoster.home.presentation.components.TIMELINE_SLOT_COUNT
 import app.usefoster.home.presentation.components.TimelineSlot
-import app.usefoster.designsystem.avatar.avatarResources
+import app.usefoster.home.presentation.components.buildTimelineSlots
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
-import foster.home.generated.resources.history_completed_of
-import foster.home.generated.resources.history_filter_checkins
-import foster.home.generated.resources.history_filter_completed
-import foster.home.generated.resources.history_filter_missed
-import foster.home.generated.resources.history_missed_of
-import foster.home.generated.resources.history_month_april
-import foster.home.generated.resources.history_month_august
-import foster.home.generated.resources.history_month_december
-import foster.home.generated.resources.history_month_february
-import foster.home.generated.resources.history_month_january
-import foster.home.generated.resources.history_month_july
-import foster.home.generated.resources.history_month_june
-import foster.home.generated.resources.history_month_march
-import foster.home.generated.resources.history_month_may
-import foster.home.generated.resources.history_month_november
-import foster.home.generated.resources.history_month_october
-import foster.home.generated.resources.history_month_september
+import foster.home.generated.resources.date_mdY
+import foster.home.generated.resources.history_board_checkins
+import foster.home.generated.resources.history_board_label
+import foster.home.generated.resources.history_board_missed
+import foster.home.generated.resources.history_boards_filled
+import foster.home.generated.resources.history_boards_perfect
+import foster.home.generated.resources.history_dot_missed
+import foster.home.generated.resources.history_dot_none
+import foster.home.generated.resources.history_dot_position
+import foster.home.generated.resources.history_empty
+import foster.home.generated.resources.history_first_board_progress
+import foster.home.generated.resources.history_perfect_badge
+import foster.home.generated.resources.month_apr
+import foster.home.generated.resources.month_aug
+import foster.home.generated.resources.month_dec
+import foster.home.generated.resources.month_feb
+import foster.home.generated.resources.month_jan
+import foster.home.generated.resources.month_jul
+import foster.home.generated.resources.month_jun
+import foster.home.generated.resources.month_mar
+import foster.home.generated.resources.month_may
+import foster.home.generated.resources.month_nov
+import foster.home.generated.resources.month_oct
+import foster.home.generated.resources.month_sep
 import kotlin.time.Clock
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Which days the history calendar highlights. */
-enum class HistoryFilter { Completed, Missed, CheckIns }
-
-/** One month of sample check-in data (placeholder until the real logic lands). */
-private data class HistoryMonthData(
-    val year: Int,
-    val monthNumber: Int,
-    val events: List<TimelineEvent>,
-)
-
 /**
- * Check-in history screen. Opened by tapping the status summary card on Home.
+ * Check-in history screen: an archive of finished 26-dot boards.
  *
- * Layout top to bottom: top bar (back / "History" / year dropdown), a centered
- * filter row (Completed · Missed · Check-ins), then one section per month —
- * a header row (`August 14 of 16 completed ─── 88%`) above a calendar grid
- * rendered exactly like the home check-in grid.
+ * Each section is one completed cycle rendered with the exact same
+ * [CheckInTimelineGrid] as Home (bottom-origin 1+7+7+7+4 layout, avatars,
+ * check badges, missed gaps). The header carries the board's date range and
+ * stats; tapping a dot opens a sheet with the exact date and check-in times.
  *
- * DESIGN PASS ONLY: currently rendered with generated sample data; the real
- * check-in/missed-check-in aggregation comes in a follow-up pass.
+ * Boards are 26-day windows anchored to the user's first-ever activity, so
+ * they always line up with Home's cycle math. The current in-progress board
+ * and abandoned (zero-activity) boards are excluded — see [buildBoardUiModels].
+ *
+ * Data comes from the shared [app.usefoster.home.data.HomeRepository] through
+ * [CheckInHistoryViewModel] — the same snapshot Home already loads.
  */
 @Composable
 fun CheckInHistoryScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: CheckInHistoryViewModel = rememberCheckInHistoryViewModel(),
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val selectedDot by viewModel.selectedDot.collectAsStateWithLifecycle()
+    // Visual "today" for slot rendering (elapsed/future classification).
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
-    var selectedYear by rememberSaveable { mutableIntStateOf(today.year) }
-    var selectedFilter by rememberSaveable { mutableStateOf(HistoryFilter.CheckIns) }
-    val years = remember(today) { listOf(today.year, today.year - 1, today.year - 2) }
-    val months = remember(today, selectedYear) { sampleHistoryMonths(today, selectedYear) }
 
     Scaffold(
         modifier = modifier,
         containerColor = FosterTheme.colors.background.b0,
-        topBar = {
-            HistoryTopBar(
-                onBack = onBack,
-                years = years,
-                selectedYear = selectedYear,
-                onYearSelected = { selectedYear = it },
-            )
-        },
+        topBar = { HistoryTopBar(onBack = onBack) },
     ) { padding ->
         Box(
             modifier = Modifier
@@ -116,124 +110,125 @@ fun CheckInHistoryScreen(
                 .fillMaxSize(),
             contentAlignment = Alignment.TopCenter,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 720.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Spacer(Modifier.height(8.dp))
-
-                HistoryFilterRow(
-                    selectedFilter = selectedFilter,
-                    onSelectFilter = { selectedFilter = it },
-                )
-
-                Spacer(Modifier.height(24.dp))
-
-                months.forEach { month ->
-                    HistoryMonthSection(
-                        year = month.year,
-                        monthNumber = month.monthNumber,
-                        events = month.events,
-                        filter = selectedFilter,
-                        today = today,
+            when {
+                state.isLoading -> Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(28.dp),
+                        color = FosterTheme.colors.text.primary,
+                        strokeWidth = 2.dp,
                     )
-                    Spacer(Modifier.height(28.dp))
                 }
 
-                Spacer(Modifier.height(24.dp))
+                state.boards.isEmpty() -> Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = if (state.currentBoardProgress == null) {
+                            // No check-ins ever — nothing to archive.
+                            stringResource(Res.string.history_empty)
+                        } else {
+                            // Check-ins exist, but they all live in the current
+                            // in-progress board; history shows finished boards.
+                            stringResource(
+                                Res.string.history_first_board_progress,
+                                state.currentBoardProgress!!,
+                                TIMELINE_SLOT_COUNT,
+                            )
+                        },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = FosterTheme.colors.text.tertiary,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    )
+                }
+
+                else -> Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 720.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Spacer(Modifier.height(8.dp))
+
+                    BoardsFilledStatRow(
+                        filled = state.boardsFilled,
+                        perfect = state.perfectCount,
+                    )
+
+                    Spacer(Modifier.height(24.dp))
+
+                    state.boards.forEach { board ->
+                        BoardSection(
+                            board = board,
+                            today = today,
+                            onDotClick = viewModel::selectDot,
+                        )
+                        Spacer(Modifier.height(28.dp))
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+                }
             }
+        }
+    }
+
+    selectedDot?.let { dot ->
+        DotDetailsSheet(dot = dot, onDismiss = viewModel::dismissDot)
+    }
+}
+
+/** "N boards filled · ★ M perfect" summary at the top of the archive. */
+@Composable
+private fun BoardsFilledStatRow(
+    filled: Int,
+    perfect: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.history_boards_filled, filled),
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = FosterTheme.colors.text.primary,
+        )
+        if (perfect > 0) {
+            Spacer(Modifier.widthIn(min = 12.dp))
+            Text(
+                text = "★",
+                fontSize = 14.sp,
+                color = FosterTheme.colors.green.default,
+            )
+            Spacer(Modifier.widthIn(min = 4.dp))
+            Text(
+                text = stringResource(Res.string.history_boards_perfect, perfect),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = FosterTheme.colors.green.default,
+            )
         }
     }
 }
 
 @Composable
-private fun HistoryFilterRow(
-    selectedFilter: HistoryFilter,
-    onSelectFilter: (HistoryFilter) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        HistoryFilterOption(
-            filter = HistoryFilter.Completed,
-            label = stringResource(Res.string.history_filter_completed),
-            selected = selectedFilter == HistoryFilter.Completed,
-            onSelect = onSelectFilter,
-        )
-        HistoryFilterOption(
-            filter = HistoryFilter.Missed,
-            label = stringResource(Res.string.history_filter_missed),
-            selected = selectedFilter == HistoryFilter.Missed,
-            onSelect = onSelectFilter,
-        )
-        HistoryFilterOption(
-            filter = HistoryFilter.CheckIns,
-            label = stringResource(Res.string.history_filter_checkins),
-            selected = selectedFilter == HistoryFilter.CheckIns,
-            onSelect = onSelectFilter,
-        )
-    }
-}
-
-@Composable
-private fun HistoryFilterOption(
-    filter: HistoryFilter,
-    label: String,
-    selected: Boolean,
-    onSelect: (HistoryFilter) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .clickable { onSelect(filter) }
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = { onSelect(filter) },
-        )
-        Text(
-            text = label,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            color = FosterTheme.colors.text.primary,
-        )
-    }
-}
-
-@Composable
-private fun HistoryMonthSection(
-    year: Int,
-    monthNumber: Int,
-    events: List<TimelineEvent>,
-    filter: HistoryFilter,
+private fun BoardSection(
+    board: HistoryBoardUiModel,
     today: LocalDate,
+    onDotClick: (HistoryBoardUiModel, TimelineSlot) -> Unit,
 ) {
-    val filteredEvents = remember(events, filter, today) {
-        events.filteredFor(filter, today)
+    val slots = remember(board.startDate, board.events, today) {
+        buildTimelineSlots(startDate = board.startDate, today = today, events = board.events)
     }
-    val slots = remember(year, monthNumber, filteredEvents, today) {
-        buildMonthSlots(year, monthNumber, today, filteredEvents)
-    }
-
-    // Stats always come from the full month (elapsed days only), so switching
-    // filters doesn't change the denominator.
-    val scheduledCount = events.count { it.date <= today }
-    val completedCount = events.count { it.date <= today && it.checkedIn && !it.missed }
-    val missedCount = scheduledCount - completedCount
-    val (headline, total, labelRes) = when (filter) {
-        HistoryFilter.Missed -> Triple(missedCount, scheduledCount, Res.string.history_missed_of)
-        HistoryFilter.Completed, HistoryFilter.CheckIns ->
-            Triple(completedCount, scheduledCount, Res.string.history_completed_of)
-    }
-    val percent = if (total == 0) 0 else (headline * 100.0 / total).toInt()
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -241,166 +236,200 @@ private fun HistoryMonthSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = historyMonthName(monthNumber),
+                text = stringResource(Res.string.history_board_label, board.boardIndex),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = FosterTheme.colors.text.primary,
             )
             Spacer(Modifier.widthIn(min = 8.dp))
-            Text(
-                text = stringResource(labelRes, headline, total),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = FosterTheme.colors.text.tertiary,
-                maxLines = 1,
-            )
-            Spacer(Modifier.widthIn(min = 8.dp))
-            HistoryDashedLine(modifier = Modifier.weight(1f))
-            Spacer(Modifier.widthIn(min = 8.dp))
-            Text(
-                text = "$percent%",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = FosterTheme.colors.text.primary,
-            )
+
+            if (board.isPerfect) {
+                Spacer(Modifier.weight(1f))
+                PerfectBadge()
+            }
         }
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            text = stringResource(Res.string.history_board_checkins, board.completedCount) +
+                " · " + stringResource(Res.string.history_board_missed, board.missedCount),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = FosterTheme.colors.text.tertiary,
+        )
 
         Spacer(Modifier.height(20.dp))
 
-        CheckInMonthGrid(slots = slots)
+        CheckInTimelineGrid(
+            slots = slots,
+            animateBubble = false,
+            onSlotClick = { slot -> onDotClick(board, slot) },
+        )
     }
 }
 
-/** Dashed line between the month stats and the percentage. */
+/** ★ Perfect pill for boards with zero missed occurrences. */
 @Composable
-private fun HistoryDashedLine(modifier: Modifier = Modifier) {
-    val color = FosterTheme.colors.stroke.secondary
-    Canvas(modifier = modifier.height(1.dp)) {
-        drawLine(
-            color = color,
-            start = Offset.Zero,
-            end = Offset(size.width, 0f),
-            strokeWidth = 1.dp.toPx(),
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 6.dp.toPx())),
+private fun PerfectBadge(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(FosterTheme.colors.green.fill)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "★",
+            fontSize = 12.sp,
+            color = FosterTheme.colors.green.default,
+        )
+        Spacer(Modifier.widthIn(min = 4.dp))
+        Text(
+            text = stringResource(Res.string.history_perfect_badge),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = FosterTheme.colors.green.default,
         )
     }
+}
+
+/** "Aug 2 – 29" / "Aug 28 – Sep 2" / "Dec 28, 2026 – Jan 2, 2027". */
+@Composable
+private fun boardDateRange(start: LocalDate, end: LocalDate): String {
+    val startMonth = shortMonthName(start.month)
+    val endMonth = shortMonthName(end.month)
+    return when {
+        start.year == end.year && start.month == end.month ->
+            "$startMonth ${start.day} – ${end.day}"
+        start.year == end.year ->
+            "$startMonth ${start.day} – $endMonth ${end.day}"
+        else ->
+            "$startMonth ${start.day}, ${start.year} – $endMonth ${end.day}, ${end.year}"
+    }
+}
+
+/** "Aug 14, 2026" via the shared date_mdY pattern. */
+@Composable
+private fun dotDate(date: LocalDate): String {
+    val monthAbbr = shortMonthName(date.month)
+    return stringResource(Res.string.date_mdY, monthAbbr, date.day, date.year)
+}
+
+private fun shortMonthRes(month: Month): StringResource = when (month) {
+    Month.JANUARY -> Res.string.month_jan
+    Month.FEBRUARY -> Res.string.month_feb
+    Month.MARCH -> Res.string.month_mar
+    Month.APRIL -> Res.string.month_apr
+    Month.MAY -> Res.string.month_may
+    Month.JUNE -> Res.string.month_jun
+    Month.JULY -> Res.string.month_jul
+    Month.AUGUST -> Res.string.month_aug
+    Month.SEPTEMBER -> Res.string.month_sep
+    Month.OCTOBER -> Res.string.month_oct
+    Month.NOVEMBER -> Res.string.month_nov
+    Month.DECEMBER -> Res.string.month_dec
 }
 
 @Composable
-private fun historyMonthName(monthNumber: Int): String = stringResource(
-    when (monthNumber) {
-        1 -> Res.string.history_month_january
-        2 -> Res.string.history_month_february
-        3 -> Res.string.history_month_march
-        4 -> Res.string.history_month_april
-        5 -> Res.string.history_month_may
-        6 -> Res.string.history_month_june
-        7 -> Res.string.history_month_july
-        8 -> Res.string.history_month_august
-        9 -> Res.string.history_month_september
-        10 -> Res.string.history_month_october
-        11 -> Res.string.history_month_november
-        else -> Res.string.history_month_december
-    },
-)
+private fun shortMonthName(month: Month): String = stringResource(shortMonthRes(month))
 
-// ---------------------------------------------------------------------------
-// Month slot building + filtering (logic pass will replace the sample data)
-// ---------------------------------------------------------------------------
+/** Bottom sheet shown when a board dot is tapped. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DotDetailsSheet(
+    dot: DotDetails,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = FosterTheme.colors.background.b1,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.history_board_label, dot.boardIndex) +
+                    " · " + stringResource(
+                    Res.string.history_dot_position,
+                    dot.dotNumber,
+                    TIMELINE_SLOT_COUNT,
+                ),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = FosterTheme.colors.text.tertiary,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = dotDate(dot.date),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = FosterTheme.colors.text.primary,
+            )
 
-/**
- * Mirrors [app.usefoster.home.presentation.components.buildTimelineSlots] but
- * for an arbitrary month: one [TimelineSlot] per day of the month, in
- * chronological order, so [CheckInMonthGrid] renders it exactly like home.
- */
-private fun buildMonthSlots(
-    year: Int,
-    monthNumber: Int,
-    today: LocalDate,
-    events: Collection<TimelineEvent>,
-): List<TimelineSlot> {
-    val firstDay = LocalDate(year, monthNumber, 1)
-    val daysInMonth = firstDay.plus(DatePeriod(months = 1)).minus(DatePeriod(days = 1)).dayOfMonth
-    val eventByDate = events.groupBy { it.date }
+            Spacer(Modifier.height(16.dp))
 
-    return List(daysInMonth) { index ->
-        val date = firstDay.plus(DatePeriod(days = index))
-        val dayEvents = eventByDate[date].orEmpty()
-        val missedEvents = dayEvents.filter { it.missed || (date < today && !it.checkedIn) }
-        val visibleEvents = dayEvents - missedEvents.toSet()
-        val avatars = visibleEvents.flatMap { it.avatars }
-        TimelineSlot(
-            date = date,
-            isElapsed = date < today,
-            isCurrent = date == today,
-            isFuture = date > today,
-            isCheckedIn = dayEvents.isNotEmpty() && dayEvents.all { it.checkedIn },
-            hasPendingCheckIn = dayEvents.any { date >= today && !it.checkedIn },
-            hasMissedCheckIn = missedEvents.isNotEmpty(),
-            avatars = avatars,
-            avatarCount = visibleEvents.sumOf { maxOf(it.avatarCount, it.avatars.size) },
-            plant = dayEvents.firstNotNullOfOrNull { it.plant },
-        )
-    }
-}
-
-/**
- * Narrows the event set per filter so the grid only lights the relevant days:
- * days without events render as the small inactive dot, same as home.
- */
-private fun List<TimelineEvent>.filteredFor(
-    filter: HistoryFilter,
-    today: LocalDate,
-): List<TimelineEvent> = when (filter) {
-    HistoryFilter.Completed -> filter { it.checkedIn && !it.missed }
-    HistoryFilter.Missed -> filter { it.missed || (it.date < today && !it.checkedIn) }
-    HistoryFilter.CheckIns -> this
-}
-
-// ---------------------------------------------------------------------------
-// Sample data (design pass only)
-// ---------------------------------------------------------------------------
-
-private fun sampleHistoryMonths(today: LocalDate, year: Int): List<HistoryMonthData> {
-    val lastMonth = if (year == today.year) today.monthNumber else 12
-    return (lastMonth downTo 1).map { monthNumber ->
-        HistoryMonthData(
-            year = year,
-            monthNumber = monthNumber,
-            events = sampleMonthEvents(year, monthNumber, today),
-        )
-    }
-}
-
-/** Deterministic per-day sample: most days checked in, ~1 in 10 missed. */
-private fun sampleMonthEvents(
-    year: Int,
-    monthNumber: Int,
-    today: LocalDate,
-): List<TimelineEvent> {
-    val firstDay = LocalDate(year, monthNumber, 1)
-    val lastDay = firstDay.plus(DatePeriod(months = 1)).minus(DatePeriod(days = 1)).dayOfMonth
-    val sampleAvatars = avatarResources
-
-    val events = mutableListOf<TimelineEvent>()
-    for (day in 1..lastDay) {
-        val date = LocalDate(year, monthNumber, day)
-        if (date > today) break // future days stay empty → inactive dots
-
-        val seed = (day * 7 + monthNumber * 13) % 10
-        val missed = seed == 3
-        val avatarCount = if (seed % 5 == 0) 2 else 1
-        val avatars = List(avatarCount) { i ->
-            sampleAvatars[(day + monthNumber * 2 + i) % sampleAvatars.size]
+            if (dot.checkIns.isEmpty() && dot.missedContactNames.isEmpty()) {
+                Text(
+                    text = stringResource(Res.string.history_dot_none),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = FosterTheme.colors.text.tertiary,
+                )
+            } else {
+                dot.checkIns.forEach { entry ->
+                    DotDetailsRow(
+                        label = entry.contactName,
+                        trailing = entry.time,
+                        trailingColor = FosterTheme.colors.text.secondary,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                }
+                dot.missedContactNames.forEach { name ->
+                    DotDetailsRow(
+                        label = name,
+                        trailing = stringResource(Res.string.history_dot_missed),
+                        trailingColor = FosterTheme.colors.red.default,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                }
+            }
         }
-        events += TimelineEvent(
-            date = date,
-            checkedIn = !missed,
-            missed = false,
-            avatars = avatars,
-        )
     }
-    return events
+}
+
+@Composable
+private fun DotDetailsRow(
+    label: String,
+    trailing: String?,
+    trailingColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            color = FosterTheme.colors.text.primary,
+            modifier = Modifier.weight(1f),
+        )
+        trailing?.let {
+            Text(
+                text = it,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = trailingColor,
+            )
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
