@@ -14,6 +14,7 @@ import app.usefoster.home.domain.ContactDataSource
 import app.usefoster.home.domain.Contact
 import app.usefoster.home.presentation.HomeViewModel
 import app.usefoster.home.presentation.contactprofile.ContactProfileViewModel
+import app.usefoster.home.presentation.history.CheckInHistoryViewModel
 import app.usefoster.home.presentation.settings.AccountViewModel
 import app.usefoster.home.presentation.settings.GroupDetailViewModel
 import app.usefoster.home.presentation.settings.GroupSettingsViewModel
@@ -146,6 +147,17 @@ fun rememberAccountViewModel(): AccountViewModel {
         key = "account",
         factory = viewModelFactory {
             initializer { AccountViewModel(homeRepository, accountRepository) }
+        },
+    )
+}
+
+@Composable
+fun rememberCheckInHistoryViewModel(): CheckInHistoryViewModel {
+    val homeRepository = LocalHomeRepository.current
+    return viewModel(
+        key = "check-in-history",
+        factory = viewModelFactory {
+            initializer { CheckInHistoryViewModel(homeRepository) }
         },
     )
 }

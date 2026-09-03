@@ -57,6 +57,7 @@ import app.usefoster.home.presentation.badges.BadgeRevealStore
 import app.usefoster.home.presentation.badges.PlantRewardOverlay
 import app.usefoster.home.presentation.brainstorm.BrainstormScreen
 import app.usefoster.home.presentation.contactprofile.ContactProfileScreen
+import app.usefoster.home.presentation.history.CheckInHistoryScreen
 import app.usefoster.home.presentation.paywall.DiscountPaywallScreen
 import app.usefoster.home.presentation.paywall.PaywallScreen
 import app.usefoster.home.presentation.settings.GroupDetailScreen
@@ -371,10 +372,15 @@ private fun OnboardingAppContent(
                         onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
                         onBrainstormClick = { contactId -> navigator.navigate(Screen.Brainstorm(contactId)) },
                         onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
+                        onOpenHistory = { navigator.navigate(Screen.CheckInHistory) },
                         onSettingsClick = { navigator.navigate(Screen.Settings()) },
                         onShowPaywall = showPremiumPaywall,
                         onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
                         bottomBarActions = bottomBarActions,
+                    )
+
+                    is Screen.CheckInHistory -> CheckInHistoryScreen(
+                        onBack = { navigator.goBack() },
                     )
 
                     is Screen.CheckIns -> CheckInsScreen(
