@@ -42,8 +42,10 @@
             </intent-filter>
         </activity>
 
+        <!-- TESTING ONLY: exported=true lets adb broadcast trigger notifications
+             for manual QA. MUST be reverted to exported="false" before shipping. -->
         <receiver
-            android:exported="false"
+            android:exported="true"
             android:name="app.usefoster.shared.notifications.CheckInReminderReceiver" />
 
         <receiver

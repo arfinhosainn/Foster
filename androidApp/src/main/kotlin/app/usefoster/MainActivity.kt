@@ -15,10 +15,12 @@ import app.usefoster.navigation.Screen
 import app.usefoster.navigation.rememberNavigator
 import app.usefoster.onboarding.OnboardingApp
 import app.usefoster.onboarding.data.supabase.createAppSupabaseClient
+import app.usefoster.onboarding.isFirstRunSurface
 import io.github.jan.supabase.auth.handleDeeplinks
 import app.usefoster.shared.notifications.NotificationTapExtras
 import app.usefoster.shared.notifications.NotificationTapRouter
 import app.usefoster.shared.notifications.NotificationTarget
+import app.usefoster.shared.notifications.HomeCheckInListSignal
 import app.usefoster.shared.notifications.ReminderScheduler
 import app.usefoster.shared.subscription.initRevenueCat
 
@@ -53,16 +55,25 @@ class MainActivity : ComponentActivity() {
 
             // Notification tap routing — buffered so cold-start taps (extras
             // arriving before the nav graph/auth routing is ready) replay once
-            // a real screen is up.
+            // a real screen is up. Onboarding surfaces are never hijacked; the
+            // tap stays buffered and replays after onboarding completes.
             val pendingTap by NotificationTapRouter.pending.collectAsState()
             LaunchedEffect(pendingTap, navigator.currentScreen) {
                 val target = pendingTap ?: return@LaunchedEffect
                 if (navigator.currentScreen is Screen.Splash) return@LaunchedEffect
+                if (navigator.currentScreen.isFirstRunSurface) return@LaunchedEffect
                 NotificationTapRouter.consume()
                 val dayKey = target.dayKey
                 val contactId = target.contactId
                 when {
-                    dayKey != null -> navigator.navigate(Screen.DayAgenda(dayKey))
+                    dayKey != null -> {
+                        // Group digest → land on Home scrolled to the check-in
+                        // contact list; no separate day-agenda screen.
+                        if (navigator.currentScreen !is Screen.Home) {
+                            navigator.replaceAll(Screen.Home)
+                        }
+                        HomeCheckInListSignal.post()
+                    }
                     contactId != null -> navigator.navigate(Screen.ContactProfile(contactId))
                 }
             }

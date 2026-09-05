@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import app.usefoster.shared.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +44,17 @@ class CheckInReminderReceiver : BroadcastReceiver() {
                 val headline = intent.getStringExtra(EXTRA_HEADLINE)
                     ?: context.getString(R.string.notif_contact_fallback)
                 val targetId = intent.getStringExtra(EXTRA_TARGET_ID)
+                val targetIsContact = intent.getBooleanExtra(EXTRA_TARGET_IS_CONTACT, false)
 
-                buildDigestNotification(context, itemCount, headline, category, dayKey, targetId)
-                    .also { markDayDelivered(dayKey, pendingResult) }
+                buildDigestNotification(
+                    context,
+                    itemCount,
+                    headline,
+                    category,
+                    dayKey,
+                    targetId,
+                    targetIsContact,
+                ).also { markDayDelivered(dayKey, pendingResult) }
             }
 
             intent.hasExtra(EXTRA_STANDALONE_KEY) -> {
@@ -82,12 +91,23 @@ class CheckInReminderReceiver : BroadcastReceiver() {
         category: String,
         dayKey: Long,
         targetId: String?,
+        targetIsContact: Boolean,
     ): android.app.Notification {
+        // A single-contact digest deep-links straight to the contact profile;
+        // multi-item digests open the grouped day agenda.
+        val singleContact = itemCount <= 1 && targetId != null && targetIsContact
         val builder = NotificationCompat.Builder(context, channelFor(category))
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(ContextCompat.getColor(context, R.color.notif_icon_color))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .setContentIntent(contentIntent(context, dayKey = dayKey, contactId = null))
+            .setContentIntent(
+                contentIntent(
+                    context,
+                    dayKey = if (singleContact) null else dayKey,
+                    contactId = if (singleContact) targetId else null,
+                ),
+            )
 
         if (itemCount <= 1) {
             builder.setContentTitle(context.getString(R.string.notif_checkin_title, headline))
@@ -116,7 +136,8 @@ class CheckInReminderReceiver : BroadcastReceiver() {
         targetIsContact: Boolean,
     ): android.app.Notification {
         return NotificationCompat.Builder(context, channelFor(category))
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setColor(ContextCompat.getColor(context, R.color.notif_icon_color))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(

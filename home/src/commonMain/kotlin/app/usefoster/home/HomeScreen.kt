@@ -46,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +61,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -104,6 +107,7 @@ import app.usefoster.home.presentation.components.buildCheckInTimelineEvents
 import app.usefoster.home.presentation.components.isCheckInBubbleAnimationEnabled
 import app.usefoster.home.presentation.components.rememberTimelineSlots
 import app.usefoster.home.presentation.components.shouldStartCheckInBubbleWindow
+import app.usefoster.shared.notifications.HomeCheckInListSignal
 import app.usefoster.home.presentation.components.timelineMaxCellSizeForWidth
 import app.usefoster.home.presentation.components.updateTimelineDate
 import app.usefoster.home.presentation.contactprofile.ContactProfileScreen
@@ -175,6 +179,20 @@ fun HomeScreen(
     val accountState by accountRepository.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
+
+    // Digest-notification taps land on Home scrolled to the check-in contact
+    // list. The signal is a monotonic trigger id; the section's Y offset is
+    // measured via onGloballyPositioned at the CheckInSection call site.
+    val homeScrollState = rememberScrollState()
+    val checkInListSignal by HomeCheckInListSignal.pending.collectAsState()
+    var checkInSectionTop by remember { mutableStateOf(0f) }
+    LaunchedEffect(checkInListSignal) {
+        if (checkInListSignal > 0) {
+            // Cold start: wait until the section has been laid out.
+            while (checkInSectionTop <= 0f) delay(50)
+            homeScrollState.animateScrollTo(checkInSectionTop.toInt())
+        }
+    }
 
     LaunchedEffect(accountRepository) {
         accountRepository.load()
@@ -310,7 +328,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .widthIn(max = 720.dp)
                             .padding(horizontal = 24.dp)
-                            .verticalScroll(rememberScrollState()),
+                            .verticalScroll(homeScrollState),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                 Spacer(Modifier.height(32.dp))
@@ -432,6 +450,9 @@ fun HomeScreen(
                             outstandingCount = state.outstandingCount,
                             checkingInContactIds = state.checkingInContactIds,
                             onCheckIn = viewModel::checkIn,
+                            modifier = Modifier.onGloballyPositioned { coordinates ->
+                                checkInSectionTop = coordinates.positionInParent().y
+                            },
                             onContactClick = { contact ->
                                 if (useSupportingPane) {
                                     selectedContactId = contact.id
@@ -549,6 +570,7 @@ private fun CheckInSection(
     onContactClick: (Contact) -> Unit,
     timelineMaxCellSize: Dp,
     initialCountdownStartDate: LocalDate?,
+    modifier: Modifier = Modifier,
 ) {
     var today by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault())) }
     var nowEpochMillis by remember { mutableStateOf(Clock.System.now().toEpochMilliseconds()) }
@@ -604,7 +626,7 @@ private fun CheckInSection(
         bubbleWindowActive = shouldStartCheckInBubbleWindow(appInForeground, hasPendingToday)
     }
 
-    Column {
+    Column(modifier = modifier) {
         Text(
             "Check In",
             style = FosterTheme.typography.heading2,
