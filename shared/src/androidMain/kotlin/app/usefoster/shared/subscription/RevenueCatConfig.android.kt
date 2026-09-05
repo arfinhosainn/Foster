@@ -1,5 +1,11 @@
 package app.usefoster.shared.subscription
 
-// TODO: Replace with your real Google Play public SDK key from the RevenueCat
-//  dashboard (Project Settings → API Keys → App-specific keys, prefixed `goog_`).
-actual val revenueCatApiKey: String = "YOUR_GOOGLE_PLAY_PUBLIC_SDK_KEY"
+import app.usefoster.shared.secrets.Secrets
+
+/**
+ * Public Google Play SDK key (prefixed `goog_`), injected at startup from
+ * BuildConfig — which Gradle fills from env vars / the gitignored
+ * local.properties. Never commit real values.
+ */
+actual val revenueCatApiKey: String
+    get() = Secrets.revenueCatApiKey

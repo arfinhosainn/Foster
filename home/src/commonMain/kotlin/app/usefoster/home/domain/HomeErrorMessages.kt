@@ -6,6 +6,7 @@ import foster.home.generated.resources.error_delete_account
 import foster.home.generated.resources.error_network
 import foster.home.generated.resources.error_session_expired
 import foster.home.generated.resources.error_unexpected
+import foster.home.generated.resources.brainstorm_rate_limited
 import org.jetbrains.compose.resources.StringResource
 
 fun ContactError.toUserMessage(): String = when (this) {
@@ -17,6 +18,7 @@ fun ContactError.toUserMessage(): String = when (this) {
 fun BrainstormError.toUserMessage(): String = when (this) {
     BrainstormError.NotAuthenticated -> "Your session expired. Please sign in again."
     BrainstormError.Network -> "Check your connection and try again."
+    BrainstormError.RateLimited -> "Too many requests right now. Please try again later."
     is BrainstormError.Unknown -> "Something went wrong. Please try again."
 }
 
@@ -41,6 +43,7 @@ fun ContactError.toUserMessageResource(): StringResource = when (this) {
 fun BrainstormError.toUserMessageResource(): StringResource = when (this) {
     BrainstormError.NotAuthenticated -> Res.string.error_session_expired
     BrainstormError.Network -> Res.string.error_network
+    BrainstormError.RateLimited -> Res.string.brainstorm_rate_limited
     is BrainstormError.Unknown -> Res.string.error_unexpected
 }
 

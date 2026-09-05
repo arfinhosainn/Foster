@@ -1,4 +1,35 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+/**
+ * Secret resolution: environment variable first (CI — local.properties does not
+ * exist there), then the gitignored local.properties, then a hard failure at
+ * CONFIGURATION time. A missing secret must fail the build in seconds with an
+ * actionable message, never surface as a runtime 401. See local.properties.example.
+ */
+fun resolveSecret(envName: String, propertyName: String): String =
+    System.getenv(envName)?.takeIf { it.isNotBlank() }
+        ?: rootProject.file("local.properties").takeIf { it.exists() }
+            ?.let { propsFile ->
+                Properties().apply { propsFile.inputStream().use(::load) }
+            }?.getProperty(propertyName)?.takeIf { it.isNotBlank() }
+        ?: throw GradleException(
+            "Missing secret '$propertyName' (env: $envName). " +
+                "Add it to local.properties — see local.properties.example — or set the $envName environment variable.",
+        )
+
+/**
+ * Optional variant: missing/blank resolves to "" instead of failing (used for
+ * the RevenueCat key — blank means the SDK stays unconfigured, which is a
+ * supported state until real keys are created).
+ */
+fun resolveSecretOrEmpty(envName: String, propertyName: String): String =
+    System.getenv(envName)?.takeIf { it.isNotBlank() }
+        ?: rootProject.file("local.properties").takeIf { it.exists() }
+            ?.let { propsFile ->
+                Properties().apply { propsFile.inputStream().use(::load) }
+            }?.getProperty(propertyName)?.takeIf { it.isNotBlank() }
+        ?: ""
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -40,6 +71,12 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
+
+        // Build-time secret injection (hygiene, not secrecy — see Secrets.kt).
+        buildConfigField("String", "SUPABASE_URL", "\"${resolveSecret("SUPABASE_URL", "supabase.url")}\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"${resolveSecret("SUPABASE_PUBLISHABLE_KEY", "supabase.publishable_key")}\"")
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${resolveSecret("GOOGLE_WEB_CLIENT_ID", "google.web.client.id")}\"")
+        buildConfigField("String", "REVENUECAT_ANDROID_KEY", "\"${resolveSecretOrEmpty("REVENUECAT_ANDROID_KEY", "revenuecat.android.key")}\"")
     }
     packaging {
         resources {
@@ -62,5 +99,6 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }

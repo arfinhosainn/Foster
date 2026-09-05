@@ -134,6 +134,7 @@
     <string name="brainstorm_copy">Copy</string>
     <string name="brainstorm_copied">Copied</string>
     <string name="brainstorm_share_unavailable">No app is available to share this idea.</string>
+    <string name="brainstorm_rate_limited">Too many requests right now. Please try again later.</string>
     <string name="badges_title">Badges</string>
     <string name="badges_collect_plant">Collect Plant</string>
     <string name="badges_tap_reveal">TAP TO REVEAL</string>

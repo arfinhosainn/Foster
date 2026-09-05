@@ -36,6 +36,67 @@ const json = (status: number, body: unknown) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+// --- Cost-abuse defenses (the Gemini call is the only real-money risk) -------
+// Binding limits: the per-user cooldown (below) and the per-IP daily limit.
+// The global daily ceiling is a SMOKE DETECTOR, not a gate — set generously,
+// alerted at 50%/80% so capacity is a human decision, never a self-DoS.
+const GLOBAL_DAILY_CEILING = 1_000;
+const PER_IP_DAILY_LIMIT = 30;
+const ALERT_FRACTIONS = [0.5, 0.8] as const;
+
+/**
+ * Resolves the caller IP for the per-IP limiter.
+ *
+ * VERIFIED EMPIRICALLY, not assumed: set the DEBUG_IP_HEADERS secret to "true",
+ * generate once, and read the function logs. Supabase's edge appends the real
+ * caller as the RIGHT-MOST x-forwarded-for entry (client-appendable left-most
+ * entries are untrustworthy), but proxy hop counts differ by deployment — if
+ * the probe shows an internal address on the right, drop to second-from-right
+ * here. cf-connecting-ip (Cloudflare-injected) is used when present.
+ */
+function extractClientIp(req: Request): string | null {
+  if (Deno.env.get("DEBUG_IP_HEADERS") === "true") {
+    console.log("[ip-probe] cf-connecting-ip:", req.headers.get("cf-connecting-ip"));
+    console.log("[ip-probe] x-forwarded-for:", req.headers.get("x-forwarded-for"));
+  }
+  const cf = req.headers.get("cf-connecting-ip")?.trim();
+  if (cf) return cf;
+  const xff = req.headers.get("x-forwarded-for");
+  if (!xff) return null;
+  const parts = xff.split(",").map((p) => p.trim()).filter(Boolean);
+  return parts[parts.length - 1] ?? null;
+}
+
+/** Edge-triggered capacity alerts — once per threshold per day, via webhook. */
+async function maybeAlertCapacity(globalCount: number, todayUtc: string) {
+  for (const fraction of ALERT_FRACTIONS) {
+    const threshold = Math.ceil(GLOBAL_DAILY_CEILING * fraction);
+    if (globalCount < threshold) continue;
+    const { data: alreadyFired } = await admin
+      .from("brainstorm_alerts")
+      .select("threshold")
+      .eq("window_date", todayUtc)
+      .eq("threshold", threshold)
+      .maybeSingle();
+    if (alreadyFired) continue;
+    // Record BEFORE the webhook so a delivery failure can't cause repeat alerts.
+    await admin.from("brainstorm_alerts").insert({ window_date: todayUtc, threshold });
+    const webhook = Deno.env.get("ALERT_WEBHOOK_URL");
+    if (!webhook) continue;
+    try {
+      await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: `Foster brainstorm: ${globalCount}/${GLOBAL_DAILY_CEILING} daily generations (crossed the ${threshold} alert threshold).`,
+        }),
+      });
+    } catch (err) {
+      console.error("[brainstorm] alert webhook failed:", err);
+    }
+  }
+}
+
 // Tone handling for sensitive content is a hard requirement, not polish.
 const SYSTEM_PROMPT = `You are Brainstorm, a warm and thoughtful conversation assistant inside the Foster relationship app.
 You are given notes and relationship context about a specific contact. Generate 4 to 6 specific, personalized suggestions of things the user could actually say or ask this contact — grounded in the real notes, not generic topic categories.
@@ -236,6 +297,55 @@ Deno.serve(async (req) => {
     .limit(1);
   if (todaySession && todaySession.length > 0) {
     return json(200, { success: true, cooldown: true, topics: [] });
+  }
+
+  // --- Cost-abuse defenses: run only for requests that would reach the LLM
+  // (the cooldown above short-circuits at zero cost). --------------------------
+
+  // Global daily ceiling — backstop only. Alert at 50%/80%; reject at 100%.
+  const { count: globalCount, error: globalErr } = await admin
+    .from("brainstorm_sessions")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", `${todayUtc}T00:00:00`);
+  if (!globalErr && typeof globalCount === "number") {
+    await maybeAlertCapacity(globalCount, todayUtc);
+    if (globalCount >= GLOBAL_DAILY_CEILING) {
+      return json(429, {
+        success: false,
+        limited: "global",
+        error: "Brainstorm is at capacity for today. Please try again tomorrow.",
+      });
+    }
+  }
+
+  // Per-IP daily limit — an actual anti-abuse gate (N Google accounts behind
+  // one IP all share this budget). The ip_limits table is deny-all RLS; only
+  // this service role touches it.
+  const clientIp = extractClientIp(req);
+  if (clientIp) {
+    const { data: ipRow } = await admin
+      .from("brainstorm_ip_limits")
+      .select("window_date, count")
+      .eq("ip", clientIp)
+      .maybeSingle();
+    if (ipRow && ipRow.window_date === todayUtc && ipRow.count >= PER_IP_DAILY_LIMIT) {
+      return json(429, {
+        success: false,
+        limited: "ip",
+        error: "Too many requests from this network. Please try again tomorrow.",
+      });
+    }
+    if (ipRow && ipRow.window_date === todayUtc) {
+      await admin
+        .from("brainstorm_ip_limits")
+        .update({ count: ipRow.count + 1, updated_at: new Date().toISOString() })
+        .eq("ip", clientIp);
+    } else {
+      // Upsert with today's window self-TTLs the row; pg_cron purges the rest.
+      await admin
+        .from("brainstorm_ip_limits")
+        .upsert({ ip: clientIp, window_date: todayUtc, count: 1 });
+    }
   }
 
   // Gather the contact's real context (notes + recent check-in notes + reminders).
