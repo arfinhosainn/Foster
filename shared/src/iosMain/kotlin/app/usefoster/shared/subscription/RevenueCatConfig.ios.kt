@@ -1,5 +1,11 @@
 package app.usefoster.shared.subscription
 
-// TODO: Replace with your real Apple public SDK key from the RevenueCat
-//  dashboard (Project Settings → API Keys → App-specific keys, prefixed `appl_`).
-actual val revenueCatApiKey: String = "YOUR_APPLE_PUBLIC_SDK_KEY"
+import app.usefoster.shared.secrets.Secrets
+
+/**
+ * Public Apple SDK key (prefixed `appl_`), injected at startup from Info.plist
+ * — which Xcode fills from the gitignored Secrets.xcconfig. Never commit real
+ * values.
+ */
+actual val revenueCatApiKey: String
+    get() = Secrets.revenueCatApiKey

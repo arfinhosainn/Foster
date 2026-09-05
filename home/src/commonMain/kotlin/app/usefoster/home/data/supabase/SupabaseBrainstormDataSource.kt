@@ -16,6 +16,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -70,10 +71,15 @@ class SupabaseBrainstormDataSource(
             client.auth.currentSessionOrNull()
                 ?: return Result.Error(BrainstormError.NotAuthenticated)
 
-            // Non-2xx surfaces as a thrown RestException (caught below).
+            // Non-2xx surfaces as a thrown RestException (caught below) — with
+            // one exception: 429 is mapped to RateLimited BEFORE parsing, since
+            // the server returns a dedicated JSON body for limit rejections.
             val response: HttpResponse = client.functions.invoke("brainstorm") {
                 contentType(ContentType.Application.Json)
                 setBody(buildJsonObject { put("contactId", contactId) }.toString())
+            }
+            if (response.status == HttpStatusCode.TooManyRequests) {
+                return Result.Error(BrainstormError.RateLimited)
             }
             val body = response.bodyAsText()
             val parsed = brainstormJson.decodeFromString<BrainstormResponse>(body)
@@ -146,6 +152,8 @@ class SupabaseBrainstormDataSource(
         e.message?.contains("JWT", ignoreCase = true) == true -> BrainstormError.NotAuthenticated
         e.message?.contains("401", ignoreCase = true) == true -> BrainstormError.NotAuthenticated
         e.message?.contains("Unauthorized", ignoreCase = true) == true -> BrainstormError.NotAuthenticated
+        e.message?.contains("429", ignoreCase = true) == true -> BrainstormError.RateLimited
+        e.message?.contains("Too Many Requests", ignoreCase = true) == true -> BrainstormError.RateLimited
         e.message?.contains("network", ignoreCase = true) == true -> BrainstormError.Network
         e.message?.contains("timeout", ignoreCase = true) == true -> BrainstormError.Network
         e.message?.contains("Connect", ignoreCase = true) == true -> BrainstormError.Network

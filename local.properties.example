@@ -1,0 +1,10 @@
+# TEMPLATE — copy the entries you need into local.properties (same folder, which
+# is gitignored) and fill in. NEVER commit real values (this repo is public).
+#
+# Resolution order per secret: environment variable (same name, UPPERCASE,
+# underscores) → this file → Gradle build fails at configuration time.
+# A missing key must fail the build in seconds, never 401 at runtime.
+supabase.url=https://YOUR-PROJECT-REF.supabase.co
+supabase.publishable_key=sb_publishable_xxxxxxxxxxxxxxxxxxxxxxxx
+google.web.client.id=000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+revenuecat.android.key=goog_xxxxxxxxxxxxxxxx

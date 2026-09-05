@@ -40,5 +40,8 @@ interface BrainstormDataSource {
 sealed interface BrainstormError {
     data object NotAuthenticated : BrainstormError
     data object Network : BrainstormError
+
+    /** Per-IP or global daily limit reached on the server (HTTP 429). */
+    data object RateLimited : BrainstormError
     data class Unknown(val detail: String?) : BrainstormError
 }

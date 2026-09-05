@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import app.usefoster.BuildConfig
 import app.usefoster.navigation.Screen
 import app.usefoster.navigation.rememberNavigator
 import app.usefoster.onboarding.OnboardingApp
@@ -22,6 +23,7 @@ import app.usefoster.shared.notifications.NotificationTapRouter
 import app.usefoster.shared.notifications.NotificationTarget
 import app.usefoster.shared.notifications.HomeCheckInListSignal
 import app.usefoster.shared.notifications.ReminderScheduler
+import app.usefoster.shared.secrets.Secrets
 import app.usefoster.shared.subscription.initRevenueCat
 
 class MainActivity : ComponentActivity() {
@@ -38,6 +40,18 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { splashHeldVisible.value }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Secrets must be configured before the lazy Supabase client below and
+        // before initRevenueCat(). Values come from BuildConfig, which Gradle
+        // fills from env vars / the gitignored local.properties — a missing
+        // value fails the Gradle build at configuration time, not here.
+        Secrets.configure(
+            supabaseUrl = BuildConfig.SUPABASE_URL,
+            supabasePublishableKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY,
+            googleWebClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID,
+            revenueCatApiKey = BuildConfig.REVENUECAT_ANDROID_KEY,
+        )
+
         supabaseClient.handleDeeplinks(intent)
 
         ReminderScheduler.init(applicationContext)

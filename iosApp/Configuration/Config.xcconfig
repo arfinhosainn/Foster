@@ -1,3 +1,9 @@
+// Local secrets are injected from the gitignored Secrets.xcconfig next to this
+// file (#include? = optional, so fresh clones build and fail at app startup
+// with instructions instead of breaking the Xcode project).
+// GOTCHA: xcconfig treats // as a comment — escape URLs as https:$()//…
+#include? Secrets.xcconfig
+
 TEAM_ID=
 
 PRODUCT_NAME=Foster

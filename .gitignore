@@ -17,3 +17,11 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+
+# Secrets / signing — never commit (see docs/security-checklist.md)
+iosApp/Configuration/Secrets.xcconfig
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+.env*
