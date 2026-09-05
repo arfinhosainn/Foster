@@ -57,7 +57,7 @@ begin
     perform cron.schedule(
       'purge-brainstorm-ip-limits',
       '0 3 * * *',
-      $$delete from public.brainstorm_ip_limits where window_date < current_date - interval '2 days'$$
+      $sql$delete from public.brainstorm_ip_limits where window_date < current_date - interval '2 days'$sql$
     );
   end if;
 end $$;
