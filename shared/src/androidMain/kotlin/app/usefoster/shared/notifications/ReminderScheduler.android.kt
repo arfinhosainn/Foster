@@ -16,9 +16,8 @@ import kotlinx.coroutines.withContext
  *
  * Alarms use `setExactAndAllowWhileIdle` (fires during Doze). The
  * `USE_EXACT_ALARM` permission (Android 13+) is granted by default for
- * reminder-centric apps; `SCHEDULE_EXACT_ALARM` remains the fallback grant on
- * older targets, and an inexact alarm is the final fallback so scheduling
- * never crashes.
+ * reminder-centric apps; on older targets where exact alarms aren't granted,
+ * an inexact alarm is the fallback so scheduling never crashes.
  */
 actual class ReminderScheduler : NotificationSchedulingOps {
     actual override suspend fun scheduleDay(plan: DayPlan) {

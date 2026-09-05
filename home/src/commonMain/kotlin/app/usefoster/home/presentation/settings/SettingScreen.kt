@@ -1,6 +1,7 @@
 package app.usefoster.home.presentation.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -80,6 +82,10 @@ import foster.home.generated.resources.settings_notification
 import foster.home.generated.resources.settings_support
 import org.jetbrains.compose.resources.stringResource
 
+/** Public legal-document URLs (hosted on the Foster Framer site). */
+private const val PRIVACY_POLICY_URL = "https://fosterapp.framer.website/privacy"
+private const val TERMS_URL = "https://fosterapp.framer.website/terms"
+
 @Composable
 fun SettingScreen(
     onBack: () -> Unit,
@@ -89,6 +95,7 @@ fun SettingScreen(
     initiallyShowAccountSheet: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    val uriHandler = LocalUriHandler.current
     val liquidState = rememberLiquidState()
     val density = LocalDensity.current
 
@@ -257,7 +264,10 @@ fun SettingScreen(
                     color = FosterTheme.colors.text.tertiary
                 )
                 Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { uriHandler.openUri(TERMS_URL) },
+                ) {
 
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_terms),
@@ -276,7 +286,10 @@ fun SettingScreen(
 
                 Spacer(Modifier.height(3.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { uriHandler.openUri(PRIVACY_POLICY_URL) },
+                ) {
 
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_privacy),

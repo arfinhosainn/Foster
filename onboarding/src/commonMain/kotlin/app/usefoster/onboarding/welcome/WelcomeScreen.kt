@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -60,6 +61,10 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
+/** Public legal-document URLs (hosted on the Foster Framer site). */
+private const val PRIVACY_POLICY_URL = "https://fosterapp.framer.website/privacy"
+private const val TERMS_URL = "https://fosterapp.framer.website/terms"
+
 @Composable
 fun WelcomeScreen(
     supabaseClient: SupabaseClient,
@@ -69,6 +74,7 @@ fun WelcomeScreen(
     onRetryProfileLoad: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val uriHandler = LocalUriHandler.current
     var errorMessage by androidx.compose.runtime.remember {
         mutableStateOf<OnboardingAuthError?>(
             null
@@ -286,8 +292,8 @@ fun WelcomeScreen(
                     Spacer(Modifier.height(24.dp))
 
                     TermsAndPrivacyNotice(
-                        onTermsClick = { /* navigate to Terms screen or open URL */ },
-                        onPrivacyClick = { /* navigate to Privacy screen or open URL */ },
+                        onTermsClick = { uriHandler.openUri(TERMS_URL) },
+                        onPrivacyClick = { uriHandler.openUri(PRIVACY_POLICY_URL) },
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

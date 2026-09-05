@@ -13,7 +13,7 @@ There is exactly **one type of notification**: a per-contact "time to check in" 
 
 | Platform | Mechanism | Details |
 |---|---|---|
-| Android | `AlarmManager.setExactAndAllowWhileIdle` → `CheckInReminderReceiver` broadcast | Falls back to inexact alarm if `SCHEDULE_EXACT_ALARM` is denied (the permission is declared in the manifest but never requested at runtime). High-importance channel `check_in_reminders`, created lazily at fire time. Copy: "Check in with {name}" / "It's time to check in on {name}" (localized EN/ES). |
+| Android | `AlarmManager.setExactAndAllowWhileIdle` → `CheckInReminderReceiver` broadcast | Falls back to inexact alarm when `canScheduleExactAlarms()` is false (Android 12/12L; `USE_EXACT_ALARM` is auto-granted on 13+, `SCHEDULE_EXACT_ALARM` is not declared in the manifest and is never requested at runtime). High-importance channel `check_in_reminders`, created lazily at fire time. Copy: "Check in with {name}" / "It's time to check in on {name}" (localized EN/ES). |
 | iOS | `UNUserNotificationCenter` + one-shot `UNCalendarNotificationTrigger`, request id = contactId | Same copy but hardcoded English (not localized). Permission requested only from the onboarding button. No `UNUserNotificationCenterDelegate` is installed in the Swift host. |
 
 Key files:
@@ -72,8 +72,7 @@ the Home / Add Contact flows above.
 2. **Notification tap is inert** — no `setContentIntent` / deep link into the contact profile.
 3. **64-reminder cap applied on Android too** — the cap exists for the iOS pending-notification
    limit; Android users with more than 64 due contacts silently lose the rest.
-4. **Exact-alarm permission never requested** — on Android 14+ many users will silently fall back
-   to inexact delivery; no `ACTION_REQUEST_SCHEDULE_EXACT_ALARM` flow exists.
+4. **Exact-alarm access is never requested at runtime** — on Android 13+ `USE_EXACT_ALARM` is auto-granted (declared, can't be revoked), and on Android 12/12L users silently fall back to inexact delivery; no `ACTION_REQUEST_SCHEDULE_EXACT_ALARM` flow exists.
 5. **iOS notification copy is not localized** (Android supports EN/ES).
 6. **iOS foreground presentation undelegated** — no `UNUserNotificationCenterDelegate` in the Swift
    host, so in-app banner behavior is left to OS defaults.
