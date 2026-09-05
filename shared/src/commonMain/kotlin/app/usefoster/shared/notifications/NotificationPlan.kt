@@ -1,5 +1,6 @@
 package app.usefoster.shared.notifications
 
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 
 /** Notification categories, one Android channel / iOS category per value. */
@@ -102,6 +103,21 @@ object NotificationTapRouter {
         val target = _pending.value
         _pending.value = null
         return target
+    }
+}
+
+/**
+ * One-shot signal: a digest notification tap wants Home scrolled to its
+ * check-in contact list (no separate day-agenda screen). Posted by platform
+ * notification-tap routing, collected by HomeScreen. The value is a
+ * monotonically increasing trigger id so every tap re-fires the scroll.
+ */
+object HomeCheckInListSignal {
+    private val _pending = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    val pending: kotlinx.coroutines.flow.StateFlow<Long> = _pending.asStateFlow()
+
+    fun post() {
+        _pending.value = _pending.value + 1
     }
 }
 

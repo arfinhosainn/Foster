@@ -1,0 +1,5 @@
+<resources>
+    <!-- Notification small-icon background color; the icon artwork remains
+         defined by ic_notification.xml. -->
+    <color name="notif_icon_color">#15803D</color>
+</resources>
