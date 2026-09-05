@@ -24,13 +24,16 @@ create policy "avatars_public_read"
 
 -- 3. Owner-scoped writes: users may only write INSIDE avatars/<their-uid>/… ----
 -- storage.foldername(name) returns text[], so scope on [1] = the uid segment.
+-- GOTCHA: subscripting a function call needs parentheses in CREATE POLICY —
+-- storage.foldername(name)[1] is a parser error; (storage.foldername(name))[1]
+-- is the grammar PostgreSQL accepts.
 
 drop policy if exists "avatars_owner_insert" on storage.objects;
 create policy "avatars_owner_insert"
   on storage.objects for insert to authenticated
   with check (
     bucket_id = 'avatars'
-    and storage.foldername(name)[1] = auth.uid()::text
+    and (storage.foldername(name))[1] = auth.uid()::text
   );
 
 drop policy if exists "avatars_owner_delete" on storage.objects;
@@ -38,5 +41,5 @@ create policy "avatars_owner_delete"
   on storage.objects for delete to authenticated
   using (
     bucket_id = 'avatars'
-    and storage.foldername(name)[1] = auth.uid()::text
+    and (storage.foldername(name))[1] = auth.uid()::text
   );
