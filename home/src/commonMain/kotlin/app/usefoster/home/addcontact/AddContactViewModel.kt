@@ -259,7 +259,6 @@ class AddContactViewModel(
                     avatarColor = colorHex,
                     checkInFrequency = state.selectedFrequency,
                     reminderTime = reminderTime,
-                    phoneNumber = state.importedPhoneNumber,
                 )
             } else {
                 contactDataSource.updateContact(
@@ -268,7 +267,6 @@ class AddContactViewModel(
                     avatarColor = colorHex,
                     checkInFrequency = state.selectedFrequency,
                     reminderTime = reminderTime,
-                    phoneNumber = state.importedPhoneNumber,
                 )
             }
 
@@ -352,7 +350,6 @@ class AddContactViewModel(
                 initialName = contact.name,
                 selectedAvatarIndex = colorHexes.indexOf(contact.avatarColor).takeIf { it >= 0 } ?: 0,
                 initialAvatarIndex = colorHexes.indexOf(contact.avatarColor).takeIf { it >= 0 } ?: 0,
-                importedPhoneNumber = contact.phoneNumber,
                 selectedFrequency = contact.checkInFrequency,
                 initialFrequency = contact.checkInFrequency,
                 selectedHour = time.first,

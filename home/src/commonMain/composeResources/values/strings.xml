@@ -130,8 +130,10 @@
     <string name="brainstorm_empty_no_ideas">No ideas are available yet. Check back tomorrow for fresh suggestions.</string>
     <string name="brainstorm_history_empty">No past brainstorms yet. Generate your first batch of ideas in the Current Output tab.</string>
     <string name="brainstorm_history_item">A brainstorm session from earlier</string>
-    <string name="brainstorm_send_message_cd">Send this message to your contact</string>
-    <string name="brainstorm_no_phone_number">No phone number saved for this contact. Import them from your phone contacts to send messages directly.</string>
+    <string name="brainstorm_share_cd">Share this idea</string>
+    <string name="brainstorm_copy">Copy</string>
+    <string name="brainstorm_copied">Copied</string>
+    <string name="brainstorm_share_unavailable">No app is available to share this idea.</string>
     <string name="badges_title">Badges</string>
     <string name="badges_collect_plant">Collect Plant</string>
     <string name="badges_tap_reveal">TAP TO REVEAL</string>

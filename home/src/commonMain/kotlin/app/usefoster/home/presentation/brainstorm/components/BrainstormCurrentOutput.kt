@@ -29,7 +29,8 @@ fun CurrentOutputContent(
     notice: String?,
     error: StringResource?,
     onDismissNotice: () -> Unit,
-    onSendMessage: ((BrainstormTopic) -> Unit)? = null,
+    onShareTopic: ((BrainstormTopic) -> Unit)? = null,
+    onCopyTopic: ((BrainstormTopic) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -78,7 +79,8 @@ fun CurrentOutputContent(
             topics.forEach { topic ->
                 TopicCard(
                     topic = topic,
-                    onSendMessage = onSendMessage?.let { send -> { send(topic) } },
+                    onShareTopic = onShareTopic?.let { share -> { share(topic) } },
+                    onCopyTopic = onCopyTopic?.let { copy -> { copy(topic) } },
                 )
             }
         }

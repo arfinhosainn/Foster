@@ -11,8 +11,6 @@ data class Contact(
     val nextCheckInDate: String?,
     val lastCheckInDate: String?,
     val streakCount: Int,
-    /** Captured at import time; enables SMS hand-off from brainstorm cards. */
-    val phoneNumber: String? = null,
 )
 
 fun Contact.nextCheckInDateLocal(): LocalDate? =

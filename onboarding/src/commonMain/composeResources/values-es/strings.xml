@@ -64,7 +64,6 @@
     <string name="error_subscription_network">Comprueba tu conexión e inténtalo de nuevo.</string>
     <string name="error_subscription_unknown">Algo salió mal. Inténtalo de nuevo.</string>
     <string name="action_try_again">Inténtalo de nuevo</string>
-    <string name="phone_enter_number">Ingresa el número de teléfono</string>
     <string name="custom_add_more_title">Añade más recordatorios</string>
     <string name="custom_like_birthdays">Como cumpleaños, aniversarios, etc.</string>
     <string name="reminders_add">Añadir recordatorio</string>

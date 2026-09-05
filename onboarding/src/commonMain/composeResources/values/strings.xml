@@ -64,7 +64,6 @@
     <string name="error_subscription_network">Check your connection and try again.</string>
     <string name="error_subscription_unknown">Something went wrong. Please try again.</string>
     <string name="action_try_again">Try again</string>
-    <string name="phone_enter_number">Enter phone number</string>
     <string name="custom_add_more_title">Add more reminder</string>
     <string name="custom_like_birthdays">Like birthdays, anniversaries, etc</string>
     <string name="reminders_add">Add reminder</string>

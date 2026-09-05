@@ -12,9 +12,6 @@ import platform.Contacts.CNContact
 import platform.Contacts.CNContactFamilyNameKey
 import platform.Contacts.CNContactGivenNameKey
 import platform.Contacts.CNContactImageDataKey
-import platform.Contacts.CNContactPhoneNumbersKey
-import platform.Contacts.CNLabeledValue
-import platform.Contacts.CNPhoneNumber
 import platform.ContactsUI.CNContactPickerDelegateProtocol
 import platform.ContactsUI.CNContactPickerViewController
 import platform.Foundation.NSData
@@ -45,7 +42,6 @@ actual fun rememberContactPicker(
                         CNContactGivenNameKey,
                         CNContactFamilyNameKey,
                         CNContactImageDataKey,
-                        CNContactPhoneNumbersKey,
                     )
                     presenter.presentViewController(picker, animated = true, completion = null)
                 } catch (error: Exception) {
@@ -85,7 +81,6 @@ private class ContactPickerDelegate(
                         name = name,
                         photo = didSelectContact.imageData?.toImageBitmap()
                             ?: didSelectContact.thumbnailImageData?.toImageBitmap(),
-                        phoneNumber = didSelectContact.primaryPhoneNumber(),
                     ),
                 )
             }
@@ -102,25 +97,6 @@ private class ContactPickerDelegate(
     }
 }
 
-/**
- * Prefers the mobile/iPhone number, falls back to the first number on record.
- */
-private fun CNContact.primaryPhoneNumber(): String? {
-    val entries = phoneNumbers.orEmpty()
-        .filterIsInstance<CNLabeledValue>()
-        .mapNotNull { labeledValue ->
-            val number = (labeledValue.value as? CNPhoneNumber)?.stringValue
-                ?.trim()
-                ?.takeIf { it.isNotEmpty() }
-                ?: return@mapNotNull null
-            number to ((labeledValue.label as? String).orEmpty())
-        }
-    return entries.firstOrNull { (_, label) ->
-        label.contains("mobile", ignoreCase = true) || label.contains("iphone", ignoreCase = true)
-    }?.first
-        ?: entries.firstOrNull()?.first
-}
-
 @OptIn(ExperimentalForeignApi::class)
 private fun NSData.toImageBitmap(): ImageBitmap? =
     runCatching {
@@ -132,7 +108,7 @@ private fun NSData.toImageBitmap(): ImageBitmap? =
     }.getOrNull()
 
 @OptIn(ExperimentalForeignApi::class)
-private fun currentViewController(): UIViewController? {
+internal fun currentViewController(): UIViewController? {
     val window = UIApplication.sharedApplication.windows
         .filterIsInstance<UIWindow>()
         .firstOrNull { it.isKeyWindow() }

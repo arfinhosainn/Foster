@@ -47,7 +47,8 @@ fun HistoryContent(
     sessions: List<BrainstormSession>,
     isLoading: Boolean,
     error: StringResource?,
-    onSendMessage: ((BrainstormTopic) -> Unit)? = null,
+    onShareTopic: ((BrainstormTopic) -> Unit)? = null,
+    onCopyTopic: ((BrainstormTopic) -> Unit)? = null,
     notice: String? = null,
     onDismissNotice: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -96,7 +97,8 @@ fun HistoryContent(
                             session.topics.forEach { topic ->
                                 TopicCard(
                                     topic = topic,
-                                    onSendMessage = onSendMessage?.let { send -> { send(topic) } },
+                                    onShareTopic = onShareTopic?.let { share -> { share(topic) } },
+                                    onCopyTopic = onCopyTopic?.let { copy -> { copy(topic) } },
                                 )
                             }
                             Spacer(modifier = Modifier.height(4.dp))

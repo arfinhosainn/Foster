@@ -22,6 +22,4 @@ data class BrainstormState(
     val currentTopics: List<BrainstormTopic>? = null,
     val history: List<BrainstormSession> = emptyList(),
     val isLoadingHistory: Boolean = true,
-    /** Phone number of the contact being brainstormed for; enables SMS hand-off. */
-    val contactPhoneNumber: String? = null,
 )

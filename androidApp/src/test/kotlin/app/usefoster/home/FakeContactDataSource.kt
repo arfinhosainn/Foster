@@ -159,7 +159,6 @@ class FakeContactDataSource(
         avatarColor: String?,
         checkInFrequency: String,
         reminderTime: String?,
-        phoneNumber: String?,
     ): Result<Contact, ContactError> {
         createContactCalls++
         val result = createContactResult ?: return Result.Error(ContactError.Unknown("not used"))
@@ -182,7 +181,6 @@ class FakeContactDataSource(
         avatarColor: String?,
         checkInFrequency: String,
         reminderTime: String?,
-        phoneNumber: String?,
     ): Result<Contact, ContactError> {
         updateContactCalls += UpdateContactCall(
             contactId,
