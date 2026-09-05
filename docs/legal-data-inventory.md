@@ -77,7 +77,7 @@ Collected & stored server-side via the `complete_onboarding` RPC (`onboarding/..
 
 ## 6. Data collected during app use
 
-- **Contacts** added (manual or imported from device contacts): `name`, `phone_number` (captured only so Brainstorm suggestions can hand off to the SMS app pre-filled), `avatar_color`, `check_in_frequency`, `reminder_time`, `next/last_check_in_date`, `streak_count`. — `home/.../domain/Contact.kt`, `SupabaseContactDataSource.kt`
+- **Contacts** added (manual or imported from device contacts): `name`, `avatar_color`, `check_in_frequency`, `reminder_time`, `next/last_check_in_date`, `streak_count`. — `home/.../domain/Contact.kt`, `SupabaseContactDataSource.kt`. **Phone numbers are no longer collected** (the `contacts.phone_number` column was dropped — see `onboarding/sql/migration_drop_contact_phone.sql`; contact import reads name + photo only).
 - **Check-ins**: timestamp + optional free-text note (`check_ins` table). — `home/.../domain/CheckIn.kt`
 - **Missed check-ins** auto-derived (`missed_check_ins` table). — `onboarding/sql/migration_missed_check_ins.sql`
 - **Notes about contacts**: title + body, free text (`notes`, current column name `title/body`). — `home/.../domain/Note.kt`
@@ -88,10 +88,11 @@ Collected & stored server-side via the `complete_onboarding` RPC (`onboarding/..
 - **On-device only (not uploaded):** theme preference (light/dark/system), onboarding draft, notification plan snapshot, paywall gate state — DataStore (Android) / NSUserDefaults (iOS). — `shared/src/*Main/.../theme`, `notifications`, `paywall`, `onboarding/.../OnboardingDraftStore.kt`
 
 ### Device contact handling (important for the policy)
-- Android: uses the **system contact picker** (`PickContact`), requesting `READ_CONTACTS` only at import time; reads the **single selected** contact's display name, photo (local), and phone number (mobile preferred). — `shared/src/androidMain/.../contacts/ContactPicker.android.kt`
-- iOS: uses `CNContactPickerViewController`; reads selected contact's given/family/organization name, image (local), phone number. — `shared/src/iosMain/.../contacts/ContactPicker.ios.kt`
-- **The app does not upload your whole contact list.** Only the one contact you choose is saved, and only name + phone + color are stored server-side.
+- Android: uses the **system contact picker** (`PickContact`), requesting `READ_CONTACTS` only at import time; reads the **single selected** contact's display name and photo (local only). **No phone number is read.** — `shared/src/androidMain/.../contacts/ContactPicker.android.kt`
+- iOS: uses `CNContactPickerViewController`; reads selected contact's given/family/organization name and image (local only). **No phone number is read.** — `shared/src/iosMain/.../contacts/ContactPicker.ios.kt`
+- **The app does not upload your whole contact list.** Only the one contact you choose is saved, and only name + color are stored server-side.
 - `Info.plist` usage string: *"Foster uses your contacts to import a person you want to keep in touch with."*
+- **Brainstorm share**: tapping the share control on a brainstorm card opens the **OS share sheet** (`ACTION_SEND` on Android / `UIActivityViewController` on iOS) with the idea pre-filled — nothing auto-sends, no SMS-only path, and **no phone number is used or required**. A long-press offers "Copy to clipboard". — `shared/.../messaging/ShareComposer.*`, `home/.../brainstorm/BrainstormScreen.kt`
 
 ## 7. Device permissions requested
 

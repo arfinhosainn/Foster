@@ -19,7 +19,6 @@ data class AddContactState(
     val selectedAvatarIndex: Int? = 0,
     val initialAvatarIndex: Int? = 0,
     val importedPhoto: ImageBitmap? = null,
-    val importedPhoneNumber: String? = null,
     val groups: List<Group> = emptyList(),
     val contacts: List<Contact> = emptyList(),
     val memberships: List<GroupMembership> = emptyList(),
@@ -82,7 +81,6 @@ fun AddContactState.withImportedContact(contact: ImportedContact): AddContactSta
         name = contact.name,
         selectedAvatarIndex = if (contact.photo != null) null else selectedAvatarIndex,
         importedPhoto = contact.photo,
-        importedPhoneNumber = contact.phoneNumber,
         error = null,
     )
 }

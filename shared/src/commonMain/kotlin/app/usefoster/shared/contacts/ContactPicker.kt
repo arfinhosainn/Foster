@@ -6,8 +6,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 data class ImportedContact(
     val name: String,
     val photo: ImageBitmap? = null,
-    /** Primary phone number captured at import time — enables SMS hand-off. */
-    val phoneNumber: String? = null,
 )
 
 @Composable

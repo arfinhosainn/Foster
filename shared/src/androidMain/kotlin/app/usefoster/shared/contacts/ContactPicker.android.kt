@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.ContactsContract.Contacts
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -87,36 +86,7 @@ private fun readContact(context: Context, contactUri: Uri): ImportedContact? {
         ImportedContact(
             name = name,
             photo = photoUri?.let { loadContactPhoto(context, Uri.parse(it)) },
-            phoneNumber = readPhoneNumber(context, contactUri),
         )
-    }
-}
-
-/**
- * Reads the contact's phone number so brainstorm topics can hand off to the
- * SMS app with the recipient pre-filled. Prefers the mobile number, falls back
- * to the first number on record.
- */
-private fun readPhoneNumber(context: Context, contactUri: Uri): String? {
-    val contactId = contactUri.lastPathSegment ?: return null
-    return context.contentResolver.query(
-        Phone.CONTENT_URI,
-        arrayOf(Phone.NUMBER, Phone.TYPE),
-        "${Phone.CONTACT_ID} = ?",
-        arrayOf(contactId),
-        null,
-    )?.use { cursor ->
-        var fallback: String? = null
-        while (cursor.moveToNext()) {
-            val number = cursor.getString(cursor.getColumnIndexOrThrow(Phone.NUMBER))
-                ?.trim()
-                .orEmpty()
-            if (number.isEmpty()) continue
-            val type = cursor.getInt(cursor.getColumnIndexOrThrow(Phone.TYPE))
-            if (type == Phone.TYPE_MOBILE) return@use number
-            if (fallback == null) fallback = number
-        }
-        fallback
     }
 }
 

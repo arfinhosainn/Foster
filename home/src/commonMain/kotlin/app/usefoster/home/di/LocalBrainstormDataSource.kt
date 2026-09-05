@@ -20,11 +20,10 @@ val LocalBrainstormRepository = staticCompositionLocalOf<BrainstormRepository> {
 @Composable
 fun rememberBrainstormViewModel(contactId: String): BrainstormViewModel {
     val repository = LocalBrainstormRepository.current
-    val contactDataSource = LocalContactDataSource.current
     return viewModel(
         key = "brainstorm-$contactId",
         factory = viewModelFactory {
-            initializer { BrainstormViewModel(contactId, repository, contactDataSource) }
+            initializer { BrainstormViewModel(contactId, repository) }
         },
     )
 }

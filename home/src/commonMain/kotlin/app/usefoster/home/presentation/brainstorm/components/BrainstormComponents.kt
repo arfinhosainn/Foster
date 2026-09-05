@@ -6,9 +6,11 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -24,12 +26,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,10 +47,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.home.domain.BrainstormTopic
 import app.usefoster.home.presentation.brainstorm.BrainstormTab
+import app.usefoster.home.presentation.brainstorm.formatTopicMessage
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
 import foster.home.generated.resources.ic_point
-import foster.home.generated.resources.brainstorm_send_message_cd
+import foster.home.generated.resources.brainstorm_share_cd
+import foster.home.generated.resources.brainstorm_copy
 import org.jetbrains.compose.resources.vectorResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -130,13 +139,17 @@ fun BrainstormTabs(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TopicCard(
     topic: BrainstormTopic,
-    onSendMessage: (() -> Unit)? = null,
+    onShareTopic: ((BrainstormTopic) -> Unit)? = null,
+    onCopyTopic: ((BrainstormTopic) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val canSendMessage = onSendMessage != null && !topic.description.isNullOrBlank()
+    val shareText = formatTopicMessage(topic)
+    val canShare = onShareTopic != null && shareText.isNotBlank()
+    var shareMenuOpen by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -165,28 +178,47 @@ fun TopicCard(
                 style = FosterTheme.typography.heading4,
                 fontWeight = FontWeight.Normal,
                 color = FosterTheme.colors.text.secondary,
-                // Keep clear of the send icon pinned to the bottom-right corner.
+                // Keep clear of the share icon pinned to the bottom-right corner.
                 modifier = Modifier.padding(end = 36.dp, bottom = 4.dp),
             )
         }
 
-        if (canSendMessage) {
+        if (canShare) {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 12.dp, bottom = 12.dp)
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(FosterTheme.colors.fill.secondary)
-                    .clickable(onClick = onSendMessage),
-                contentAlignment = Alignment.Center,
+                    .padding(end = 12.dp, bottom = 12.dp),
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = stringResource(Res.string.brainstorm_send_message_cd),
-                    tint = FosterTheme.colors.text.primary,
-                    modifier = Modifier.size(16.dp),
-                )
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(FosterTheme.colors.fill.secondary)
+                        .combinedClickable(
+                            onClick = { onShareTopic.invoke(topic) },
+                            onLongClick = { shareMenuOpen = true },
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = stringResource(Res.string.brainstorm_share_cd),
+                        tint = FosterTheme.colors.text.primary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                DropdownMenu(
+                    expanded = shareMenuOpen,
+                    onDismissRequest = { shareMenuOpen = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.brainstorm_copy)) },
+                        onClick = {
+                            shareMenuOpen = false
+                            onCopyTopic?.invoke(topic)
+                        },
+                    )
+                }
             }
         }
     }

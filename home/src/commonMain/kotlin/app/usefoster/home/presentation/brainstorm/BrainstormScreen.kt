@@ -11,31 +11,38 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import app.usefoster.designsystem.snackbar.FosterSnackbarHost
 import app.usefoster.home.di.rememberBrainstormViewModel
 import app.usefoster.home.domain.BrainstormTopic
 import app.usefoster.home.presentation.brainstorm.components.BrainstormTabs
 import app.usefoster.home.presentation.brainstorm.components.BrainstormTopBar
 import app.usefoster.home.presentation.brainstorm.components.CurrentOutputContent
 import app.usefoster.home.presentation.brainstorm.components.HistoryContent
-import app.usefoster.shared.messaging.rememberSmsComposer
+import app.usefoster.shared.messaging.rememberShareComposer
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
-import foster.home.generated.resources.brainstorm_no_phone_number
+import foster.home.generated.resources.brainstorm_share_unavailable
+import foster.home.generated.resources.brainstorm_copied
 import foster.home.generated.resources.gradients
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -49,10 +56,31 @@ fun BrainstormScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     var selectedTab by remember { mutableStateOf(BrainstormTab.CurrentOutput) }
 
-    val noPhoneNumberMessage = stringResource(Res.string.brainstorm_no_phone_number)
-    val smsComposer = rememberSmsComposer(
-        onUnavailable = { viewModel.onAction(BrainstormAction.ShowNotice(noPhoneNumberMessage)) },
+    val shareUnavailableMessage = stringResource(Res.string.brainstorm_share_unavailable)
+    val copiedMessage = stringResource(Res.string.brainstorm_copied)
+    val shareComposer = rememberShareComposer(
+        onUnavailable = { viewModel.onAction(BrainstormAction.ShowNotice(shareUnavailableMessage)) },
     )
+    val snackbarHostState = remember { SnackbarHostState() }
+    val clipboard = LocalClipboardManager.current
+    val scope = rememberCoroutineScope()
+
+    val shareTopic: (BrainstormTopic) -> Unit = { topic ->
+        val text = formatTopicMessage(topic)
+        if (text.isBlank()) {
+            viewModel.onAction(BrainstormAction.ShowNotice(shareUnavailableMessage))
+        } else {
+            shareComposer(text)
+        }
+    }
+    @Suppress("DEPRECATION") // LocalClipboardManager.setText remains the common KMP API here.
+    val copyTopic: (BrainstormTopic) -> Unit = { topic ->
+        val text = formatTopicMessage(topic)
+        if (text.isNotBlank()) {
+            clipboard.setText(AnnotatedString(text))
+            scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
+        }
+    }
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -78,6 +106,9 @@ fun BrainstormScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = { BrainstormTopBar() },
+            snackbarHost = {
+                FosterSnackbarHost(hostState = snackbarHostState)
+            },
             containerColor = FosterTheme.colors.background.b0.copy(alpha = 0f),
         ) { innerPadding ->
             Column(
@@ -110,29 +141,15 @@ fun BrainstormScreen(
                         notice = state.notice,
                         error = state.error,
                         onDismissNotice = { viewModel.onAction(BrainstormAction.DismissNotice) },
-                        onSendMessage = { topic ->
-                            val phone = state.contactPhoneNumber
-                            val body = topic.description
-                            if (phone.isNullOrBlank() || body.isNullOrBlank()) {
-                                viewModel.onAction(BrainstormAction.ShowNotice(noPhoneNumberMessage))
-                            } else {
-                                smsComposer(phone, body)
-                            }
-                        },
+                        onShareTopic = shareTopic,
+                        onCopyTopic = copyTopic,
                     )
                     BrainstormTab.History -> HistoryContent(
                         sessions = state.history,
                         isLoading = state.isLoadingHistory,
                         error = state.error,
-                        onSendMessage = { topic ->
-                            val phone = state.contactPhoneNumber
-                            val body = topic.description
-                            if (phone.isNullOrBlank() || body.isNullOrBlank()) {
-                                viewModel.onAction(BrainstormAction.ShowNotice(noPhoneNumberMessage))
-                            } else {
-                                smsComposer(phone, body)
-                            }
-                        },
+                        onShareTopic = shareTopic,
+                        onCopyTopic = copyTopic,
                         notice = state.notice,
                         onDismissNotice = { viewModel.onAction(BrainstormAction.DismissNotice) },
                     )
