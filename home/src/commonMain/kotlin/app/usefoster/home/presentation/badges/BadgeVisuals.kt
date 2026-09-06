@@ -46,7 +46,6 @@ import foster.home.generated.resources.blue_flower
 import foster.home.generated.resources.ic_bluelotus
 import foster.home.generated.resources.ic_brown
 import foster.home.generated.resources.ic_close
-import foster.home.generated.resources.ic_greenflower
 import foster.home.generated.resources.ic_lotus
 import foster.home.generated.resources.ic_mushroom
 import foster.home.generated.resources.ic_pinkflower
@@ -76,8 +75,9 @@ fun badgeIcon(badge: Badge): DrawableResource {
         "brown" -> Res.drawable.ic_brown
         "bluelotus" -> Res.drawable.ic_bluelotus
         "sunflower" -> Res.drawable.ic_sunflower
-        "greenflower" -> Res.drawable.ic_greenflower
-        else -> Res.drawable.ic_greenflower
+        // No dedicated badge icon for the green flower: use the sunflower
+        // artwork as the shared generic plant instead.
+        else -> Res.drawable.ic_sunflower
     }
 }
 
@@ -92,7 +92,6 @@ fun badgeFlowerAsset(badge: Badge): String {
         "pink" in name || "red" in name -> "pinkflower"
         "brown" in name || "yellow" in name || "yello" in name -> "brown"
         "sunflower" in name -> "sunflower"
-        "green" in name -> "greenflower"
         else -> when (badge.threshold) {
             1 -> "soil"
             15 -> "lotus"
@@ -100,9 +99,9 @@ fun badgeFlowerAsset(badge: Badge): String {
             45 -> "brown"
             60 -> "bluelotus"
             75 -> "pinkflower"
-            90 -> "greenflower"
             115 -> "mushroom"
-            else -> "greenflower"
+            // Unknown names/thresholds fall back to the sunflower artwork.
+            else -> "sunflower"
         }
     }
 }
@@ -117,9 +116,9 @@ fun badgeCollectArtwork(badge: Badge): DrawableResource {
         "brown" -> Res.drawable.yellow_flower
         "bluelotus" -> Res.drawable.blue_flower
         "sunflower" -> Res.drawable.sun_flower
-        // The new artwork set has no separate green plant, so retain the
-        // existing green artwork until one is provided.
-        else -> Res.drawable.ic_greenflower
+        // The new artwork set has no dedicated green plant, so fall back to
+        // the sunflower artwork instead of the old green-flower vector.
+        else -> Res.drawable.sun_flower
     }
 }
 
@@ -246,7 +245,7 @@ fun PlantUnlockedBadgeOverlay(
                             contentDescription = stringResource(Res.string.cd_close),
                             tint = Color.Unspecified,
                             modifier = Modifier
-                                .size(28.dp)
+                                .size(24.dp)
                                 .clickable(onClick = onDismiss),
                         )
 
@@ -330,57 +329,55 @@ fun PlantUnlockedBadgeOverlay(
             }
         } else {
             // Collection preview (unlocked flower tapped in the account sheet):
-            // 24dp padding all around, close icon pinned to the very top-left
-            // corner, 64dp gap down to the title/subtitle, the flower graphic
-            // centered in the remaining middle space, and the detail text 29dp
-            // right below the flower.
-            Column(
+            // 24dp padding all around, close icon pinned to the top-start
+            // corner, title/subtitle at top-center below it, and the flower
+            // graphic at the TRUE geometric center of the card (not the
+            // leftover space under the title, which makes it sit too low).
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_close),
-                        contentDescription = stringResource(Res.string.cd_close),
-                        tint = Color.Unspecified,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clickable(onClick = onDismiss),
-                    )
-                }
-
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    text = "A new plant has grown!",
-                    color = FosterTheme.colors.text.primary,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = badge.name,
-                    color = FosterTheme.colors.text.tertiary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                )
-
-                Box(
+                Icon(
+                    painter = painterResource(Res.drawable.ic_close),
+                    contentDescription = stringResource(Res.string.cd_close),
+                    tint = Color.Unspecified,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center,
+                        .size(28.dp)
+                        .align(Alignment.TopStart)
+                        .clickable(onClick = onDismiss),
+                )
+
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 50.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Image(
-                        painter = painterResource(badgeCollectArtwork(badge)),
-                        contentDescription = badge.name,
-                        modifier = Modifier.size(151.dp, 210.dp),
+                    Text(
+                        text = "A new plant has grown!",
+                        color = FosterTheme.colors.text.primary,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = badge.name,
+                        color = FosterTheme.colors.text.tertiary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
                     )
                 }
 
+                Image(
+                    painter = painterResource(badgeCollectArtwork(badge)),
+                    contentDescription = badge.name,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(151.dp, 210.dp),
+                )
             }
         }
     }

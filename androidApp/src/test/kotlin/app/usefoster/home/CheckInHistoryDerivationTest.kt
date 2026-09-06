@@ -225,8 +225,12 @@ class CheckInHistoryDerivationTest {
         assertEquals(3, details.dotNumber)
         assertEquals(LocalDate(2026, 6, 3), details.date)
         assertEquals(listOf("Cc1"), details.checkIns.map { it.contactName })
-        assertEquals("12:00", details.checkIns.single().time)
-        assertEquals(listOf("Cc2"), details.missedContactNames)
+        assertEquals("12:00 PM", details.checkIns.single().time)
+        assertEquals("#007AFF", details.checkIns.single().avatarColor)
+        assertEquals(listOf("Cc2"), details.missedEntries.map { it.contactName })
+        // Missed rows carry the contact's avatar too (no time — it never happened).
+        assertEquals("#007AFF", details.missedEntries.single().avatarColor)
+        assertNull(details.missedEntries.single().time)
 
         // Empty dot: no check-ins, no misses.
         val emptyDetails = buildDotDetails(
@@ -238,7 +242,7 @@ class CheckInHistoryDerivationTest {
             timeZone = utc,
         )
         assertTrue(emptyDetails.checkIns.isEmpty())
-        assertTrue(emptyDetails.missedContactNames.isEmpty())
+        assertTrue(emptyDetails.missedEntries.isEmpty())
         assertNull(emptyDetails.checkIns.firstOrNull()?.time)
     }
 }

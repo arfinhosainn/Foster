@@ -27,15 +27,20 @@ import app.usefoster.onboarding.timereminder.TimeReminderScreen
 import app.usefoster.onboarding.welcome.WelcomeScreen
 import app.usefoster.onboarding.splash.SplashScreen
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.SnackbarHostState
 import app.usefoster.designsystem.snackbar.FosterSnackbarHost
 import app.usefoster.designsystem.snackbar.FosterSnackbarStyle
@@ -44,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import app.usefoster.adaptive.WindowWidthSizeClass
 import app.usefoster.adaptive.windowWidthSizeClass
@@ -57,7 +63,10 @@ import app.usefoster.home.presentation.badges.BadgeRevealStore
 import app.usefoster.home.presentation.badges.PlantRewardOverlay
 import app.usefoster.home.presentation.brainstorm.BrainstormScreen
 import app.usefoster.home.presentation.contactprofile.ContactProfileScreen
+import app.usefoster.home.presentation.history.HISTORY_BOOK_HOME_PAGE
+import app.usefoster.home.presentation.history.HomeHistoryBook
 import app.usefoster.home.presentation.history.CheckInHistoryScreen
+import app.usefoster.home.presentation.history.historyBookProgress
 import app.usefoster.home.presentation.paywall.DiscountPaywallScreen
 import app.usefoster.home.presentation.paywall.PaywallScreen
 import app.usefoster.home.presentation.settings.GroupDetailScreen
@@ -72,6 +81,8 @@ import app.usefoster.shared.paywall.LocalPaywallGateManager
 import app.usefoster.shared.paywall.PaywallGateManagerProvider
 import app.usefoster.shared.paywall.PaywallTrigger
 import app.usefoster.shared.subscription.LocalSubscriptionRepository
+import app.usefoster.shared.swipehint.LocalSwipeHintStore
+import app.usefoster.shared.swipehint.SwipeHintPreferenceStoreProvider
 import app.usefoster.theme.FosterTheme
 import app.usefoster.theme.ThemePreferenceStoreProvider
 import foster.onboarding.generated.resources.Res
@@ -81,11 +92,52 @@ import foster.onboarding.generated.resources.error_draft_read
 import foster.onboarding.generated.resources.error_draft_write
 import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import io.github.jan.supabase.SupabaseClient
 import kotlin.time.Duration.Companion.milliseconds
+
+/** How far the one-time Home swipe hint peeks toward History (fraction of a page). */
+private const val HOME_SWIPE_HINT_PEEK_FRACTION = 0.22f
+
+/** Wait after Home is first shown before the hint plays (let the screen settle). */
+private const val HOME_SWIPE_HINT_DELAY_MILLIS = 900L
+
+/** Outward nudge duration; the return uses a spring so it feels like a card snapping back. */
+private const val HOME_SWIPE_HINT_OUT_MILLIS = 240
+
+/**
+ * The one-time swipe hint: nudge the book toward History and back without ever
+ * crossing the 50% settle threshold, so the focused page (and route stack)
+ * never changes. Runs inside [PagerState.scroll] so it cooperates with — and
+ * can be preempted by — a real user drag; the outward motion is a short tween,
+ * the return a spring for a "snap back" feel.
+ */
+private suspend fun performHomeSwipeHintNudge(pagerState: PagerState, pageWidth: Int) {
+    val peekBy = -(pageWidth * HOME_SWIPE_HINT_PEEK_FRACTION)
+    pagerState.scroll {
+        var previous = 0f
+        animate(
+            initialValue = 0f,
+            targetValue = peekBy,
+            animationSpec = tween(HOME_SWIPE_HINT_OUT_MILLIS),
+        ) { value, _ ->
+            scrollBy(value - previous)
+            previous = value
+        }
+        animate(
+            initialValue = peekBy,
+            targetValue = 0f,
+            animationSpec = spring(),
+        ) { value, _ ->
+            scrollBy(value - previous)
+            previous = value
+        }
+    }
+}
 
 @Composable
 fun OnboardingApp(
@@ -102,7 +154,13 @@ fun OnboardingApp(
             // to the DEVICE theme.
             ThemePreferenceStoreProvider {
                 FosterTheme {
-                    OnboardingAppContent(navigator, supabaseClient, onSplashBusyChanged)
+                    // Durable flags for the one-time Home swipe hint (see
+                    // SwipeHintPreferenceStore): once the hint has played OR the
+                    // user has actually swiped the Home/History book, it is
+                    // retired forever across launches.
+                    SwipeHintPreferenceStoreProvider {
+                        OnboardingAppContent(navigator, supabaseClient, onSplashBusyChanged)
+                    }
                 }
             }
         }
@@ -225,6 +283,76 @@ private fun OnboardingAppContent(
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val useRailLayout = windowWidthSizeClass(maxWidth) == WindowWidthSizeClass.Expanded
         val bottomBarActions = remember { BottomBarActions() }
+
+        // ONE pager state for the Home/History book, hoisted to the shell so
+        // the persistent bottom bar can track the drag finger-by-finger
+        // (alpha/offset from the pager's live offset).
+        val homeBookPagerState = rememberPagerState(
+            initialPage = HISTORY_BOOK_HOME_PAGE,
+            pageCount = { 2 },
+        )
+
+        // One-time "you can swipe" hint: Home is the RIGHT page of the book and
+        // History is its LEFT neighbor, so new users won't know a rightwards
+        // drag on Home reveals History. A little after first landing on Home,
+        // nudge the pager ~22% toward History and spring back — Home slides
+        // right, a sliver of History peeks from the left edge, then settles.
+        // Played only for new users who've never swiped, ONCE — retired forever
+        // the moment it plays (SwipeHintPreferenceStore.markHintShown) or the
+        // moment the user actually drags the book (markSwiped), across launches.
+        // Never mid-gesture, and never past the 50% settle threshold, so the
+        // route stack and back gesture never see it.
+        val swipeHintStore = LocalSwipeHintStore.current
+        val hintSeen by remember(swipeHintStore) {
+            swipeHintStore?.hasSeenHint ?: MutableStateFlow(true)
+        }.collectAsState()
+        val userSwipedBook by remember(swipeHintStore) {
+            swipeHintStore?.hasSwipedBook ?: MutableStateFlow(true)
+        }.collectAsState()
+        LaunchedEffect(
+            homeBookPagerState,
+            navigator.currentScreen,
+            hintSeen,
+            userSwipedBook,
+            showRewardOverlay,
+        ) {
+            if (hintSeen || userSwipedBook) return@LaunchedEffect
+            if (navigator.currentScreen !is Screen.Home) return@LaunchedEffect
+            if (showRewardOverlay) return@LaunchedEffect
+            if (homeBookPagerState.settledPage != HISTORY_BOOK_HOME_PAGE) return@LaunchedEffect
+
+            delay(HOME_SWIPE_HINT_DELAY_MILLIS)
+
+            // Re-check right before moving: the user may have grabbed the pager,
+            // flipped to History, or the persisted flags may have finished
+            // loading during the delay (keying on hintSeen/userSwipedBook already
+            // restarts this effect when they flip, this is a final guard).
+            val store = swipeHintStore ?: return@LaunchedEffect
+            if (store.hasSeenHint.value || store.hasSwipedBook.value) return@LaunchedEffect
+            if (showRewardOverlay) return@LaunchedEffect
+            if (homeBookPagerState.isScrollInProgress) return@LaunchedEffect
+            if (homeBookPagerState.settledPage != HISTORY_BOOK_HOME_PAGE) return@LaunchedEffect
+
+            val pageWidth = homeBookPagerState.layoutInfo.pageSize
+            if (pageWidth <= 0) return@LaunchedEffect
+
+            store.markHintShown()
+            performHomeSwipeHintNudge(homeBookPagerState, pageWidth)
+        }
+
+        // A real swipe (any drag on the book) retires the hint permanently —
+        // even if it hadn't played yet — because the user demonstrably knows
+        // how the book works. PagerState emits DragInteraction.Start for
+        // user-initiated drags only, so programmatic scrolls (tap-open,
+        // top-bar back, the hint nudge itself) never trigger this.
+        LaunchedEffect(homeBookPagerState, swipeHintStore) {
+            val store = swipeHintStore ?: return@LaunchedEffect
+            homeBookPagerState.interactionSource.interactions.collect { interaction ->
+                if (interaction is DragInteraction.Start) {
+                    store.markSwiped()
+                }
+            }
+        }
 
         // The rail is only visible on the two tab destinations (Home / CheckIns);
         // on every other screen — including all of onboarding — it is hidden.
@@ -368,19 +496,35 @@ private fun OnboardingAppContent(
                         onBack = { navigator.goBack() },
                     )
 
-                    is Screen.Home -> HomeScreen(
-                        onContactClick = { contact -> navigator.navigate(Screen.ContactProfile(contact.id)) },
-                        onBrainstormClick = { contactId -> navigator.navigate(Screen.Brainstorm(contactId)) },
-                        onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
-                        onOpenHistory = { navigator.navigate(Screen.CheckInHistory) },
-                        onSettingsClick = { navigator.navigate(Screen.Settings()) },
-                        onShowPaywall = showPremiumPaywall,
-                        onShowDiscountPaywall = { navigator.navigate(Screen.DiscountPaywall) },
-                        bottomBarActions = bottomBarActions,
-                    )
-
-                    is Screen.CheckInHistory -> CheckInHistoryScreen(
-                        onBack = { navigator.goBack() },
+                    // Home and CheckInHistory are the two pages of ONE
+                    // pager-backed book (see HomeHistoryBook): the status card
+                    // pushes the History route and the book animates to it;
+                    // swiping drags focus between the two already-open pages
+                    // and reconciles the route on settle.
+                    is Screen.Home,
+                    is Screen.CheckInHistory,
+                    -> HomeHistoryBook(
+                        navigator = navigator,
+                        pagerState = homeBookPagerState,
+                        historyPage = { CheckInHistoryScreen(onBack = { navigator.goBack() }) },
+                        homePage = {
+                            HomeScreen(
+                                onContactClick = { contact ->
+                                    navigator.navigate(Screen.ContactProfile(contact.id))
+                                },
+                                onBrainstormClick = { contactId ->
+                                    navigator.navigate(Screen.Brainstorm(contactId))
+                                },
+                                onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
+                                onOpenHistory = { navigator.navigate(Screen.CheckInHistory) },
+                                onSettingsClick = { navigator.navigate(Screen.Settings()) },
+                                onShowPaywall = showPremiumPaywall,
+                                onShowDiscountPaywall = {
+                                    navigator.navigate(Screen.DiscountPaywall)
+                                },
+                                bottomBarActions = bottomBarActions,
+                            )
+                        },
                     )
 
                     is Screen.CheckIns -> CheckInsScreen(
@@ -472,11 +616,16 @@ private fun OnboardingAppContent(
 
         // Single persistent navigation bar: its selection circle glides between
         // tabs while screens slide underneath (see NavigationTransitionPolicy).
+        // During a Home/History book drag it fades/slides with the finger
+        // (bookProgress) instead of popping at the settle boundary.
+        val inHistoryBook = navigator.currentScreen is Screen.Home ||
+            navigator.currentScreen is Screen.CheckInHistory
         PersistentBottomNavigationBar(
             navigator = navigator,
             actions = bottomBarActions,
             useRail = useRailLayout,
             onSelectTab = { index -> navigator.selectMainTab(index) },
+            bookProgress = if (inHistoryBook) historyBookProgress(homeBookPagerState) else 0f,
             modifier = Modifier.align(if (useRailLayout) Alignment.CenterStart else Alignment.BottomCenter),
         )
         } // end blurred backdrop container
@@ -559,6 +708,11 @@ private fun Navigator.selectMainTab(index: Int) {
  * AnimatedContent so the indicator's travel animation runs concurrently with —
  * and unaffected by — the horizontal page transition of the screens. Hidden
  * while non-tab screens are pushed or while a tab screen shows an overlay.
+ *
+ * [bookProgress] (0f = focused on Home, 1f = focused on History) makes the bar
+ * track the Home/History book drag finger-by-finger instead of popping at the
+ * settle boundary. Once History is fully focused the bar content is not
+ * composed at all, so the invisible surface can't steal touches.
  */
 @Composable
 private fun PersistentBottomNavigationBar(
@@ -566,6 +720,7 @@ private fun PersistentBottomNavigationBar(
     actions: BottomBarActions,
     useRail: Boolean,
     onSelectTab: (Int) -> Unit,
+    bookProgress: Float,
     modifier: Modifier = Modifier,
 ) {
     // Theme now comes from the single root wrapper in OnboardingApp, so this bar
@@ -576,6 +731,8 @@ private fun PersistentBottomNavigationBar(
         Screen.CheckIns -> 1
         else -> null
     }
+    val inHistoryBook = navigator.currentScreen is Screen.Home ||
+        navigator.currentScreen is Screen.CheckInHistory
 
     // Freeze the last tab while non-tab destinations sit on top, so the fading
     // bar doesn't visibly reset its circle back to item 0 mid-exit.
@@ -584,7 +741,9 @@ private fun PersistentBottomNavigationBar(
         stickySelectedIndex.intValue = selectedIndex
     }
 
-    val visible = selectedIndex != null && !actions.isOverlayShowing
+    // Stay composed during a book drag even though History isn't a tab, so the
+    // fade can follow the finger in BOTH directions.
+    val visible = (selectedIndex != null || inHistoryBook) && !actions.isOverlayShowing
 
     AnimatedVisibility(
         visible = visible,
@@ -596,18 +755,31 @@ private fun PersistentBottomNavigationBar(
             else slideOutVertically(tween(180)) { it } + fadeOut(tween(180)),
         modifier = modifier,
     ) {
-        if (useRail) {
-            SolidNavigationRail(
-                selectedIndex = stickySelectedIndex.intValue,
-                onItemSelected = onSelectTab,
-                onAddClick = actions::notifyAddContactRequested,
-            )
-        } else {
-            SolidBottomNavBar(
-                selectedIndex = stickySelectedIndex.intValue,
-                onItemSelected = onSelectTab,
-                onAddClick = actions::notifyAddContactRequested,
-            )
+        if (bookProgress < 1f || selectedIndex != null) {
+            Box(
+                modifier = Modifier.graphicsLayer {
+                    alpha = 1f - bookProgress
+                    if (useRail) {
+                        translationX = -bookProgress * 48.dp.toPx()
+                    } else {
+                        translationY = bookProgress * 48.dp.toPx()
+                    }
+                },
+            ) {
+                if (useRail) {
+                    SolidNavigationRail(
+                        selectedIndex = stickySelectedIndex.intValue,
+                        onItemSelected = onSelectTab,
+                        onAddClick = actions::notifyAddContactRequested,
+                    )
+                } else {
+                    SolidBottomNavBar(
+                        selectedIndex = stickySelectedIndex.intValue,
+                        onItemSelected = onSelectTab,
+                        onAddClick = actions::notifyAddContactRequested,
+                    )
+                }
+            }
         }
     }
 } // end PersistentBottomNavigationBar

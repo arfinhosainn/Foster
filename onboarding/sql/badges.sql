@@ -3,7 +3,7 @@
 -- count (across ALL the user's contacts).
 --
 --   * adds `badges.description` (missing in migration_v2_erd.sql)
---   * seeds the 8-badge public catalog (thresholds 1 / 15 / 30 / 45 / 60 / 75 / 90 / 115)
+--   * seeds the 7-badge public catalog (thresholds 1 / 15 / 30 / 45 / 60 / 75 / 115)
 --   * auto-unlocks badges via a `check_ins` AFTER INSERT trigger
 --
 -- Idempotent / re-runnable: column adds are guarded, seeds only insert rows
@@ -156,9 +156,11 @@ insert into public.badges (name, description, threshold)
 select 'Pink Flower', 'Reach 75 check-ins and grow a pink flower.', 75
 where not exists (select 1 from public.badges where name = 'Pink Flower');
 
-insert into public.badges (name, description, threshold)
-select 'Green Flower', 'Reach 90 check-ins and grow a green flower.', 90
-where not exists (select 1 from public.badges where name = 'Green Flower');
+-- Green Flower is retired (removed from the achievement progression). Deleting
+-- it here keeps re-runs of this migration on older databases consistent;
+-- user_badges rows for it cascade away via the FK. Legacy rows that this script
+-- itself renames to 'Green Flower' above are caught by this same delete.
+delete from public.badges where name = 'Green Flower';
 
 insert into public.badges (name, description, threshold)
 select 'Mushrooms', 'Reach 115 check-ins and discover the mushrooms.', 115

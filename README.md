@@ -41,8 +41,10 @@ configuration time.
 
 **iOS** — copy [`iosApp/Configuration/Secrets.xcconfig.example`](./iosApp/Configuration/Secrets.xcconfig.example)
 to `Secrets.xcconfig` (gitignored, auto-included by `Config.xcconfig`) and fill
-it in. Gotcha: xcconfig treats `//` as a comment — escape URLs as
-`https:$()//…`. Values flow into Info.plist at build time.
+it in. Gotcha: xcconfig treats `//` as a comment, so write the URL without
+adjacent slashes — `https:/$()/your-ref.supabase.co` expands to
+`https://your-ref.supabase.co` at build time. Values flow into Info.plist at
+build time.
 
 Both platforms bootstrap these into `Secrets` at app startup
 (`MainActivity.onCreate` / `MainViewController`). `Secrets.configure` is

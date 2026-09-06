@@ -522,6 +522,7 @@ private fun MoveMemberDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = FosterTheme.colors.fill.tertiary,
         title = { Text(stringResource(Res.string.group_move_dialog_title, contact?.name ?: "")) },
         text = {
             if (otherGroups.isEmpty()) {
@@ -565,7 +566,12 @@ private fun MoveMemberDialog(
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = stringResource(Res.string.action_cancel),
+                    color = FosterTheme.colors.red.default,
+                )
+            }
         },
     )
 }

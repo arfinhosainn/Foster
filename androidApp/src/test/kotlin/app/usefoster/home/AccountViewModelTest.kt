@@ -94,7 +94,6 @@ class AccountViewModelTest {
                 badges = listOf(
                     Badge("b8", "Mushrooms", "mushrooms", 115),
                     Badge("b3", "Sunflower", "sun", 30),
-                    Badge("b6", "Green Flower", "green", 90),
                     Badge("b1", "Soil", "soil", 1),
                     Badge("b5", "Blue Flower", "blue", 60),
                     Badge("b4", "Brown Flower", "brown", 45),
@@ -107,13 +106,13 @@ class AccountViewModelTest {
             advanceUntilIdle()
 
             val slots = viewModel.state.value.badgeSlots
-            assertEquals(8, slots.size)
+            assertEquals(7, slots.size)
             assertEquals("b1", slots[0].badge.id)
             assertEquals(true, slots[0].unlocked)
             assertEquals("b2", slots[1].badge.id)
             assertEquals(false, slots[1].unlocked)
             assertEquals(
-                listOf("Soil", "Lotus Flower", "Sunflower", "Brown Flower", "Blue Flower", "Pink Flower", "Green Flower", "Mushrooms"),
+                listOf("Soil", "Lotus Flower", "Sunflower", "Brown Flower", "Blue Flower", "Pink Flower", "Mushrooms"),
                 slots.map { it.badge.name },
             )
         } finally {

@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.usefoster.home.domain.BrainstormTopic
 import app.usefoster.theme.FosterTheme
@@ -32,12 +33,13 @@ fun CurrentOutputContent(
     onShareTopic: ((BrainstormTopic) -> Unit)? = null,
     onCopyTopic: ((BrainstormTopic) -> Unit)? = null,
     modifier: Modifier = Modifier,
+    horizontalPadding: Dp = 24.dp,
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = horizontalPadding),
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 

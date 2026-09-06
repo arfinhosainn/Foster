@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.theme.FosterTheme
@@ -32,6 +33,7 @@ fun FosterButton(
     ),
     contentPadding: PaddingValues = PaddingValues(horizontal = 35.dp, vertical = 15.dp),
     textStyle: TextStyle = FosterTheme.typography.heading3Bold,
+    iconSize: Dp = 18.dp,
 ) {
     Button(
         onClick = onClick,
@@ -49,7 +51,7 @@ fun FosterButton(
             )
             Spacer(modifier = Modifier.width(8.dp))
         } else if (leadingIcon != null) {
-            Box(modifier = Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.size(iconSize), contentAlignment = Alignment.Center) {
                 leadingIcon()
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -63,7 +65,7 @@ fun FosterButton(
 
         if (trailingIcon != null && !loading) {
             Spacer(modifier = Modifier.width(8.dp))
-            Box(modifier = Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.size(iconSize), contentAlignment = Alignment.Center) {
                 trailingIcon()
             }
         }

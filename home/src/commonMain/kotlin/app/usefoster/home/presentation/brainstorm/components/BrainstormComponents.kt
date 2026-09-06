@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.home.domain.BrainstormTopic
@@ -76,12 +77,13 @@ fun BrainstormTabs(
     selected: BrainstormTab,
     onSelect: (BrainstormTab) -> Unit,
     modifier: Modifier = Modifier,
+    horizontalPadding: Dp = 24.dp,
 ) {
     val options = listOf(BrainstormTab.CurrentOutput to "Current Output", BrainstormTab.History to "History")
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 10.dp),
+            .padding(horizontal = horizontalPadding, vertical = 10.dp),
     ) {
         val isWideLayout = maxWidth >= 600.dp
         val controlHeight = if (isWideLayout) 86.dp else 46.dp

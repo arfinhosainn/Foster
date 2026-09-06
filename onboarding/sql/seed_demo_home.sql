@@ -88,7 +88,6 @@ begin
       ('Brown Flower', 'Reach 45 check-ins and grow a brown flower.',     45),
       ('Blue Flower',  'Reach 60 check-ins and grow a blue lotus.',       60),
       ('Pink Flower',  'Reach 75 check-ins and grow a pink flower.',      75),
-      ('Green Flower', 'Reach 90 check-ins and grow a green flower.',     90),
       ('Mushrooms',    'Reach 115 check-ins and discover the mushrooms.',115)
     ) as v(name, description, threshold)
   where not exists (select 1 from public.badges b where b.name = v.name);

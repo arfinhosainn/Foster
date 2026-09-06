@@ -119,6 +119,39 @@ class NavigationTransitionPolicyTest {
         assertEquals(0.3f, NavAnimationSpecs.ForwardParallaxFraction)
     }
 
+    @Test
+    fun historyIsAPagerPageWithNoRouteAnimation() {
+        // Home and History are two pages of one pager-backed book — the pager
+        // owns the motion, so AnimatedContent must stay out of the way for the
+        // pair in BOTH directions.
+        assertEquals(
+            ScreenTransitionStyle.None,
+            transitionStyle(
+                initial = state(Screen.Home),
+                target = state(Screen.CheckInHistory, NavigationOperation.Forward),
+            ),
+        )
+        assertEquals(
+            ScreenTransitionStyle.None,
+            transitionStyle(
+                initial = state(Screen.CheckInHistory),
+                target = state(Screen.Home, NavigationOperation.Backward),
+            ),
+        )
+    }
+
+    @Test
+    fun homeAndHistoryShareOneAnimatedContentSlot() {
+        // Same slot = the pager is never torn down, double-composed, or
+        // re-animated when focus flips between the two book pages.
+        assertEquals(navContentKey(Screen.Home), navContentKey(Screen.CheckInHistory))
+        kotlin.test.assertNotEquals(navContentKey(Screen.Home), navContentKey(Screen.CheckIns))
+        kotlin.test.assertNotEquals(
+            navContentKey(Screen.Home),
+            navContentKey(Screen.Settings()),
+        )
+    }
+
     private fun state(
         screen: Screen,
         operation: NavigationOperation = NavigationOperation.ResetStack,

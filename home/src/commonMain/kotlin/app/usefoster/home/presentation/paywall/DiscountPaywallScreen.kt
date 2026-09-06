@@ -5,9 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -43,12 +46,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.usefoster.adaptive.adaptiveSurfacePolicy
 import app.usefoster.home.di.rememberDiscountPaywallViewModel
 import app.usefoster.theme.FosterTheme
 import kotlinx.coroutines.delay
@@ -141,11 +146,18 @@ fun DiscountPaywallScreen(
     val seconds = (remainingSeconds % 60).toString().padStart(2, '0')
     val countdownText = "$hours : $minutes : $seconds"
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(PaywallBackground),
     ) {
+        // Adaptive cap: keep the offer a readable single column on
+        // tablets/desktop instead of stretching edge-to-edge.
+        val policy = adaptiveSurfacePolicy(
+            width = maxWidth,
+            height = maxHeight,
+            fontScale = LocalDensity.current.fontScale,
+        )
         // Tree decorations at the bottom corners.
         Image(
             painter = painterResource(Res.drawable.ic_treeleft),
@@ -160,10 +172,12 @@ fun DiscountPaywallScreen(
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .align(Alignment.Center)
+                .widthIn(max = policy.maxWidth)
+                .fillMaxHeight()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = policy.horizontalPadding),
             verticalArrangement = Arrangement.Center,
         ) {
             // Hero offer card.

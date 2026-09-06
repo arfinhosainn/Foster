@@ -212,30 +212,34 @@ fun WelcomeScreen(
                     )
                     Spacer(Modifier.height(50.dp))
 
-                    FosterButton(
-                        text = stringResource(Res.string.auth_continue_apple),
-                        onClick = {
-                            errorMessage = null
-                            try {
-                                println("Starting Apple Sign-In flow...")
-                                appleSignInAction.startFlow()
-                                println("Apple startFlow returned (no exception)")
-                            } catch (e: Exception) {
-                                if (e is CancellationException) throw e
-                                println("Apple startFlow failed")
-                                errorMessage = e.toOnboardingAuthError()
-                            }
-                        },
-                        leadingIcon = {
-                            Image(
-                                painter = painterResource(Res.drawable.ic_apple),
-                                contentDescription = "",
-                                colorFilter = ColorFilter.tint(FosterTheme.colors.background.b0)
-                            )
-                        },
-                        loading = false
-                    )
-                    Spacer(Modifier.height(13.dp))
+                    // Apple sign-in is iOS-only: on Android we show just the
+                    // Google button; on iOS both sign-in options appear.
+                    if (isApplePlatform()) {
+                        FosterButton(
+                            text = stringResource(Res.string.auth_continue_apple),
+                            onClick = {
+                                errorMessage = null
+                                try {
+                                    println("Starting Apple Sign-In flow...")
+                                    appleSignInAction.startFlow()
+                                    println("Apple startFlow returned (no exception)")
+                                } catch (e: Exception) {
+                                    if (e is CancellationException) throw e
+                                    println("Apple startFlow failed")
+                                    errorMessage = e.toOnboardingAuthError()
+                                }
+                            },
+                            leadingIcon = {
+                                Image(
+                                    painter = painterResource(Res.drawable.ic_apple),
+                                    contentDescription = "",
+                                    colorFilter = ColorFilter.tint(FosterTheme.colors.background.b0)
+                                )
+                            },
+                            loading = false
+                        )
+                        Spacer(Modifier.height(13.dp))
+                    }
 
                     FosterButton(
                         colors = ButtonDefaults.buttonColors(
@@ -262,6 +266,7 @@ fun WelcomeScreen(
                                 errorMessage = e.toOnboardingAuthError()
                             }
                         },
+                        iconSize = 24.dp,
                         loading = false
                     )
                     errorMessage?.let {

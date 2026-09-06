@@ -55,14 +55,31 @@ private fun screenTransitionStyle(screen: Screen): ScreenTransitionStyle {
         is Screen.ContactProfile,
         is Screen.Settings,
         Screen.CheckIns,
-        Screen.CheckInHistory,
         is Screen.GroupDetail -> ScreenTransitionStyle.Horizontal
 
+        // Home and CheckInHistory are two pages of one pager-backed "book"
+        // (see HomeHistoryBook) — the pager owns all motion between them, so
+        // AnimatedContent must never animate across this pair.
         Screen.Home -> ScreenTransitionStyle.Reset
+        Screen.CheckInHistory -> ScreenTransitionStyle.None
         is Screen.Brainstorm,
         Screen.Paywall,
         Screen.DiscountPaywall,
         Screen.GroupSettings,
         is Screen.DayAgenda -> ScreenTransitionStyle.Vertical
     }
+}
+
+/** Sentinel AnimatedContent key shared by the two pages of the Home/History book. */
+const val HomeHistoryBookNavKey = "HomeHistoryBook"
+
+/**
+ * AnimatedContent identity for [FosterNavHost]. Home and CheckInHistory share
+ * ONE content slot so the pager-backed book is never torn down,
+ * double-composed, or re-animated when focus flips between its pages. Every
+ * other screen keeps its own slot (and its own route transition).
+ */
+fun navContentKey(screen: Screen): Any = when (screen) {
+    Screen.Home, Screen.CheckInHistory -> HomeHistoryBookNavKey
+    else -> screen
 }
