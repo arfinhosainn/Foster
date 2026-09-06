@@ -3,12 +3,14 @@ package app.usefoster.home.presentation.brainstorm
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -22,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -29,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import app.usefoster.adaptive.adaptiveSurfacePolicy
 import app.usefoster.designsystem.snackbar.FosterSnackbarHost
 import app.usefoster.home.di.rememberBrainstormViewModel
 import app.usefoster.home.domain.BrainstormTopic
@@ -111,48 +115,65 @@ fun BrainstormScreen(
             },
             containerColor = FosterTheme.colors.background.b0.copy(alpha = 0f),
         ) { innerPadding ->
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize(),
             ) {
-                if (state.isRefreshing) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 4.dp),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End,
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(14.dp),
-                            color = FosterTheme.colors.text.tertiary,
-                            strokeWidth = 1.5.dp,
+                // Adaptive cap: keeps the tab bar + cards a readable single
+                // column on tablets/desktop (same policy as CheckInHistory/Paywall).
+                val policy = adaptiveSurfacePolicy(
+                    width = maxWidth,
+                    height = maxHeight,
+                    fontScale = LocalDensity.current.fontScale,
+                )
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .widthIn(max = policy.maxWidth)
+                        .fillMaxSize(),
+                ) {
+                    if (state.isRefreshing) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = policy.horizontalPadding, vertical = 4.dp),
+                            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(14.dp),
+                                color = FosterTheme.colors.text.tertiary,
+                                strokeWidth = 1.5.dp,
+                            )
+                        }
+                    }
+                    BrainstormTabs(
+                        selected = selectedTab,
+                        onSelect = { selectedTab = it },
+                        horizontalPadding = policy.horizontalPadding,
+                    )
+                    when (selectedTab) {
+                        BrainstormTab.CurrentOutput -> CurrentOutputContent(
+                            topics = state.currentTopics,
+                            isGenerating = state.isGenerating,
+                            notice = state.notice,
+                            error = state.error,
+                            onDismissNotice = { viewModel.onAction(BrainstormAction.DismissNotice) },
+                            onShareTopic = shareTopic,
+                            onCopyTopic = copyTopic,
+                            horizontalPadding = policy.horizontalPadding,
+                        )
+                        BrainstormTab.History -> HistoryContent(
+                            sessions = state.history,
+                            isLoading = state.isLoadingHistory,
+                            error = state.error,
+                            onShareTopic = shareTopic,
+                            onCopyTopic = copyTopic,
+                            notice = state.notice,
+                            onDismissNotice = { viewModel.onAction(BrainstormAction.DismissNotice) },
+                            horizontalPadding = policy.horizontalPadding,
                         )
                     }
-                }
-                BrainstormTabs(
-                    selected = selectedTab,
-                    onSelect = { selectedTab = it },
-                )
-                when (selectedTab) {
-                    BrainstormTab.CurrentOutput -> CurrentOutputContent(
-                        topics = state.currentTopics,
-                        isGenerating = state.isGenerating,
-                        notice = state.notice,
-                        error = state.error,
-                        onDismissNotice = { viewModel.onAction(BrainstormAction.DismissNotice) },
-                        onShareTopic = shareTopic,
-                        onCopyTopic = copyTopic,
-                    )
-                    BrainstormTab.History -> HistoryContent(
-                        sessions = state.history,
-                        isLoading = state.isLoadingHistory,
-                        error = state.error,
-                        onShareTopic = shareTopic,
-                        onCopyTopic = copyTopic,
-                        notice = state.notice,
-                        onDismissNotice = { viewModel.onAction(BrainstormAction.DismissNotice) },
-                    )
                 }
             }
         }

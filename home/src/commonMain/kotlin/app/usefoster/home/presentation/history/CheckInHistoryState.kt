@@ -181,7 +181,9 @@ fun currentBoardProgress(
 /** One row in the dot-detail sheet. */
 data class DotCheckInEntry(
     val contactName: String,
-    /** Local "HH:mm" time of the check-in; null when unparseable. */
+    /** Contact accent color used to pick the avatar drawable. */
+    val avatarColor: String?,
+    /** Local "h:mm AM/PM" time of the check-in; null when unparseable. */
     val time: String?,
 )
 
@@ -192,7 +194,11 @@ data class DotDetails(
     val dotNumber: Int,
     val date: LocalDate,
     val checkIns: List<DotCheckInEntry>,
-    val missedContactNames: List<String>,
+    /**
+     * Missed occurrences as full entries (avatar + name, no time — a missed
+     * check-in never happened, so there is nothing to timestamp).
+     */
+    val missedEntries: List<DotCheckInEntry>,
 )
 
 /**
@@ -215,35 +221,46 @@ fun buildDotDetails(
         .filter { it.contactId in contactIds && it.localDate(timeZone) == slot.date }
         .sortedBy { it.checkedInAt }
         .map { checkIn ->
+            val contact = contactsById.getValue(checkIn.contactId)
             DotCheckInEntry(
-                contactName = contactsById.getValue(checkIn.contactId).name,
+                contactName = contact.name,
+                avatarColor = contact.avatarColor,
                 time = formatCheckInTime(checkIn.checkedInAt, timeZone),
             )
         }
-    val missedNames = maps.missedByDate[slot.date].orEmpty()
+    val missedEntries = maps.missedByDate[slot.date].orEmpty()
         .intersect(contactIds)
-        .map { contactsById.getValue(it).name }
-        .sorted()
+        .map { contactsById.getValue(it) }
+        .sortedBy { it.name }
+        .map { contact ->
+            DotCheckInEntry(
+                contactName = contact.name,
+                avatarColor = contact.avatarColor,
+                time = null,
+            )
+        }
 
     return DotDetails(
         boardIndex = board.boardIndex,
         dotNumber = dotNumber,
         date = slot.date,
         checkIns = dayCheckIns,
-        missedContactNames = missedNames,
+        missedEntries = missedEntries,
     )
 }
 
-/** Local "HH:mm" rendering of an ISO check-in timestamp; null when unparseable. */
+/**
+ * Local "h:mm AM/PM" rendering of an ISO check-in timestamp (12-hour clock,
+ * e.g. "12:45 AM" / "2:05 PM"); null when unparseable.
+ */
 private fun formatCheckInTime(checkedInAt: String, timeZone: TimeZone): String? =
     runCatching {
         val time = kotlin.time.Instant.parse(checkedInAt)
             .toLocalDateTime(timeZone)
             .time
-        buildString {
-            append(time.hour.toString().padStart(2, '0'))
-            append(':')
-            append(time.minute.toString().padStart(2, '0'))
-        }
+        val hour12 = time.hour % 12
+        val displayHour = if (hour12 == 0) 12 else hour12
+        val meridiem = if (time.hour < 12) "AM" else "PM"
+        "$displayHour:${time.minute.toString().padStart(2, '0')} $meridiem"
     }.getOrNull()
 

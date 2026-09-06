@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -39,6 +40,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -63,7 +65,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import foster.home.generated.resources.Res
 import foster.home.generated.resources.ic_appearance
-import foster.home.generated.resources.ic_contacts
 import foster.home.generated.resources.ic_greenprofile
 import foster.home.generated.resources.ic_groups
 import foster.home.generated.resources.ic_notification
@@ -74,7 +75,6 @@ import foster.home.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.vectorResource
 import foster.home.generated.resources.settings_account
 import foster.home.generated.resources.settings_appearance
-import foster.home.generated.resources.settings_contacts
 import foster.home.generated.resources.settings_danger_zone
 import foster.home.generated.resources.settings_delete_account
 import foster.home.generated.resources.settings_groups
@@ -185,6 +185,10 @@ fun SettingScreen(
                     top = topBarHeightDp, start = 24.dp, end =
                         24.dp
                 )
+                // Clears the floating bottom nav bar (~96dp + system insets):
+                // the version/terms/privacy links end the scroll and were
+                // landing behind the bar, making Privacy effectively untappable.
+                .padding(bottom = 20.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -221,7 +225,6 @@ fun SettingScreen(
                             reminderScheduler.openSettings()
                         }
                     },
-                    SettingsRow.Item(icon = Res.drawable.ic_contacts, title = stringResource(Res.string.settings_contacts)) {},
                     SettingsRow.Item(icon = Res.drawable.ic_groups, title = stringResource(Res.string.settings_groups)) {
                         showGroupSheet = true
                     },
@@ -229,17 +232,25 @@ fun SettingScreen(
                 ),
             )
 
-            // "Danger Zone" label
+            // "Danger Zone" label — start-aligned (the column centers children by
+            // default), matching the section-header language of the rows below.
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = stringResource(Res.string.settings_danger_zone),
                 style = FosterTheme.typography.heading3,
                 fontWeight = FontWeight.SemiBold,
                 color = FosterTheme.colors.text.primary,
-                modifier = Modifier.padding(horizontal = 10.dp),
+                textAlign = TextAlign.Start,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
             )
 
             SettingsGroup(
                 liquidState = liquidState,
+                // Tighter corners than the 40dp row groups — reads as a
+                // standalone destructive action, not another settings card.
+                shape = RoundedCornerShape(24.dp),
                 rows = listOf(
                     SettingsRow.Destructive(
                         icon = Res.drawable.ic_trashbin,
@@ -272,7 +283,8 @@ fun SettingScreen(
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_terms),
                         contentDescription = "",
-                        tint = Color.Unspecified
+                        tint = Color.Unspecified,
+                        modifier = modifier.size(16.dp)
                     )
                     Spacer(Modifier.width(5.dp))
                     Text(

@@ -24,7 +24,7 @@ fun FosterNavHost(
 ) {
     AnimatedContent(
         targetState = navigator.navState,
-        contentKey = { it.screen },
+        contentKey = { navContentKey(it.screen) },
         transitionSpec = {
             val style = transitionStyle(initialState, targetState)
             val isBackward = targetState.operation == NavigationOperation.Backward

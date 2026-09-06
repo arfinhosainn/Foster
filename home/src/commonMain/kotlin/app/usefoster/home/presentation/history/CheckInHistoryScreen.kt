@@ -1,7 +1,10 @@
 package app.usefoster.home.presentation.history
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,12 +13,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.Devices
@@ -34,8 +41,12 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.usefoster.adaptive.AdaptiveSurface
+import app.usefoster.adaptive.adaptiveSurfacePolicy
+import app.usefoster.designsystem.sideShine
 import app.usefoster.home.di.rememberCheckInHistoryViewModel
 import app.usefoster.home.presentation.components.CheckInTimelineGrid
+import app.usefoster.home.presentation.components.ContactAvatar
 import app.usefoster.home.presentation.components.TIMELINE_SLOT_COUNT
 import app.usefoster.home.presentation.components.TimelineSlot
 import app.usefoster.home.presentation.components.buildTimelineSlots
@@ -47,12 +58,15 @@ import foster.home.generated.resources.history_board_label
 import foster.home.generated.resources.history_board_missed
 import foster.home.generated.resources.history_boards_filled
 import foster.home.generated.resources.history_boards_perfect
+import foster.home.generated.resources.history_dot_checkins_day
 import foster.home.generated.resources.history_dot_missed
+import foster.home.generated.resources.history_dot_missed_day
 import foster.home.generated.resources.history_dot_none
-import foster.home.generated.resources.history_dot_position
+import foster.home.generated.resources.history_dot_of_board
 import foster.home.generated.resources.history_empty
 import foster.home.generated.resources.history_first_board_progress
 import foster.home.generated.resources.history_perfect_badge
+import foster.home.generated.resources.ic_flame
 import foster.home.generated.resources.month_apr
 import foster.home.generated.resources.month_aug
 import foster.home.generated.resources.month_dec
@@ -72,6 +86,19 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
+
+/**
+ * A board needs at least this much width before a second archive column is
+ * worth it (7 timeline cells plus gutters at Home's base 50dp cell size).
+ */
+private val MIN_HISTORY_BOARD_COLUMN_WIDTH = 480.dp
+
+/**
+ * Hard cap for the two-column archive: two ~496dp boards plus the gutter and
+ * horizontal padding. Beyond this the rows simply center.
+ */
+private val MAX_TWO_COLUMN_HISTORY_WIDTH = 1040.dp
 
 /**
  * Check-in history screen: an archive of finished 26-dot boards.
@@ -104,12 +131,33 @@ fun CheckInHistoryScreen(
         containerColor = FosterTheme.colors.background.b0,
         topBar = { HistoryTopBar(onBack = onBack) },
     ) { padding ->
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize(),
             contentAlignment = Alignment.TopCenter,
         ) {
+            // Same adaptive policy as the rest of the app: a readable content
+            // cap that scales with window size class and font scale, plus
+            // tighter horizontal padding when a large font is active.
+            val policy = adaptiveSurfacePolicy(
+                width = maxWidth,
+                height = maxHeight,
+                fontScale = LocalDensity.current.fontScale,
+            )
+            // History uses slightly tighter gutters than the shared 24dp policy:
+            // 20dp each side, still dropping to 16dp when a large font is
+            // active so text keeps the extra room.
+            val horizontalPadding = if (LocalDensity.current.fontScale >= 1.5f) 16.dp else 20.dp
+            // Boards flow into a second column once the window can hand each
+            // one a comfortable ~480dp lane (CheckIns group-grid idiom).
+            val boardColumns = (maxWidth / MIN_HISTORY_BOARD_COLUMN_WIDTH).toInt().coerceIn(1, 2)
+            val contentMaxWidth = if (boardColumns > 1) {
+                MAX_TWO_COLUMN_HISTORY_WIDTH
+            } else {
+                policy.maxWidth
+            }
+
             when {
                 state.isLoading -> Box(
                     modifier = Modifier.fillMaxSize(),
@@ -123,9 +171,7 @@ fun CheckInHistoryScreen(
                 }
 
                 state.boards.isEmpty() -> Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -145,15 +191,18 @@ fun CheckInHistoryScreen(
                         fontWeight = FontWeight.Medium,
                         color = FosterTheme.colors.text.tertiary,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier
+                            .widthIn(max = policy.maxWidth)
+                            .padding(horizontal = horizontalPadding),
                     )
                 }
 
                 else -> Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .widthIn(max = 720.dp)
+                        .widthIn(max = contentMaxWidth)
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 24.dp),
+                        .padding(horizontal = horizontalPadding),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Spacer(Modifier.height(8.dp))
@@ -165,12 +214,23 @@ fun CheckInHistoryScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    state.boards.forEach { board ->
-                        BoardSection(
-                            board = board,
-                            today = today,
-                            onDotClick = viewModel::selectDot,
-                        )
+                    state.boards.chunked(boardColumns).forEach { rowBoards ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp),
+                        ) {
+                            rowBoards.forEach { board ->
+                                BoardSection(
+                                    board = board,
+                                    today = today,
+                                    onDotClick = viewModel::selectDot,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            repeat(boardColumns - rowBoards.size) {
+                                Spacer(Modifier.weight(1f))
+                            }
+                        }
                         Spacer(Modifier.height(28.dp))
                     }
 
@@ -185,7 +245,7 @@ fun CheckInHistoryScreen(
     }
 }
 
-/** "N boards filled · ★ M perfect" summary at the top of the archive. */
+/** "N boards filled · 🔥 M perfect" summary at the top of the archive. */
 @Composable
 private fun BoardsFilledStatRow(
     filled: Int,
@@ -204,10 +264,11 @@ private fun BoardsFilledStatRow(
         )
         if (perfect > 0) {
             Spacer(Modifier.widthIn(min = 12.dp))
-            Text(
-                text = "★",
-                fontSize = 14.sp,
-                color = FosterTheme.colors.green.default,
+            Icon(
+                imageVector = vectorResource(Res.drawable.ic_flame),
+                contentDescription = null,
+                tint = FosterTheme.colors.green.default,
+                modifier = Modifier.size(14.dp),
             )
             Spacer(Modifier.widthIn(min = 4.dp))
             Text(
@@ -225,12 +286,24 @@ private fun BoardSection(
     board: HistoryBoardUiModel,
     today: LocalDate,
     onDotClick: (HistoryBoardUiModel, TimelineSlot) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val slots = remember(board.startDate, board.events, today) {
         buildTimelineSlots(startDate = board.startDate, today = today, events = board.events)
     }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    // Each board lives in a card (rounded b1 surface with the same left+right
+    // edge shine as Home's contact list), so the archive reads as a stack of
+    // collectible boards.
+    val boardCardShape = RoundedCornerShape(24.dp)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(boardCardShape)
+            .background(FosterTheme.colors.background.b1)
+            .sideShine(boardCardShape, intensity = 0.5f)
+            .padding(horizontal = 16.dp, vertical = 18.dp),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -269,29 +342,17 @@ private fun BoardSection(
     }
 }
 
-/** ★ Perfect pill for boards with zero missed occurrences. */
+/** 🔥 Perfect pill for boards with zero missed occurrences. */
 @Composable
 private fun PerfectBadge(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(percent = 50))
-            .background(FosterTheme.colors.green.fill)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "★",
-            fontSize = 12.sp,
-            color = FosterTheme.colors.green.default,
+
+        Icon(
+            imageVector = vectorResource(Res.drawable.ic_flame),
+            contentDescription = null,
+            tint = FosterTheme.colors.green.active,
+            modifier = Modifier.size(18.dp),
         )
-        Spacer(Modifier.widthIn(min = 4.dp))
-        Text(
-            text = stringResource(Res.string.history_perfect_badge),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = FosterTheme.colors.green.default,
-        )
-    }
+
 }
 
 /** "Aug 2 – 29" / "Aug 28 – Sep 2" / "Dec 28, 2026 – Jan 2, 2027". */
@@ -347,64 +408,87 @@ private fun DotDetailsSheet(
         sheetState = sheetState,
         containerColor = FosterTheme.colors.background.b1,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp),
-        ) {
-            Text(
-                text = stringResource(Res.string.history_board_label, dot.boardIndex) +
-                    " · " + stringResource(
-                    Res.string.history_dot_position,
-                    dot.dotNumber,
-                    TIMELINE_SLOT_COUNT,
-                ),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = FosterTheme.colors.text.tertiary,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = dotDate(dot.date),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = FosterTheme.colors.text.primary,
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            if (dot.checkIns.isEmpty() && dot.missedContactNames.isEmpty()) {
+        AdaptiveSurface {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+            ) {
                 Text(
-                    text = stringResource(Res.string.history_dot_none),
-                    fontSize = 15.sp,
+                    text = dotDate(dot.date),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = FosterTheme.colors.text.primary,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = dotDetailSummary(dot),
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = FosterTheme.colors.text.tertiary,
                 )
-            } else {
-                dot.checkIns.forEach { entry ->
-                    DotDetailsRow(
-                        label = entry.contactName,
-                        trailing = entry.time,
-                        trailingColor = FosterTheme.colors.text.secondary,
+
+                Spacer(Modifier.height(16.dp))
+
+                if (dot.checkIns.isEmpty() && dot.missedEntries.isEmpty()) {
+                    Text(
+                        text = stringResource(Res.string.history_dot_none),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = FosterTheme.colors.text.tertiary,
                     )
-                    Spacer(Modifier.height(10.dp))
-                }
-                dot.missedContactNames.forEach { name ->
-                    DotDetailsRow(
-                        label = name,
-                        trailing = stringResource(Res.string.history_dot_missed),
-                        trailingColor = FosterTheme.colors.red.default,
-                    )
-                    Spacer(Modifier.height(10.dp))
+                } else {
+                    dot.checkIns.forEach { entry ->
+                        DotDetailsRow(
+                            avatarColor = entry.avatarColor,
+                            label = entry.contactName,
+                            trailing = entry.time,
+                            trailingColor = FosterTheme.colors.text.secondary,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                    }
+                    dot.missedEntries.forEach { entry ->
+                        DotDetailsRow(
+                            avatarColor = entry.avatarColor,
+                            label = entry.contactName,
+                            trailing = stringResource(Res.string.history_dot_missed),
+                            trailingColor = FosterTheme.colors.red.default,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                    }
                 }
             }
         }
     }
 }
 
+/**
+ * "Dot 4 of Board 3 · 2 check-ins this day · 3 missed check-ins this day" — the
+ * summary line just under the dot's date. Each count only appears when
+ * non-zero: a day can mix both (one contact checked in, another missed).
+ */
+@Composable
+private fun dotDetailSummary(dot: DotDetails): String {
+    val position = stringResource(Res.string.history_dot_of_board, dot.dotNumber, dot.boardIndex)
+    return buildList {
+        add(position)
+        if (dot.checkIns.isNotEmpty()) {
+            add(stringResource(Res.string.history_dot_checkins_day, dot.checkIns.size))
+        }
+        if (dot.missedEntries.isNotEmpty()) {
+            add(stringResource(Res.string.history_dot_missed_day, dot.missedEntries.size))
+        }
+    }.joinToString(" · ")
+}
+
+/**
+ * One row in the dot sheet: contact avatar (home contact-list style) + name +
+ * trailing time / "Missed" label. Missed rows carry the contact's avatar too —
+ * only their [trailing] differs (red "Missed" instead of a time).
+ */
 @Composable
 private fun DotDetailsRow(
+    avatarColor: String?,
     label: String,
     trailing: String?,
     trailingColor: Color,
@@ -414,6 +498,13 @@ private fun DotDetailsRow(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        ContactAvatar(
+            avatarColor = avatarColor,
+            modifier = Modifier
+                .size(40.dp)
+                .border(1.5.dp, FosterTheme.colors.stroke.secondary, CircleShape),
+        )
+        Spacer(Modifier.width(12.dp))
         Text(
             text = label,
             fontSize = 15.sp,
@@ -439,6 +530,7 @@ private fun DotDetailsRow(
 @Preview(name = "Phone", device = Devices.PHONE, showBackground = true)
 @Preview(name = "Foldable", device = Devices.FOLDABLE, showBackground = true)
 @Preview(name = "Tablet", device = Devices.TABLET, showBackground = true)
+@Preview(name = "Desktop", device = Devices.DESKTOP, showBackground = true)
 @PreviewLightDark
 @Composable
 private fun PreviewCheckInHistoryScreen() {

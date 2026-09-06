@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,6 +69,7 @@ sealed interface SettingsRow {
 fun SettingsGroup(
     rows: List<SettingsRow>,
     liquidState: LiquidState,
+    shape: Shape = RoundedCornerShape(40.dp),
     modifier: Modifier = Modifier
 ) {
 
@@ -76,7 +78,7 @@ fun SettingsGroup(
     Surface(
         modifier = modifier.liquefiable(liquidState),
         color = FosterTheme.colors.background.b1,
-        shape = RoundedCornerShape(40.dp)
+        shape = shape
     ) {
 
         Column {

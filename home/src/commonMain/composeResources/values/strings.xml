@@ -21,6 +21,7 @@
     <string name="brainstorm_cooldown">Already generated today. Check back tomorrow for fresh ideas.</string>
     <string name="cd_close">Close</string>
     <string name="cd_back">Back</string>
+    <string name="cd_back_to_home">Back to home</string>
     <string name="cd_selected">Selected</string>
     <string name="home_check_in_title">Check In</string>
     <string name="home_checkin_error">Couldn\'t check in. Please try again.</string>
@@ -191,6 +192,9 @@
     <string name="history_board_missed">%1$d missed</string>
     <string name="history_perfect_badge">Perfect</string>
     <string name="history_dot_position">Dot %1$d of %2$d</string>
+    <string name="history_dot_of_board">Dot %1$d of Board %2$d</string>
+    <string name="history_dot_checkins_day">%1$d check-ins this day</string>
+    <string name="history_dot_missed_day">%1$d missed check-ins this day</string>
     <string name="history_dot_missed">Missed</string>
     <string name="history_dot_none">No check-ins this day</string>
 </resources>

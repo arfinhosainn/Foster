@@ -107,9 +107,11 @@ empty state tell the truth:
 
 1. **Top bar**: back button + start-aligned "History" title. (No year dropdown — boards span
    years freely, so a year filter would be meaningless; the board date ranges carry the dates.)
-2. **Stat row**: `N boards filled · ★ M perfect` — a collectible-feel summary from the palette.
-3. **Board sections (newest first)**:
-   - Header: `Board 3` + date range (`Aug 2 – Aug 29`) + a **★ Perfect** green pill when the
+2. **Stat row**: `N boards filled · 🔥 M perfect` — a collectible-feel summary from the palette
+   (flame icon = perfect, matching the board badge).
+3. **Board sections (newest first)** — each board sits in a **card** (rounded `b1` surface, the
+   app's standard card language) so the archive reads as a stack of collectible boards:
+   - Header: `Board 3` + date range (`Aug 2 – Aug 29`) + a **🔥 Perfect** green pill when the
      board has zero misses.
    - Stats line: `26 check-ins · 0 missed`.
    - The grid: **`CheckInTimelineGrid` — the exact same component as Home** (bottom-up
@@ -117,10 +119,13 @@ empty state tell the truth:
      gaps for missed days, small inactive dots for days with nothing). `animateBubble = false`
      because history is past-oriented, and dots are tappable.
 4. **Dot tap → detail sheet** (`ModalBottomSheet`, same pattern as the app's other sheets):
-   - `Board 3 · Dot 5 of 26`
-   - Exact date, e.g. `Aug 5, 2026`
-   - One row per check-in that day: **contact name + local time (HH:mm)**
-   - Rows for missed occurrences (red "Missed" label)
+   - **Date first** (e.g. `Aug 5, 2026`)
+   - Under it the summary line: `Dot 5 of Board 3 · 2 check-ins this day` (check-in count is
+     omitted on days with no completions).
+   - One row per check-in that day: **contact avatar + name** (same list style as Home's contact
+     list) + local time in **12-hour `h:mm AM/PM` format**.
+   - Rows for missed occurrences: **contact avatar + name** (same list style) + red
+     "Missed" label (no time — a missed check-in never happened).
    - "No check-ins this day" when the dot is empty.
 
 ---
@@ -178,5 +183,5 @@ empty state tell the truth:
 - Real usage: finish a 26-dot board on Home; the next board starts and the finished one appears
   in History (tap the status card).
 - For a demo: `onboarding/sql/seed_history_boards.sql` back-fills 3 finished boards (Board 3
-  ★ Perfect) + 7 dots of the in-progress board into the database.
-- **`isPerfect`** = zero missed occurrences and at least one check-in in the window (⭐ marker).
+  🔥 Perfect) + 7 dots of the in-progress board into the database.
+- **`isPerfect`** = zero missed occurrences and at least one check-in in the window (🔥 marker).

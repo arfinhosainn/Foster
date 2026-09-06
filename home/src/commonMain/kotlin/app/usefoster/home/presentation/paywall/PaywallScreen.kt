@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -47,6 +50,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.usefoster.adaptive.adaptiveSurfacePolicy
 import app.usefoster.designsystem.buttons.FosterButton
 import app.usefoster.home.di.rememberPaywallViewModel
 import app.usefoster.shared.subscription.BillingPeriod
@@ -100,9 +104,16 @@ fun PaywallScreen(
         }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier.fillMaxSize().background(FosterTheme.colors.background.b0),
     ) {
+        // Adaptive cap: keep the paywall a readable single column on
+        // tablets/desktop instead of stretching edge-to-edge.
+        val policy = adaptiveSurfacePolicy(
+            width = maxWidth,
+            height = maxHeight,
+            fontScale = LocalDensity.current.fontScale,
+        )
         Image(
             painter = painterResource(Res.drawable.ic_treeleft),
             contentDescription = null,
@@ -115,9 +126,12 @@ fun PaywallScreen(
         )
 
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .align(Alignment.Center)
+                .widthIn(max = policy.maxWidth)
+                .fillMaxHeight()
                 .statusBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .padding(horizontal = policy.horizontalPadding, vertical = 16.dp)
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 IconButton(

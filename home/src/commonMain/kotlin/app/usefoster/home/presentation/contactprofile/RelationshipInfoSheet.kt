@@ -166,7 +166,7 @@ fun RelationshipInfoSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
             // Full-bleed grass: deliberately OUTSIDE AdaptiveSurface so the
             // sheet's 24dp horizontal padding doesn't inset it.
@@ -322,7 +322,7 @@ private fun GrassProgress(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp),
+            .height(150.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Image(

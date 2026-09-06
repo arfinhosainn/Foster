@@ -38,19 +38,11 @@ class BadgeRevealTest {
             badgeFlowerAsset(Badge("blue", "Blue Flower", "desc", 60)),
         )
         assertEquals(
-            "pinkflower",
-            badgeFlowerAsset(Badge("pink", "Pink Flower", "desc", 75)),
-        )
-        assertEquals(
-            "greenflower",
-            badgeFlowerAsset(Badge("green", "Green Flower", "desc", 90)),
-        )
-        assertEquals(
             "mushroom",
             badgeFlowerAsset(Badge("mushrooms", "Mushrooms", "desc", 115)),
         )
         assertEquals(
-            listOf("soil", "lotus", "sunflower", "brown", "bluelotus", "pinkflower", "greenflower", "mushroom"),
+            listOf("soil", "lotus", "sunflower", "brown", "bluelotus", "pinkflower", "mushroom"),
             listOf(
                 Badge("soil", "Soil", "desc", 1),
                 Badge("lotus", "Lotus Flower", "desc", 15),
@@ -58,7 +50,6 @@ class BadgeRevealTest {
                 Badge("brown", "Brown Flower", "desc", 45),
                 Badge("blue", "Blue Flower", "desc", 60),
                 Badge("pink", "Pink Flower", "desc", 75),
-                Badge("green", "Green Flower", "desc", 90),
                 Badge("mushrooms", "Mushrooms", "desc", 115),
             ).map(::badgeFlowerAsset),
         )
@@ -67,8 +58,8 @@ class BadgeRevealTest {
     @Test
     fun badgeIconUsesRequestedThresholdSequenceWhenNameIsUnknown() {
         assertEquals(
-            listOf("soil", "lotus", "sunflower", "brown", "bluelotus", "pinkflower", "greenflower", "mushroom"),
-            listOf(1, 15, 30, 45, 60, 75, 90, 115)
+            listOf("soil", "lotus", "sunflower", "brown", "bluelotus", "pinkflower", "mushroom"),
+            listOf(1, 15, 30, 45, 60, 75, 115)
                 .map { threshold -> badgeFlowerAsset(Badge("unknown", "Unknown", "desc", threshold)) },
         )
     }

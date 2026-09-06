@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.usefoster.home.domain.BrainstormSession
 import app.usefoster.home.domain.BrainstormTopic
@@ -52,12 +53,13 @@ fun HistoryContent(
     notice: String? = null,
     onDismissNotice: () -> Unit = {},
     modifier: Modifier = Modifier,
+    horizontalPadding: Dp = 24.dp,
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = horizontalPadding),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
         if (notice != null) {
