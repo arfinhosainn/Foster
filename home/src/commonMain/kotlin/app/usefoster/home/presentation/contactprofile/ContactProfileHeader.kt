@@ -46,10 +46,12 @@ import app.usefoster.designsystem.buttons.FosterButton
 import app.usefoster.home.presentation.components.ContactAvatar
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.cd_new_milestone
 import foster.home.generated.resources.ic_dropdown
 import foster.home.generated.resources.notif
 import foster.home.generated.resources.ic_notification
 import foster.home.generated.resources.ic_reminder
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
 @Composable
@@ -153,7 +155,7 @@ fun ContactProfileHeader(
                 // tint = Color.Unspecified keeps the colors baked into the vector.
                 Icon(
                     imageVector = vectorResource(Res.drawable.notif),
-                    contentDescription = "New relationship milestone",
+                    contentDescription = stringResource(Res.string.cd_new_milestone),
                     tint = Color.Unspecified,
                     modifier = Modifier.padding(start = 2.dp),
                 )

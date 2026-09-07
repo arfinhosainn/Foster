@@ -8,6 +8,7 @@ data class CustomReminderState(
     val draftRecurrence: String = "None",
     val draftDate: String = "Choose Date",
     val draftDateEpochMillis: Long? = null,
+    val draftTimeOfDay: String? = null,
     val editingReminderId: String? = null,
 )
 
@@ -16,5 +17,6 @@ data class ReminderItem(
     val title: String,
     val description: String,
     val recurrence: String,
-    val date: String
+    val date: String,
+    val timeOfDay: String? = null,
 )

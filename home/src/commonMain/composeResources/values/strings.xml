@@ -197,4 +197,43 @@
     <string name="history_dot_missed_day">%1$d missed check-ins this day</string>
     <string name="history_dot_missed">Missed</string>
     <string name="history_dot_none">No check-ins this day</string>
+
+    <!-- Localization gap fixes: strings previously hardcoded in code. -->
+    <string name="home_get_started">Get started</string>
+    <string name="home_import_from_contacts">Import from your contact</string>
+    <string name="home_check_in_cta">Check in</string>
+    <string name="checkin_one_waiting">One contact waiting for check in</string>
+    <string name="dayagenda_nothing_due">Nothing due this day</string>
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+    <string name="date_month_jan">Jan</string>
+    <string name="date_month_feb">Feb</string>
+    <string name="date_month_mar">Mar</string>
+    <string name="date_month_apr">Apr</string>
+    <string name="date_month_may">May</string>
+    <string name="date_month_jun">Jun</string>
+    <string name="date_month_jul">Jul</string>
+    <string name="date_month_aug">Aug</string>
+    <string name="date_month_sep">Sep</string>
+    <string name="date_month_oct">Oct</string>
+    <string name="date_month_nov">Nov</string>
+    <string name="date_month_dec">Dec</string>
+    <string name="cd_timeline_today_pending">Today, check-in pending</string>
+    <string name="cd_timeline_missed">Missed check-in on %1$s</string>
+    <string name="cd_timeline_checked_in">Checked in on %1$s</string>
+    <string name="cd_timeline_upcoming">Upcoming date %1$s</string>
+    <string name="cd_timeline_no_checkin">No check-in on %1$s</string>
+    <string name="cd_timeline_plant_grown">Plant grown on %1$s</string>
+    <string name="groups_create_first_hint">Tap + to create your first group</string>
+    <string name="group_no_members_yet">No members yet</string>
+    <string name="group_add_from_home_hint">Members can be added from the Home screen group filter</string>
+    <string name="group_move_no_other">No other groups yet — create one from the Groups screen.</string>
+    <string name="group_move_no_other_sheet">No other groups yet.</string>
+    <string name="settings_terms_of_service">Terms of Service</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="badge_new_plant_grown">A new plant has grown!</string>
+    <string name="badge_tap_reveal_plant">Tap to reveal your new plant</string>
+    <string name="brainstorm_tab_current">Current Output</string>
+    <string name="cd_new_milestone">New relationship milestone</string>
+    <string name="cd_discount_sixty">60% discount</string>
 </resources>

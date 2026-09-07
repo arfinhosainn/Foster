@@ -2,11 +2,11 @@ package app.usefoster.home.presentation.paywall
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHostState
 import app.usefoster.designsystem.snackbar.FosterSnackbarHost
 import app.usefoster.designsystem.snackbar.FosterSnackbarStyle
@@ -49,20 +50,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.adaptive.adaptiveSurfacePolicy
+import app.usefoster.designsystem.sideShine
 import app.usefoster.home.di.rememberDiscountPaywallViewModel
 import app.usefoster.theme.FosterTheme
+import co.touchlab.kermit.Logger.Companion.a
 import kotlinx.coroutines.delay
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.cd_close
 import foster.home.generated.resources.discountgradient
 import foster.home.generated.resources.discounts
 import foster.home.generated.resources.gradientss
 import foster.home.generated.resources.grass
-import foster.home.generated.resources.ic_arrowforward
+import foster.home.generated.resources.ic_close
 import foster.home.generated.resources.ic_treeleft
 import foster.home.generated.resources.ic_treeright
 import foster.home.generated.resources.left_flower
@@ -78,33 +81,20 @@ import foster.home.generated.resources.discount_for_annual
 import foster.home.generated.resources.discount_lowest_price
 import foster.home.generated.resources.discount_one_time_offer
 import foster.home.generated.resources.discount_processing
+import foster.home.generated.resources.cd_discount_sixty
 import foster.home.generated.resources.paywall_restore_cta
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.getString
-
-/**
- * Real pricing worked backward from the 60% discount:
- * original annual $48.99 -> 60% off -> $19.60/year -> $1.63/month.
- */
-private const val ORIGINAL_ANNUAL_PRICE = "$48.99"
-private const val DISCOUNTED_ANNUAL_PRICE = "$19.60"
-private const val DISCOUNTED_MONTHLY_PRICE = "$1.63"
 
 /** Fallback countdown (12h 29m) while no real deadline is available (preview). */
 private const val DEFAULT_OFFER_DURATION_SECONDS = 12L * 3600 + 29L * 60
 
 /** Pale sage tint applied to the monochrome -60% art and laurel branches. */
 private val DiscountArtTint = Color(0xFFD9E2C9).copy(alpha = 0.85f)
-private val DiscountMuted = Color(0xFF9A9E93)
-
-// Shared paywall palette (mirrors the constants in PaywallScreen.kt).
-private val PaywallBackground = Color(0xFF080809)
-private val PaywallWhite = Color(0xFFF8F8F8)
-private val PaywallMuted = Color(0xFF8F8E98)
-private val PaywallGreen = Color(0xFF22C55E)
 
 @Composable
 fun DiscountPaywallScreen(
+    onBack: () -> Unit = {},
     onSubscribed: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: DiscountPaywallViewModel = rememberDiscountPaywallViewModel(),
@@ -149,7 +139,7 @@ fun DiscountPaywallScreen(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(PaywallBackground),
+            .background(FosterTheme.colors.background.b0),
     ) {
         // Adaptive cap: keep the offer a readable single column on
         // tablets/desktop instead of stretching edge-to-edge.
@@ -208,7 +198,7 @@ fun DiscountPaywallScreen(
                 ) {
                     Image(
                         painter = painterResource(Res.drawable.discounts),
-                        contentDescription = "60% discount",
+                        contentDescription = stringResource(Res.string.cd_discount_sixty),
                         colorFilter = ColorFilter.tint(DiscountArtTint),
                         modifier = Modifier.fillMaxWidth(0.55f),
                     )
@@ -216,7 +206,7 @@ fun DiscountPaywallScreen(
                     Spacer(Modifier.height(16.dp))
                     Text(
                         text = stringResource(Res.string.discount_one_time_offer),
-                        color = PaywallWhite,
+                        color = FosterTheme.colors.text.primary,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -224,7 +214,7 @@ fun DiscountPaywallScreen(
                     Spacer(Modifier.height(16.dp))
                     Text(
                         text = stringResource(Res.string.discount_expires_in),
-                        color = DiscountMuted,
+                        color = FosterTheme.colors.text.secondary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -240,7 +230,7 @@ fun DiscountPaywallScreen(
                         Spacer(Modifier.width(2.dp))
                         Text(
                             text = countdownText,
-                            color = PaywallWhite,
+                            color = FosterTheme.colors.text.primary,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -254,50 +244,60 @@ fun DiscountPaywallScreen(
                     }
 
                     Spacer(Modifier.height(24.dp))
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(Color.White.copy(alpha = 0.12f))
-                            .border(1.dp, Color.White.copy(alpha = 0.25f), RoundedCornerShape(50))
-                            .padding(horizontal = 28.dp, vertical = 12.dp),
-                    ) {
-                        Text(
-                            text = "$DISCOUNTED_MONTHLY_PRICE / month",
-                            color = PaywallWhite.copy(alpha = 0.75f),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
+                    // Store-backed annual price pill — now a purchase trigger. The old
+                    // straight border is replaced with the two-sided edge shine
+                    // (hot on the left + right edges, clear through the middle).
+                    Box(modifier = Modifier.clip(RoundedCornerShape(50))) {
+                        Button(
+                            onClick = { viewModel.onAction(DiscountPaywallAction.Purchase) },
+                            enabled = !state.isPurchasing && !state.isRestoring,
+                            shape = RoundedCornerShape(50),
+                            modifier = modifier.height(55.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = FosterTheme.colors.fill.quaternary.copy(alpha = 0.02f),
+                                contentColor = FosterTheme.colors.text.primary.copy(alpha = 0.75f),
+                                disabledContainerColor = FosterTheme.colors.fill.secondary,
+                                disabledContentColor = FosterTheme.colors.text.secondary,
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 0.dp,
+                                pressedElevation = 0.dp,
+                                focusedElevation = 0.dp,
+                                hoveredElevation = 0.dp,
+                                disabledElevation = 0.dp,
+                            ),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                        ) {
+                            Text(
+                                text = state.annual?.priceString ?: "—",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                        // Rim-light edge shine on both sides, painted above the fill.
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .sideShine(RoundedCornerShape(50), width = 1.dp, intensity = 0.5f),
                         )
                     }
 
                     Spacer(Modifier.height(11.dp))
                     Text(
                         text = stringResource(Res.string.discount_lowest_price),
-                        color = PaywallGreen,
+                        color = FosterTheme.colors.green.default,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                     )
 
                     Spacer(Modifier.height(60.dp))
 
-                    // Price anchor: strikethrough original -> bold discounted.
+                    // The price is supplied by the current RevenueCat package,
+                    // so it follows the user's store and currency.
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = ORIGINAL_ANNUAL_PRICE,
-                            color = DiscountMuted,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            textDecoration = TextDecoration.LineThrough,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Icon(
-                            vectorResource(Res.drawable.ic_arrowforward),
-                            contentDescription = null,
-                            tint = PaywallWhite
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = DISCOUNTED_ANNUAL_PRICE,
-                            color = PaywallWhite,
+                            text = state.annual?.priceString ?: "—",
+                            color = FosterTheme.colors.text.primary,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -305,9 +305,27 @@ fun DiscountPaywallScreen(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = stringResource(Res.string.discount_for_annual),
-                        color = DiscountMuted,
+                        color = FosterTheme.colors.text.secondary,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
+                    )
+                }
+                // Close icon pinned INSIDE the card, top-end corner (the screen
+                // top bar / status bar is handled by the outer column padding).
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 16.dp, end = 16.dp)
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color.Transparent),
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_close),
+                        contentDescription = stringResource(Res.string.cd_close),
+                        tint = FosterTheme.colors.fill.quaternary.copy(alpha = 0.3f),
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
@@ -318,16 +336,19 @@ fun DiscountPaywallScreen(
                 onClick = { viewModel.onAction(DiscountPaywallAction.Purchase) },
                 enabled = !state.isPurchasing && !state.isRestoring,
                 modifier = Modifier
+                    .padding(horizontal = 35.dp)
                     .fillMaxWidth()
-                    .height(58.dp),
+                    .height(60.dp),
                 shape = RoundedCornerShape(32.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PaywallWhite,
-                    contentColor = PaywallBackground,
+                    containerColor = FosterTheme.colors.background.onBackground,
+                    contentColor = FosterTheme.colors.background.b0,
                 ),
             ) {
                 Text(
-                    text = if (state.isPurchasing) stringResource(Res.string.discount_processing) else stringResource(Res.string.discount_claim_cta),
+                    text = if (state.isPurchasing) stringResource(Res.string.discount_processing) else stringResource(
+                        Res.string.discount_claim_cta
+                    ),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -341,13 +362,13 @@ fun DiscountPaywallScreen(
             ) {
                 if (state.isRestoring) {
                     androidx.compose.material3.CircularProgressIndicator(
-                        color = PaywallGreen,
+                        color = FosterTheme.colors.green.default,
                         modifier = Modifier.size(20.dp),
                     )
                 } else {
                     Text(
                         text = stringResource(Res.string.paywall_restore_cta),
-                        color = PaywallWhite,
+                        color = FosterTheme.colors.text.primary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                     )
@@ -360,7 +381,7 @@ fun DiscountPaywallScreen(
                 text = stringResource(Res.string.discount_billing_note),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                color = PaywallMuted,
+                color = FosterTheme.colors.text.secondary,
                 fontSize = 14.sp,
             )
         }

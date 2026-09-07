@@ -72,6 +72,7 @@
     <string name="reminder_recurrence_cd">Recurrencia</string>
     <string name="reminder_recurrence_label">Recurrencia: </string>
     <string name="reminder_date_label">Fecha</string>
+    <string name="reminder_time_label">Hora</string>
     <string name="name_what_call">¿Cómo te llamamos?</string>
     <string name="name_full_name">Nombre completo</string>
     <string name="cd_logo">Logo</string>

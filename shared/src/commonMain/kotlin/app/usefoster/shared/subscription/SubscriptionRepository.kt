@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
  */
 const val UNLIMITED_ENTITLEMENT_ID = "unlimited"
 
+/** Optional RevenueCat offering used by the time-limited discount paywall. */
+const val DISCOUNT_OFFERING_ID = "discount"
+
 /**
  * App-wide subscription state, backed by RevenueCat's `unlimited` entitlement.
  *
@@ -26,8 +29,20 @@ interface SubscriptionRepository {
     /** Re-fetch entitlement from RevenueCat (call on app foreground / after auth). */
     suspend fun refresh(): Result<Unit, SubscriptionError>
 
-    /** Current Offering's monthly + annual packages, with store prices + trial info. */
-    suspend fun loadPaywallOffering(): Result<PaywallOffering, SubscriptionError>
+    /**
+     * Align RevenueCat with the authenticated account. Pass null when the app
+     * signs out so the next account starts from RevenueCat's anonymous user.
+     */
+    suspend fun identify(userId: String?): Result<Unit, SubscriptionError>
+
+    /**
+     * Load an offering's monthly + annual packages, with store prices + trial
+     * info. When [offeringIdentifier] is absent or not configured, the current
+     * offering is used.
+     */
+    suspend fun loadPaywallOffering(
+        offeringIdentifier: String? = null,
+    ): Result<PaywallOffering, SubscriptionError>
 
     /** Trigger RevenueCat's purchase flow for [pkg]. */
     suspend fun purchase(pkg: PaywallPackage): PurchaseOutcome

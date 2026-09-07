@@ -41,6 +41,7 @@ data class CustomReminderDto(
     val description: String = "",
     val recurrence: String = "none",
     val dateEpochMillis: Long? = null,
+    val timeOfDay: String? = null,
 )
 
 @Serializable

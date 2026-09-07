@@ -59,10 +59,14 @@ import foster.home.generated.resources.yellow_flower
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import foster.home.generated.resources.action_skip
+import foster.home.generated.resources.badge_locked
+import foster.home.generated.resources.badge_new_plant_grown
+import foster.home.generated.resources.badge_tap_reveal_plant
 import foster.home.generated.resources.badges_collect_plant
 import foster.home.generated.resources.badges_tap_reveal
 import foster.home.generated.resources.badges_title
 import foster.home.generated.resources.cd_close
+import foster.home.generated.resources.plant_unlocked
 import org.jetbrains.compose.resources.stringResource
 
 /** Maps a badge to the matching flower artwork from the resource catalog. */
@@ -176,7 +180,7 @@ private fun BadgeSlotItem(
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            text = if (slot.unlocked) slot.badge.name else "Locked",
+            text = if (slot.unlocked) slot.badge.name else stringResource(Res.string.badge_locked),
             color = if (slot.unlocked) FosterTheme.colors.text.primary else FosterTheme.colors.text.tertiary,
             fontSize = 11.sp,
             fontWeight = if (slot.unlocked) FontWeight.Medium else FontWeight.Normal,
@@ -259,7 +263,11 @@ fun PlantUnlockedBadgeOverlay(
 
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = if (revealed) "A new plant has grown!" else "Plant unlocked",
+                        text = if (revealed) {
+                            stringResource(Res.string.badge_new_plant_grown)
+                        } else {
+                            stringResource(Res.string.plant_unlocked)
+                        },
                         color = FosterTheme.colors.text.primary,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -267,7 +275,11 @@ fun PlantUnlockedBadgeOverlay(
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        text = if (revealed) badge.name else "Tap to reveal your new plant",
+                        text = if (revealed) {
+                            badge.name
+                        } else {
+                            stringResource(Res.string.badge_tap_reveal_plant)
+                        },
                         color = FosterTheme.colors.text.tertiary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
@@ -355,7 +367,7 @@ fun PlantUnlockedBadgeOverlay(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = "A new plant has grown!",
+                        text = stringResource(Res.string.badge_new_plant_grown),
                         color = FosterTheme.colors.text.primary,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold,

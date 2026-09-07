@@ -51,6 +51,8 @@ import app.usefoster.home.presentation.brainstorm.BrainstormTab
 import app.usefoster.home.presentation.brainstorm.formatTopicMessage
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.brainstorm_tab_current
+import foster.home.generated.resources.history_title
 import foster.home.generated.resources.ic_point
 import foster.home.generated.resources.brainstorm_share_cd
 import foster.home.generated.resources.brainstorm_copy
@@ -79,7 +81,10 @@ fun BrainstormTabs(
     modifier: Modifier = Modifier,
     horizontalPadding: Dp = 24.dp,
 ) {
-    val options = listOf(BrainstormTab.CurrentOutput to "Current Output", BrainstormTab.History to "History")
+    val options = listOf(
+        BrainstormTab.CurrentOutput to stringResource(Res.string.brainstorm_tab_current),
+        BrainstormTab.History to stringResource(Res.string.history_title),
+    )
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()

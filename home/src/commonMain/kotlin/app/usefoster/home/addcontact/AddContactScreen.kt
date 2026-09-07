@@ -127,6 +127,7 @@ import foster.home.generated.resources.cd_edit_profile_picture
 import foster.home.generated.resources.cd_selected
 import foster.home.generated.resources.edit_contact_subtitle
 import foster.home.generated.resources.edit_contact_title
+import foster.home.generated.resources.ic_adds
 import org.jetbrains.compose.resources.stringResource
 
 private val frequencies = listOf(
@@ -793,7 +794,7 @@ private fun GroupCard(
             }
         } else if (members.isEmpty() && group.color == null) {
             Icon(
-                imageVector = Icons.Filled.Add,
+                imageVector = vectorResource(Res.drawable.ic_adds),
                 contentDescription = stringResource(Res.string.cd_add_members),
                 tint = FosterTheme.colors.text.quaternary,
                 modifier = Modifier.size(40.dp),

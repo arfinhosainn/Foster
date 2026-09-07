@@ -64,6 +64,8 @@ import io.github.fletchmckee.liquid.rememberLiquidState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.settings_terms_of_service
+import foster.home.generated.resources.settings_privacy
 import foster.home.generated.resources.ic_appearance
 import foster.home.generated.resources.ic_greenprofile
 import foster.home.generated.resources.ic_groups
@@ -288,7 +290,7 @@ fun SettingScreen(
                     )
                     Spacer(Modifier.width(5.dp))
                     Text(
-                        "Terms of Service",
+                        stringResource(Res.string.settings_terms_of_service),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = FosterTheme.colors.text.secondary
@@ -311,7 +313,7 @@ fun SettingScreen(
                     Spacer(Modifier.width(5.dp))
 
                     Text(
-                        "Privacy",
+                        stringResource(Res.string.settings_privacy),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = FosterTheme.colors.text.secondary

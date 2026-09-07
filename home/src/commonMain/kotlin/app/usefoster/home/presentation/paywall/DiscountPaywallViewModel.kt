@@ -7,6 +7,7 @@ import app.usefoster.shared.paywall.PaywallGateManager
 import app.usefoster.shared.paywall.PaywallTrigger
 import app.usefoster.shared.subscription.PurchaseOutcome
 import app.usefoster.shared.subscription.SubscriptionRepository
+import app.usefoster.shared.subscription.DISCOUNT_OFFERING_ID
 import app.usefoster.shared.subscription.toUserMessageResource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +50,7 @@ class DiscountPaywallViewModel(
 
     private fun loadOffering() {
         viewModelScope.launch {
-            when (val result = subscriptionRepository.loadPaywallOffering()) {
+            when (val result = subscriptionRepository.loadPaywallOffering(DISCOUNT_OFFERING_ID)) {
                 is Result.Success -> _state.update {
                     it.copy(isLoading = false, annual = result.data?.annual)
                 }

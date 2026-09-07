@@ -32,4 +32,5 @@
     <string name="error_subscription_unavailable">Subscriptions are temporarily unavailable. Please try again later.</string>
     <string name="error_subscription_network">Check your connection and try again.</string>
     <string name="error_subscription_unknown">Something went wrong. Please try again.</string>
+    <string name="please_wait">Please wait</string>
 </resources>

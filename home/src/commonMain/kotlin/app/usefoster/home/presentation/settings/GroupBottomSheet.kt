@@ -75,6 +75,7 @@ import app.usefoster.home.presentation.components.contactsForGroup
 import app.usefoster.adaptive.AdaptiveSurface
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.group_move_no_other_sheet
 import foster.home.generated.resources.ic_add
 import foster.home.generated.resources.ic_edit
 import foster.home.generated.resources.group_card
@@ -527,7 +528,7 @@ private fun MoveMemberDialog(
         text = {
             if (otherGroups.isEmpty()) {
                 Text(
-                    "No other groups yet.",
+                    stringResource(Res.string.group_move_no_other_sheet),
                     color = FosterTheme.colors.text.tertiary,
                 )
             } else {

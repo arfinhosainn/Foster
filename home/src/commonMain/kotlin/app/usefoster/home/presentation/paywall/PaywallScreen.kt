@@ -137,7 +137,7 @@ fun PaywallScreen(
                 IconButton(
                     onClick = onBack,
                     modifier = Modifier.size(24.dp).clip(RoundedCornerShape(50))
-                        .background(PaywallCloseBackground),
+                        .background(FosterTheme.colors.fill.quaternary),
                 ) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.ic_close),
@@ -151,7 +151,7 @@ fun PaywallScreen(
 
             if (state.isLoading) {
                 Box(Modifier.fillMaxWidth().height(480.dp), contentAlignment = Alignment.Center) {
-                    androidx.compose.material3.CircularProgressIndicator(color = PaywallGreen)
+                    androidx.compose.material3.CircularProgressIndicator(color = FosterTheme.colors.green.default)
                 }
             } else {
                 FeatureCard()
@@ -171,13 +171,13 @@ fun PaywallScreen(
                     loading = state.isPurchasing,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = FosterTheme.colors.background.onBackground,
-                        contentColor = PaywallBackground,
-                        disabledContainerColor = PaywallWhite.copy(alpha = 0.5f),
-                        disabledContentColor = PaywallBackground.copy(alpha = 0.5f),
+                        contentColor = FosterTheme.colors.background.b0,
+                        disabledContainerColor = FosterTheme.colors.fill.secondary,
+                        disabledContentColor = FosterTheme.colors.text.secondary,
                     ),
                     contentPadding = PaddingValues(0.dp),
                     textStyle = FosterTheme.typography.heading3Bold.copy(
-                        color = PaywallBackground,
+                        color = FosterTheme.colors.background.b0,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                     ),
@@ -192,7 +192,7 @@ fun PaywallScreen(
                         if (state.isRestoring) stringResource(Res.string.paywall_restoring) else stringResource(Res.string.paywall_restore_cta),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = PaywallWhite,
+                        color = FosterTheme.colors.text.primary,
                     )
                 }
                 Spacer(Modifier.height(16.dp))
@@ -203,7 +203,7 @@ fun PaywallScreen(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Normal,
                     lineHeight = 20.sp,
-                    color = PaywallMuted,
+                    color = FosterTheme.colors.text.secondary,
                 )
             }
         }
@@ -257,20 +257,20 @@ private fun FeatureCard() {
             ) {
                 Text(
                     "Foster",
-                    color = PaywallWhite,
+                    color = FosterTheme.colors.text.primary,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.width(12.dp))
                 Box(
                     modifier = Modifier.clip(RoundedCornerShape(50))
-                        .background(Color(0x665A774C))
-                        .border(1.dp, Color(0x8897A98D), RoundedCornerShape(50))
+                        .background(FosterTheme.colors.green.fill)
+                        .border(1.dp, FosterTheme.colors.green.stroke, RoundedCornerShape(50))
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
                     Text(
                         "UNLIMITED",
-                        color = PaywallWhite,
+                        color = FosterTheme.colors.green.active,
                         fontSize = 14.sp,
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Bold,
@@ -299,7 +299,7 @@ private fun PaywallFeatureRow(feature: PaywallFeature) {
         Spacer(Modifier.width(15.dp))
         Text(
             feature.title,
-            color = PaywallWhite,
+            color = FosterTheme.colors.text.primary,
             fontSize = 17.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f),
@@ -327,12 +327,12 @@ private fun PageIndicator() {
     ) {
         Box(
             modifier = Modifier.size(width = 24.dp, height = 8.dp)
-                .clip(RoundedCornerShape(50)).background(PaywallWhite),
+                .clip(RoundedCornerShape(50)).background(FosterTheme.colors.text.primary),
         )
         Spacer(Modifier.width(12.dp))
         Box(
             modifier = Modifier.size(8.dp).clip(RoundedCornerShape(50))
-                .background(PaywallIndicatorInactive),
+                .background(FosterTheme.colors.gray.tertiary),
         )
     }
 }
@@ -350,16 +350,14 @@ private fun PlanList(
     ) {
         PlanCard(
             title = stringResource(Res.string.paywall_annual_plan),
-            price = annualPrice ?: "$35.00",
+            price = annualPrice ?: "—",
             periodLabel = "year",
-            originalPrice = "\$99.99",
-            discount = "40% OFF",
             isSelected = selectedPeriod == BillingPeriod.ANNUAL,
             onClick = { onSelect(BillingPeriod.ANNUAL) },
         )
         PlanCard(
             title = stringResource(Res.string.paywall_monthly_plan),
-            price = monthlyPrice ?: "39.99",
+            price = monthlyPrice ?: "—",
             periodLabel = "month",
             isSelected = selectedPeriod == BillingPeriod.MONTHLY,
             onClick = { onSelect(BillingPeriod.MONTHLY) },
@@ -386,7 +384,9 @@ private fun PlanCard(
             .then(
                 if (isSelected) Modifier.border(
                     width = 1.dp,
-                    brush = Brush.linearGradient(listOf(PaywallGreen, PaywallYellow)),
+                    brush = Brush.linearGradient(
+                        listOf(FosterTheme.colors.green.default, FosterTheme.colors.yellow.default),
+                    ),
                     shape = shape,
                 ) else Modifier,
             )
@@ -404,17 +404,17 @@ private fun PlanCard(
                         title,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = PaywallMuted,
+                        color = FosterTheme.colors.text.secondary,
                     )
                     discount?.let {
                         Spacer(Modifier.width(8.dp))
                         Text(
                             it,
-                            color = FosterTheme.colors.yellow.stroke,
+                            color = FosterTheme.colors.yellow.active,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.clip(RoundedCornerShape(40))
-                                .background(PaywallYellow)
+                                .background(FosterTheme.colors.yellow.fill)
                                 .padding(horizontal = 6.dp, vertical = 0.dp),
                         )
                     }
@@ -424,7 +424,7 @@ private fun PlanCard(
                     originalPrice?.let {
                         Text(
                             it,
-                            color = PaywallMuted,
+                            color = FosterTheme.colors.text.secondary,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Medium,
                             textDecoration = TextDecoration.LineThrough,
@@ -435,13 +435,13 @@ private fun PlanCard(
                         price,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
-                        color = PaywallWhite
+                        color = FosterTheme.colors.text.primary
                     )
                     Text(
                         "/ $periodLabel",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
-                        color = PaywallWhite
+                        color = FosterTheme.colors.text.primary
                     )
                 }
             }
@@ -456,18 +456,6 @@ private fun PlanCard(
         }
     }
 }
-
-private val PaywallBackground = Color(0xFF080809)
-private val PaywallWhite = Color(0xFFF8F8F8)
-private val PaywallMuted = Color(0xFF8F8E98)
-private val PaywallGreen = Color(0xFF22C55E)
-private val PaywallGreenYellow = Color(0xFFB7D82D)
-private val PaywallYellow = Color(0xFFFACC15)
-private val PaywallCloseBackground = Color.Transparent
-private val PaywallPlanBackground = Color(0xFF19191D)
-private val PaywallComingSoonText = Color(0xFFB4B2BC)
-private val PaywallComingSoonBackground = Color(0x332C3A34)
-private val PaywallIndicatorInactive = Color(0xFF404047)
 
 
 @PreviewLightDark

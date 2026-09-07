@@ -18,23 +18,26 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.TimeInput
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +66,7 @@ import foster.home.generated.resources.action_cancel
 import foster.home.generated.resources.action_done
 import foster.home.generated.resources.action_save
 import foster.home.generated.resources.cd_close
+import foster.home.generated.resources.recurrence_none
 import foster.home.generated.resources.reminder_create
 import foster.home.generated.resources.reminder_date_label
 import foster.home.generated.resources.reminder_description_label
@@ -94,24 +98,33 @@ fun AddReminderSheet(
     var recurrenceMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var datePickerVisible by rememberSaveable { mutableStateOf(false) }
     var timePickerVisible by rememberSaveable { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = draftDateEpochMillis)
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = draftDateEpochMillis,
+        initialDisplayMode = DisplayMode.Input,
+    )
+    val recurrenceLabel = reminderRecurrenceOptions
+        .firstOrNull { (value, _) -> value.equals(draftRecurrence, ignoreCase = true) }
+        ?.second
+        ?: Res.string.recurrence_none
 
     if (timePickerVisible) {
         val initial = parseTimeOfDay(draftTimeOfDay)
-        val timeState = rememberTimePickerState(
-            initialHour = initial?.first ?: CUSTOM_REMINDER_HOUR,
-            initialMinute = initial?.second ?: 0,
-            is24Hour = true,
+        val initialHour24 = initial?.first ?: CUSTOM_REMINDER_HOUR
+        val initialMinute = initial?.second ?: 0
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialHour24,
+            initialMinute = initialMinute,
+            is24Hour = false,
         )
+
         AlertDialog(
             onDismissRequest = { timePickerVisible = false },
             containerColor = FosterTheme.colors.background.b1,
             confirmButton = {
                 TextButton(onClick = {
-                    // CommonMain-safe zero-padded "HH:mm"
-                    val h = timeState.hour.toString().padStart(2, '0')
-                    val m = timeState.minute.toString().padStart(2, '0')
-                    onTimeChanged("$h:$m")
+                    val hour = timePickerState.hour.toString().padStart(2, '0')
+                    val minute = timePickerState.minute.toString().padStart(2, '0')
+                    onTimeChanged("$hour:$minute")
                     timePickerVisible = false
                 }) {
                     Text(text = stringResource(Res.string.action_done), color = FosterTheme.colors.text.primary)
@@ -122,7 +135,24 @@ fun AddReminderSheet(
                     Text(text = stringResource(Res.string.action_cancel), color = FosterTheme.colors.text.primary)
                 }
             },
-            text = { TimePicker(state = timeState) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        TimeInput(
+                            state = timePickerState,
+                            colors = TimePickerDefaults.colors(
+                                timeSelectorSelectedContainerColor = FosterTheme.colors.fill.tertiary,
+                            ),
+                        )
+                    }
+                }
+            },
         )
     }
 
@@ -170,6 +200,7 @@ fun AddReminderSheet(
         ) {
             DatePicker(
                 state = datePickerState,
+                showModeToggle = false,
                 colors = DatePickerDefaults.colors(
                     containerColor = FosterTheme.colors.fill.tertiary,
                     selectedDayContainerColor = Color(0xFF16A34A),
@@ -310,12 +341,13 @@ fun AddReminderSheet(
 
                 Box {
                     FosterActionButton(
-                        text = draftRecurrence,
+                        text = stringResource(recurrenceLabel),
                         trailingIcon = Icons.Default.KeyboardArrowDown,
                         onClick = { recurrenceMenuExpanded = true },
                         containerColor = FosterTheme.colors.background.b1,
                         contentColor = FosterTheme.colors.text.primary,
                         iconTint = FosterTheme.colors.text.primary,
+                        iconSize = 18.dp,
                         textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                         modifier = Modifier.height(44.dp).width(86.dp),
@@ -335,6 +367,14 @@ fun AddReminderSheet(
                                         text = stringResource(labelRes),
                                         color = FosterTheme.colors.text.primary,
                                         fontWeight = FontWeight.Medium,
+                                    )
+                                },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        tint = FosterTheme.colors.text.tertiary,
+                                        modifier = Modifier.size(18.dp),
                                     )
                                 },
                                 onClick = {
@@ -367,6 +407,7 @@ fun AddReminderSheet(
                     containerColor = FosterTheme.colors.background.b1,
                     contentColor = FosterTheme.colors.text.primary,
                     iconTint = FosterTheme.colors.text.primary,
+                    iconSize = 18.dp,
                     textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                     modifier = Modifier.height(44.dp).width(140.dp),
@@ -393,6 +434,7 @@ fun AddReminderSheet(
                     containerColor = FosterTheme.colors.background.b1,
                     contentColor = FosterTheme.colors.text.primary,
                     iconTint = FosterTheme.colors.text.primary,
+                    iconSize = 18.dp,
                     textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                     modifier = Modifier.height(44.dp).width(140.dp),
@@ -413,9 +455,13 @@ fun AddReminderSheet(
     }
 }
 
-/** Shows the effective fire time: stored "HH:mm", or the fallback hour when null. */
+/** Shows the effective fire time in 12-hour form with AM/PM (e.g. "9:00 AM"). */
 private fun formatReminderTime(timeOfDay: String?): String {
-    val (h, m) = parseTimeOfDay(timeOfDay)
-        ?: return CUSTOM_REMINDER_HOUR.toString().padStart(2, '0') + ":00"
-    return h.toString().padStart(2, '0') + ":" + m.toString().padStart(2, '0')
+    val (h24, m) = parseTimeOfDay(timeOfDay) ?: (CUSTOM_REMINDER_HOUR to 0)
+    val displayHour = when (val twelveHour = h24 % 12) {
+        0 -> 12
+        else -> twelveHour
+    }
+    val apm = if (h24 < 12) "AM" else "PM"
+    return "$displayHour:${m.toString().padStart(2, '0')} $apm"
 }
