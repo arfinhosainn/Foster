@@ -22,7 +22,9 @@ class FakeSubscriptionRepository(
 
     override suspend fun refresh(): Result<Unit, SubscriptionError> = Result.Success(Unit)
 
-    override suspend fun loadPaywallOffering(): Result<PaywallOffering, SubscriptionError> =
+    override suspend fun identify(userId: String?): Result<Unit, SubscriptionError> = Result.Success(Unit)
+
+    override suspend fun loadPaywallOffering(offeringIdentifier: String?): Result<PaywallOffering, SubscriptionError> =
         Result.Error(SubscriptionError.NotConfigured)
 
     override suspend fun purchase(pkg: PaywallPackage): PurchaseOutcome = PurchaseOutcome.Error

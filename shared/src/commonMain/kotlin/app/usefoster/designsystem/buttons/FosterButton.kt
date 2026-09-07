@@ -14,6 +14,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.theme.FosterTheme
+import foster.shared.generated.resources.Res
+import foster.shared.generated.resources.please_wait
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FosterButton(
@@ -58,7 +61,7 @@ fun FosterButton(
         }
 
         Text(
-            text = if (loading) "Please wait" else text,
+            text = if (loading) stringResource(Res.string.please_wait) else text,
             style = textStyle,
             maxLines = 1
         )

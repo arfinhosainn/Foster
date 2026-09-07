@@ -142,14 +142,20 @@ import foster.home.generated.resources.action_try_again
 import foster.home.generated.resources.audience_everyone
 import foster.home.generated.resources.cd_checked_in
 import foster.home.generated.resources.home_checkin_error
+import foster.home.generated.resources.home_check_in_cta
+import foster.home.generated.resources.home_check_in_title
 import foster.home.generated.resources.home_contacts_waiting_many
 import foster.home.generated.resources.home_contacts_waiting_one
+import foster.home.generated.resources.home_get_started
+import foster.home.generated.resources.home_import_from_contacts
 import foster.home.generated.resources.home_next_checkin_in
 import foster.home.generated.resources.home_no_checkin_today
+import foster.home.generated.resources.home_no_contacts_audience
 import foster.home.generated.resources.home_no_upcoming_checkins
 import foster.home.generated.resources.home_select_contact
 import foster.home.generated.resources.home_select_contact_hint
 import foster.home.generated.resources.home_updating
+import foster.home.generated.resources.ic_adds
 import org.jetbrains.compose.resources.stringResource
 
 private fun audienceIcon(name: String): DrawableResource = when (name.lowercase()) {
@@ -416,7 +422,7 @@ fun HomeScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Add,
+                                    imageVector = vectorResource(Res.drawable.ic_adds),
                                     contentDescription = null,
                                     tint = FosterTheme.colors.text.tertiary,
                                     modifier = Modifier.size(50.dp)
@@ -425,7 +431,7 @@ fun HomeScreen(
                             Spacer(Modifier.height(30.dp))
 
                             Text(
-                                "Get started",
+                                stringResource(Res.string.home_get_started),
                                 color = FosterTheme.colors.text.primary,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Medium
@@ -433,7 +439,7 @@ fun HomeScreen(
                             Spacer(Modifier.height(10.dp))
 
                             Text(
-                                "Import from your contact",
+                                stringResource(Res.string.home_import_from_contacts),
                                 color = FosterTheme.colors.text.tertiary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
@@ -628,7 +634,7 @@ private fun CheckInSection(
 
     Column(modifier = modifier) {
         Text(
-            "Check In",
+            stringResource(Res.string.home_check_in_title),
             style = FosterTheme.typography.heading2,
             color = FosterTheme.colors.text.primary,
             fontWeight = FontWeight.Medium,
@@ -661,7 +667,7 @@ private fun CheckInSection(
         Spacer(Modifier.height(32.dp))
         if (contacts.isEmpty()) {
             Text(
-                "No contacts in this audience",
+                stringResource(Res.string.home_no_contacts_audience),
                 color = FosterTheme.colors.text.tertiary,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
@@ -803,7 +809,7 @@ private fun ContactCheckInRow(
                         ),
                     ) {
                         Text(
-                            "Check in",
+                            stringResource(Res.string.home_check_in_cta),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             color = Color.Black,

@@ -57,9 +57,19 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.home_check_in_title
+import foster.home.generated.resources.checkin_one_waiting
 import foster.home.generated.resources.ic_circlecheckmark
+import foster.home.generated.resources.date_today
+import foster.home.generated.resources.cd_timeline_today_pending
+import foster.home.generated.resources.cd_timeline_missed
+import foster.home.generated.resources.cd_timeline_checked_in
+import foster.home.generated.resources.cd_timeline_upcoming
+import foster.home.generated.resources.cd_timeline_no_checkin
+import foster.home.generated.resources.cd_timeline_plant_grown
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
 const val TIMELINE_COLUMNS = 7
@@ -388,12 +398,12 @@ private fun TimelineCell(
     cellSize: Dp,
 ) {
     val stateDescription = when {
-        slot.isCurrent && slot.hasPendingCheckIn -> "Today, check-in pending"
-        slot.isCurrent -> "Today"
-        slot.hasMissedCheckIn -> "Missed check-in on ${slot.date}"
-        slot.isCheckedIn -> "Checked in on ${slot.date}"
-        slot.isFuture -> "Upcoming date ${slot.date}"
-        else -> "No check-in on ${slot.date}"
+        slot.isCurrent && slot.hasPendingCheckIn -> stringResource(Res.string.cd_timeline_today_pending)
+        slot.isCurrent -> stringResource(Res.string.date_today)
+        slot.hasMissedCheckIn -> stringResource(Res.string.cd_timeline_missed, slot.date)
+        slot.isCheckedIn -> stringResource(Res.string.cd_timeline_checked_in, slot.date)
+        slot.isFuture -> stringResource(Res.string.cd_timeline_upcoming, slot.date)
+        else -> stringResource(Res.string.cd_timeline_no_checkin, slot.date)
     }
 
     // Important: this wrapper is intentionally NOT clipped so avatar clusters and badges
@@ -468,9 +478,9 @@ private fun EmptyOrCheckedCell(slot: TimelineSlot, colors: TimelineGridColors, c
             slot.plant != null -> Image(
                 painter = painterResource(slot.plant),
                 contentDescription = if (slot.hasMissedCheckIn) {
-                    "Missed check-in on ${slot.date}"
+                    stringResource(Res.string.cd_timeline_missed, slot.date)
                 } else {
-                    "Plant grown on ${slot.date}"
+                    stringResource(Res.string.cd_timeline_plant_grown, slot.date)
                 },
                 modifier = Modifier.size(cellSize * 0.42f),
                 contentScale = ContentScale.Fit,
@@ -684,12 +694,12 @@ fun CheckInTimelineGridSample(modifier: Modifier = Modifier) {
     )
     Column(modifier = modifier) {
         Text(
-            "Check In", style = FosterTheme.typography.heading2, fontWeight = FontWeight.Medium,
+            stringResource(Res.string.home_check_in_title), style = FosterTheme.typography.heading2, fontWeight = FontWeight.Medium,
             color = FosterTheme.colors.text.primary
         )
         Spacer(Modifier.height(5.dp))
         Text(
-            "One contact waiting for check in",
+            stringResource(Res.string.checkin_one_waiting),
             color = FosterTheme.colors.text.tertiary,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,

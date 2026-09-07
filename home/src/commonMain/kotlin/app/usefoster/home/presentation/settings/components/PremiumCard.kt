@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.theme.FosterTheme
+import app.usefoster.theme.LocalFosterIsDark
 import foster.home.generated.resources.Res
 import foster.home.generated.resources.gradients
 import foster.home.generated.resources.ic_crown
@@ -98,7 +99,7 @@ fun PremiumCard(
 
                     Text(
                         text = stringResource(Res.string.premium_unlimited),
-                        color = Color.White,
+                        color = if (LocalFosterIsDark.current) Color.White else Color.Black,
                         fontSize = 9.sp,
                         fontStyle = FontStyle.Italic,
                         fontWeight = FontWeight.Bold,

@@ -55,6 +55,7 @@ import app.usefoster.home.domain.BadgeSlot
 import app.usefoster.home.di.rememberAccountViewModel
 import app.usefoster.home.presentation.badges.badgeIcon
 import app.usefoster.home.presentation.components.avatarIndexForId
+import app.usefoster.home.presentation.rememberMonthAbbreviations
 import app.usefoster.adaptive.AdaptiveSurface
 import app.usefoster.designsystem.avatar.ChooseAvatarBottomSheet
 import app.usefoster.designsystem.avatar.ProfilePhotoPicker
@@ -74,6 +75,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import foster.home.generated.resources.cd_close
 import foster.home.generated.resources.cd_locked
+import foster.home.generated.resources.badge_locked
 import foster.home.generated.resources.settings_account
 import foster.home.generated.resources.settings_check_ins_stat
 import foster.home.generated.resources.settings_contacts
@@ -161,7 +163,9 @@ fun AccountBottomSheet(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = state.createdAt?.let { stringResource(Res.string.settings_joined, formatJoinedDate(it)) } ?: "",
+                text = state.createdAt?.let {
+                    stringResource(Res.string.settings_joined, formatJoinedDate(it, rememberMonthAbbreviations()))
+                } ?: "",
                 color = FosterTheme.colors.text.tertiary,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium
@@ -390,7 +394,7 @@ private fun AccountBadgeItem(
         }
         Spacer(Modifier.height(10.dp))
         Text(
-            text = if (slot.unlocked) slot.badge.name else "Locked",
+            text = if (slot.unlocked) slot.badge.name else stringResource(Res.string.badge_locked),
             color = if (slot.unlocked) FosterTheme.colors.text.primary else FosterTheme.colors.text.tertiary,
             fontSize = 15.sp,
             fontWeight = if (slot.unlocked) FontWeight.Medium else FontWeight.Normal,
@@ -400,13 +404,13 @@ private fun AccountBadgeItem(
     }
 }
 
-private fun formatJoinedDate(iso: String): String {
+private fun formatJoinedDate(iso: String, months: List<String>): String {
     val date = iso.substringBefore('T').split("-")
     if (date.size != 3) return iso.substringBefore('T')
     val month = when (date[1]) {
-        "01" -> "Jan"; "02" -> "Feb"; "03" -> "Mar"; "04" -> "Apr"
-        "05" -> "May"; "06" -> "Jun"; "07" -> "Jul"; "08" -> "Aug"
-        "09" -> "Sep"; "10" -> "Oct"; "11" -> "Nov"; else -> "Dec"
+        "01" -> months[0]; "02" -> months[1]; "03" -> months[2]; "04" -> months[3]
+        "05" -> months[4]; "06" -> months[5]; "07" -> months[6]; "08" -> months[7]
+        "09" -> months[8]; "10" -> months[9]; "11" -> months[10]; else -> months[11]
     }
     val day = date[2].toIntOrNull() ?: return iso.substringBefore('T')
     val suffix = when {

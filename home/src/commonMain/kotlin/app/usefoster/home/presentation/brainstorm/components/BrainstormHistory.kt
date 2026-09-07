@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.usefoster.home.domain.BrainstormSession
 import app.usefoster.home.domain.BrainstormTopic
+import app.usefoster.home.presentation.rememberMonthAbbreviations
 import app.usefoster.theme.FosterTheme
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -40,6 +41,8 @@ import kotlinx.datetime.toLocalDateTime
 import foster.home.generated.resources.Res
 import foster.home.generated.resources.brainstorm_history_empty
 import foster.home.generated.resources.brainstorm_history_item
+import foster.home.generated.resources.date_today
+import foster.home.generated.resources.date_yesterday
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -80,7 +83,12 @@ fun HistoryContent(
             )
             else -> Column(modifier = Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                groupByDate(sessions).forEach { (label, groupSessions) ->
+                val months = rememberMonthAbbreviations()
+                val todayLabel = stringResource(Res.string.date_today)
+                val yesterdayLabel = stringResource(Res.string.date_yesterday)
+                groupByDate(sessions) { createdAt ->
+                    sessionDateLabel(createdAt, months, todayLabel, yesterdayLabel)
+                }.forEach { (label, groupSessions) ->
                     Text(
                         text = label,
                         style = FosterTheme.typography.heading4Semibold,
@@ -156,27 +164,33 @@ private fun HistoryLoadingSkeleton(
     }
 }
 
-private val MONTHS = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-
-private fun sessionDateLabel(createdAt: String): String {
+private fun sessionDateLabel(
+    createdAt: String,
+    months: List<String>,
+    todayLabel: String,
+    yesterdayLabel: String,
+): String {
     val date = runCatching {
         Instant.parse(createdAt).toLocalDateTime(TimeZone.currentSystemDefault()).date
     }.getOrNull() ?: return createdAt
     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
     return when (date) {
-        today -> "Today"
-        today.minus(1, DateTimeUnit.DAY) -> "Yesterday"
-        else -> "${MONTHS[date.month.ordinal]} ${date.day}, ${date.year}"
+        today -> todayLabel
+        today.minus(1, DateTimeUnit.DAY) -> yesterdayLabel
+        else -> "${months[date.month.ordinal]} ${date.day}, ${date.year}"
     }
 }
 
 // Sessions arrive newest-first; group by their (local) day label, preserving order.
-private fun groupByDate(sessions: List<BrainstormSession>): List<Pair<String, List<BrainstormSession>>> {
+private fun groupByDate(
+    sessions: List<BrainstormSession>,
+    labelFor: (String) -> String,
+): List<Pair<String, List<BrainstormSession>>> {
     val result = mutableListOf<Pair<String, List<BrainstormSession>>>()
     var label: String? = null
     var buffer = mutableListOf<BrainstormSession>()
     sessions.forEach { session ->
-        val currentLabel = sessionDateLabel(session.createdAt)
+        val currentLabel = labelFor(session.createdAt)
         if (currentLabel != label) {
             if (label != null) result.add(label to buffer)
             label = currentLabel

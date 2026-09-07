@@ -52,6 +52,27 @@ Both platforms bootstrap these into `Secrets` at app startup
 protection is RLS + rate limits (see [`docs/security-checklist.md`](./docs/security-checklist.md)
 for key rotation, the brainstorm abuse defenses, and the full server checklist).
 
+### RevenueCat dashboard setup
+
+The app expects the following RevenueCat configuration:
+
+- Add the Android package `app.usefoster` and the iOS bundle identifier from
+  `iosApp` as separate store apps.
+- Add the regular store products to one **current offering**, using
+  RevenueCat's `$rc_monthly` and `$rc_annual` package types.
+- Optionally add a second offering with identifier `discount`, using the
+  discounted annual product for the time-limited discount screen. If it is
+  absent, that screen safely falls back to the current offering.
+- Attach both products to the `unlimited` entitlement. The app uses this
+  entitlement as the only source of premium access.
+- Use the public `goog_…` key on Android and `appl_…` key on iOS; never use a
+  RevenueCat secret API key in the app.
+
+Prices and trial text are read from the current offering at runtime, so they
+must not be duplicated in Kotlin. Purchases are linked to the authenticated
+Supabase user UUID after sign-in and returned to an anonymous RevenueCat user
+on sign-out.
+
 ---
 
 Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…

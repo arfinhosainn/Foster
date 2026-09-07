@@ -3,6 +3,8 @@ package app.usefoster.shared.subscription
 import app.usefoster.shared.domain.Result
 import com.revenuecat.purchases.kmp.Purchases
 import com.revenuecat.purchases.kmp.ktx.awaitCustomerInfo
+import com.revenuecat.purchases.kmp.ktx.awaitLogIn
+import com.revenuecat.purchases.kmp.ktx.awaitLogOut
 import com.revenuecat.purchases.kmp.ktx.awaitOfferings
 import com.revenuecat.purchases.kmp.ktx.awaitPurchase
 import com.revenuecat.purchases.kmp.ktx.awaitRestore
@@ -14,6 +16,9 @@ import com.revenuecat.purchases.kmp.models.Period
 import com.revenuecat.purchases.kmp.models.PurchasesException
 import com.revenuecat.purchases.kmp.models.PurchasesTransactionException
 import com.revenuecat.purchases.kmp.models.StoreProduct
+import com.revenuecat.purchases.kmp.PurchasesDelegate
+import com.revenuecat.purchases.kmp.models.PurchasesError
+import com.revenuecat.purchases.kmp.models.StoreTransaction
 import com.revenuecat.purchases.kmp.models.freePhase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,8 +43,54 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
     // RC Package that awaitPurchase() needs.
     private var cachedPackages: Map<String, Package> = emptyMap()
 
+    private var currentUserId: String? = null
+
+    private val revenueCatDelegate = object : PurchasesDelegate {
+        override fun onCustomerInfoUpdated(customerInfo: CustomerInfo) {
+            _isSubscribed.value = isUnlimitedActive(customerInfo)
+        }
+
+        override fun onPurchasePromoProduct(
+            product: StoreProduct,
+            startPurchase: (
+                onError: (error: PurchasesError, userCancelled: Boolean) -> Unit,
+                onSuccess: (storeTransaction: StoreTransaction, customerInfo: CustomerInfo) -> Unit,
+            ) -> Unit,
+        ) {
+            // Promotional App Store purchases are not initiated by this paywall.
+        }
+    }
+
+    override suspend fun identify(userId: String?): Result<Unit, SubscriptionError> {
+        if (!Purchases.isConfigured) return Result.Error(SubscriptionError.NotConfigured)
+        return try {
+            if (userId.isNullOrBlank()) {
+                if (!Purchases.sharedInstance.isAnonymous) {
+                    Purchases.sharedInstance.awaitLogOut()
+                }
+                currentUserId = null
+                _isSubscribed.value = false
+            } else if (currentUserId != userId) {
+                if (!Purchases.sharedInstance.isAnonymous) {
+                    Purchases.sharedInstance.awaitLogOut()
+                }
+                Purchases.sharedInstance.awaitLogIn(userId)
+                currentUserId = userId
+                refresh()
+            }
+            Result.Success(Unit)
+        } catch (error: Exception) {
+            if (error is CancellationException) throw error
+            when (error) {
+                is PurchasesException -> Result.Error(error.toSubscriptionError())
+                else -> Result.Error(SubscriptionError.Unknown(error.message))
+            }
+        }
+    }
+
     override suspend fun refresh(): Result<Unit, SubscriptionError> {
         if (!Purchases.isConfigured) return Result.Error(SubscriptionError.NotConfigured)
+        installDelegate()
         try {
             val info = Purchases.sharedInstance.awaitCustomerInfo()
             _isSubscribed.value = isUnlimitedActive(info)
@@ -54,11 +105,14 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
         }
     }
 
-    override suspend fun loadPaywallOffering(): Result<PaywallOffering, SubscriptionError> {
+    override suspend fun loadPaywallOffering(
+        offeringIdentifier: String?,
+    ): Result<PaywallOffering, SubscriptionError> {
         if (!Purchases.isConfigured) return Result.Error(SubscriptionError.NotConfigured)
+        installDelegate()
         return try {
             val offerings = Purchases.sharedInstance.awaitOfferings()
-            val current = offerings.current
+            val current = offeringIdentifier?.let { offerings[it] } ?: offerings.current
                 ?: return Result.Error(SubscriptionError.NotConfigured)
             Result.Success(current.toPaywallOffering())
         } catch (e: PurchasesException) {
@@ -71,12 +125,11 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
 
     override suspend fun purchase(pkg: PaywallPackage): PurchaseOutcome {
         if (!Purchases.isConfigured) return PurchaseOutcome.Error
+        installDelegate()
         val rcPackage = cachedPackages[pkg.identifier]
             ?: return PurchaseOutcome.Error
         return try {
-            val result = Purchases.sharedInstance.awaitPurchase(rcPackage)
-            // Flip entitlement immediately — no restart needed.
-            _isSubscribed.value = isUnlimitedActive(result.customerInfo)
+            Purchases.sharedInstance.awaitPurchase(rcPackage)
             PurchaseOutcome.Success
         } catch (e: PurchasesTransactionException) {
             if (e.userCancelled) PurchaseOutcome.Cancelled
@@ -89,11 +142,10 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
 
     override suspend fun restorePurchases(): Result<Boolean, SubscriptionError> {
         if (!Purchases.isConfigured) return Result.Error(SubscriptionError.NotConfigured)
+        installDelegate()
         return try {
             val info = Purchases.sharedInstance.awaitRestore()
-            val active = isUnlimitedActive(info)
-            _isSubscribed.value = active
-            Result.Success(active)
+            Result.Success(isUnlimitedActive(info))
         } catch (e: PurchasesException) {
             Result.Error(e.toSubscriptionError())
         } catch (e: Exception) {
@@ -103,6 +155,10 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
     }
 
     // -- Helpers ---------------------------------------------------------------
+
+    private fun installDelegate() {
+        Purchases.sharedInstance.delegate = revenueCatDelegate
+    }
 
     private fun isUnlimitedActive(info: CustomerInfo): Boolean =
         info.entitlements.active[UNLIMITED_ENTITLEMENT_ID] != null

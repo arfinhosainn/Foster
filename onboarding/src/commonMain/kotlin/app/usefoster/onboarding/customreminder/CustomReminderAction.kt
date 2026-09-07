@@ -9,5 +9,6 @@ sealed interface CustomReminderAction {
     data class DraftDescriptionChanged(val description: String) : CustomReminderAction
     data class DraftRecurrenceChanged(val recurrence: String) : CustomReminderAction
     data class DraftDateChanged(val date: String, val dateEpochMillis: Long) : CustomReminderAction
+    data class DraftTimeChanged(val timeOfDay: String?) : CustomReminderAction
     data object SaveReminderClicked : CustomReminderAction
 }

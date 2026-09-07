@@ -202,8 +202,8 @@ begin
 
   -- replace custom reminders
   delete from custom_reminders where owner_user_id = v_user_id;
-  insert into custom_reminders (owner_user_id, title, description, recurrence, date_epoch_millis)
-  select v_user_id, r->>'title', r->>'description', r->>'recurrence', (r->>'dateEpochMillis')::bigint
+  insert into custom_reminders (owner_user_id, title, description, recurrence, date_epoch_millis, time_of_day)
+  select v_user_id, r->>'title', r->>'description', r->>'recurrence', (r->>'dateEpochMillis')::bigint, r->>'timeOfDay'
   from jsonb_array_elements(payload->'customReminders') as r;
 
   -- replace notes

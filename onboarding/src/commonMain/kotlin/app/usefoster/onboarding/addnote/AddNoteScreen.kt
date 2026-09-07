@@ -61,6 +61,7 @@ import foster.onboarding.generated.resources.ic_flower
 import org.jetbrains.compose.resources.vectorResource
 import foster.onboarding.generated.resources.action_next
 import foster.onboarding.generated.resources.action_skip
+import foster.onboarding.generated.resources.notes_add_note
 import foster.onboarding.generated.resources.notes_empty_hint
 import foster.onboarding.generated.resources.onb_addnote_title
 import org.jetbrains.compose.resources.stringResource
@@ -250,7 +251,7 @@ private fun AddNoteScreenContent(
                                 Row(modifier = modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
                                     Icon(
                                         vectorResource(Res.drawable.ic_add),
-                                        contentDescription = "Add Note",
+                                        contentDescription = stringResource(Res.string.notes_add_note),
                                         tint = FosterTheme.colors.text.primary
                                     )
                                     Spacer(Modifier.width(4.dp))

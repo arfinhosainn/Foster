@@ -64,8 +64,11 @@ import foster.home.generated.resources.Res
 import foster.home.generated.resources.add_no_groups_yet
 import foster.home.generated.resources.cd_no_members
 import foster.home.generated.resources.checkins_create_group_hint
+import foster.home.generated.resources.ic_add
+import foster.home.generated.resources.ic_adds
 import foster.home.generated.resources.settings_check_ins_stat
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 
 private const val PhoneGroupColumns = 2
 
@@ -327,7 +330,7 @@ private fun GroupCard(
     ) {
         if (members.isEmpty()) {
             Icon(
-                imageVector = Icons.Filled.Add,
+                imageVector = vectorResource(Res.drawable.ic_adds),
                 contentDescription = stringResource(Res.string.cd_no_members),
                 tint = FosterTheme.colors.text.quaternary,
                 modifier = Modifier.size(40.dp),

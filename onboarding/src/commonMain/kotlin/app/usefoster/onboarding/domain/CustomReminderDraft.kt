@@ -9,4 +9,5 @@ data class CustomReminderDraft(
     val description: String = "",
     val recurrence: ReminderFrequency = ReminderFrequency.None,
     val dateEpochMillis: Long? = null,
+    val timeOfDay: String? = null,
 )

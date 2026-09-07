@@ -34,6 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.designsystem.buttons.FosterButton
 import app.usefoster.home.di.LocalContactDataSource
+import foster.home.generated.resources.Res
+import foster.home.generated.resources.cd_back
+import foster.home.generated.resources.dayagenda_nothing_due
+import org.jetbrains.compose.resources.stringResource
 import app.usefoster.home.domain.CheckInDue
 import app.usefoster.home.domain.Contact
 import app.usefoster.home.domain.CustomReminderDue
@@ -132,7 +136,7 @@ fun DayAgendaScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(Res.string.cd_back),
                     tint = FosterTheme.colors.gray.primary,
                 )
             }
@@ -147,7 +151,7 @@ fun DayAgendaScreen(
         if (items.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Nothing due this day",
+                    text = stringResource(Res.string.dayagenda_nothing_due),
                     color = FosterTheme.colors.text.tertiary,
                     fontSize = 16.sp,
                 )

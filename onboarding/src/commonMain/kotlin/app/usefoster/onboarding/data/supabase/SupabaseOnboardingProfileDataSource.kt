@@ -250,6 +250,7 @@ internal fun OnboardingDraft.toCompleteOnboardingPayload(
                 description = it.description,
                 recurrence = it.recurrence.name.lowercase(),
                 dateEpochMillis = it.dateEpochMillis,
+                timeOfDay = it.timeOfDay,
             )
         },
         notes = notes.map { NoteDto(title = it.title, body = it.body) },

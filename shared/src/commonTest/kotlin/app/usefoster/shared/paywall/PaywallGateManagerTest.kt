@@ -55,7 +55,9 @@ class PaywallGateManagerTest {
 
         override suspend fun refresh(): Result<Unit, SubscriptionError> = Result.Success(Unit)
 
-        override suspend fun loadPaywallOffering(): Result<PaywallOffering, SubscriptionError> {
+        override suspend fun identify(userId: String?): Result<Unit, SubscriptionError> = Result.Success(Unit)
+
+        override suspend fun loadPaywallOffering(offeringIdentifier: String?): Result<PaywallOffering, SubscriptionError> {
             return Result.Success(PaywallOffering(monthly = null, annual = null))
         }
 

@@ -52,6 +52,8 @@ import app.usefoster.home.di.rememberGroupSettingsViewModel
 import app.usefoster.home.presentation.settings.components.SettingsTopBar
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.add_no_groups_yet
+import foster.home.generated.resources.groups_create_first_hint
 import foster.home.generated.resources.ic_add
 import foster.home.generated.resources.ic_edit
 import foster.home.generated.resources.ic_trashbin
@@ -120,14 +122,14 @@ fun GroupSettingsScreen(
             } else if (state.groups.isEmpty()) {
                 Spacer(Modifier.height(32.dp))
                 Text(
-                    "No groups yet",
+                    stringResource(Res.string.add_no_groups_yet),
                     color = FosterTheme.colors.text.primary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Tap + to create your first group",
+                    stringResource(Res.string.groups_create_first_hint),
                     color = FosterTheme.colors.text.tertiary,
                     fontSize = 14.sp,
                 )

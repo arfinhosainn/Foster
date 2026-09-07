@@ -25,3 +25,6 @@ iosApp/Configuration/Secrets.xcconfig
 *.p12
 *.mobileprovision
 .env*
+
+# Play Policy Insights audit scratch artifacts
+.scratch/

@@ -49,6 +49,9 @@ import app.usefoster.home.domain.Group
 import app.usefoster.home.presentation.settings.components.SettingsTopBar
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
+import foster.home.generated.resources.group_no_members_yet
+import foster.home.generated.resources.group_add_from_home_hint
+import foster.home.generated.resources.group_move_no_other
 import foster.home.generated.resources.ic_edit
 import foster.home.generated.resources.ic_trashbin
 import org.jetbrains.compose.resources.vectorResource
@@ -117,14 +120,14 @@ fun GroupDetailScreen(
             } else if (state.members.isEmpty()) {
                 Spacer(Modifier.height(32.dp))
                 Text(
-                    "No members yet",
+                    stringResource(Res.string.group_no_members_yet),
                     color = FosterTheme.colors.text.primary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Members can be added from the Home screen group filter",
+                    stringResource(Res.string.group_add_from_home_hint),
                     color = FosterTheme.colors.text.tertiary,
                     fontSize = 14.sp,
                 )
@@ -304,7 +307,7 @@ private fun MoveMemberDialog(
         text = {
             if (otherGroups.isEmpty()) {
                 Text(
-                    "No other groups yet — create one from the Groups screen.",
+                    stringResource(Res.string.group_move_no_other),
                     color = FosterTheme.colors.text.tertiary,
                 )
             } else {

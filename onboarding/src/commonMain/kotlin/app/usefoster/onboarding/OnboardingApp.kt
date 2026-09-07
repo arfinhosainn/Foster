@@ -208,6 +208,15 @@ private fun OnboardingAppContent(
     LaunchedEffect(Unit) {
         var recoveryAttempted = false
         supabaseClient.auth.sessionStatus.collect { status ->
+            when (status) {
+                is SessionStatus.Authenticated -> {
+                    subscriptionRepository.identify(
+                        supabaseClient.auth.currentSessionOrNull()?.user?.id,
+                    )
+                }
+                is SessionStatus.NotAuthenticated -> subscriptionRepository.identify(null)
+                else -> Unit
+            }
             when (authSessionAction(status, navigator.currentScreen is Screen.Splash)) {
                 AuthSessionAction.Route -> {
                     recoveryAttempted = false
@@ -594,6 +603,7 @@ private fun OnboardingAppContent(
                     )
 
                 is Screen.DiscountPaywall -> DiscountPaywallScreen(
+                    onBack = { navigator.goBack() },
                     onSubscribed = { navigator.goBack() },
                 )
 

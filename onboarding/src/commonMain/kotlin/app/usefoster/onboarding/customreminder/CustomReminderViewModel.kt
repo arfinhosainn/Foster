@@ -37,6 +37,7 @@ class CustomReminderViewModel(
                     draftRecurrence = "None",
                     draftDate = "Choose Date",
                     draftDateEpochMillis = null,
+                    draftTimeOfDay = null,
                     editingReminderId = null,
                 )
             }
@@ -51,6 +52,7 @@ class CustomReminderViewModel(
                     draftRecurrence = reminder.recurrence.toUiLabel(),
                     draftDate = reminder.dateEpochMillis?.toReminderDate() ?: "Choose Date",
                     draftDateEpochMillis = reminder.dateEpochMillis,
+                    draftTimeOfDay = reminder.timeOfDay,
                     editingReminderId = reminder.id,
                 )
             }
@@ -74,6 +76,7 @@ class CustomReminderViewModel(
                     draftRecurrence = "None",
                     draftDate = "Choose Date",
                     draftDateEpochMillis = null,
+                    draftTimeOfDay = null,
                     editingReminderId = null,
                 )
             }
@@ -92,6 +95,9 @@ class CustomReminderViewModel(
                     draftDateEpochMillis = action.dateEpochMillis,
                 )
             }
+            is CustomReminderAction.DraftTimeChanged -> {
+                _state.value = _state.value.copy(draftTimeOfDay = action.timeOfDay)
+            }
             is CustomReminderAction.SaveReminderClicked -> {
                 val s = _state.value
                 val reminderId = s.editingReminderId
@@ -102,6 +108,7 @@ class CustomReminderViewModel(
                     description = s.draftDescription,
                     recurrence = s.draftRecurrence.toReminderFrequency(),
                     dateEpochMillis = s.draftDateEpochMillis,
+                    timeOfDay = s.draftTimeOfDay,
                 )
                 draftStore.update {
                     it.copy(
@@ -130,6 +137,7 @@ class CustomReminderViewModel(
                     draftRecurrence = "None",
                     draftDate = "Choose Date",
                     draftDateEpochMillis = null,
+                    draftTimeOfDay = null,
                     editingReminderId = null,
                 )
             }
@@ -157,6 +165,7 @@ private fun CustomReminderDraft.toReminderItem(): ReminderItem = ReminderItem(
     description = description,
     recurrence = recurrence.toUiLabel(),
     date = dateEpochMillis?.toReminderDate() ?: "Choose Date",
+    timeOfDay = timeOfDay,
 )
 
 private fun ReminderFrequency.toUiLabel(): String = when (this) {

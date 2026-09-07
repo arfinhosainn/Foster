@@ -197,4 +197,44 @@
     <string name="history_dot_missed_day">%1$d check-ins perdidos este día</string>
     <string name="history_dot_missed">Perdido</string>
     <string name="history_dot_none">Sin check-ins este día</string>
+
+    <!-- Cadenas que estaban escritas directamente en el código, ahora localizadas
+         (mismo orden de claves que values/strings.xml). -->
+    <string name="home_get_started">Empieza</string>
+    <string name="home_import_from_contacts">Importa desde tus contactos</string>
+    <string name="home_check_in_cta">Haz check-in</string>
+    <string name="checkin_one_waiting">Un contacto esperando check-in</string>
+    <string name="dayagenda_nothing_due">Nada pendiente este día</string>
+    <string name="date_today">Hoy</string>
+    <string name="date_yesterday">Ayer</string>
+    <string name="date_month_jan">ene</string>
+    <string name="date_month_feb">feb</string>
+    <string name="date_month_mar">mar</string>
+    <string name="date_month_apr">abr</string>
+    <string name="date_month_may">may</string>
+    <string name="date_month_jun">jun</string>
+    <string name="date_month_jul">jul</string>
+    <string name="date_month_aug">ago</string>
+    <string name="date_month_sep">sep</string>
+    <string name="date_month_oct">oct</string>
+    <string name="date_month_nov">nov</string>
+    <string name="date_month_dec">dic</string>
+    <string name="cd_timeline_today_pending">Hoy, check-in pendiente</string>
+    <string name="cd_timeline_missed">Check-in perdido el %1$s</string>
+    <string name="cd_timeline_checked_in">Check-in hecho el %1$s</string>
+    <string name="cd_timeline_upcoming">Próxima fecha %1$s</string>
+    <string name="cd_timeline_no_checkin">Sin check-in el %1$s</string>
+    <string name="cd_timeline_plant_grown">Planta crecida el %1$s</string>
+    <string name="groups_create_first_hint">Toca + para crear tu primer grupo</string>
+    <string name="group_no_members_yet">Aún no hay miembros</string>
+    <string name="group_add_from_home_hint">Los miembros se agregan desde el filtro de grupos en Inicio</string>
+    <string name="group_move_no_other">Aún no hay otros grupos. Crea uno desde la pantalla de Grupos.</string>
+    <string name="group_move_no_other_sheet">Aún no hay otros grupos.</string>
+    <string name="settings_terms_of_service">Términos del servicio</string>
+    <string name="settings_privacy">Privacidad</string>
+    <string name="badge_new_plant_grown">¡Ha crecido una nueva planta!</string>
+    <string name="badge_tap_reveal_plant">Toca para revelar tu nueva planta</string>
+    <string name="brainstorm_tab_current">Resultado actual</string>
+    <string name="cd_new_milestone">Nuevo hito de relación</string>
+    <string name="cd_discount_sixty">Descuento del 60%</string>
 </resources>
