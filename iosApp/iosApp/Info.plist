@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSContactsUsageDescription</key>
-	<string>Foster uses your contacts to import a person you want to keep in touch with.</string>
 	<!-- Build-injected secrets — values come from the gitignored
 	     Configuration/Secrets.xcconfig (see Secrets.xcconfig.example). -->
 	<key>SUPABASE_URL</key>

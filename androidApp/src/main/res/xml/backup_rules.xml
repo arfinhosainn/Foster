@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cloud-backup rules for Android <=11 auto backup (fullBackupContent).
+     Excludes app-private local state: DataStore preferences (onboarding
+     draft, theme, swipe hints, paywall state, notification plan) and all
+     SharedPreferences (including the Supabase auth session store).
+     Rationale: keep account data out of Google Drive backups — see
+     COMPLIANCE_TODO item 7 and PRIVACY_POLICY.md §10. Users re-authenticate
+     after a restore. -->
+<full-backup-content>
+    <exclude domain="file" path="datastore/" />
+    <exclude domain="sharedpref" path="." />
+</full-backup-content>

@@ -49,6 +49,7 @@ import org.jetbrains.compose.resources.vectorResource
 import foster.home.generated.resources.action_cancel
 import foster.home.generated.resources.action_delete
 import foster.home.generated.resources.cd_close
+import foster.home.generated.resources.delete_confirm_keyword
 import foster.home.generated.resources.delete_type_confirm
 import foster.home.generated.resources.settings_delete_account
 import org.jetbrains.compose.resources.stringResource
@@ -65,7 +66,10 @@ fun DeleteAccountBottomSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var confirmedText by rememberSaveable { mutableStateOf("") }
-    val confirmed = !isLoading && confirmedText.uppercase() == "DELETE"
+    // Localized confirmation keyword (e.g. "DELETE" / "ELIMINAR") so the
+    // instruction, placeholder, and check always match the active language.
+    val confirmKeyword = stringResource(Res.string.delete_confirm_keyword)
+    val confirmed = !isLoading && confirmedText.uppercase() == confirmKeyword.uppercase()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -143,7 +147,7 @@ fun DeleteAccountBottomSheet(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.delete_type_confirm),
+                text = stringResource(Res.string.delete_type_confirm, confirmKeyword),
                 style = FosterTheme.typography.heading4Semibold,
                 color = FosterTheme.colors.text.primary,
             )
@@ -160,7 +164,7 @@ fun DeleteAccountBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {
                     Text(
-                        text = "DELETE",
+                        text = confirmKeyword,
                         style = FosterTheme.typography.heading4Semibold,
                         color = FosterTheme.colors.text.tertiary,
                     )

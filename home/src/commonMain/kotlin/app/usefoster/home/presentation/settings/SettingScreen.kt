@@ -80,6 +80,7 @@ import foster.home.generated.resources.settings_account
 import foster.home.generated.resources.settings_appearance
 import foster.home.generated.resources.settings_danger_zone
 import foster.home.generated.resources.settings_delete_account
+import foster.home.generated.resources.settings_delete_account_web
 import foster.home.generated.resources.settings_groups
 import foster.home.generated.resources.settings_notification
 import foster.home.generated.resources.settings_support
@@ -88,6 +89,7 @@ import org.jetbrains.compose.resources.stringResource
 /** Public legal-document URLs (hosted on the Foster Framer site). */
 private const val PRIVACY_POLICY_URL = "https://fosterapp.framer.website/privacy"
 private const val TERMS_URL = "https://fosterapp.framer.website/terms"
+private const val DELETE_ACCOUNT_URL = "https://fosterapp.framer.website/delete-account"
 private const val SUPPORT_EMAIL_URI = "mailto:programmingwitharfin@gmail.com"
 
 @Composable
@@ -329,6 +331,30 @@ fun SettingScreen(
 
                     Spacer(Modifier.height(34.dp))
 
+                }
+
+                // Public web deletion path (Play requires a visible
+                // account-deletion route in addition to the in-app one).
+                Spacer(Modifier.height(3.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { uriHandler.openUri(DELETE_ACCOUNT_URL) },
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_trashbin),
+                        contentDescription = "",
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(5.dp))
+
+                    Text(
+                        stringResource(Res.string.settings_delete_account_web),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = FosterTheme.colors.text.secondary
+                    )
                 }
 
             }

@@ -31,7 +31,7 @@ Configure a reproducible, signed Android release build for Google Play testing w
 # Technical Design
 
 ### Current Implementation
-- `androidApp/build.gradle.kts` defines `applicationId = "app.usefoster"`, `versionCode = 2` for the next Play upload because version code 1 is already used, and a minified `release` build type, but has no `signingConfigs` block or release signing assignment.
+- `androidApp/build.gradle.kts` defines `applicationId = "app.usefoster"`, `versionCode = 3` for the next Play upload because version codes 1 and 2 are already used, and a minified `release` build type, but has no `signingConfigs` block or release signing assignment.
 - The same file already resolves build secrets from environment variables first and gitignored `local.properties` second; this pattern should be extended for signing values without placing them in source.
 - `.gitignore` already excludes `local.properties`, `*.jks`, and `*.keystore`, and `docs/security-checklist.md` explicitly requires signing artifacts to remain uncommitted.
 - `README.md` currently documents local secrets but not Android release signing.
@@ -41,7 +41,7 @@ Configure a reproducible, signed Android release build for Google Play testing w
 - **Credential resolution:** support environment variables for CI and ignored `local.properties` entries for local development; never hardcode passwords in `androidApp/build.gradle.kts`.
 - **Release-only signing:** attach the signing configuration to `buildTypes.release` while leaving debug builds independent of the release keystore.
 - **Artifact:** use `bundleRelease` as the primary validation target because Google Play distribution uses Android App Bundles; optionally produce a signed release APK only when a direct-install artifact is needed.
-- **Versioning:** use `versionCode = 2` for the next upload because version code 1 is already used; increase it for every subsequent Play upload.
+- **Versioning:** use `versionCode = 3` for the next upload because version codes 1 and 2 are already used; increase it for every subsequent Play upload.
 
 ### Proposed Changes
 1. Add release-signing value resolution in `androidApp/build.gradle.kts` for the keystore path, alias, store password, and key password, with a clear release-build error when a required value is missing.
@@ -99,7 +99,7 @@ The local path should resolve to `/Users/arfinhossin/Desktop/keystore/usefoster-
 The release-signing contract is fixed without exposing any secret values.
 
 - Confirm the target file name under `/Users/arfinhossin/Desktop/keystore` and the key alias to use.
-- Confirm that the existing `app.usefoster` application ID remains unchanged and that the next upload uses `versionCode = 2` because version code 1 has already been used.
+- Confirm that the existing `app.usefoster` application ID remains unchanged and that the next upload uses `versionCode = 3` because version codes 1 and 2 have already been used.
 - Verify the keystore will stay outside `/Users/arfinhossin/Downloads/Nekko` and that `.gitignore` protections remain in place.
 - Do not collect or store keystore passwords in chat.
 

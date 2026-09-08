@@ -9,6 +9,11 @@
 // enforce `contact.owner_id = auth.uid()` ourselves). A one-per-contact-per-day
 // cooldown short-circuits before any LLM call.
 //
+// PRODUCTION WARNING (COMPLIANCE_TODO item 13): keep the DEBUG_IP_HEADERS
+// secret unset/"false" in production. When enabled, extractClientIp logs raw
+// cf-connecting-ip / x-forwarded-for header values (personal data) to function
+// logs. It exists only for one-off deployment probes.
+//
 // Deploy:
 //   supabase secrets set GEMINI_API_KEY=<google-ai-studio-key>
 //   supabase functions deploy brainstorm --no-verify-jwt
