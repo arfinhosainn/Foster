@@ -164,21 +164,25 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
         info.entitlements.active[UNLIMITED_ENTITLEMENT_ID] != null
 
     private fun Offering.toPaywallOffering(): PaywallOffering {
+        val monthlyPackage = monthly
+        val annualPackage = annual
         val packages = mutableMapOf<String, Package>()
-        monthly?.let { packages[it.identifier] = it }
-        annual?.let { packages[it.identifier] = it }
-        cachedPackages = packages
+        monthlyPackage?.let { packages[cacheKey(it)] = it }
+        annualPackage?.let { packages[cacheKey(it)] = it }
+        cachedPackages = cachedPackages + packages
         return PaywallOffering(
-            monthly = monthly?.toPaywallPackage(BillingPeriod.MONTHLY),
-            annual = annual?.toPaywallPackage(BillingPeriod.ANNUAL),
+            monthly = monthlyPackage?.toPaywallPackage(BillingPeriod.MONTHLY, cacheKey(monthlyPackage)),
+            annual = annualPackage?.toPaywallPackage(BillingPeriod.ANNUAL, cacheKey(annualPackage)),
         )
     }
 
-    private fun Package.toPaywallPackage(period: BillingPeriod): PaywallPackage {
+    private fun Offering.cacheKey(pkg: Package): String = "$identifier:${pkg.identifier}"
+
+    private fun Package.toPaywallPackage(period: BillingPeriod, cacheKey: String): PaywallPackage {
         val product = storeProduct
         val (hasTrial, trialString) = product.freeTrialInfo()
         return PaywallPackage(
-            identifier = identifier,
+            identifier = cacheKey,
             period = period,
             priceString = product.price.formatted,
             periodString = when (period) {
@@ -220,9 +224,13 @@ class RevenueCatSubscriptionRepository : SubscriptionRepository {
     }
 
     private fun Period.formatTrial(): String {
-        val unitName = unit.name.lowercase()
-        val label = if (value == 1) unitName else "${unitName}s"
-        return "$value $label free trial"
+        val (displayValue, unitName) = if (unit.name.equals("WEEK", ignoreCase = true)) {
+            value * 7 to "day"
+        } else {
+            value to unit.name.lowercase()
+        }
+        val label = if (displayValue == 1) unitName else "${unitName}s"
+        return "$displayValue-$label free trial"
     }
 
     private fun PurchasesException.toSubscriptionError(): SubscriptionError {

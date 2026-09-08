@@ -8,12 +8,11 @@ package app.usefoster.shared.subscription
  * entitlement unlocks BOTH gates.
  *
  * Free limits:
- *  - Contacts:    10 total
- *  - Brainstorm:   3 generations per calendar month
+ *  - Contacts:     5 total
+ *  - Brainstorm:   subscription required
  */
 object SubscriptionGates {
-    const val FREE_CONTACT_LIMIT = 10
-    const val FREE_BRAINSTORM_MONTHLY_LIMIT = 3
+    const val FREE_CONTACT_LIMIT = 5
 
     fun contactGate(isSubscribed: Boolean, currentContactCount: Int): GateResult =
         if (isSubscribed || currentContactCount < FREE_CONTACT_LIMIT) {
@@ -23,10 +22,10 @@ object SubscriptionGates {
         }
 
     fun brainstormGate(isSubscribed: Boolean, monthlyGenerationCount: Int): GateResult =
-        if (isSubscribed || monthlyGenerationCount < FREE_BRAINSTORM_MONTHLY_LIMIT) {
+        if (isSubscribed) {
             GateResult.Allowed
         } else {
-            GateResult.Blocked(BlockReason.BrainstormLimitReached(FREE_BRAINSTORM_MONTHLY_LIMIT))
+            GateResult.Blocked(BlockReason.BrainstormRequiresSubscription)
         }
 }
 
@@ -38,4 +37,5 @@ sealed interface GateResult {
 sealed interface BlockReason {
     data class ContactsLimitReached(val limit: Int) : BlockReason
     data class BrainstormLimitReached(val limit: Int) : BlockReason
+    data object BrainstormRequiresSubscription : BlockReason
 }

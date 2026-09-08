@@ -149,6 +149,7 @@
     <string name="discount_one_time_offer">One-time offer</string>
     <string name="discount_expires_in">Expires in</string>
     <string name="discount_lowest_price">Lowest price ever</string>
+    <string name="discount_annual_price">%1$s / year</string>
     <string name="discount_for_annual">For annual plan</string>
     <string name="discount_processing">Processing...</string>
     <string name="discount_claim_cta">Claim limited offer!</string>

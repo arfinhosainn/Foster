@@ -2,6 +2,7 @@ package app.usefoster.home.presentation.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -51,8 +53,10 @@ import app.usefoster.home.presentation.components.TIMELINE_SLOT_COUNT
 import app.usefoster.home.presentation.components.TimelineSlot
 import app.usefoster.home.presentation.components.buildTimelineSlots
 import app.usefoster.theme.FosterTheme
+import app.usefoster.theme.LocalFosterIsDark
 import foster.home.generated.resources.Res
 import foster.home.generated.resources.date_mdY
+import foster.home.generated.resources.cd_locked
 import foster.home.generated.resources.history_board_checkins
 import foster.home.generated.resources.history_board_label
 import foster.home.generated.resources.history_board_missed
@@ -67,6 +71,7 @@ import foster.home.generated.resources.history_empty
 import foster.home.generated.resources.history_first_board_progress
 import foster.home.generated.resources.history_perfect_badge
 import foster.home.generated.resources.ic_flame
+import foster.home.generated.resources.ic_lock
 import foster.home.generated.resources.month_apr
 import foster.home.generated.resources.month_aug
 import foster.home.generated.resources.month_dec
@@ -120,6 +125,8 @@ fun CheckInHistoryScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CheckInHistoryViewModel = rememberCheckInHistoryViewModel(),
+    isLocked: Boolean = false,
+    onLockedClick: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val selectedDot by viewModel.selectedDot.collectAsStateWithLifecycle()
@@ -129,7 +136,12 @@ fun CheckInHistoryScreen(
     Scaffold(
         modifier = modifier,
         containerColor = FosterTheme.colors.background.b0,
-        topBar = { HistoryTopBar(onBack = onBack) },
+        topBar = {
+            HistoryTopBar(
+                onBack = onBack,
+                modifier = if (isLocked) Modifier.blur(10.dp) else Modifier,
+            )
+        },
     ) { padding ->
         BoxWithConstraints(
             modifier = Modifier
@@ -158,6 +170,11 @@ fun CheckInHistoryScreen(
                 policy.maxWidth
             }
 
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (isLocked) Modifier.blur(10.dp) else Modifier),
+            ) {
             when {
                 state.isLoading -> Box(
                     modifier = Modifier.fillMaxSize(),
@@ -235,6 +252,27 @@ fun CheckInHistoryScreen(
                     }
 
                     Spacer(Modifier.height(24.dp))
+                }
+            }
+            }
+            if (isLocked) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(FosterTheme.colors.background.b0.copy(alpha = 0.62f))
+                        .clickable(onClick = onLockedClick),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = vectorResource(Res.drawable.ic_lock),
+                        contentDescription = stringResource(Res.string.cd_locked),
+                        modifier = Modifier.size(48.dp),
+                        tint = if (LocalFosterIsDark.current) {
+                            Color.Unspecified
+                        } else {
+                            Color.White.copy(alpha = 0.5f)
+                        },
+                    )
                 }
             }
         }

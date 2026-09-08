@@ -57,6 +57,7 @@ import app.usefoster.home.presentation.settings.components.SettingsRow
 import app.usefoster.home.presentation.settings.components.SettingsTopBar
 import app.usefoster.shared.domain.Result
 import app.usefoster.shared.notifications.ReminderScheduler
+import app.usefoster.shared.version.currentAppVersion
 import app.usefoster.theme.AppThemeMode
 import app.usefoster.theme.LocalThemeStore
 import app.usefoster.theme.FosterTheme
@@ -87,6 +88,7 @@ import org.jetbrains.compose.resources.stringResource
 /** Public legal-document URLs (hosted on the Foster Framer site). */
 private const val PRIVACY_POLICY_URL = "https://fosterapp.framer.website/privacy"
 private const val TERMS_URL = "https://fosterapp.framer.website/terms"
+private const val SUPPORT_EMAIL_URI = "mailto:programmingwitharfin@gmail.com"
 
 @Composable
 fun SettingScreen(
@@ -100,6 +102,7 @@ fun SettingScreen(
     val uriHandler = LocalUriHandler.current
     val liquidState = rememberLiquidState()
     val density = LocalDensity.current
+    val appVersion = currentAppVersion()
 
     // Real OS notification permission state. Read on launch and after returning
     // from the OS settings screen. Android/iOS can't re-grant from an in-app
@@ -230,7 +233,12 @@ fun SettingScreen(
                     SettingsRow.Item(icon = Res.drawable.ic_groups, title = stringResource(Res.string.settings_groups)) {
                         showGroupSheet = true
                     },
-                    SettingsRow.Item(icon = Res.drawable.ic_support, title = stringResource(Res.string.settings_support)) {},
+                    SettingsRow.Item(
+                        icon = Res.drawable.ic_support,
+                        title = stringResource(Res.string.settings_support),
+                    ) {
+                        uriHandler.openUri(SUPPORT_EMAIL_URI)
+                    },
                 ),
             )
 
@@ -271,7 +279,7 @@ fun SettingScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    "Foster 2026.01.10",
+                    "Foster $appVersion",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     color = FosterTheme.colors.text.tertiary

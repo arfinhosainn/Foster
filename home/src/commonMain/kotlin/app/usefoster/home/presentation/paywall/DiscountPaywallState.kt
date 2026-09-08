@@ -17,6 +17,7 @@ sealed interface DiscountPaywallEvent {
 data class DiscountPaywallState(
     val isLoading: Boolean = true,
     val annual: PaywallPackage? = null,
+    val regularAnnual: PaywallPackage? = null,
     val isPurchasing: Boolean = false,
     val isRestoring: Boolean = false,
 )

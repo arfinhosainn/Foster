@@ -34,6 +34,7 @@ import app.usefoster.home.di.rememberEditContactViewModel
 import app.usefoster.home.addcontact.EditContactSheet
 import app.usefoster.home.domain.checkInProgressFraction
 import app.usefoster.theme.FosterTheme
+import app.usefoster.shared.subscription.LocalSubscriptionRepository
 import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -43,11 +44,13 @@ fun ContactProfileScreen(
     contactId: String,
     onBack: () -> Unit,
     onBrainstormClick: () -> Unit,
+    onShowPaywall: () -> Unit = {},
     isSupportingPane: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val viewModel = rememberContactProfileViewModel(contactId)
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val isSubscribed by LocalSubscriptionRepository.current.isSubscribed.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     var showEditContact by remember { mutableStateOf(false) }
 
@@ -135,7 +138,8 @@ fun ContactProfileScreen(
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                     BrainstormCard(
-                        onClick = onBrainstormClick,
+                        isLocked = !isSubscribed,
+                        onClick = if (isSubscribed) onBrainstormClick else onShowPaywall,
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     NotesSection(

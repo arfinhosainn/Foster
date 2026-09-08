@@ -224,7 +224,7 @@ class AddContactViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, error = null) }
 
-            // Gate 1 — Unlimited Contacts: free users capped at 10.
+            // Gate 1 — Unlimited Contacts: free users capped at 5.
             // Block + show paywall (never silently fail) when the limit is hit.
             val isSubscribed = subscriptionRepository.isSubscribed.value
             if (state.editingContactId == null && !isSubscribed) {

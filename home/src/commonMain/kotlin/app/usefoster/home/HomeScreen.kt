@@ -111,6 +111,7 @@ import app.usefoster.shared.notifications.HomeCheckInListSignal
 import app.usefoster.home.presentation.components.timelineMaxCellSizeForWidth
 import app.usefoster.home.presentation.components.updateTimelineDate
 import app.usefoster.home.presentation.contactprofile.ContactProfileScreen
+import app.usefoster.shared.subscription.LocalSubscriptionRepository
 import app.usefoster.home.presentation.HomeLoadingSkeleton
 import app.usefoster.home.domain.MissedCheckIn
 import app.usefoster.theme.FosterTheme
@@ -183,6 +184,7 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val accountRepository = LocalAccountRepository.current
     val accountState by accountRepository.state.collectAsStateWithLifecycle()
+    val isSubscribed by LocalSubscriptionRepository.current.isSubscribed.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -348,8 +350,8 @@ fun HomeScreen(
                         outstandingBgResource = Res.drawable.ic_globe,
                         upToDateBgResource = Res.drawable.ic_fire,
                         gradientOrbResource = Res.drawable.img_gradientss,
-                        onOutstandingClick = onOpenHistory,
-                        onUpToDateClick = onOpenHistory,
+                        onOutstandingClick = if (isSubscribed) onOpenHistory else onShowPaywall,
+                        onUpToDateClick = if (isSubscribed) onOpenHistory else onShowPaywall,
                     )
 
                     state.checkInError?.let {
@@ -498,6 +500,7 @@ fun HomeScreen(
                                 contactId = selectedContact.id,
                                 onBack = { selectedContactId = null },
                                 onBrainstormClick = { onBrainstormClick(selectedContact.id) },
+                                onShowPaywall = onShowPaywall,
                                 isSupportingPane = true,
                                 modifier = Modifier.fillMaxSize(),
                             )

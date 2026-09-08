@@ -103,17 +103,29 @@ fun HomeHistoryBook(
     pagerState: PagerState,
     historyPage: @Composable () -> Unit,
     homePage: @Composable () -> Unit,
+    isHistoryAccessible: Boolean = true,
+    onHistoryLocked: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     // Pager settle → route. The policy only dispatches when the route
     // disagrees with the settled page, so this can never loop with the
     // route → pager effect below.
-    LaunchedEffect(navigator) {
+    LaunchedEffect(navigator, isHistoryAccessible, onHistoryLocked) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { page ->
                 when (homeBookActionFor(page, navigator.currentScreen)) {
-                    HomeBookAction.OpenHistory -> navigator.navigate(Screen.CheckInHistory)
+                    HomeBookAction.OpenHistory -> {
+                        if (isHistoryAccessible) {
+                            navigator.navigate(Screen.CheckInHistory)
+                        } else {
+                            onHistoryLocked()
+                            pagerState.animateScrollToPage(
+                                page = HISTORY_BOOK_HOME_PAGE,
+                                animationSpec = BookTapScrollSpec,
+                            )
+                        }
+                    }
                     HomeBookAction.ReturnToHome -> {
                         if (historyIsPoppedOnReturn(navigator.backStack)) {
                             navigator.goBack()

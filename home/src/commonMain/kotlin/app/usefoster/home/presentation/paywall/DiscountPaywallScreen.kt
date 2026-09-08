@@ -22,9 +22,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -43,6 +40,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -50,6 +50,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,6 +58,7 @@ import app.usefoster.adaptive.adaptiveSurfacePolicy
 import app.usefoster.designsystem.sideShine
 import app.usefoster.home.di.rememberDiscountPaywallViewModel
 import app.usefoster.theme.FosterTheme
+import app.usefoster.theme.LocalFosterIsDark
 import co.touchlab.kermit.Logger.Companion.a
 import kotlinx.coroutines.delay
 import foster.home.generated.resources.Res
@@ -80,6 +82,7 @@ import foster.home.generated.resources.discount_expires_in
 import foster.home.generated.resources.discount_for_annual
 import foster.home.generated.resources.discount_lowest_price
 import foster.home.generated.resources.discount_one_time_offer
+import foster.home.generated.resources.discount_annual_price
 import foster.home.generated.resources.discount_processing
 import foster.home.generated.resources.cd_discount_sixty
 import foster.home.generated.resources.paywall_restore_cta
@@ -91,6 +94,7 @@ private const val DEFAULT_OFFER_DURATION_SECONDS = 12L * 3600 + 29L * 60
 
 /** Pale sage tint applied to the monochrome -60% art and laurel branches. */
 private val DiscountArtTint = Color(0xFFD9E2C9).copy(alpha = 0.85f)
+private val DiscountCardSurface = Color(0xFF18181B)
 
 @Composable
 fun DiscountPaywallScreen(
@@ -102,6 +106,7 @@ fun DiscountPaywallScreen(
     val state by viewModel.state.collectAsState()
     val offerExpiresAtMillis by viewModel.offerExpiresAtMillis.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val isDarkTheme = LocalFosterIsDark.current
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -139,8 +144,18 @@ fun DiscountPaywallScreen(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(FosterTheme.colors.background.b0),
+            .background(if (isDarkTheme) Color.Transparent else Color.White),
     ) {
+        if (!isDarkTheme) {
+            Image(
+                painter = painterResource(Res.drawable.discountgradient),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier
+                    .matchParentSize()
+            )
+        }
+
         // Adaptive cap: keep the offer a readable single column on
         // tablets/desktop instead of stretching edge-to-edge.
         val policy = adaptiveSurfacePolicy(
@@ -173,29 +188,45 @@ fun DiscountPaywallScreen(
             // Hero offer card.
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(40.dp)),
+                    .fillMaxWidth(),
             ) {
+                if (!isDarkTheme) {
+                    Image(
+                        painter = painterResource(Res.drawable.discountgradient),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier
+                            .matchParentSize()
+                            .blur(20.dp, BlurredEdgeTreatment.Unbounded)
+                            .alpha(0.35f),
+                    )
+                }
 
-                Image(
-                    painterResource(Res.drawable.grass), contentDescription = null,
-                    modifier = modifier.align(Alignment.TopCenter)
-                )
-
-                Image(
-                    painter = painterResource(Res.drawable.discountgradient),
-                    contentDescription = null,
-                    contentScale = ContentScale.FillBounds,
-                    modifier = Modifier.matchParentSize().align(Alignment.TopCenter),
-                )
-
-                // Card content on top of the gradient.
-                Column(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 54.dp, bottom = 40.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                        .clip(RoundedCornerShape(40.dp))
+                        .background(DiscountCardSurface),
                 ) {
+                    Image(
+                        painterResource(Res.drawable.grass), contentDescription = null,
+                        modifier = modifier.align(Alignment.TopCenter)
+                    )
+
+                    Image(
+                        painter = painterResource(Res.drawable.discountgradient),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier.matchParentSize().align(Alignment.TopCenter),
+                    )
+
+                    // Card content on top of the gradient.
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, end = 20.dp, top = 54.dp, bottom = 40.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                     Image(
                         painter = painterResource(Res.drawable.discounts),
                         contentDescription = stringResource(Res.string.cd_discount_sixty),
@@ -206,7 +237,7 @@ fun DiscountPaywallScreen(
                     Spacer(Modifier.height(16.dp))
                     Text(
                         text = stringResource(Res.string.discount_one_time_offer),
-                        color = FosterTheme.colors.text.primary,
+                        color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -214,7 +245,7 @@ fun DiscountPaywallScreen(
                     Spacer(Modifier.height(16.dp))
                     Text(
                         text = stringResource(Res.string.discount_expires_in),
-                        color = FosterTheme.colors.text.secondary,
+                        color = Color(0xFFEEEEEE).copy(alpha = 0.5f),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -230,7 +261,7 @@ fun DiscountPaywallScreen(
                         Spacer(Modifier.width(2.dp))
                         Text(
                             text = countdownText,
-                            color = FosterTheme.colors.text.primary,
+                            color = Color.White,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -269,9 +300,12 @@ fun DiscountPaywallScreen(
                             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                         ) {
                             Text(
-                                text = state.annual?.priceString ?: "—",
+                                text = state.annual?.let {
+                                    stringResource(Res.string.discount_annual_price, it.priceString)
+                                } ?: "—",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
+                                color = Color.White.copy(alpha = 0.75f)
                             )
                         }
                         // Rim-light edge shine on both sides, painted above the fill.
@@ -290,14 +324,31 @@ fun DiscountPaywallScreen(
                         fontWeight = FontWeight.Medium,
                     )
 
-                    Spacer(Modifier.height(60.dp))
+                    Spacer(Modifier.height(54.dp))
 
                     // The price is supplied by the current RevenueCat package,
                     // so it follows the user's store and currency.
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        state.regularAnnual?.let { regularAnnual ->
+                            Text(
+                                text = regularAnnual.priceString,
+                                color = FosterTheme.colors.text.secondary,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Medium,
+                                textDecoration = TextDecoration.LineThrough,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = FosterTheme.colors.text.secondary,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
                         Text(
                             text = state.annual?.priceString ?: "—",
-                            color = FosterTheme.colors.text.primary,
+                            color = Color.White,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -309,24 +360,25 @@ fun DiscountPaywallScreen(
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
                     )
-                }
-                // Close icon pinned INSIDE the card, top-end corner (the screen
-                // top bar / status bar is handled by the outer column padding).
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 16.dp, end = 16.dp)
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(Color.Transparent),
-                ) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.ic_close),
-                        contentDescription = stringResource(Res.string.cd_close),
-                        tint = FosterTheme.colors.fill.quaternary.copy(alpha = 0.3f),
-                        modifier = Modifier.size(24.dp),
-                    )
+                    }
+                    // Close icon pinned INSIDE the card, top-end corner (the screen
+                    // top bar / status bar is handled by the outer column padding).
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 16.dp, end = 16.dp)
+                            .size(24.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.Transparent),
+                    ) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.ic_close),
+                            contentDescription = stringResource(Res.string.cd_close),
+                            tint = Color(0xFFEEEEEE).copy(alpha = 0.5f),
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
                 }
             }
 

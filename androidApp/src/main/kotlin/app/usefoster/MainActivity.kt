@@ -25,6 +25,7 @@ import app.usefoster.shared.notifications.HomeCheckInListSignal
 import app.usefoster.shared.notifications.ReminderScheduler
 import app.usefoster.shared.secrets.Secrets
 import app.usefoster.shared.subscription.initRevenueCat
+import app.usefoster.shared.version.configureAppVersion
 
 class MainActivity : ComponentActivity() {
     private val supabaseClient by lazy { createAppSupabaseClient() }
@@ -40,6 +41,8 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { splashHeldVisible.value }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        configureAppVersion(applicationContext)
 
         // Secrets must be configured before the lazy Supabase client below and
         // before initRevenueCat(). Values come from BuildConfig, which Gradle

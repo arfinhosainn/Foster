@@ -194,6 +194,7 @@ private fun OnboardingAppContent(
 
     val subscriptionRepository = LocalSubscriptionRepository.current
     val paywallGateManager = LocalPaywallGateManager.current
+    val isSubscribed by subscriptionRepository.isSubscribed.collectAsState()
 
     // Silent startup refresh of the subscription entitlement: this is a
     // background refresh with no user action to retry, so a failure must NOT
@@ -515,14 +516,23 @@ private fun OnboardingAppContent(
                     -> HomeHistoryBook(
                         navigator = navigator,
                         pagerState = homeBookPagerState,
-                        historyPage = { CheckInHistoryScreen(onBack = { navigator.goBack() }) },
+                        isHistoryAccessible = isSubscribed,
+                        onHistoryLocked = showPremiumPaywall,
+                        historyPage = {
+                            CheckInHistoryScreen(
+                                onBack = { navigator.goBack() },
+                                isLocked = !isSubscribed,
+                                onLockedClick = showPremiumPaywall,
+                            )
+                        },
                         homePage = {
                             HomeScreen(
                                 onContactClick = { contact ->
                                     navigator.navigate(Screen.ContactProfile(contact.id))
                                 },
                                 onBrainstormClick = { contactId ->
-                                    navigator.navigate(Screen.Brainstorm(contactId))
+                                    if (isSubscribed) navigator.navigate(Screen.Brainstorm(contactId))
+                                    else showPremiumPaywall()
                                 },
                                 onCheckInsClick = { navigator.navigate(Screen.CheckIns) },
                                 onOpenHistory = { navigator.navigate(Screen.CheckInHistory) },
@@ -550,11 +560,18 @@ private fun OnboardingAppContent(
                         contactId = screen.contactId,
                         onBack = { navigator.goBack() },
                         onBrainstormClick = { navigator.navigate(Screen.Brainstorm(screen.contactId)) },
+                        onShowPaywall = showPremiumPaywall,
                     )
 
-                is Screen.Brainstorm -> BrainstormScreen(
-                    contactId = screen.contactId,
-                )
+                is Screen.Brainstorm -> if (isSubscribed) {
+                    BrainstormScreen(
+                        contactId = screen.contactId,
+                    )
+                } else {
+                    LaunchedEffect(screen.contactId) {
+                        showPremiumPaywall()
+                    }
+                }
 
                     is Screen.Settings -> SettingScreen(
                         onBack = { navigator.goBack() },

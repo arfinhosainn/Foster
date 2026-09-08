@@ -21,7 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -30,13 +32,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.usefoster.designsystem.leftEdgeShine
 import app.usefoster.theme.FosterTheme
+import app.usefoster.theme.LocalFosterIsDark
 import foster.home.generated.resources.Res
 import foster.home.generated.resources.ic_brainstrom
+import foster.home.generated.resources.ic_lock
 import foster.home.generated.resources.img_gradientss
 import org.jetbrains.compose.resources.painterResource
 import foster.home.generated.resources.brainstorm_action
 import foster.home.generated.resources.brainstorm_ai_hint
 import foster.home.generated.resources.brainstorm_topics
+import foster.home.generated.resources.cd_locked
 import org.jetbrains.compose.resources.stringResource
 
 private val BRAINSTORM_CARD_HEIGHT = 133.dp
@@ -45,6 +50,7 @@ private val BRAINSTORM_CARD_SHAPE = RoundedCornerShape(24.dp)
 @Composable
 fun BrainstormCard(
     onClick: () -> Unit,
+    isLocked: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -57,59 +63,85 @@ fun BrainstormCard(
             .leftEdgeShine(BRAINSTORM_CARD_SHAPE, intensity = 0.4f) // ← edge-lit shine, left side only
             .clickable(onClick = onClick),
     ) {
-        // Sized so it doesn't fill the whole card (Crop + no size would stretch it
-        // edge-to-edge and lock it to the middle). Aligned to BottomEnd, then offset
-        // further down/right so the blob's hotspot sits in the bottom-end corner;
-        // the overflow is clipped by the card's shape.
-        Image(
-            painter = painterResource(Res.drawable.img_gradientss),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .offset(x = 80.dp, y = 0.dp),
-        )
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+                .blur(if (isLocked) 10.dp else 0.dp),
         ) {
-            Column {
-                Text(
-                    text = stringResource(Res.string.brainstorm_topics),
-                    color = FosterTheme.colors.text.primary,
-                    fontSize = 17.sp,
-                    lineHeight = 22.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(Res.string.brainstorm_ai_hint),
-                    color = FosterTheme.colors.text.tertiary,
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-            Row(
+            // Sized so it doesn't fill the whole card (Crop + no size would stretch it
+            // edge-to-edge and lock it to the middle). Aligned to BottomEnd, then offset
+            // further down/right so the blob's hotspot sits in the bottom-end corner;
+            // the overflow is clipped by the card's shape.
+            Image(
+                painter = painterResource(Res.drawable.img_gradientss),
+                contentDescription = null,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(FosterTheme.colors.background.b1)
-                    .padding(start = 10.dp, end = 16.dp, top = 5.dp, bottom = 5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    .align(Alignment.CenterEnd)
+                    .offset(x = 80.dp, y = 0.dp),
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(Res.string.brainstorm_topics),
+                        color = FosterTheme.colors.text.primary,
+                        fontSize = 17.sp,
+                        lineHeight = 22.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(Res.string.brainstorm_ai_hint),
+                        color = FosterTheme.colors.text.tertiary,
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(FosterTheme.colors.background.b1)
+                        .padding(start = 10.dp, end = 16.dp, top = 5.dp, bottom = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.ic_brainstrom),
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.brainstorm_action),
+                        color = FosterTheme.colors.text.primary,
+                        fontSize = 16.sp,
+                        lineHeight = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        }
+        if (isLocked) {
+            Box(
+                modifier = Modifier
+                    .blur(2.dp)
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.001f)),
+                contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.ic_brainstrom),
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                )
-                Text(
-                    text = stringResource(Res.string.brainstorm_action),
-                    color = FosterTheme.colors.text.primary,
-                    fontSize = 16.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    painter = painterResource(Res.drawable.ic_lock),
+                    contentDescription = stringResource(Res.string.cd_locked),
+                    modifier = Modifier.size(40.dp),
+                    colorFilter = if (LocalFosterIsDark.current) {
+                        null
+                    } else {
+                        ColorFilter.tint(Color.Black.copy(alpha = 0.5f))
+                    },
                 )
             }
         }

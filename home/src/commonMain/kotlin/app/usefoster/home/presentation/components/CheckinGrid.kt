@@ -655,7 +655,7 @@ private fun BoxScope.CheckBadge(
     ) {
         timelineStackedAvatarIndicatorOffset(cellSize)
     } else {
-        DpOffset(x = cellSize * 0.05f, y = -(cellSize * 0.06f))
+        DpOffset(x = cellSize * 0.001f, y = -(cellSize * 0.001f))
     }
     Icon(
         imageVector = vectorResource(Res.drawable.ic_circlecheckmark),

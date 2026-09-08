@@ -149,6 +149,7 @@
     <string name="discount_one_time_offer">Oferta por tiempo limitado</string>
     <string name="discount_expires_in">Termina en</string>
     <string name="discount_lowest_price">El precio más bajo hasta ahora</string>
+    <string name="discount_annual_price">%1$s / año</string>
     <string name="discount_for_annual">Con el plan anual</string>
     <string name="discount_processing">Procesando…</string>
     <string name="discount_claim_cta">¡Reclama la oferta limitada!</string>

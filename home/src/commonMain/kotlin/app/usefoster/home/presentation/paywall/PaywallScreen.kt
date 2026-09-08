@@ -222,14 +222,25 @@ fun PaywallScreen(
 private data class PaywallFeature(
     val title: String,
     val icon: DrawableResource,
-    val comingSoon: Boolean = false,
 )
 
 private val paywallFeatures = listOf(
-    PaywallFeature("Unlimited Contacts", Res.drawable.ic_groupgradient),
-    PaywallFeature("Smart Reminder", Res.drawable.ic_calendergradient, comingSoon = true),
-    PaywallFeature("Relationship Insight", Res.drawable.ic_insightgradient, comingSoon = true),
-    PaywallFeature("Premium Support", Res.drawable.ic_headphonegradient),
+    PaywallFeature(
+        title = "Unlimited Contacts",
+        icon = Res.drawable.ic_groupgradient,
+    ),
+    PaywallFeature(
+        title = "Check-ins History",
+        icon = Res.drawable.ic_calendergradient,
+    ),
+    PaywallFeature(
+        title = "AI Brainstorm",
+        icon = Res.drawable.ic_insightgradient,
+    ),
+    PaywallFeature(
+        title = "Premium Support",
+        icon = Res.drawable.ic_headphonegradient,
+    ),
 )
 
 @Composable
@@ -304,17 +315,6 @@ private fun PaywallFeatureRow(feature: PaywallFeature) {
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f),
         )
-        if (feature.comingSoon) {
-            Text(
-                "COMING SOON",
-                color = FosterTheme.colors.text.secondary,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clip(RoundedCornerShape(50))
-                    .background(FosterTheme.colors.fill.secondary)
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
-            )
-        }
     }
 }
 

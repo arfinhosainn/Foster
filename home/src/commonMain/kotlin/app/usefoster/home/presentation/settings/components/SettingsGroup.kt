@@ -20,6 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -119,12 +121,16 @@ private fun SettingsItem(
     item: SettingsRow.Item,
     liquidState: LiquidState
 ) {
+    val haptics = LocalHapticFeedback.current
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(82.dp)
-            .clickable { item.onClick() }
+            .clickable {
+                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                item.onClick()
+            }
             .padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -169,12 +175,16 @@ private fun SettingsDeleteItem(
     item: SettingsRow.Destructive,
     liquidState: LiquidState
 ) {
+    val haptics = LocalHapticFeedback.current
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(82.dp)
-            .clickable { item.onClick() }
+            .clickable {
+                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                item.onClick()
+            }
             .padding(horizontal = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

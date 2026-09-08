@@ -50,11 +50,14 @@ class DiscountPaywallViewModel(
 
     private fun loadOffering() {
         viewModelScope.launch {
-            when (val result = subscriptionRepository.loadPaywallOffering(DISCOUNT_OFFERING_ID)) {
-                is Result.Success -> _state.update {
-                    it.copy(isLoading = false, annual = result.data?.annual)
-                }
-                is Result.Error -> _state.update { it.copy(isLoading = false) }
+            val discountOffering = subscriptionRepository.loadPaywallOffering(DISCOUNT_OFFERING_ID)
+            val regularOffering = subscriptionRepository.loadPaywallOffering()
+            _state.update {
+                it.copy(
+                    isLoading = false,
+                    annual = (discountOffering as? Result.Success)?.data?.annual,
+                    regularAnnual = (regularOffering as? Result.Success)?.data?.annual,
+                )
             }
         }
     }

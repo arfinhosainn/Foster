@@ -6,26 +6,26 @@ import kotlin.test.assertTrue
 
 /**
  * Pure unit tests for the free-tier gating logic — no RevenueCat, no Supabase,
- * no UI. Verifies the 10-contact cap, the 3/month brainstorm cap, and that a
+ * no UI. Verifies the 5-contact cap, subscription-only brainstorm access, and that a
  * single `unlimited` entitlement unlocks BOTH gates.
  */
 class SubscriptionGatesTest {
 
-    // -- Contact gate (free = 10 max) ----------------------------------------
+    // -- Contact gate (free = 5 max) -----------------------------------------
 
     @Test
     fun contactGate_allowsFreeUserBelowLimit() {
-        val result = SubscriptionGates.contactGate(isSubscribed = false, currentContactCount = 9)
+        val result = SubscriptionGates.contactGate(isSubscribed = false, currentContactCount = 4)
         assertEquals(GateResult.Allowed, result)
     }
 
     @Test
     fun contactGate_blocksFreeUserAtLimit() {
-        val result = SubscriptionGates.contactGate(isSubscribed = false, currentContactCount = 10)
+        val result = SubscriptionGates.contactGate(isSubscribed = false, currentContactCount = 5)
         assertTrue(result is GateResult.Blocked)
         val reason = (result as GateResult.Blocked).reason
         assertTrue(reason is BlockReason.ContactsLimitReached)
-        assertEquals(10, (reason as BlockReason.ContactsLimitReached).limit)
+        assertEquals(5, (reason as BlockReason.ContactsLimitReached).limit)
     }
 
     @Test
@@ -36,7 +36,7 @@ class SubscriptionGatesTest {
 
     @Test
     fun contactGate_allowsSubscribedUserAtLimit() {
-        val result = SubscriptionGates.contactGate(isSubscribed = true, currentContactCount = 10)
+        val result = SubscriptionGates.contactGate(isSubscribed = true, currentContactCount = 5)
         assertEquals(GateResult.Allowed, result)
     }
 
@@ -46,38 +46,19 @@ class SubscriptionGatesTest {
         assertEquals(GateResult.Allowed, result)
     }
 
-    // -- Brainstorm gate (free = 3/month) ------------------------------------
+    // -- Brainstorm gate (subscription required) -----------------------------
 
     @Test
-    fun brainstormGate_allowsFreeUserBelowLimit() {
+    fun brainstormGate_blocksFreeUserRegardlessOfGenerationCount() {
         val result = SubscriptionGates.brainstormGate(isSubscribed = false, monthlyGenerationCount = 2)
-        assertEquals(GateResult.Allowed, result)
-    }
-
-    @Test
-    fun brainstormGate_blocksFreeUserAtLimit() {
-        val result = SubscriptionGates.brainstormGate(isSubscribed = false, monthlyGenerationCount = 3)
         assertTrue(result is GateResult.Blocked)
         val reason = (result as GateResult.Blocked).reason
-        assertTrue(reason is BlockReason.BrainstormLimitReached)
-        assertEquals(3, (reason as BlockReason.BrainstormLimitReached).limit)
+        assertEquals(BlockReason.BrainstormRequiresSubscription, reason)
     }
 
     @Test
-    fun brainstormGate_blocksFreeUserAboveLimit() {
-        val result = SubscriptionGates.brainstormGate(isSubscribed = false, monthlyGenerationCount = 5)
-        assertTrue(result is GateResult.Blocked)
-    }
-
-    @Test
-    fun brainstormGate_allowsSubscribedUserAtLimit() {
-        val result = SubscriptionGates.brainstormGate(isSubscribed = true, monthlyGenerationCount = 3)
-        assertEquals(GateResult.Allowed, result)
-    }
-
-    @Test
-    fun brainstormGate_allowsSubscribedUserFarAboveLimit() {
-        val result = SubscriptionGates.brainstormGate(isSubscribed = true, monthlyGenerationCount = 100)
+    fun brainstormGate_allowsSubscribedUser() {
+        val result = SubscriptionGates.brainstormGate(isSubscribed = true, monthlyGenerationCount = 0)
         assertEquals(GateResult.Allowed, result)
     }
 
@@ -91,13 +72,12 @@ class SubscriptionGatesTest {
         )
         assertEquals(
             GateResult.Allowed,
-            SubscriptionGates.brainstormGate(isSubscribed = true, monthlyGenerationCount = 50),
+            SubscriptionGates.brainstormGate(isSubscribed = true, monthlyGenerationCount = 0),
         )
     }
 
     @Test
     fun freeLimitsAreCorrect() {
-        assertEquals(10, SubscriptionGates.FREE_CONTACT_LIMIT)
-        assertEquals(3, SubscriptionGates.FREE_BRAINSTORM_MONTHLY_LIMIT)
+        assertEquals(5, SubscriptionGates.FREE_CONTACT_LIMIT)
     }
 }
