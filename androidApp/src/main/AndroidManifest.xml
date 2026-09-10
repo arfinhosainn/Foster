@@ -10,12 +10,6 @@
         returns exactly one contact and requires no permission — compliant with
         Google's Contact Picker policy (see supabase/../COMPLIANCE_TODO item 16).
     -->
-    <!--
-        Reminder-centric app: granted by default on Android 13+ with no prompt
-        (Play policy: core function is alarms/reminders). Deletes the exact-alarm
-        request UX from the plan.
-    -->
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Strip biometric permissions injected transitively by

@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.Dispatchers
@@ -14,10 +15,9 @@ import kotlinx.coroutines.withContext
  * [ReminderScheduler.init]; before that (or if it was never called) all
  * operations are harmless no-ops.
  *
- * Alarms use `setExactAndAllowWhileIdle` (fires during Doze). The
- * `USE_EXACT_ALARM` permission (Android 13+) is granted by default for
- * reminder-centric apps; on older targets where exact alarms aren't granted,
- * an inexact alarm is the fallback so scheduling never crashes.
+ * Alarms use `setExactAndAllowWhileIdle` when the device allows exact alarms.
+ * Otherwise, an inexact alarm is used so scheduling never crashes or requires
+ * the restricted exact-alarm permission.
  */
 actual class ReminderScheduler : NotificationSchedulingOps {
     actual override suspend fun scheduleDay(plan: DayPlan) {
@@ -75,7 +75,14 @@ actual class ReminderScheduler : NotificationSchedulingOps {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
-            if (alarmManager.canScheduleExactAlarms()) {
+            // canScheduleExactAlarms() exists only on Android 12+ (API 31).
+            // On Android 11 and below exact alarms need no permission, so they
+            // are always allowed there. Calling the API-31+ method unguarded
+            // would throw NoSuchMethodError on Android 11 devices.
+            val exactAlarmsAllowed =
+                Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                    alarmManager.canScheduleExactAlarms()
+            if (exactAlarmsAllowed) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     fireAtEpochMillis,
