@@ -2,6 +2,7 @@ package app.usefoster.home.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -59,6 +60,8 @@ import app.usefoster.home.domain.Contact
 import app.usefoster.home.domain.Group
 import app.usefoster.home.domain.GroupMembership
 import app.usefoster.home.presentation.components.ContactAvatar
+import app.usefoster.home.presentation.settings.GroupMembersBottomSheet
+import app.usefoster.shared.subscription.LocalSubscriptionRepository
 import app.usefoster.theme.FosterTheme
 import foster.home.generated.resources.Res
 import foster.home.generated.resources.add_no_groups_yet
@@ -91,8 +94,10 @@ fun CheckInsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val accountRepository = LocalAccountRepository.current
     val accountState by accountRepository.state.collectAsStateWithLifecycle()
+    val isSubscribed by LocalSubscriptionRepository.current.isSubscribed.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     var showAddContact by rememberSaveable { mutableStateOf(false) }
+    var selectedGroupId by rememberSaveable { mutableStateOf<String?>(null) }
     val handleAddClick = resolveCheckInsAddClick(onAddClick) { showAddContact = true }
 
     // Event-stream bridge to the shell-owned persistent bottom bar (rationale
@@ -140,7 +145,7 @@ fun CheckInsScreen(
                         )
                     },
                     onAvatarClick = onSettingsClick,
-                    onPremiumClick = onShowPaywall,
+                    onPremiumClick = if (isSubscribed) null else onShowPaywall,
                 )
             },
             containerColor = FosterTheme.colors.background.b0,
@@ -164,6 +169,7 @@ fun CheckInsScreen(
                         groups = state.groups,
                         contacts = state.contacts,
                         memberships = state.memberships,
+                        onGroupClick = { selectedGroupId = it },
                     )
                 }
 
@@ -204,6 +210,13 @@ fun CheckInsScreen(
             },
         )
     }
+
+    selectedGroupId?.let { groupId ->
+        GroupMembersBottomSheet(
+            groupId = groupId,
+            onDismiss = { selectedGroupId = null },
+        )
+    }
 }
 
 @Composable
@@ -229,6 +242,7 @@ private fun GroupGrid(
     groups: List<Group>,
     contacts: List<Contact>,
     memberships: List<GroupMembership>,
+    onGroupClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
@@ -246,6 +260,7 @@ private fun GroupGrid(
                             group = group,
                             members = members,
                             memberCount = memberships.count { it.groupId == group.id },
+                            onClick = { onGroupClick(group.id) },
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -276,6 +291,7 @@ private fun GroupCell(
     group: Group,
     members: List<Contact>,
     memberCount: Int,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -286,7 +302,8 @@ private fun GroupCell(
             members = members,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f),
+                .aspectRatio(1f)
+                .clickable(onClick = onClick),
         )
 
         Spacer(Modifier.height(20.dp))

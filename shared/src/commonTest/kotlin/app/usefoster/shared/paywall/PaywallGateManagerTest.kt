@@ -9,6 +9,7 @@ import app.usefoster.shared.subscription.SubscriptionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.runBlocking
@@ -45,13 +46,25 @@ class PaywallGateManagerTest {
         private val subscribedFlow = MutableStateFlow(initiallySubscribed)
         override val isSubscribed = subscribedFlow.asStateFlow()
 
+        private val cancellationPendingFlow = MutableStateFlow(false)
+        override val isCancellationPending = cancellationPendingFlow.asStateFlow()
+
+        private val productFlow = MutableStateFlow<String?>(null)
+        override val activeProductId: StateFlow<String?> = productFlow.asStateFlow()
+
+        private val billingIssueFlow = MutableStateFlow(false)
+        override val hasBillingIssue: StateFlow<Boolean> = billingIssueFlow.asStateFlow()
+
         fun becomeSubscribed() {
             subscribedFlow.value = true
         }
 
         fun setSubscribed(value: Boolean) {
             subscribedFlow.value = value
+            if (!value) productFlow.value = null
         }
+
+        override fun manageSubscriptionUrl(): String? = null
 
         override suspend fun refresh(): Result<Unit, SubscriptionError> = Result.Success(Unit)
 

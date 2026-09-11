@@ -75,6 +75,7 @@
     <string name="settings_contacts">Contactos</string>
     <string name="settings_groups">Grupos</string>
     <string name="settings_support">Asistencia</string>
+    <string name="settings_manage_subscription">Gestionar suscripción</string>
     <string name="settings_danger_zone">Zona de riesgo</string>
     <string name="settings_delete_account">Eliminar cuenta</string>
     <string name="settings_delete_account_web">Eliminar tu cuenta (web)</string>

@@ -57,6 +57,7 @@ import app.usefoster.home.presentation.settings.components.SettingsRow
 import app.usefoster.home.presentation.settings.components.SettingsTopBar
 import app.usefoster.shared.domain.Result
 import app.usefoster.shared.notifications.ReminderScheduler
+import app.usefoster.shared.subscription.LocalSubscriptionRepository
 import app.usefoster.shared.version.currentAppVersion
 import app.usefoster.theme.AppThemeMode
 import app.usefoster.theme.LocalThemeStore
@@ -70,6 +71,7 @@ import foster.home.generated.resources.settings_privacy
 import foster.home.generated.resources.ic_appearance
 import foster.home.generated.resources.ic_greenprofile
 import foster.home.generated.resources.ic_groups
+import foster.home.generated.resources.ic_crown
 import foster.home.generated.resources.ic_notification
 import foster.home.generated.resources.ic_privacy
 import foster.home.generated.resources.ic_support
@@ -82,6 +84,7 @@ import foster.home.generated.resources.settings_danger_zone
 import foster.home.generated.resources.settings_delete_account
 import foster.home.generated.resources.settings_delete_account_web
 import foster.home.generated.resources.settings_groups
+import foster.home.generated.resources.settings_manage_subscription
 import foster.home.generated.resources.settings_notification
 import foster.home.generated.resources.settings_support
 import org.jetbrains.compose.resources.stringResource
@@ -105,6 +108,14 @@ fun SettingScreen(
     val liquidState = rememberLiquidState()
     val density = LocalDensity.current
     val appVersion = currentAppVersion()
+
+    // Subscription state drives what Settings shows for a paying user: when
+    // subscribed the upgrade card is hidden and a native "Manage Subscription"
+    // row takes its place; it flips back automatically when the entitlement
+    // lapses (after the user cancels on Google Play / the App Store).
+    val subscriptionRepository = LocalSubscriptionRepository.current
+    val isSubscribed by subscriptionRepository.isSubscribed.collectAsState()
+    val isCancellationPending by subscriptionRepository.isCancellationPending.collectAsState()
 
     // Real OS notification permission state. Read on launch and after returning
     // from the OS settings screen. Android/iOS can't re-grant from an in-app
@@ -203,45 +214,76 @@ fun SettingScreen(
 
             Spacer(Modifier.height(12.dp)) // small breathing room below bar
 
-            PremiumCard(onClick = onPremiumClick)
+            if (isSubscribed) {
+                // Subscribed user: the upgrade card disappears (it returns
+                // automatically the moment the entitlement lapses). Their
+                // subscription management lives in the first settings row below.
+            } else {
+                PremiumCard(onClick = onPremiumClick)
+            }
 
             SettingsGroup(
                 liquidState = liquidState,
-                rows = listOf(
-                    SettingsRow.Item(icon = Res.drawable.ic_greenprofile, title = stringResource(Res.string.settings_account)) {
-                        showAccountSheet = true
-                        onAccountClick()
-                    },
-                    SettingsRow.Item(
-                        icon = Res.drawable.ic_appearance,
-                        title = stringResource(Res.string.settings_appearance),
-                        trailing = appearanceLabel,
-                    ) { showAppearanceSheet = true },
-                    SettingsRow.Item(
-                        icon = Res.drawable.ic_notification,
-                        title = stringResource(Res.string.settings_notification),
-                        trailing = when (notificationEnabled) {
-                            true -> "On"
-                            false -> "Off"
-                            null -> null
-                        },
-                    ) {
-                        // Opens the OS notification settings page — can't be toggled
-                        // in-app once denied at the system level.
-                        scope.launch {
-                            reminderScheduler.openSettings()
-                        }
-                    },
-                    SettingsRow.Item(icon = Res.drawable.ic_groups, title = stringResource(Res.string.settings_groups)) {
-                        showGroupSheet = true
-                    },
-                    SettingsRow.Item(
-                        icon = Res.drawable.ic_support,
-                        title = stringResource(Res.string.settings_support),
-                    ) {
-                        uriHandler.openUri(SUPPORT_EMAIL_URI)
-                    },
-                ),
+                rows = buildList {
+                    // Active subscribers see a native "Manage Subscription"
+                    // deep link (Google Play subscriptions page / App Store)
+                    // instead of an upgrade surface. One tap opens the store
+                    // screen; one more tap cancels — the two-tap rule.
+                    if (isSubscribed) {
+                        add(
+                            SettingsRow.Item(
+                                icon = Res.drawable.ic_crown,
+                                title = stringResource(Res.string.settings_manage_subscription),
+                                subtitle = if (isCancellationPending) {
+                                    "Canceled — access remains until the current billing period ends"
+                                } else {
+                                    null
+                                },
+                            ) {
+                                subscriptionRepository.manageSubscriptionUrl()?.let { url ->
+                                    uriHandler.openUri(url)
+                                }
+                            },
+                        )
+                    }
+                    addAll(
+                        listOf(
+                            SettingsRow.Item(icon = Res.drawable.ic_greenprofile, title = stringResource(Res.string.settings_account)) {
+                                showAccountSheet = true
+                                onAccountClick()
+                            },
+                            SettingsRow.Item(
+                                icon = Res.drawable.ic_appearance,
+                                title = stringResource(Res.string.settings_appearance),
+                                trailing = appearanceLabel,
+                            ) { showAppearanceSheet = true },
+                            SettingsRow.Item(
+                                icon = Res.drawable.ic_notification,
+                                title = stringResource(Res.string.settings_notification),
+                                trailing = when (notificationEnabled) {
+                                    true -> "On"
+                                    false -> "Off"
+                                    null -> null
+                                },
+                            ) {
+                                // Opens the OS notification settings page — can't be toggled
+                                // in-app once denied at the system level.
+                                scope.launch {
+                                    reminderScheduler.openSettings()
+                                }
+                            },
+                            SettingsRow.Item(icon = Res.drawable.ic_groups, title = stringResource(Res.string.settings_groups)) {
+                                showGroupSheet = true
+                            },
+                            SettingsRow.Item(
+                                icon = Res.drawable.ic_support,
+                                title = stringResource(Res.string.settings_support),
+                            ) {
+                                uriHandler.openUri(SUPPORT_EMAIL_URI)
+                            },
+                        ),
+                    )
+                },
             )
 
             // "Danger Zone" label — start-aligned (the column centers children by

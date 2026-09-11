@@ -80,4 +80,11 @@ class SubscriptionGatesTest {
     fun freeLimitsAreCorrect() {
         assertEquals(5, SubscriptionGates.FREE_CONTACT_LIMIT)
     }
+
+    @Test
+    fun cancellationKeepsAccessUntilTheActiveEntitlementExpires() {
+        assertTrue(isCancellationPending(isActive = true, unsubscribeDetectedAtMillis = 1L))
+        assertTrue(!isCancellationPending(isActive = false, unsubscribeDetectedAtMillis = 1L))
+        assertTrue(!isCancellationPending(isActive = true, unsubscribeDetectedAtMillis = null))
+    }
 }

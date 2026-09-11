@@ -69,8 +69,8 @@ android {
         applicationId = "app.usefoster"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 5
-        versionName = "1.0.0"
+        versionCode = 7
+        versionName = "1.0.1"
 
         // Build-time secret injection (hygiene, not secrecy — see Secrets.kt).
         buildConfigField("String", "SUPABASE_URL", "\"${resolveSecret("SUPABASE_URL", "supabase.url")}\"")
