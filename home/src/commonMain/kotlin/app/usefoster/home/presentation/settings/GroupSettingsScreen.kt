@@ -6,7 +6,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -80,7 +79,6 @@ fun GroupSettingsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     var isEditOptions by rememberSaveable { mutableStateOf(false) }
-    var selectedGroupId by rememberSaveable { mutableStateOf<String?>(null) }
 
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
@@ -140,7 +138,6 @@ fun GroupSettingsScreen(
                         memberCount = state.memberCount(group.id),
                         editMode = isEditOptions,
                         onRemove = { viewModel.onAction(GroupSettingsAction.DeleteGroup(group.id)) },
-                        onClick = { selectedGroupId = group.id },
                     )
                     Spacer(Modifier.height(12.dp))
                 }
@@ -184,12 +181,6 @@ fun GroupSettingsScreen(
         )
     }
 
-    selectedGroupId?.let { groupId ->
-        GroupBottomSheet(
-            groupId = groupId,
-            onDismiss = { selectedGroupId = null },
-        )
-    }
 }
 
 @Composable
@@ -261,13 +252,11 @@ private fun GroupRow(
     memberCount: Int,
     editMode: Boolean,
     onRemove: () -> Unit,
-    onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(FosterTheme.colors.background.b1, RoundedCornerShape(20.dp))
-            .clickable(enabled = !editMode, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

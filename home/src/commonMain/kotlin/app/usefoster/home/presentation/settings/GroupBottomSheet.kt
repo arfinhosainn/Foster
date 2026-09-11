@@ -45,7 +45,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -106,17 +105,11 @@ import foster.home.generated.resources.group_no_members
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupBottomSheet(
-    groupId: String? = null,
     onDismiss: () -> Unit,
 ) {
     val viewModel = rememberGroupSettingsViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true,)
-    var selectedGroupId by rememberSaveable(groupId) { mutableStateOf(groupId) }
-
-
-
-
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -154,18 +147,12 @@ fun GroupBottomSheet(
         },
     ) {
         AdaptiveSurface {
-            selectedGroupId?.let { groupId ->
-                GroupMembersContent(
-                    groupId = groupId,
-                    onBack = { selectedGroupId = null },
-                )
-            } ?: run {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(bottom = 24.dp),
-                ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 24.dp),
+            ) {
                 Text(
                     text = stringResource(Res.string.settings_groups),
                     color = FosterTheme.colors.text.primary,
@@ -196,7 +183,6 @@ fun GroupBottomSheet(
                         onDelete = { groupId ->
                             viewModel.onAction(GroupSettingsAction.DeleteGroup(groupId))
                         },
-                        onGroupClick = { selectedGroupId = it },
                     )
                 }
 
@@ -225,8 +211,30 @@ fun GroupBottomSheet(
                     enabled = !state.isSaving,
                     loading = state.isSaving,
                 )
-                }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GroupMembersBottomSheet(
+    groupId: String,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = FosterTheme.colors.background.b1,
+        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
+    ) {
+        AdaptiveSurface {
+            GroupMembersContent(
+                groupId = groupId,
+                onBack = onDismiss,
+            )
         }
     }
 }
@@ -587,7 +595,6 @@ private fun GroupGrid(
     state: GroupSettingsState,
     onGroupNameChanged: (String, String) -> Unit,
     onDelete: (String) -> Unit,
-    onGroupClick: (String) -> Unit,
 ) {
     BoxWithConstraints {
         val columns = (maxWidth / 180.dp).toInt().coerceIn(2, 4)
@@ -607,7 +614,6 @@ private fun GroupGrid(
                             name = state.draftNames[group.id] ?: group.name,
                             onNameChanged = { onGroupNameChanged(group.id, it) },
                             onDelete = { onDelete(group.id) },
-                            onClick = { onGroupClick(group.id) },
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -707,7 +713,6 @@ private fun GroupItem(
     name: String,
     onNameChanged: (String) -> Unit,
     onDelete: () -> Unit,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -719,7 +724,7 @@ private fun GroupItem(
                 group = group,
                 members = members,
                 memberCount = memberCount,
-                modifier = Modifier.clickable(enabled = !isEditing, onClick = onClick),
+                modifier = Modifier,
             )
             if (isEditing) {
                 Box(

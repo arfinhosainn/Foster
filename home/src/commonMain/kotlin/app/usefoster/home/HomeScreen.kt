@@ -308,7 +308,7 @@ fun HomeScreen(
                     )
                 },
                 onAvatarClick = { onSettingsClick() },
-                onPremiumClick = onShowPaywall,
+                onPremiumClick = if (isSubscribed) null else onShowPaywall,
             )
             },
             containerColor = FosterTheme.colors.background.b0,

@@ -23,6 +23,7 @@ import app.usefoster.home.di.LocalProfileDataSource
 import app.usefoster.shared.domain.ProfileDataSource
 import app.usefoster.shared.subscription.LocalSubscriptionRepository
 import app.usefoster.shared.subscription.RevenueCatSubscriptionRepository
+import app.usefoster.shared.subscription.rememberEntitlementSnapshotStore
 import app.usefoster.onboarding.addnote.AddNoteViewModel
 import app.usefoster.onboarding.contact.ContactViewModel
 import app.usefoster.onboarding.customreminder.CustomReminderViewModel
@@ -93,7 +94,10 @@ fun OnboardingDraftStoreProvider(
             scope = repositoryScope,
         )
     }
-    val subscriptionRepository = remember { RevenueCatSubscriptionRepository() }
+    val entitlementSnapshotStore = rememberEntitlementSnapshotStore()
+    val subscriptionRepository = remember(client, entitlementSnapshotStore) {
+        RevenueCatSubscriptionRepository(entitlementSnapshotStore)
+    }
 
     CompositionLocalProvider(
         LocalOnboardingDraftStore provides draftStore,

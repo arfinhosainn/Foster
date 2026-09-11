@@ -1,6 +1,7 @@
 package app.usefoster.onboarding
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,6 +43,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.SnackbarHostState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.usefoster.designsystem.snackbar.FosterSnackbarHost
 import app.usefoster.designsystem.snackbar.FosterSnackbarStyle
 import androidx.compose.runtime.mutableIntStateOf
@@ -206,6 +210,24 @@ private fun OnboardingAppContent(
         subscriptionRepository.refresh()
     }
 
+    // Re-fetch the entitlement every time the app returns to the foreground.
+    // This is what re-locks gated features (and re-shows the premium icons) the
+    // moment the subscription is cancelled on Google Play / the App Store and
+    // the user comes back — no app restart needed. RevenueCat also pushes
+    // customer-info updates via the delegate, but an explicit refresh guarantees
+    // the fresh state on resume even if that callback was missed while the app
+    // was backgrounded.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, subscriptionRepository) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                scope.launch { subscriptionRepository.refresh() }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     LaunchedEffect(Unit) {
         var recoveryAttempted = false
         supabaseClient.auth.sessionStatus.collect { status ->
@@ -278,6 +300,9 @@ private fun OnboardingAppContent(
     // expired (or never started), fall back to the regular paywall.
     val showPremiumPaywall: () -> Unit = {
         scope.launch {
+            // Already subscribed: nothing to sell — never show the paywall to a
+            // paying user (e.g. a stale premium surface triggered mid-refresh).
+            if (isSubscribed) return@launch
             if (paywallGateManager.isDiscountOfferLive()) {
                 paywallGateManager.onDiscountPaywallShown()
                 navigator.navigate(Screen.DiscountPaywall)
@@ -604,25 +629,36 @@ private fun OnboardingAppContent(
                         onBack = { navigator.goBack() },
                     )
 
-                    is Screen.Paywall -> PaywallScreen(
-                        onBack = {
-                            // Closing the regular paywall arms exit-intent and
-                            // offers the 60% deal IMMEDIATELY in this session;
-                            // if the gates block it here, the armed dismissal
-                            // still fires on the next cold start as a fallback.
-                            paywallGateManager.onRegularPaywallDismissed()
-                            navigator.goBack()
-                            scope.launch {
-                                paywallGateManager.reportTrigger(PaywallTrigger.EXIT_INTENT)
-                            }
-                        },
+                    is Screen.Paywall -> if (isSubscribed) {
+                        // Defensive: a subscriber should never see a paywall.
+                        // Pop immediately (e.g. entitlement restored in another
+                        // flow while this screen was already on the stack).
+                        LaunchedEffect(Unit) { navigator.goBack() }
+                    } else {
+                        PaywallScreen(
+                            onBack = {
+                                // Closing the regular paywall arms exit-intent and
+                                // offers the 60% deal IMMEDIATELY in this session;
+                                // if the gates block it here, the armed dismissal
+                                // still fires on the next cold start as a fallback.
+                                paywallGateManager.onRegularPaywallDismissed()
+                                navigator.goBack()
+                                scope.launch {
+                                    paywallGateManager.reportTrigger(PaywallTrigger.EXIT_INTENT)
+                                }
+                            },
+                            onSubscribed = { navigator.goBack() },
+                        )
+                    }
+
+                is Screen.DiscountPaywall -> if (isSubscribed) {
+                    LaunchedEffect(Unit) { navigator.goBack() }
+                } else {
+                    DiscountPaywallScreen(
+                        onBack = { navigator.goBack() },
                         onSubscribed = { navigator.goBack() },
                     )
-
-                is Screen.DiscountPaywall -> DiscountPaywallScreen(
-                    onBack = { navigator.goBack() },
-                    onSubscribed = { navigator.goBack() },
-                )
+                }
 
                 is Screen.DayAgenda -> DayAgendaScreen(
                     dayKey = screen.dayKey,

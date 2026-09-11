@@ -26,6 +26,42 @@ interface SubscriptionRepository {
     /** True while the `unlimited` entitlement is active for the current user. */
     val isSubscribed: StateFlow<Boolean>
 
+    /** True when the active subscription was canceled and will end at expiry. */
+    val isCancellationPending: StateFlow<Boolean>
+
+    /**
+     * Store product id of the active subscription that grants the `unlimited`
+     * entitlement (e.g. `foster_premium_yearly`). Null when not subscribed.
+     * Updated on every refresh / customer-info event so it stays correct when
+     * the user cancels and the entitlement lapses.
+     */
+    val activeProductId: StateFlow<String?>
+
+    /**
+     * True when the store reported a billing problem with the subscription that
+     * unlocks `unlimited` (payment method failed / renewal declined). The
+     * entitlement usually stays ACTIVE through the store's grace period, so
+     * [isSubscribed] may still be true — but when it is false and this is true,
+     * the correct move is to deep-link the user to fix their payment method on
+     * the store, not to show them a buy screen.
+     */
+    val hasBillingIssue: StateFlow<Boolean>
+
+    /**
+     * Native store URL where the user can view, update payment method or cancel
+     * their active subscription. On Android this is Google Play's subscriptions
+     * page (`https://play.google.com/store/account/subscriptions?sku=<product-id>
+     * &package=app.usefoster`) and on iOS the App Store's subscription settings
+     * page. RevenueCat derives the correct URL per platform from the latest
+     * [CustomerInfo]; the product-id deep link (then the bare package link) is
+     * used as a fallback.
+     *
+     * Returns null when the user has no active subscription / payment issue.
+     * One tap from Settings lands the user on Play's native management screen,
+     * satisfying Play's "two taps to cancel" policy without any in-app UI.
+     */
+    fun manageSubscriptionUrl(): String?
+
     /** Re-fetch entitlement from RevenueCat (call on app foreground / after auth). */
     suspend fun refresh(): Result<Unit, SubscriptionError>
 

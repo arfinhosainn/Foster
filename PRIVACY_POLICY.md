@@ -1,6 +1,6 @@
 # Foster — Privacy Policy
 
-**Effective date: September 8, 2026 · Last updated: September 8, 2026**
+**Effective date: September 8, 2026 · Last updated: September 10, 2026**
 
 - **Who we are (the data controller):** MD. ARFIN HOSSIN PATWARY, trading as **Foster — Grow Your Connection** ("Foster", "we", "us")
 - **Registered address:** Taraf Patwary Bari, West Fatehpur, Dagonbhuiyan, Feni - 3900, Bangladesh
@@ -9,7 +9,7 @@
 - **This policy:** https://fosterapp.framer.website/privacy
 - **Terms & Conditions:** https://fosterapp.framer.website/terms
 
-This policy applies to the Foster mobile apps on Android and iOS. It is publicly accessible on the web (no login needed, no geo-blocking) and is linked inside the app on the sign-in screen and in Settings → Privacy Policy.
+This policy applies to the Foster mobile apps on Android and iOS, and to information submitted through the public web deletion form. It is publicly accessible on the web (no login needed, no geo-blocking) and is linked inside the app on the sign-in screen and in Settings → Privacy Policy.
 
 **How we notify you of changes:** when we change this policy, we update the "Last updated" date above and, for material changes, show a notice in the app (and in app-release notes) before or when the change takes effect. If a change affects how we use data we already hold in a way that requires a new permission under your law, we will ask for your consent where consent is the lawful basis.
 
@@ -67,12 +67,13 @@ We do **not sell your data, and we do not share it for targeted advertising.** W
 | **RevenueCat** | Subscription management | Purchase/entitlement data, app-user ID, device identifier | https://www.revenuecat.com/privacy |
 | **Google Play / Apple App Store** | App distribution, payments | Your store account and transactions | Store privacy policies |
 | **Google / Apple** | Sign-in providers | Your name/email (or relay email) at sign-in | Provider privacy policies |
+| **Framer** | Website hosting and deletion-request form | Email address and reason submitted through the form | https://www.framer.com/legal/privacy |
 
 ## 8. Data retention and deletion
 
 - **In-app deletion (recommended):** Settings → Delete Account → type "DELETE" to confirm. This immediately and permanently deletes your account row, which cascades to delete **all** of your data: profile, people/contacts, groups, check-ins, notes, custom reminders, notification settings, badges, and your avatar files in storage. There is no grace period and no recovery.
-- **Web deletion:** visit https://fosterapp.framer.website/delete-account and follow the instructions (you will verify your email; we complete the deletion and confirm by email).
-- **Timing:** deletion is performed immediately upon request and is permanent. Our hosting plan (Supabase Free) **does not include automated database backups**, so we hold no backup copies of your data. If we ever move to a paid plan that includes backups (e.g., up to 7 days of scheduled backups), residual copies would be purged on the provider's backup-retention schedule and this section would be updated accordingly.
+- **Web deletion:** you can also request deletion here, without installing the app: https://fosterapp.framer.website/delete-account. Submit the form with the email address associated with your account and a brief reason. We may ask you to confirm ownership of the account before processing.
+- **Timing:** in-app deletion is immediate and permanent. Requests submitted through the web form are processed within 30 days. We do not retain backup copies of deleted account data.
 - **Legally required retention:** we do not retain your personal data after deletion. Purchase/transaction records may be retained by our subscription processor (RevenueCat) and the app stores where required by tax, accounting, or consumer-protection law; those records are held by the processor, not in your Foster account.
 - **Local data on your device** is removed when you delete your account in-app, when you uninstall the app, or via your OS "clear data" controls.
 
@@ -98,7 +99,7 @@ Foster contains **no advertising SDKs and no tracking**. We do not collect or us
 
 ## 13. EEA and UK visitors
 
-Foster is **not distributed in the European Economic Area or the United Kingdom** — it is not offered or targeted to people in those regions. Even so, if you use Foster from there, we voluntarily apply the same standards as this policy describes everywhere else: purpose-limited use of your data, the rights in §§14–16 (access, correction, deletion), immediate deletion on request (§8), and the processor safeguards in §7/§17.
+Foster is **not distributed in the European Economic Area or the United Kingdom** — it is not offered or targeted to people in those regions. Even so, if you use Foster from there, we voluntarily apply the same standards as this policy describes everywhere else: purpose-limited use of your data, the rights in §§14–16 (access, correction, deletion), immediate in-app deletion and web deletion requests processed within 30 days (§8), and the processor safeguards in §7/§17.
 
 ## 14. Your rights (California — CCPA/CPRA)
 
@@ -122,7 +123,7 @@ Data is stored in Supabase (Google Cloud, us-west-2, United States) and processe
 
 ## 18. How to contact us
 
-Privacy questions, deletion requests, or anything else: **programmingwitharfin@gmail.com**. Postal: MD. ARFIN HOSSIN PATWARY, Taraf Patwary Bari, West Fatehpur, Dagonbhuiyan, Feni - 3900, Bangladesh. We aim to reply within 14 days.
+Privacy questions, deletion requests, or anything else: **programmingwitharfin@gmail.com**. Postal: MD. ARFIN HOSSIN PATWARY, Taraf Patwary Bari, West Fatehpur, Dagonbhuiyan, Feni - 3900, Bangladesh. We process deletion requests submitted through the web form within 30 days.
 
 ---
 

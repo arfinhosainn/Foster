@@ -144,12 +144,20 @@ private fun SettingsItem(
 
         Spacer(Modifier.width(18.dp))
 
-        Text(
-            text = item.title,
-            style = FosterTheme.typography.heading4Semibold,
-            fontSize = 17.sp,
-            modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = item.title,
+                style = FosterTheme.typography.heading4Semibold,
+                fontSize = 17.sp,
+            )
+            item.subtitle?.let { subtitle ->
+                Text(
+                    text = subtitle,
+                    color = FosterTheme.colors.text.secondary,
+                    fontSize = 12.sp,
+                )
+            }
+        }
 
         item.trailing?.let {
 

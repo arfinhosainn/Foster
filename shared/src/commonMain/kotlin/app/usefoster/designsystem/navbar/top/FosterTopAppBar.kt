@@ -50,7 +50,7 @@ fun FosterTopBar(
     onAudienceSelect: (AudienceOption) -> Unit = {},
     userName: String = "",
     onAvatarClick: () -> Unit = {},
-    onPremiumClick: () -> Unit = {},
+    onPremiumClick: (() -> Unit)? = null,
     title: String? = null,
     avatarContent: @Composable () -> Unit = {
         MonogramAvatar(name = userName)
@@ -93,12 +93,17 @@ fun FosterTopBar(
         }
     },
     actions = {
-        IconButton(onClick = onPremiumClick) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.ic_crown),
-                contentDescription = stringResource(Res.string.cd_premium),
-                tint = Color.Unspecified,
-            )
+        // The upgrade crown is a *purchase* surface: it disappears for users
+        // who are already subscribers (onPremiumClick == null) and returns
+        // reactively once the entitlement lapses.
+        if (onPremiumClick != null) {
+            IconButton(onClick = onPremiumClick) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.ic_crown),
+                    contentDescription = stringResource(Res.string.cd_premium),
+                    tint = Color.Unspecified,
+                )
+            }
         }
     },
 )
